@@ -11,5 +11,5 @@ test "text golden escapes message, keys and binary data" {
     var buffer: [1024]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buffer);
     try encode(.{ .level = .info, .scope = "worker", .message = "done\n\xff", .fields = &.{ field.kv("a=b", 12), field.kv("blob", field.bytes("\xff")) }, .timestamp_ns = -1 }, &writer);
-    try std.testing.expectEqualStrings("-1 info scope=\"worker\" message=\"done\\n\\xff\" session=0 channel=0 sequence=0 \"a=b\"=12 \"blob\"=\"hex:ff\"\n", writer.buffered());
+    try std.testing.expectEqualStrings("-1 info scope= \"worker\" message= \"done\\n\\xff\" session= 0 channel= 0 sequence= 0 \"a=b\"= 12 \"blob\"= \"hex:ff\"\n", writer.buffered());
 }

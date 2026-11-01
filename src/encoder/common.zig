@@ -80,7 +80,7 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
     }.write);
 }
 
-pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn(@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("{\"timestamp_ns\":");
     try valueInner(writer, .{ .timestamp_ns = event.timestamp_ns }, .json);
     if (readable) |timestamp| {
@@ -139,37 +139,37 @@ fn encodeText(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
             for (ctx.fields) |field| {
                 try output.writeByte(' ');
                 try quoted(output, field.key, .text);
-                try output.writeByte('=');
+                try output.writeAll("= ");
                 try valueInner(output, field.value, .text);
             }
         }
     }.write);
 }
 
-pub fn encodeTextWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn(@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+pub fn encodeTextWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     if (readable) |timestamp| try writer.writeAll(timestamp) else try decimal.write(writer, event.timestamp_ns);
     try writer.writeByte(' ');
     try writer.writeAll(@tagName(event.level));
-    try writer.writeAll(" scope=");
+    try writer.writeAll(" scope= ");
     try quoted(writer, event.scope, .text);
-    try writer.writeAll(" message=");
+    try writer.writeAll(" message= ");
     try message(writer, event, .text);
-    try writer.writeAll(" session=");
+    try writer.writeAll(" session= ");
     try decimal.write(writer, event.session);
-    try writer.writeAll(" channel=");
+    try writer.writeAll(" channel= ");
     try decimal.write(writer, event.channel);
-    try writer.writeAll(" sequence=");
+    try writer.writeAll(" sequence= ");
     try decimal.write(writer, event.sequence);
     if (event.trace_id) |id| {
-        try writer.writeAll(" trace_id=");
+        try writer.writeAll(" trace_id= ");
         try hex(writer, &id);
     }
     if (event.span_id) |id| {
-        try writer.writeAll(" span_id=");
+        try writer.writeAll(" span_id= ");
         try hex(writer, &id);
     }
     if (event.source) |source| {
-        try writer.writeAll(" source=");
+        try writer.writeAll(" source= ");
         try source_path.write(writer, source.file);
         try writer.writeByte(':');
         try decimal.write(writer, source.line);
@@ -199,7 +199,7 @@ fn encodeLogfmt(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std
     }.write);
 }
 
-pub fn encodeLogfmtWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn(@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+pub fn encodeLogfmtWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("timestamp_ns=");
     try decimal.write(writer, event.timestamp_ns);
     if (readable) |timestamp| {
@@ -375,7 +375,7 @@ test "decoded delivery proof reuses decoder validation with identical bytes" {
         .message_template = true,
         .format_args = &.{fields.kv("0", @as(u64, 42))},
         .fields = &.{
-            fields.kv("nested", fields.group(&.{fields.kv("x", true), fields.kv("y", fields.array(&.{ .null_value, fields.fromAny("z") }))})),
+            fields.kv("nested", fields.group(&.{ fields.kv("x", true), fields.kv("y", fields.array(&.{ .null_value, fields.fromAny("z") })) })),
             fields.kv("secret", fields.secret("original")),
         },
         .timestamp_ns = -1,

@@ -30,4 +30,4 @@
 
 文件例子写入 cwd，通常追加；轮转按 retention 清理最旧归档。重复运行时根据最新 session 核对计数。`verify-local` 编译全部例子，实际运行和输出检查另行执行。
 
-示例由仓库根 `examples.zig` 选择并导入，`@src().file` 保留 `examples/` 前缀。text的 `source=examples/mmap.zig:行:列` 无外围引号；普通包模块用 `kron.source.fromModule` 在编译期映射仓库路径，见 [源码位置](../docs/usage.md#时间trace-与源位置)。
+示例由仓库根 `examples.zig` 选择并导入，`@src().file` 保留 `examples/` 前缀。text的 `source= examples/mmap.zig:行:列` 无外围引号；普通包模块用 `kron.source.fromModule` 在编译期映射仓库路径，见 [源码位置](../docs/usage.md#时间trace-与源位置)。

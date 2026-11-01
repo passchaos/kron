@@ -1,6 +1,6 @@
 # 事件编码、验证与二进制归档
 
-源码位置保留事件中的完整相对路径。text使用无外围引号的 `source=src/http/handler.zig:42:7`，方便终端跳转；控制字符、无效UTF-8和Unicode行分隔符仍被转义，不允许路径注入新日志行。JSON的 `source.file` 保持合法字符串，logfmt按其key/value语法引用字段。模块根与仓库根不同的应用使用编译期 `kron.source.fromModule`，或把编译入口放到仓库根；见 [源码路径接入](usage.md#时间trace-与源位置)。
+源码位置保留事件中的完整相对路径。text使用无外围引号的 `source= src/http/handler.zig:42:7`，方便终端跳转；控制字符、无效UTF-8和Unicode行分隔符仍被转义，不允许路径注入新日志行。JSON的 `source.file` 保持合法字符串，logfmt按其key/value语法引用字段。模块根与仓库根不同的应用使用编译期 `kron.source.fromModule`，或把编译入口放到仓库根；见 [源码路径接入](usage.md#时间trace-与源位置)。
 
 schema的key/type形状检查合并到size visitor曾做完整before/after实验，保持所有错误顺序并通过4096项独立旧/新差分，但独立PMU显示schema SPSC指令增加0.463%，完整流程没有取得吞吐收益资格，候选已否决。当前schema仍使用完整树/长度遍历后单独形状检查；无效树先于schema/level和长度错误，失败不写destination。全部候选、错误优先级测试和正负数据见`bench/evidence/2026-11-01-schema-shape-visitor/`，不能将少一个循环直接等同提速。
 

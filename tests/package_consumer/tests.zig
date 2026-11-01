@@ -12,10 +12,10 @@ test "independent consumer maps its module source root for terminal paths" {
     defer logging.destroy();
     _ = try logging.scoped("app").tryEmitAt(location, .info, "repository relative", .{});
     try logging.shutdown();
-    const expected = try std.fmt.allocPrint(std.testing.allocator, " source={s}:{d}:{d}", .{ location.file, location.line, location.column });
+    const expected = try std.fmt.allocPrint(std.testing.allocator, " source= {s}:{d}:{d}", .{ location.file, location.line, location.column });
     defer std.testing.allocator.free(expected);
     try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), expected) != null);
-    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "source=\"") == null);
+    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "source= \"") == null);
     try std.testing.expectEqualStrings("tests.zig", location.file);
 }
 

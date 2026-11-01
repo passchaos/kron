@@ -44,7 +44,7 @@ fn writeAttributesFallible(comptime format: Format, comptime referenced: bool, c
             .text => {
                 try writer.writeByte(' ');
                 try common.quoted(writer, key, .text);
-                try writer.writeByte('=');
+                try writer.writeAll("= ");
                 try common.writeWireValue(writer, value, .text);
             },
             .logfmt => {

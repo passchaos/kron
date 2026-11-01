@@ -22,8 +22,8 @@ test "source location text keeps repository paths linkable and identical after i
     var ordinary_bytes: [2048]u8 = undefined;
     var ordinary = std.Io.Writer.fixed(&ordinary_bytes);
     try encode(.text, event, &ordinary);
-    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), " source=src/http/handler.zig:42:7 ") != null);
-    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), "source=\"") == null);
+    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), " source= src/http/handler.zig:42:7 ") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), "source= \"") == null);
     var json_bytes: [2048]u8 = undefined;
     var json_output = std.Io.Writer.fixed(&json_bytes);
     try encode(.json, event, &json_output);

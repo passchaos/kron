@@ -147,10 +147,10 @@ pub fn main(init: std.process.Init) !void {
 
 文件选项沿用 `FileSink.Options`：`path` 必填，`dir=null`、`buffer_bytes=64 KiB`、`backend=.auto`、`queue_depth=4`、`append=true`。指南显式选 portable；Linux 可选 `.linux_uring`，其写出与 durable 完成契约见 [文件可靠性](file-reliability.md)。auto 的后端选择不应被当成某次基准已经使用 io_uring 的证明。
 
-`text` 将时间和级别直接放在行首，侧重阅读；`logfmt` 将所有内容统一为 `key=value`，并用 `attr.` 区分业务字段与元数据。下面省略session、sequence等公共字段：
+`text` 将时间和级别直接放在行首，字段以 `key= value` 分隔，侧重阅读；`logfmt` 将所有内容统一为 `key=value`，并用 `attr.` 区分业务字段与元数据。下面省略session、sequence等公共字段：
 
 ```text
-text:   2026-11-01T23:00:00+08:00 info scope="http" message="completed" "status"=200
+text:   2026-11-01T23:00:00+08:00 info scope= "http" message= "completed" "status"= 200
 logfmt: timestamp_ns=1793545200000000000 timestamp="2026-11-01T23:00:00+08:00" severity=info scope="http" message="completed" attr.status=200
 ```
 
@@ -491,7 +491,7 @@ zig build run-source-location -Doptimize=ReleaseSafe
 
 它向 `kron-source-location.jsonl` 和stdout同时输出JSON，使用本地时间。`tryEmitAt(@src(), ...)` 演示直接消息，`tryLogfAt(@src(), ...)` 演示格式串；JSON的source包含 `module`（Zig构建模块）、`file`、`function`、`line`、`column`。`scope="http.server"` 是应用指定的业务组件名称，与 `source.module` 各有用途。把 `@src()` 放在需要定位的调用点；包装函数内部的 `@src()` 定位包装函数，想记录上层调用者时应显式传入source。
 
-现有 [Mmap例子](../examples/mmap.zig) 和 [文件/stdout本地时间例子](../examples/file_stdout_local_time.zig) 也使用 `tryLogfAt(@src(), ...)`：文件JSON保留完整source，stdout text显示 `source=examples/mmap.zig:35:31`，路径相对仓库根目录且没有外围引号，方便IDE终端识别跳转。需要在stdout也看到完整module/function等信息时选择JSON。
+现有 [Mmap例子](../examples/mmap.zig) 和 [文件/stdout本地时间例子](../examples/file_stdout_local_time.zig) 也使用 `tryLogfAt(@src(), ...)`：文件JSON保留完整source，stdout text显示 `source= examples/mmap.zig:35:31`，路径相对仓库根目录且没有外围引号，方便IDE终端识别跳转。需要在stdout也看到完整module/function等信息时选择JSON。
 
 Zig的 `@src().file` 相对当前模块的源码根目录。仓库示例统一从根目录 [examples.zig](../examples.zig) 导入，因此保留 `examples/` 前缀；JSON的 `source.file` 同样保存此完整相对路径。JSON路径仍是合法JSON字符串。
 
