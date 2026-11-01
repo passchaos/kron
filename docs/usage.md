@@ -483,6 +483,16 @@ _ = try traced.tryLogfAt(@src(), .info, "response {d}", .{@as(u16, 200)}, .{});
 
 示例重复字节只用于演示；应用传入自己的有效 trace/span ID。带 `At` 的方法记录 source，普通方法不自动读取调用者位置。
 
+完整源码位置例子见 [source_location.zig](../examples/source_location.zig)，运行：
+
+```sh
+zig build run-source-location -Doptimize=ReleaseSafe
+```
+
+它向 `kron-source-location.jsonl` 和stdout同时输出JSON，使用本地时间。`tryEmitAt(@src(), ...)` 演示直接消息，`tryLogfAt(@src(), ...)` 演示格式串；JSON的source包含 `module`（Zig构建模块）、`file`、`function`、`line`、`column`。`scope="http.server"` 是应用指定的业务组件名称，与 `source.module` 各有用途。把 `@src()` 放在需要定位的调用点；包装函数内部的 `@src()` 定位包装函数，想记录上层调用者时应显式传入source。
+
+现有 [Mmap例子](../examples/mmap.zig) 和 [文件/stdout本地时间例子](../examples/file_stdout_local_time.zig) 也使用 `tryLogfAt(@src(), ...)`：文件JSON保留完整source，stdout text显示 `source="文件名":行:列`。需要在stdout也看到完整module/function等信息时选择JSON。
+
 时钟高级选择使用借用 Runtime：`logging.runtime().loggerWithClock(kron.NativeClock, "scope")`；静态最低级别使用 `loggerWithLevel(.info, "scope")`。静态被禁用的级别无法动态打开。TSC 需显式资格检查，见 [TSC 时钟](tsc-clock.md)。
 
 ## 轮转、多输出与热配置
@@ -605,6 +615,7 @@ try logging.shutdownUntil(kron.Deadline.after(io, 5 * std.time.ns_per_s));
 | `zig build run-local-time` | 系统本地时间、消费者格式化与同秒缓存 |
 | `zig build run-file-stdout-local-time` | 同时写JSON文件与stdout文本，两个输出都使用系统本地时间 |
 | `zig build run-mmap` | 共享Mmap、本地时间、JSON文件＋best_effort stdout、durable与自动恢复 |
+| `zig build run-source-location` | 文件/stdout JSON完整源码位置：module、file、function、line、column |
 | `zig build run-structured` | owned/borrowed context、嵌套、bytes/secret、trace/source、lazy、可读日期 |
 | `zig build run-threaded` | 双线程 SPSC、attach/detach、join 后关闭 |
 | `zig build run-prepared` | Mmap/SPSC 预注册与 durable |

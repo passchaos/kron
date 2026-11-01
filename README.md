@@ -64,6 +64,7 @@ zig build run-structured
 zig build run-local-time
 zig build run-file-stdout-local-time
 zig build run-mmap
+zig build run-source-location
 zig build run-threaded
 zig build run-rolling
 zig build run-basic

@@ -32,7 +32,7 @@ pub fn main(init: std.process.Init) !void {
     const log = logging.scoped("app");
     for (0..3) |request| {
         const id: u32 = @intCast(request);
-        _ = try log.tryLogf(.info, "mmap request {d} completed", .{id}, .{
+        _ = try log.tryLogfAt(@src(), .info, "mmap request {d} completed", .{id}, .{
             .request = id,
             .elapsed = kron.durationNs(1200),
         });
