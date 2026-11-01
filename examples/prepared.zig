@@ -2,23 +2,20 @@ const std = @import("std");
 const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
-    const output = try kron.FileSink.create(init.gpa, init.io, .{ .path = "kron-prepared.jsonl" });
-    defer output.deinit();
-    const runtime = try kron.Runtime.create(init.gpa, init.io, .{
-        .submission = .low_latency,
-        .journal = .{
+    const logging = try kron.Logging.create(init.gpa, init.io, .{
+        .output = .{ .file = .{ .path = "kron-prepared.jsonl", .backend = .portable } },
+        .format = .json,
+        .mode = .spsc,
+        .max_threads = 1,
+        .queue = .{ .mmap = .{
             .path = "kron-prepared.journal",
             .capacity = 64,
             .max_record_bytes = 4096,
             .schema_capacity = 16,
             .max_schema_bytes = 4096,
-        },
-        .max_thread_channels = 1,
-        .thread_channel_capacity = 64,
-        .routes = &.{.{ .name = "file", .sink = output.sink() }},
+        } },
     });
-    defer runtime.destroy();
-    const attached = try runtime.attachThread(.{ .scope = "worker" });
+    defer logging.destroy();
     const template: kron.Event = .{
         .level = .info,
         .scope = "worker",
@@ -28,12 +25,13 @@ pub fn main(init: std.process.Init) !void {
         .fields = &.{kron.kv("status", @as(u16, 200))},
         .timestamp_ns = 0,
     };
-    const binding = try runtime.prewarmThreadSchema(@intCast(attached.owner.control_index + 1), template);
-    const log = try runtime.threadLoggerWithSchema(attached, binding);
-    defer log.detach() catch {};
-    for (0..100) |request| {
-        _ = try log.tryLogf(.info, "request {d} completed", .{@as(u64, @intCast(request))}, .{ .status = @as(u16, 200) });
+    {
+        const log = try logging.attachPreparedThread(template);
+        defer log.detach() catch {};
+        for (0..100) |request| {
+            _ = try log.tryLogf(.info, "request {d} completed", .{@as(u64, @intCast(request))}, .{ .status = @as(u16, 200) });
+        }
     }
-    try runtime.flushUntil(.durable, kron.Deadline.after(init.io, 5 * std.time.ns_per_s));
-    try runtime.shutdownUntil(kron.Deadline.after(init.io, 5 * std.time.ns_per_s));
+    try logging.flushDurable();
+    try logging.shutdown();
 }

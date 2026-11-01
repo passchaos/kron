@@ -59,6 +59,16 @@ pub fn Bridge(comptime Owner: type) type {
             while (readers.load(.seq_cst) != 0) yieldThread();
         }
 
+        /// Detach only this owner, so cleanup of a former binding cannot
+        /// remove a newer application's binding. Drains calls borrowing owner.
+        pub fn unbindOwner(owner: *Owner) void {
+            lockLifecycle();
+            defer lifecycle_lock.store(false, .release);
+            if (binding.load(.seq_cst) != owner) return;
+            _ = binding.swap(null, .seq_cst);
+            while (readers.load(.seq_cst) != 0) yieldThread();
+        }
+
         /// Cumulative adapter counters survive bind/unbind. Runtime health
         /// independently tracks admission, capture and delivery outcomes.
         pub fn statistics() Statistics {

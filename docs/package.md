@@ -44,26 +44,20 @@ const std = @import("std");
 const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
-    const file = try kron.FileSink.create(init.gpa, init.io, .{
-        .path = "app.jsonl",
-        .backend = .portable,
+    const logging = try kron.Logging.create(init.gpa, init.io, .{
+        .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
+        .mode = .asynchronous,
+        .format = .json,
     });
-    defer file.deinit();
-    const runtime = try kron.Runtime.create(init.gpa, init.io, .{
-        .submission = .asynchronous,
-        .memory_queue = .{ .capacity = 256, .max_record_bytes = 8192 },
-        .routes = &.{.{ .name = "file", .sink = file.sink(), .format = .json }},
-    });
-    defer runtime.destroy();
-    _ = try runtime.scoped("app").tryEmit(.info, "started", .{ .version = @as(u32, 1) });
-    try runtime.flush(.written);
-    try runtime.shutdown(.drain);
+    defer logging.destroy();
+    _ = try logging.scoped("app").tryEmit(.info, "started", .{ .version = @as(u32, 1) });
+    try logging.shutdown();
 }
 ```
 
-应用负责停止所有 logger/token 用户，再关闭和销毁 Runtime，最后销毁 sink 与 I/O 环境。关闭错误应由应用显式处理；`defer` 清理不是 durable 确认。mmap 模式将 `memory_queue` 替换为 `journal`，两者恢复语义不同，详见 [async-storage.md](async-storage.md)。
+`Logging` 管理全部配置输出和底层 Runtime 的资源，应用停止所有 logger/token 用户后显式 shutdown，再 destroy owner，最后清理应用 I/O 环境。关闭错误应由应用显式处理；`defer` 清理不是 durable 确认。Mmap 设置 `.queue = .{ .mmap = journal_options }`，两者恢复语义不同。全部参数、context/线程所有权与示例见 [详细使用指南](usage.md)。多输出和轮转也使用 Logging；自定义 sink 和跨代恢复等底层扩展仍可使用 Runtime，按 Runtime → sink 顺序销毁。
 
-单线程消费项目使用 `-Dsingle-threaded=true`，并选择 `.submission = .sync`，不配置异步队列。普通 flush/shutdown可用，异步/SPSC和带deadline的控制接口有明确能力错误。库模块和应用应传入一致线程配置。
+单线程消费项目使用 `-Dsingle-threaded=true`，Logging 使用默认 `.mode = .sync`，Runtime 使用 `.submission = .sync`，不配置异步队列。普通 flush/shutdown可用，异步/SPSC和带deadline的控制接口有明确能力错误。库模块和应用应传入一致线程配置。
 
 ## 独立消费项目验收
 

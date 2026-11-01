@@ -29,6 +29,7 @@ pub const Journal = @import("journal/journal.zig").Journal;
 pub const platform = @import("platform/capabilities.zig");
 pub const Sink = @import("sink/interface.zig").Sink;
 pub const Runtime = @import("core/runtime.zig").Runtime;
+pub const Logging = @import("logging.zig").Logging;
 pub const RuntimeOptions = @import("core/runtime.zig").Options;
 pub const MemoryQueueOptions = @import("core/runtime_types.zig").MemoryQueueOptions;
 pub const QueueStorage = @import("core/runtime_types.zig").QueueStorage;

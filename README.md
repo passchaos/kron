@@ -6,6 +6,18 @@
 
 公共接口仅提供 Zig API，包依赖和应用生命周期见 [Zig 包接入](docs/package.md)。
 
+常用接入使用 `kron.Logging`，统一管理单个或多个输出与底层 Runtime；默认 stderr、同步、text、info。完整参数、结构化字段、线程、Memory/Mmap、std.log 桥、轮转和错误处理见 [详细使用指南](docs/usage.md)。
+
+```zig
+const logging = try kron.Logging.create(init.gpa, init.io, .{});
+defer logging.destroy();
+const log = logging.scoped("app");
+log.info("started", .{ .version = "1.0" });
+try logging.shutdown();
+```
+
+这里的 `init` 是 Zig 0.16 的 `std.process.Init`，应用导入 `const kron = @import("kron")`。完整程序见 [quick_start.zig](examples/quick_start.zig)。后台文件日志设置 `.output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } }`、`.mode = .asynchronous`、`.format = .json`，默认采用有界 Memory 队列，见 [file_logging.zig](examples/file_logging.zig)。
+
 固定Zig 0.16的Linux单机项目可将kron作为项目默认日志实现，优先选共享异步Memory与portable文件后端，按应用确定过载策略并显式关闭。选型、std.log桥和资格边界见[默认日志接入建议](docs/default-logging.md)。
 
 完整方案见 [整体设计](docs/design.md)。该文档汇总了多语言日志库调研，以及性能、mmap、io_uring、动态 filter 和可靠性的最终决策。
@@ -46,6 +58,11 @@ zig build test-platform-host -Doptimize=ReleaseSafe -j1
 zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1
 zig build test-regex-differential test-regex-fuzz -Doptimize=ReleaseSafe -j1
 zig build test-regex-equivalence -Doptimize=ReleaseSafe --fuzz=1M -j1
+zig build run-quick-start
+zig build run-file-logging
+zig build run-structured
+zig build run-threaded
+zig build run-rolling
 zig build run-basic
 zig build run-async-memory
 zig build run-std-log
@@ -62,7 +79,7 @@ zig-out/bin/kroncat --follow --level warn app.kron
 zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 ```
 
-可运行接口见 [basic.zig](examples/basic.zig)。`Runtime` 不拥有传入的 sink；必须先停止/销毁 runtime，再销毁 sink。journal 模式的 required custom sink 需要显式稳定 `recovery_identity`，FileSink 已自动提供绝对路径身份。
+常用接口见 [使用指南](docs/usage.md)，多输出与轮转同样使用 `Logging`，见 [rolling.zig](examples/rolling.zig)。`Logging` 拥有全部配置的文件/轮转输出和底层 Runtime，调用者停止所有用户后 destroy 一次。底层扩展示例见 [basic.zig](examples/basic.zig)；单独使用 `Runtime` 时，它默认借用传入的 sink，必须先停止/销毁 runtime，再销毁 sink。journal 模式的 required custom sink 需要显式稳定 `recovery_identity`，文件输出已自动提供绝对路径身份。
 
 默认多线程构建的 `flushUntil`、`flushRoutesUntil` 和 `shutdownUntil` 接受单调时钟 deadline。超时返回后已提交操作仍可继续，资源保持存活。单线程构建支持同步日志和普通 flush/shutdown；带 deadline 的控制操作返回 `TimedControlUnavailable`，异步/SPSC 模式返回 `ThreadsUnavailable`。详见 [生命周期与 deadline](docs/lifecycle.md)。
 

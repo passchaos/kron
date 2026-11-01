@@ -21,7 +21,9 @@ const log = try runtime.loggerWithSchema(binding);
 _ = try log.tryLogf(.info, "request {d}", .{@as(u64, 42)}, .{ .status = @as(u16, 201) });
 ```
 
-SPSC 使用 `prewarmThreadSchema(channel, example)` 与
+统一应用入口可用 `logging.prepared(example)`；SPSC 用 `logging.attachPreparedThread(example)`，内部附着并注册对应channel，使用结束后detach，准备失败会撤销附着。配置和完整步骤见 [使用指南](usage.md#预注册事件形状)。
+
+高级 Runtime 的 SPSC 使用 `prewarmThreadSchema(channel, example)` 与
 `threadLoggerWithSchema(attached, binding)`，保留原 attachment 的 cookie、generation
 和线程约束。可运行例子见 [prepared.zig](../examples/prepared.zig)。
 

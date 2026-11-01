@@ -30,32 +30,29 @@ pub fn run(allocator: std.mem.Allocator, io: std.Io, mode: Mode, directory: []co
     if (builtin.single_threaded and mode != .sync) return error.ThreadsUnavailable;
     const dir = try std.Io.Dir.cwd().createDirPathOpen(io, directory, .{ .open_options = .{ .iterate = true } });
     defer dir.close(io);
-    const file = try kron.FileSink.create(allocator, io, .{ .dir = dir, .path = "events.jsonl", .backend = .portable });
-    defer file.deinit();
     const journal_path = try std.fs.path.join(allocator, &.{ directory, "events.journal" });
     defer allocator.free(journal_path);
     const attached = mode == .spsc_memory or mode == .spsc_mmap;
     const mapped = mode == .mmap or mode == .spsc_mmap;
     const memory = mode == .memory or mode == .spsc_memory;
-    const runtime = try kron.Runtime.create(allocator, io, .{
-        .submission = if (mode == .sync) .sync else if (attached) .low_latency else .asynchronous,
-        .memory_queue = if (memory) .{ .capacity = 16, .max_record_bytes = 4096 } else null,
-        .journal = if (mapped) .{ .path = journal_path, .capacity = 16, .max_record_bytes = 4096 } else null,
-        .max_thread_channels = if (attached) 1 else 0,
-        .thread_channel_capacity = 16,
-        .idle = .sleep,
-        .routes = &.{.{ .name = "file", .sink = file.sink(), .format = .json }},
+    const logging = try kron.Logging.create(allocator, io, .{
+        .output = .{ .file = .{ .dir = dir, .path = "events.jsonl", .backend = .portable } },
+        .format = .json,
+        .mode = if (mode == .sync) .sync else if (attached) .spsc else .asynchronous,
+        .queue = if (memory) .{ .memory = .{ .capacity = 16, .max_record_bytes = 4096 } } else if (mapped) .{ .mmap = .{ .path = journal_path, .capacity = 16, .max_record_bytes = 4096 } } else null,
+        .max_threads = 1,
         .redaction = &.{.{ .key = "password", .action = .mask }},
     });
-    defer runtime.destroy();
+    defer logging.destroy();
+    const runtime = logging.runtime();
     if (attached) {
-        const log = try runtime.attachThread(.{ .scope = "consumer" });
+        const log = try logging.attachThread("consumer");
         defer log.detach() catch {};
         try events(runtime, log);
-    } else try events(runtime, runtime.scoped("consumer"));
-    try runtime.flush(.written);
-    try runtime.shutdown(.drain);
-    const health = runtime.health();
+    } else try events(runtime, logging.scoped("consumer"));
+    try logging.flush();
+    try logging.shutdown();
+    const health = logging.health();
     var thread_count: ?usize = null;
     if (builtin.single_threaded) {
         if (runtime.controlStatus().available or health.worker_alive) return error.UnexpectedBackgroundThread;

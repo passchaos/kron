@@ -63,6 +63,28 @@ pub fn main(init: std.process.Init) !void {
     }
     try expect(!forbidden.has_induced_failure);
 
+    // The application owner preserves sync/no-thread behavior and rejects
+    // unsupported modes before opening or truncating its managed output.
+    inline for (.{ .asynchronous, .spsc }) |mode| {
+        try std.testing.expectError(error.ThreadsUnavailable, kron.Logging.create(forbidden.allocator(), io, .{
+            .output = .{ .file = .{ .dir = dir, .path = "must-not-create.jsonl", .append = false } },
+            .mode = mode,
+        }));
+    }
+    try expect(!forbidden.has_induced_failure);
+    var managed_bytes: [4096]u8 = undefined;
+    var managed_writer = std.Io.Writer.fixed(&managed_bytes);
+    const logging = try kron.Logging.create(allocator, io, .{ .output = .{ .writer = &managed_writer }, .format = .json });
+    defer logging.destroy();
+    try expect(try logging.scoped("managed").tryEmit(.info, "single", .{}) == .accepted);
+    try logging.flush();
+    try std.testing.expectError(error.TimedControlUnavailable, logging.flushUntil(deadline));
+    try std.testing.expectError(error.TimedControlUnavailable, logging.flushDurableUntil(deadline));
+    try std.testing.expectError(error.TimedControlUnavailable, logging.shutdownUntil(deadline));
+    try logging.shutdown();
+    try expect(logging.health().written == 1 and !logging.runtime().controlStatus().available);
+    try onlyOneThread(io);
+
     try runtime.shutdown(.drain);
     try runtime.shutdown(.drain);
     try expect(runtime.health().state == .closed);

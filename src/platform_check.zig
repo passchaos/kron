@@ -8,6 +8,35 @@ export fn kron_platform_check(allocator: *const std.mem.Allocator, io: *const st
 }
 
 fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
+    const managed = try kron.Logging.create(allocator, io, .{
+        .output = .{ .file = .{ .path = path, .backend = .portable } },
+        .mode = .spsc,
+        .max_threads = 1,
+        .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
+    });
+    defer managed.destroy();
+    const managed_shape: kron.Event = .{ .level = .info, .scope = "managed", .message = "cross", .timestamp_ns = 0, .fields = &.{} };
+    const managed_shared = try managed.prepared(managed_shape);
+    _ = try managed_shared.tryEmit(.info, "cross", .{});
+    const managed_thread = try managed.attachPreparedThread(managed_shape);
+    _ = try managed_thread.tryEmit(.info, "cross", .{});
+    try managed_thread.detach();
+    try managed.reloadFilter("debug");
+    try managed.setLevel(.info);
+    _ = managed.health();
+    _ = managed.runtime();
+    try managed.flush();
+    try managed.flushOutputs(&.{"output"});
+    managed.flushOutputsDurable(&.{"output"}) catch {};
+    managed.flushUntil(kron.Deadline.after(io, std.time.ns_per_s)) catch {};
+    managed.flushDurableUntil(kron.Deadline.after(io, std.time.ns_per_s)) catch {};
+    managed.flushDurable() catch {};
+    managed.shutdownUntil(kron.Deadline.after(io, std.time.ns_per_s)) catch {};
+    try managed.shutdown();
+    const console = try kron.Logging.create(allocator, io, .{});
+    defer console.destroy();
+    _ = try console.scoped("managed").tryEmit(.info, "console", .{});
+    try console.shutdown();
     const file = try kron.FileSink.create(allocator, io, .{ .path = path, .backend = .portable });
     defer file.deinit();
     const sync = try kron.Runtime.create(allocator, io, .{ .routes = &.{.{ .name = "file", .sink = file.sink(), .timestamp = .{ .offset = try kron.time.UtcOffset.init(480) } }} });

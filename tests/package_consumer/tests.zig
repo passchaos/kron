@@ -2,6 +2,21 @@ const std = @import("std");
 const kron = @import("kron");
 const consumer = @import("consumer");
 
+test "independent consumer uses managed public setup and keeps its writer" {
+    var bytes: [4096]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&bytes);
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &writer }, .format = .json });
+    var alive = true;
+    defer if (alive) logging.destroy();
+    try std.testing.expectEqual(kron.EmitResult.accepted, try logging.scoped("managed").tryEmit(.info, "package owner", .{ .answer = @as(u32, 42) }));
+    try logging.shutdown();
+    try std.testing.expectEqual(@as(u64, 1), logging.health().written);
+    logging.destroy();
+    alive = false;
+    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "package owner") != null);
+    try writer.writeAll("writer remains usable\n");
+}
+
 test "independent consumer imports the module and analyzes public runtime paths" {
     std.testing.refAllDecls(consumer);
     try std.testing.expectEqual(consumer.Mode.memory, try consumer.parseMode("memory"));

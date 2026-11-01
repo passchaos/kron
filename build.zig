@@ -457,7 +457,7 @@ pub fn build(b: *std.Build) void {
     b.step("test-capture-bench", "Verify capture benchmark shapes and bounded inputs").dependOn(&run_capture_bench_tests.step);
     verify.dependOn(&run_capture_bench_tests.step);
 
-    inline for (.{ .{ "basic", "examples/basic.zig" }, .{ "readable-time", "examples/readable_time.zig" }, .{ "async-memory", "examples/async_memory.zig" }, .{ "std-log", "examples/std_log.zig" }, .{ "prepared", "examples/prepared.zig" }, .{ "hot-configuration", "examples/hot_configuration.zig" }, .{ "configuration-sources", "examples/configuration_sources.zig" }, .{ "predicates", "examples/predicates.zig" }, .{ "tsc-clock", "examples/tsc_clock.zig" } }) |example| {
+    inline for (.{ .{ "quick-start", "examples/quick_start.zig" }, .{ "file-logging", "examples/file_logging.zig" }, .{ "structured", "examples/structured.zig" }, .{ "threaded", "examples/threaded.zig" }, .{ "rolling", "examples/rolling.zig" }, .{ "basic", "examples/basic.zig" }, .{ "readable-time", "examples/readable_time.zig" }, .{ "async-memory", "examples/async_memory.zig" }, .{ "std-log", "examples/std_log.zig" }, .{ "prepared", "examples/prepared.zig" }, .{ "hot-configuration", "examples/hot_configuration.zig" }, .{ "configuration-sources", "examples/configuration_sources.zig" }, .{ "predicates", "examples/predicates.zig" }, .{ "tsc-clock", "examples/tsc_clock.zig" } }) |example| {
         const example_module = b.createModule(.{ .root_source_file = b.path(example[1]), .target = target, .optimize = optimize });
         example_module.addImport("kron", module);
         const exe = b.addExecutable(.{ .name = "kron-" ++ example[0], .root_module = example_module });
