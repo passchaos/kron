@@ -1,0 +1,834 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/u'
+# Event count (approx.): 2813226933
+#
+# Overhead  Symbol                                                            IPC   [IPC Coverage]
+# ........  ................................................................  ....................
+#
+    11.89%  [.] compiler_rt.memcpy.memcpyFast                                 -      -            
+            |          
+            |--6.93%--compiler_rt.memcpy.copyFixedLength (inlined)
+            |          compiler_rt.memcpy.copyRange4 (inlined)
+            |          |          
+            |          |--5.96%--compiler_rt.memcpy.copyLessThan16 (inlined)
+            |          |          compiler_rt.memcpy.copySmallLength (inlined)
+            |          |          compiler_rt.memcpy.memcpyFast
+            |          |          |          
+            |          |          |--5.11%--Io.Writer.write (inlined)
+            |          |          |          Io.Writer.writeAll (inlined)
+            |          |          |          |          
+            |          |          |          |--3.92%--encoder.decimal.writeMagnitude__anon_33915 (inlined)
+            |          |          |          |          encoder.decimal.write__anon_33800 (inlined)
+            |          |          |          |          encoder.common.valueInner
+            |          |          |          |          |          
+            |          |          |          |          |--3.06%--encoder.common.writeWireValue (inlined)
+            |          |          |          |          |          encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |          |          |          |          |          encoder.wire_json.Attributes(.json).write (inlined)
+            |          |          |          |          |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          |          |          |          |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          |          |          |          |          encoder.wire_json.render
+            |          |          |          |          |          core.delivery.emitWireFused (inlined)
+            |          |          |          |          |          core.runtime.Runtime.drainJournal
+            |          |          |          |          |          0xffffffffffffffff
+            |          |          |          |          |          
+            |          |          |          |           --0.86%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          |          |          |                     encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          |          |          |                     encoder.wire_json.render
+            |          |          |          |                     core.delivery.emitWireFused (inlined)
+            |          |          |          |                     core.runtime.Runtime.drainJournal
+            |          |          |          |                     0xffffffffffffffff
+            |          |          |          |          
+            |          |          |          |--0.65%--encoder.escaping.quotedAscii
+            |          |          |          |          
+            |          |          |           --0.54%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          |          |                     encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          |          |                     encoder.wire_json.render
+            |          |          |                     core.delivery.emitWireFused (inlined)
+            |          |          |                     core.runtime.Runtime.drainJournal
+            |          |          |                     0xffffffffffffffff
+            |          |          |          
+            |          |           --0.85%--core.codec.Output.put (inlined)
+            |          |                     core.wire_write.writeBlob__anon_33107 (inlined)
+            |          |                     |          
+            |          |                      --0.53%--core.wire_write.writeField__anon_33130 (inlined)
+            |          |                                core.codec.writeEvent__anon_33091 (inlined)
+            |          |                                core.codec.encodeSized
+            |          |                                core.runtime.Runtime.submitSafeDestination
+            |          |                                core.runtime.Runtime.submitDestination
+            |          |                                core.runtime.Runtime.submitToJournal (inlined)
+            |          |                                core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          |                                core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          |                                core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          |                                core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          |                                kron_reference.Worker.emit__anon_36934
+            |          |                                kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          |                                kron_reference.Worker.run (inlined)
+            |          |                                Thread.callFn__anon_31857 (inlined)
+            |          |                                Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          |                                os.linux.x86_64.clone
+            |          |          
+            |           --0.97%--compiler_rt.memcpy.copy16ToSmallLimit (inlined)
+            |                     compiler_rt.memcpy.copySmallLength (inlined)
+            |                     compiler_rt.memcpy.memcpyFast
+            |                     Io.Writer.write (inlined)
+            |                     Io.Writer.writeAll (inlined)
+            |                     encoder.decimal.writeMagnitude__anon_33915
+            |                     |          
+            |                      --0.54%--encoder.decimal.write__anon_33800 (inlined)
+            |                                encoder.common.valueInner
+            |                                encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                                encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                                encoder.wire_json.render
+            |                                core.delivery.emitWireFused (inlined)
+            |                                core.runtime.Runtime.drainJournal
+            |                                0xffffffffffffffff
+            |          
+            |--2.63%--compiler_rt.memcpy.copyRange4 (inlined)
+            |          |          
+            |           --2.52%--compiler_rt.memcpy.copyLessThan16 (inlined)
+            |                     compiler_rt.memcpy.copySmallLength (inlined)
+            |                     compiler_rt.memcpy.memcpyFast
+            |                     |          
+            |                      --2.18%--Io.Writer.write (inlined)
+            |                                Io.Writer.writeAll (inlined)
+            |                                |          
+            |                                |--0.87%--encoder.decimal.writeMagnitude__anon_33915 (inlined)
+            |                                |          encoder.decimal.write__anon_33800 (inlined)
+            |                                |          encoder.common.valueInner
+            |                                |          encoder.common.writeWireValue (inlined)
+            |                                |          encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |                                |          encoder.wire_json.Attributes(.json).write (inlined)
+            |                                |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                                |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                                |          encoder.wire_json.render
+            |                                |          core.delivery.emitWireFused (inlined)
+            |                                |          core.runtime.Runtime.drainJournal
+            |                                |          0xffffffffffffffff
+            |                                |          
+            |                                |--0.76%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                                |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                                |          encoder.wire_json.render
+            |                                |          core.delivery.emitWireFused (inlined)
+            |                                |          core.runtime.Runtime.drainJournal
+            |                                |          0xffffffffffffffff
+            |                                |          
+            |                                 --0.55%--encoder.escaping.quotedAscii
+            |          
+             --1.80%--compiler_rt.memcpy.memcpyFast
+                       |          
+                        --1.31%--Io.Writer.write (inlined)
+                                  Io.Writer.writeAll (inlined)
+                                  |          
+                                   --0.54%--encoder.decimal.writeMagnitude__anon_33915 (inlined)
+
+    10.88%  [.] core.runtime.Runtime.submitSafeDestination                    -      -            
+            |          
+            |--5.66%--core.runtime.Runtime.submitSafeDestination
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--3.59%--config.routes.Snapshot.retainChannel (inlined)
+            |          core.runtime.Runtime.submitSafeDestination
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --0.66%--atomic.Value(u64).fetchAdd (inlined)
+                       core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     8.28%  [.] encoder.wire_json.render                                      -      -            
+            |          
+            |--1.84%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+            |--1.18%--encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+            |--1.15%--encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          |          
+            |           --1.04%--0xffffffffffffffff
+            |          
+            |--0.87%--Io.Writer.writeAll (inlined)
+            |          |          
+            |           --0.76%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                     encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                     encoder.wire_json.render
+            |                     core.delivery.emitWireFused (inlined)
+            |                     core.runtime.Runtime.drainJournal
+            |                     0xffffffffffffffff
+            |          
+            |--0.65%--encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |          encoder.wire_json.Attributes(.json).write (inlined)
+            |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+            |--0.64%--Io.Writer.writeByte (inlined)
+            |          encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |          encoder.wire_json.Attributes(.json).write (inlined)
+            |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+            |--0.64%--core.field.checkUnique (inlined)
+            |          encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |          encoder.wire_json.Attributes(.json).write (inlined)
+            |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+             --0.54%--core.codec.WireInput.take (inlined)
+
+     7.42%  [.] platform.crc32.Crc32.update                                   -      -            
+            |          
+            |--3.72%--platform.crc32.Crc32.update
+            |          |          
+            |          |--2.44%--journal.journal.Journal.slotChecksum (inlined)
+            |          |          |          
+            |          |          |--1.82%--journal.journal.Reservation.commit (inlined)
+            |          |          |          core.runtime.Runtime.submitSafeDestination
+            |          |          |          core.runtime.Runtime.submitDestination
+            |          |          |          core.runtime.Runtime.submitToJournal (inlined)
+            |          |          |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          |          |          kron_reference.Worker.emit__anon_36934
+            |          |          |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          |          |          kron_reference.Worker.run (inlined)
+            |          |          |          Thread.callFn__anon_31857 (inlined)
+            |          |          |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          |          |          os.linux.x86_64.clone
+            |          |          |          
+            |          |           --0.63%--journal.journal.Journal.validateSlot
+            |          |                     |          
+            |          |                      --0.52%--journal.journal.Journal.peekChecked
+            |          |                                journal.journal.Journal.releaseAfter (inlined)
+            |          |                                core.runtime.Runtime.drainJournal
+            |          |                                0xffffffffffffffff
+            |          |          
+            |           --1.28%--journal.format.checksum (inlined)
+            |                     journal.journal.Journal.slotChecksum (inlined)
+            |                     journal.journal.Journal.validateSlot
+            |                     |          
+            |                      --0.85%--journal.journal.Journal.peekChecked
+            |                                |          
+            |                                 --0.74%--journal.journal.Journal.releaseAfter (inlined)
+            |                                           core.runtime.Runtime.drainJournal
+            |                                           0xffffffffffffffff
+            |          
+            |--2.23%--platform.crc32_pclmul.update (inlined)
+            |          platform.crc32.Crc32.update
+            |          journal.journal.Journal.slotChecksum (inlined)
+            |          |          
+            |          |--1.14%--journal.journal.Reservation.commit (inlined)
+            |          |          core.runtime.Runtime.submitSafeDestination
+            |          |          core.runtime.Runtime.submitDestination
+            |          |          core.runtime.Runtime.submitToJournal (inlined)
+            |          |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          |          kron_reference.Worker.emit__anon_36934
+            |          |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          |          kron_reference.Worker.run (inlined)
+            |          |          Thread.callFn__anon_31857 (inlined)
+            |          |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          |          os.linux.x86_64.clone
+            |          |          
+            |           --1.08%--journal.journal.Journal.validateSlot
+            |                     |          
+            |                      --0.65%--journal.journal.Journal.peekChecked
+            |                                journal.journal.Journal.releaseAfter (inlined)
+            |                                core.runtime.Runtime.drainJournal
+            |                                0xffffffffffffffff
+            |          
+             --1.31%--platform.crc32_pclmul.clmul (inlined)
+                       platform.crc32_pclmul.update (inlined)
+                       platform.crc32.Crc32.update
+                       journal.journal.Journal.slotChecksum (inlined)
+                       |          
+                       |--0.75%--journal.journal.Journal.validateSlot
+                       |          
+                        --0.56%--journal.journal.Reservation.commit (inlined)
+                                  core.runtime.Runtime.submitSafeDestination
+                                  core.runtime.Runtime.submitDestination
+                                  core.runtime.Runtime.submitToJournal (inlined)
+                                  core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                                  kron_reference.Worker.emit__anon_36934
+                                  kron_reference.Worker.runLogger__anon_32430 (inlined)
+                                  kron_reference.Worker.run (inlined)
+                                  Thread.callFn__anon_31857 (inlined)
+                                  Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                                  os.linux.x86_64.clone
+
+     7.14%  [.] encoder.common.valueInner                                     -      -            
+            |          
+            |--4.56%--encoder.decimal.digits (inlined)
+            |          encoder.decimal.writeMagnitude__anon_33915 (inlined)
+            |          encoder.decimal.write__anon_33800 (inlined)
+            |          encoder.common.valueInner
+            |          |          
+            |          |--2.58%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          |          encoder.wire_json.render
+            |          |          core.delivery.emitWireFused (inlined)
+            |          |          core.runtime.Runtime.drainJournal
+            |          |          0xffffffffffffffff
+            |          |          
+            |           --1.98%--encoder.common.writeWireValue (inlined)
+            |                     encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |                     encoder.wire_json.Attributes(.json).write (inlined)
+            |                     encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                     encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                     encoder.wire_json.render
+            |                     core.delivery.emitWireFused (inlined)
+            |                     core.runtime.Runtime.drainJournal
+            |                     0xffffffffffffffff
+            |          
+             --1.53%--encoder.common.valueInner
+                       |          
+                       |--0.99%--encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+                       |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+                       |          encoder.wire_json.render
+                       |          core.delivery.emitWireFused (inlined)
+                       |          core.runtime.Runtime.drainJournal
+                       |          0xffffffffffffffff
+                       |          
+                        --0.54%--encoder.common.writeWireValue (inlined)
+                                  encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+                                  encoder.wire_json.Attributes(.json).write (inlined)
+                                  encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+                                  encoder.wire_json.renderFormat__anon_38059 (inlined)
+                                  encoder.wire_json.render
+
+     6.14%  [.] core.runtime.Runtime.drainJournal                             -      -            
+            |          
+            |--3.84%--core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+            |--0.64%--journal.journal.Journal.reclaim (inlined)
+            |          journal.journal.Journal.releaseAfter (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+             --0.54%--journal.journal.Journal.peekBatchChecked (inlined)
+                       core.runtime.Runtime.drainJournal
+                       0xffffffffffffffff
+
+     4.16%  [.] core.codec.measure                                            -      -            
+            |          
+            |--1.50%--core.field.checkUnique (inlined)
+            |          core.field.ValueValidator.fieldsWith__anon_36867 (inlined)
+            |          core.codec.measure
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--0.75%--mem.eqlBytes (inlined)
+            |          mem.eql__anon_2554 (inlined)
+            |          core.field.checkUnique (inlined)
+            |          core.field.ValueValidator.fieldsWith__anon_36867 (inlined)
+            |          core.codec.measure
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--0.75%--core.field.ValueValidator.fieldsWith__anon_36867 (inlined)
+            |          core.codec.measure
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --0.56%--core.wire_size.SizeVisitor.result (inlined)
+                       core.codec.measure
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     3.59%  [.] kron_reference.Worker.emit__anon_36934                        -      -            
+            |          
+            |--0.84%--core.thread_registry.Registry(core.runtime.Runtime).Control.release (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).releaseChannel (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).end (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--0.77%--core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --0.54%--core.thread_registry.ThreadOwner(core.runtime.Runtime).validate (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     3.33%  [.] core.codec.encodeSized                                        -      -            
+            |          
+            |--1.37%--core.codec.writeEvent__anon_33091 (inlined)
+            |          core.codec.encodeSized
+            |          core.runtime.Runtime.submitSafeDestination
+            |          core.runtime.Runtime.submitDestination
+            |          core.runtime.Runtime.submitToJournal (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --0.54%--core.codec.encodeSized
+                       core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     3.31%  [.] core.wire_write.writeValueTo__anon_33148                      -      -            
+            |          
+             --3.09%--core.wire_write.writeValueTo__anon_33148
+                       core.wire_write.writeField__anon_33130 (inlined)
+                       core.codec.writeEvent__anon_33091 (inlined)
+                       core.codec.encodeSized
+                       |          
+                        --2.96%--core.runtime.Runtime.submitSafeDestination
+                                  core.runtime.Runtime.submitDestination
+                                  core.runtime.Runtime.submitToJournal (inlined)
+                                  core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                                  kron_reference.Worker.emit__anon_36934
+                                  kron_reference.Worker.runLogger__anon_32430 (inlined)
+                                  kron_reference.Worker.run (inlined)
+                                  Thread.callFn__anon_31857 (inlined)
+                                  Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                                  os.linux.x86_64.clone
+
+     3.12%  [.] core.codec.WireInput.value                                    -      -            
+            |          
+             --2.79%--core.codec.WireInput.value
+                       encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+                       encoder.wire_json.Attributes(.json).write (inlined)
+                       encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+                       encoder.wire_json.renderFormat__anon_38059 (inlined)
+                       encoder.wire_json.render
+                       |          
+                        --2.69%--core.delivery.emitWireFused (inlined)
+                                  core.runtime.Runtime.drainJournal
+                                  0xffffffffffffffff
+
+     3.09%  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).begin  -      -            
+            |          
+            |--1.19%--core.thread_registry.ThreadOwner(core.runtime.Runtime).begin
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).begin (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+            |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+            |          kron_reference.Worker.emit__anon_36934
+            |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+            |          kron_reference.Worker.run (inlined)
+            |          Thread.callFn__anon_31857 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --0.99%--atomic.Value(usize).cmpxchgWeak (inlined)
+                       core.thread_registry.Registry(core.runtime.Runtime).Control.acquire (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).begin
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).begin (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     2.28%  [.] encoder.escaping.quotedAscii                                  -      -            
+            |          
+            |--1.30%--encoder.escaping.quotedAscii
+            |          |          
+            |           --0.87%--encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |                     encoder.wire_json.Attributes(.json).write (inlined)
+            |                     encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |                     encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |                     encoder.wire_json.render
+            |                     core.delivery.emitWireFused (inlined)
+            |                     core.runtime.Runtime.drainJournal
+            |                     0xffffffffffffffff
+            |          
+             --0.55%--Io.Writer.write (inlined)
+                       Io.Writer.writeAll (inlined)
+                       encoder.escaping.quotedAscii
+
+     2.08%  [.] core.runtime.Runtime.threadSnapshot                           -      -            
+            |          
+             --1.52%--core.runtime.Runtime.threadSnapshot
+                       |          
+                       |--0.92%--core.runtime.Runtime.beginThread
+                       |          core.thread_registry.ThreadOwner(core.runtime.Runtime).begin
+                       |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).begin (inlined)
+                       |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       |          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       |          kron_reference.Worker.emit__anon_36934
+                       |          kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       |          kron_reference.Worker.run (inlined)
+                       |          Thread.callFn__anon_31857 (inlined)
+                       |          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       |          os.linux.x86_64.clone
+                       |          
+                        --0.60%--core.runtime.Runtime.filterThreadEnabled (inlined)
+                                  core.thread_registry.ThreadOwner(core.runtime.Runtime).begin
+                                  |          
+                                   --0.53%--core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).begin (inlined)
+                                             core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                                             core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                                             kron_reference.Worker.emit__anon_36934
+                                             kron_reference.Worker.runLogger__anon_32430 (inlined)
+                                             kron_reference.Worker.run (inlined)
+                                             Thread.callFn__anon_31857 (inlined)
+                                             Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                                             os.linux.x86_64.clone
+
+     1.91%  [.] core.runtime.Runtime.submitDestination                        -      -            
+            |          
+             --1.50%--core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     1.74%  [.] core.runtime.Runtime.notify                                   -      -            
+            |          
+             --1.36%--atomic.Value(bool).load (inlined)
+                       core.runtime.Runtime.notify
+                       core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     1.66%  [.] encoder.escaping.jsonKey                                      -      -            
+            |          
+            |--0.86%--encoder.escaping.asciiRun (inlined)
+            |          encoder.escaping.jsonKey
+            |          encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+            |          encoder.wire_json.Attributes(.json).write (inlined)
+            |          encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+            |          encoder.wire_json.renderFormat__anon_38059 (inlined)
+            |          encoder.wire_json.render
+            |          core.delivery.emitWireFused (inlined)
+            |          core.runtime.Runtime.drainJournal
+            |          0xffffffffffffffff
+            |          
+             --0.80%--encoder.escaping.jsonKey
+                       encoder.wire_json.writeAttributesFallible__anon_38288 (inlined)
+                       encoder.wire_json.Attributes(.json).write (inlined)
+                       encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+                       encoder.wire_json.renderFormat__anon_38059 (inlined)
+                       encoder.wire_json.render
+                       core.delivery.emitWireFused (inlined)
+                       core.runtime.Runtime.drainJournal
+                       0xffffffffffffffff
+
+     1.51%  [.] journal.journal.Journal.validateSlot                          -      -            
+            |          
+             --1.19%--journal.journal.Journal.validateSlot
+                       |          
+                        --0.97%--journal.journal.Journal.peekChecked
+                                  journal.journal.Journal.releaseAfter (inlined)
+                                  core.runtime.Runtime.drainJournal
+                                  0xffffffffffffffff
+
+     1.50%  [.] journal.journal.Journal.peekChecked                           -      -            
+            |          
+             --1.39%--journal.journal.Journal.peekChecked
+                       journal.journal.Journal.releaseAfter (inlined)
+                       core.runtime.Runtime.drainJournal
+                       0xffffffffffffffff
+
+     1.46%  [.] core.field.ValueValidator.valueWith__anon_36870               -      -            
+            |          
+             --0.98%--core.field.ValueValidator.valueWith__anon_36870
+                       core.field.ValueValidator.fieldsWith__anon_36867 (inlined)
+                       core.codec.measure
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     1.29%  [.] encoder.decimal.writeMagnitude__anon_33915                    -      -            
+            |          
+             --0.86%--encoder.decimal.digits (inlined)
+                       encoder.decimal.writeMagnitude__anon_33915
+                       encoder.decimal.write__anon_33623 (inlined)
+                       encoder.common.valueInner
+                       encoder.common.encodeJsonWithAttributes__anon_38285 (inlined)
+                       encoder.wire_json.renderFormat__anon_38059 (inlined)
+                       encoder.wire_json.render
+                       core.delivery.emitWireFused (inlined)
+                       core.runtime.Runtime.drainJournal
+                       0xffffffffffffffff
+
+     1.25%  [.] journal.journal.Journal.reserveSingleProducer                 -      -            
+            |          
+             --0.51%--journal.journal.Journal.reserveSingleProducer
+                       core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       core.runtime.Runtime.submitToJournal (inlined)
+                       core.thread_registry.ThreadOwner(core.runtime.Runtime).submit (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     1.15%  [.] core.field.ValueValidator.valueWith__anon_34126               -      -            
+            |
+            ---core.field.ValueValidator.value (inlined)
+               core.field.appendFields__anon_32636
+               |          
+                --0.99%--core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                          core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                          kron_reference.Worker.emit__anon_36934
+                          kron_reference.Worker.runLogger__anon_32430 (inlined)
+                          kron_reference.Worker.run (inlined)
+                          Thread.callFn__anon_31857 (inlined)
+                          Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                          os.linux.x86_64.clone
+
+     1.03%  [.] core.runtime.Runtime.threadFilterDecision                     -      -            
+            |          
+             --0.97%--core.runtime.Runtime.threadFilterDecision
+                       core.runtime.Runtime.threadSnapshot
+                       |          
+                        --0.51%--core.runtime.Runtime.beginThread
+                                  core.thread_registry.ThreadOwner(core.runtime.Runtime).begin
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).begin (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                                  core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                                  kron_reference.Worker.emit__anon_36934
+                                  kron_reference.Worker.runLogger__anon_32430 (inlined)
+                                  kron_reference.Worker.run (inlined)
+                                  Thread.callFn__anon_31857 (inlined)
+                                  Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                                  os.linux.x86_64.clone
+
+     0.97%  [.] core.field.appendFields__anon_32636                           -      -            
+            |          
+             --0.90%--core.field.appendFields__anon_32636
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+                       core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+                       kron_reference.Worker.emit__anon_36934
+                       kron_reference.Worker.runLogger__anon_32430 (inlined)
+                       kron_reference.Worker.run (inlined)
+                       Thread.callFn__anon_31857 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     0.85%  [.] 0x0000000000000b03                                            -      -            
+            |
+            ---os.linux.clock_gettime (inlined)
+               Io.Threaded.nowPosix (inlined)
+               Io.Threaded.now
+               Io.Clock.now (inlined)
+               platform.clock.realDefault
+               platform.clock.Clock.realNow (inlined)
+               core.runtime.Runtime.nowNs (inlined)
+               core.thread_registry.ThreadOwner(core.runtime.Runtime).nowNs (inlined)
+               core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).captureAndSubmit__anon_36977 (inlined)
+               core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmitAt__anon_36961 (inlined)
+               core.logger.Frontend(core.thread_registry.ThreadOwner(core.runtime.Runtime),.trace,core.context.EmptyContext).tryEmit__anon_36943 (inlined)
+               kron_reference.Worker.emit__anon_36934
+               kron_reference.Worker.runLogger__anon_32430 (inlined)
+               kron_reference.Worker.run (inlined)
+               Thread.callFn__anon_31857 (inlined)
+               Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn
+               os.linux.x86_64.clone
+
+     0.76%  [.] platform.clock.realDefault                                    -      -            
+     0.76%  [.] encoder.escaping.quoted                                       -      -            
+     0.57%  [.] core.runtime.Runtime.beginThread                              -      -            
+     0.54%  [.] core.codec.readHeader                                         -      -            
+     0.50%  [.] core.field.ValueValidator.fields                              -      -            
+     0.48%  [.] core.runtime.Runtime.routeMaskIn                              -      -            
+     0.46%  [.] Io.Threaded.now                                               -      -            
+     0.33%  [.] sink.file.FileSink.writeErased                                -      -            
+     0.32%  [.] core.delivery_batch.Configurations.select                     -      -            
+     0.28%  [.] core.runtime.Runtime.enterThreadAdmission                     -      -            
+     0.25%  [k] 0xffffffff87e00080                                            -      -            
+     0.23%  [.] Thread.LinuxThreadImpl.spawn__anon_31838.Instance.entryFn     -      -            
+     0.22%  [.] core.runtime.Runtime.endThread                                -      -            
+     0.21%  [.] config.routes.Manager.acquireChannel                          -      -            
+     0.16%  [.] mem.eql__anon_2554                                            -      -            
+     0.11%  [.] journal.journal.Journal.readSlotSchema                        -      -            
+     0.11%  [.] Io.Threaded.fileWritePositional                               -      -            
+     0.10%  [.] compiler_rt.memset                                            -      -            
+     0.10%  [.] 0x0000000000000ab1                                            -      -            
+     0.09%  [k] 0xffffffff87e00f30                                            -      -            
+     0.07%  [.] 0x0000000000000ab0                                            -      -            
+     0.07%  [.] 0x0000000000000ae9                                            -      -            
+     0.06%  [.] 0x0000000000000b15                                            -      -            
+     0.06%  [.] sort.block.block__anon_31536                                  -      -            
+     0.04%  [.] 0x0000000000000ae6                                            -      -            
+     0.03%  [.] 0x0000000000000b2b                                            -      -            
+     0.03%  [.] 0x0000000000000b75                                            -      -            
+     0.02%  [.] __vdso_clock_gettime                                          -      -            
+     0.02%  [.] kron_reference.main                                           -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

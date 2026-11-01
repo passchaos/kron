@@ -1,0 +1,94 @@
+probe pair 1/5: all output bytes/hashes agree
+probe pair 2/5: all output bytes/hashes agree
+probe pair 3/5: all output bytes/hashes agree
+probe pair 4/5: all output bytes/hashes agree
+probe pair 5/5: all output bytes/hashes agree
+{
+  "cpu": 0,
+  "pairs": 5,
+  "scope": "whole encoder probe includes input mutation, full JSON hash, reports and initialization; no file or async throughput",
+  "counters": {
+    "instructions": {
+      "before": {
+        "median": 7325639440,
+        "min": 7325639245,
+        "max": 7325639651,
+        "spread": 5.542178308464496e-08
+      },
+      "after": {
+        "median": 7300720645,
+        "min": 7300720441,
+        "max": 7300720811,
+        "spread": 5.067992846067869e-08
+      },
+      "change_percent": -0.34015863330559837,
+      "qualification": "within_noise_budget"
+    },
+    "cycles": {
+      "before": {
+        "median": 1472071704,
+        "min": 1467522193,
+        "max": 1478994380,
+        "spread": 0.007793225675642767
+      },
+      "after": {
+        "median": 1445831143,
+        "min": 1438024216,
+        "max": 1473509967,
+        "spread": 0.024543496086527443
+      },
+      "change_percent": -1.7825599750812104,
+      "qualification": "within_noise_budget"
+    }
+  },
+  "case_ns": {
+    "scalar5": {
+      "before": {
+        "median": 207.02472333333333,
+        "min": 206.54154,
+        "max": 207.39423333333335,
+        "spread": 0.004118799530819397
+      },
+      "after": {
+        "median": 198.19355666666667,
+        "min": 197.86320333333333,
+        "max": 200.08552,
+        "spread": 0.011212860317171116
+      },
+      "change_percent": -4.265754603834193,
+      "qualification": "within_noise_budget"
+    },
+    "nested20": {
+      "before": {
+        "median": 696.9797433333333,
+        "min": 692.3939966666667,
+        "max": 700.02745,
+        "spread": 0.01095218821830613
+      },
+      "after": {
+        "median": 687.1666633333333,
+        "min": 681.72418,
+        "max": 697.0301966666667,
+        "spread": 0.022274096639699714
+      },
+      "change_percent": -1.4079433575886369,
+      "qualification": "within_noise_budget"
+    },
+    "wide5": {
+      "before": {
+        "median": 332.52219,
+        "min": 331.16149333333334,
+        "max": 333.30432666666667,
+        "spread": 0.006444181464501146
+      },
+      "after": {
+        "median": 327.9571633333333,
+        "min": 326.76429666666667,
+        "max": 339.68907333333334,
+        "spread": 0.03940995383451961
+      },
+      "change_percent": -1.3728487312881898,
+      "qualification": "within_noise_budget"
+    }
+  }
+}

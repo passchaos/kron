@@ -1,5 +1,7 @@
 # 默认脱敏与journal CRC热点
 
+后续完整百万条文件流程profile发现数字临时数组到Writer的小memcpy；native decimal已在buffer剩余21字节时直接生成，并保留短写/流式fallback。100个完整before/after试验逐条验证1010万条，五组中位吞吐提升3.0%–4.0%；只有SPSC Memory P4中位区间不重叠。额外长流程user PMU该组cycles下降约5%、instructions增加约1%，候选慢值使其长流程吞吐仍inconclusive。源码与字节/物理失败前缀、探索负向和完整限制见[数字输出](decimal-output.md)及`bench/evidence/2026-11-01-decimal-direct/`。mmap初始化独立trace保留每份journal的msync/file/dir fsync发布，单个慢样本主要等待这些系统调用，不以降低发布协议换取启动排名。
+
 本轮使用公共SPSC logger和完整JSON交付，保持5个数字字段、ZeroClock、256槽journal、sleep worker及written确认。每次10,000条测量事件、1,000条预热；原始报告与源码/binary SHA256在 `bench/evidence/2026-10-31-redaction-crc/`。
 
 默认无redaction规则时，旧实现仍复制fields/arguments并清空四个scratch数组。136个CPU样本中约36%落在 `redact.clearScratch`。新实现先执行完整ValueValidator，规则数为零时直接交给相同编码/提交函数；有规则时进入独立noinline函数，scratch只在调用期间存在。Secret强制替换、节点/深度/cycle/重复key校验、原输入不变和接受前深拷贝均保留。ReleaseFast反汇编中，`submitDestination`栈从 `0xa858` 降到 `0x378`。
