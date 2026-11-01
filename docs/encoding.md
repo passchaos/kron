@@ -1,5 +1,7 @@
 # 事件编码、验证与二进制归档
 
+schema的key/type形状检查合并到size visitor曾做完整before/after实验，保持所有错误顺序并通过4096项独立旧/新差分，但独立PMU显示schema SPSC指令增加0.463%，完整流程没有取得吞吐收益资格，候选已否决。当前schema仍使用完整树/长度遍历后单独形状检查；无效树先于schema/level和长度错误，失败不写destination。全部候选、错误优先级测试和正负数据见`bench/evidence/2026-11-01-schema-shape-visitor/`，不能将少一个循环直接等同提速。
+
 `codec.encodedSize`、`codec.encode`、`codec.writeTo`都校验完整借用事件。数组和group的cycle、8层深度、重复group key和attributes/arguments共享256节点预算只有一份遍历实现，位于 `fields.ValueValidator`。格式参数顶层key允许重复；参数内部group仍校验唯一key。
 
 长度计算使用同一遍历的observer统计每个节点自己的wire字节：key为4字节长度与key内容，scalar为tag与固定值，string/bytes为tag、长度和内容，array/group为tag和child count。child由validator遍历，不再单独递归统计一次。公开standalone value size同样先校验。

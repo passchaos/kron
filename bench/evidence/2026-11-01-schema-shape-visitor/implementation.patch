@@ -1,0 +1,81 @@
+diff --git a/src/core/schema_codec.zig b/src/core/schema_codec.zig
+index 3b578d6..4478d56 100644
+--- a/src/core/schema_codec.zig
++++ b/src/core/schema_codec.zig
+@@ -8,6 +8,9 @@ const field_module = @import("field.zig");
+ const Field = field_module.Field;
+ const SizeVisitor = @import("wire_size.zig").SizeVisitor;
+ const wire = @import("wire_write.zig");
++test {
++    _ = @import("schema_shape_tests.zig");
++}
+ 
+ pub const version: u16 = codec.reference_version;
+ pub const EventMeta = schema.EventMeta;
+@@ -37,33 +40,25 @@ pub fn eventMetadata(event: Event, fields: []FieldSchema, arguments: []FieldSche
+     };
+ }
+ 
+-fn validateShape(event: Event, definition: Definition) EncodeError!void {
++fn validateMetadataShape(event: Event, definition: Definition) EncodeError!void {
+     if (!std.mem.eql(u8, event.scope, definition.scope) or event.message_template != definition.message_template or !schema.sourceEqual(event.source, definition.source) or event.fields.len != definition.field_count or event.format_args.len != definition.argument_count) return error.SchemaMismatch;
+     if (definition.message) |message| if (!std.mem.eql(u8, event.message, message)) return error.SchemaMismatch;
+-    var fields = definition.fields();
+-    for (event.fields) |field| {
+-        const expected = (try fields.next()) orelse return error.SchemaMismatch;
+-        if (!std.mem.eql(u8, field.key, expected.key) or expected.kind_mask & schema.kindMask(codec.valueTag(field.value)) == 0) return error.SchemaMismatch;
+-    }
+-    var arguments = definition.arguments();
+-    for (event.format_args) |argument| {
+-        const expected = (try arguments.next()) orelse return error.SchemaMismatch;
+-        if (!std.mem.eql(u8, argument.key, expected.key) or expected.kind_mask & schema.kindMask(codec.valueTag(argument.value)) == 0) return error.SchemaMismatch;
+-    }
+-    if (event.level == .off) return error.InvalidLevel;
+ }
+ 
+ pub fn encodedReferenceSize(event: Event, definition: Definition) EncodeError!usize {
+     var validator: field_module.ValueValidator = .{};
+-    var visitor: ReferenceSizeVisitor = .{ .size = .{ .total = codec.header_size }, .validator = &validator };
++    var visitor: ReferenceSizeVisitor = .{ .size = .{ .total = codec.header_size }, .validator = &validator, .expected = definition.fields() };
+     if (event.trace_id != null) visitor.size.add(16);
+     if (event.span_id != null) visitor.size.add(8);
+     if (definition.message == null) visitor.size.blob(event.message.len, false);
+     try validator.fieldsWith(event.fields, &visitor);
++    visitor.expected = definition.arguments();
+     try validator.argumentsWith(event.format_args, &visitor);
+     // Preserve complete-tree validation before shape/level errors, and those
+     // errors before wire overflow. Nothing has written destination yet.
+-    try validateShape(event, definition);
++    try validateMetadataShape(event, definition);
++    if (visitor.shape_error) |err| return err;
++    if (event.level == .off) return error.InvalidLevel;
+     return visitor.size.result();
+ }
+ 
+@@ -71,11 +66,25 @@ const ReferenceSizeVisitor = struct {
+     pub const Error = error{};
+     size: SizeVisitor,
+     validator: *const field_module.ValueValidator,
++    expected: schema.FieldIterator,
++    shape_error: ?(schema.Error || error{SchemaMismatch}) = null,
+ 
+     pub fn onField(self: *@This(), entry: Field) Error!void {
+         // Top-level keys live in the schema. A nested group key remains part
+         // of this payload and must be counted, including groups in arguments.
+-        if (self.validator.depth != 0) try self.size.onField(entry);
++        if (self.validator.depth != 0) return self.size.onField(entry);
++        if (self.shape_error != null) return;
++        // Observe the top-level schema while this Field is already visited.
++        // Store its first error instead of returning through the validator:
++        // a later cycle/duplicate/node error must retain its original priority.
++        const expected = self.expected.next() catch |err| {
++            self.shape_error = err;
++            return;
++        } orelse {
++            self.shape_error = error.SchemaMismatch;
++            return;
++        };
++        if (!std.mem.eql(u8, entry.key, expected.key) or expected.kind_mask & schema.kindMask(codec.valueTag(entry.value)) == 0) self.shape_error = error.SchemaMismatch;
+     }
+ 
+     pub fn onValue(self: *@This(), value: field_module.Value) Error!void {

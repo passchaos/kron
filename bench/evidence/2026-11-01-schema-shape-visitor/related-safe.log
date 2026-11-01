@@ -1,0 +1,64 @@
+1/63 root.test_0...OK
+2/63 core.codec.test.standalone decoder rejects v2 references and unversioned extended v1 headers...OK
+3/63 core.schema_codec.test_0...OK
+4/63 core.schema_codec.test.referenced event omits static metadata and survives copied schema plus values...OK
+5/63 core.schema_codec.test.ordinary dynamic message and optional typed metadata roundtrip...OK
+6/63 core.schema_codec.test.reference codec rejects malformed lengths counts tags and wrong versions...OK
+7/63 core.schema_codec.test.reference values retain integer extremes float bits bytes and time wrappers...OK
+8/63 core.schema_codec.test.nested references keep one schema while values sizes and nested keys change...OK
+9/63 core.schema_codec.test.schema metadata and reference encoding reject invalid nested values...OK
+10/63 core.schema_codec.test.historical schema payload v2 reads scalar definitions with zero route generation...OK
+11/63 core.schema_codec.test.reference size and encoding validate each node once and count only payload keys...OK
+12/63 core.schema_codec.test.reference single-pass validation preserves shared node depth and duplicate budgets...OK
+13/63 core.schema_codec.test.reference length overflow follows tree shape and level errors with zero output...OK
+14/63 journal.schema.test.schema extension roundtrip validates version layout checksum and budgets...OK
+15/63 journal.schema.test.registry deduplicates metadata keeps types source and requires sync after restart...OK
+16/63 journal.schema.test.unfinished schema slots do not hide later entries or get reused...OK
+17/63 journal.schema.test.content hash collisions still compare complete metadata before deduplication...OK
+18/63 journal.schema.test.metadata hash covers source keys kinds and scope but never event values...OK
+19/63 journal.schema.test.schema registration deeply copies keys source format and scope once...OK
+20/63 journal.schema.test.concurrent registration publishes one definition and readiness remains local...OK
+21/63 journal.schema.test.invalid refs lengths and all committed definitions are checked without mutation...OK
+22/63 journal.schema.test.ready resolution uses validated cached definitions and rejects tampered references...OK
+23/63 journal.schema.test.nested definition masks use version two while scalar definitions stay byte compatible...OK
+24/63 encoder.root.test_0...OK
+25/63 time.root.test_0...OK
+26/63 submit.callsite.test.descriptor validates format and stores immutable argument schema...OK
+27/63 submit.callsite.test.schema fingerprints are independent of source location and integer width...OK
+28/63 submit.schema_site.test.static schema optional and dynamic masks contain every supported capture kind...OK
+29/63 submit.schema_site.test.static schema format argument keys source and integer masks are type based...OK
+30/63 submit.schema_site.test.static schema ordinary literals dynamic messages and empty metadata remain distinct...OK
+31/63 submit.schema_site.test.static schema optional null and full-width values reuse one registered definition...OK
+32/63 submit.schema_site.test.static nested wrapper metadata records only top level type masks...OK
+33/63 pipeline.redact.test.in-place redaction removes original references from storage...OK
+34/63 journal.journal.test_0...OK
+35/63 core.runtime.test_0...OK
+36/63 config.routes.test_0...OK
+37/63 sink.rolling_file.test_0...OK
+38/63 journal.spsc.test_0...OK
+39/63 core.runtime_tests.test_0...OK
+40/63 core.runtime_tests.test.prepared runtime schema removes static capture bytes and keeps output self contained...OK
+41/63 core.runtime_tests.test.prepared thread schema retains SPSC ownership and metadata across collector output...OK
+42/63 journal.schema_journal_tests.test.schema disabled preserves v1 file size framing and bytes...OK
+43/63 journal.schema_journal_tests.test.v2 schema ref and ordinary self-contained records survive reopen across reserve gap...OK
+44/63 journal.schema_journal_tests.test.v1 v2 and schema layout mismatches leave the existing journal intact...OK
+45/63 journal.schema_journal_tests.test.Linux file and directory publication failures reject creation and release the journal lock...OK
+46/63 journal.schema_journal_tests.test.Linux directory sync failure after file sync keeps a schema unready until full retry...OK
+47/63 journal.schema_journal_tests.test.failed cold schema sync retains definition and forbids event commit until retry...OK
+48/63 journal.schema_journal_tests.test.failed schema sync definition can reopen and become ready after successful sync...OK
+49/63 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK
+50/63 journal.schema_journal_tests.test.schema table corruption is rejected even when no event refers to that definition...OK
+51/63 journal.schema_journal_tests.test.missing schema definition retains committed event and unknown schema versions are rejected...OK
+52/63 journal.schema_journal_tests.test.registered schema metadata strings keys source and format persist independently of caller buffers...OK
+53/63 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK
+54/63 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK
+55/63 core.thread_registry.test.registry forwards the fixed schema budget to every preallocated journal...OK
+56/63 core.thread_registry.test.thread schema binding rejects foreign owner channel and stale attachment before delegation...OK
+57/63 encoder.wire_json.test_0...OK
+58/63 encoder.wire_reference_tests.test.fused reference matches materialized all tags nested static dynamic and historical records...OK
+59/63 encoder.wire_reference_tests.test.fused reference has identical checked errors on truncation mutation type mismatch and scratch exhaustion...OK
+60/63 encoder.wire_reference_tests.test.fused reference declines deferred including unused arguments for the authoritative materialized renderer...OK
+61/63 encoder.wire_reference_tests.test.fused reference runtime rejects checked schema damage before output and retains exact pins...OK
+62/63 core.schema_shape_tests.test.schema shape visitor retains complete tree priority and metadata before descriptor errors...OK
+63/63 core.schema_shape_tests.test.schema shape visitor validates field and argument keys types then level before wire overflow...OK
+All 63 tests passed.

@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+schema形状检查并入size visitor的候选已验证并否决：与冻结旧源码4096项独立模块差分（342项成功字节一致、3754项拒绝错误与未写缓冲一致），相关Safe63项、Debug/Fast各29项通过。400项完整文件/PMU共核对5640万条JSON；首40项PMU存在测试结束阶段潜在重叠，单独标记，正式clean360项核对4436万条。独立PMU的schema SPSC Memory/Mmap指令中位增加0.463%、两侧波动通过且区间不重叠，完整320项吞吐各组均inconclusive，多数schema P4负向中位。没有取得可推广收益，生产src精确恢复`cd00f1f`，保留原552项/九目标资格；候选的完整源码、priority测试、差分与全部慢值见`bench/evidence/2026-11-01-schema-shape-visitor/qualification.json`。未更改字段验证、schema检查或跨库排名。
+
 SPSC本队列space通知源码已通过完整ReleaseSafe **93/93步骤、552/552 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**；相关Debug/Safe/Fast各25项及外部Memory/Mmap SPSC shutdown/worker错误各2项通过。真实wait前关闭、epoch回绕、own abort回收与不同队列worker错误广播不丢唤醒，共享producer/control保持原global协议。正式400项完整文件/PMU/百万条对照核对8440万条JSON，另24项诊断核对242.4万条；Memory inline SPSC P4长sampled p99.9中位366.312→340.708µs（−6.99%），CV/spread通过且置信区间不重叠。普通吞吐、p50/p99和Mmap多数未资格，短Memory P1约−10%负向中位保留且长P1 batch未重现；每Journal进程内对象增64字节，不增加分配次数或队列/file backing。源码/binary/格式/故障与全部慢值见`bench/evidence/2026-11-01-queue-progress/qualification.json`，Foundation跨库排名仍以此前同轮e8bd353为准，其他平台设备运行资格仍未取得。
 
 跨队列64条轮次交付候选已实验并否决：真实四队列Memory/Mmap×inline/schema、稀疏tracking容量、peek/flush/durable/late reclaim损坏与原peer服务位置在Debug/Safe/Fast定向各26/26通过；440项完整文件/PMU/现有单量子控制核对5244万条JSON。p99.9中位降低但p50/p99明显负向，多数组吞吐负向且所有完整性能资格仍inconclusive；四组指令中位增加0.58%–0.71%，新增调度/跨来源确认与栈空间未取得整体收益。生产src精确恢复`714c470/e8bd353`，现有调度/API与549项综合资格保持。完整候选/失败/原始慢值/控制和否决理由见`bench/evidence/2026-11-01-cross-queue-delivery/qualification.json`；不改变已归档Foundation同轮排名。
