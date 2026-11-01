@@ -1,0 +1,36 @@
+{
+  "decision": "rejected",
+  "production_source_restored_to": "e40313fc9d5e012140ad00788492763d7bd8ce5a",
+  "reason": "Ordinary Runtime saves 15360 requested heap bytes, but shared P1 batch throughput risk remains: primary Mmap -10.02% with disjoint median intervals, targeted repeat -0.76% with overlap; Memory -8.10% and -4.80%, both overlapping. No stable attribution or zero-cost guarantee.",
+  "captures": {
+    "workflow": {
+      "trials": 200,
+      "frontend": "runtime",
+      "records_verified": 20200000,
+      "sha256": "9caa0a5f4ea6d0fc97024332e275ca34ff9935c2952021c083309082f5865746"
+    },
+    "shared-repeat": {
+      "trials": 12,
+      "frontend": "runtime",
+      "records_verified": 3612000,
+      "sha256": "66e75739a7dd84d9bbe5f6cee87e970ac16960b0091c1934ca8d52c8487e42a7"
+    },
+    "shared-managed-repeat": {
+      "trials": 80,
+      "frontend": "managed",
+      "records_verified": 24080000,
+      "sha256": "af313331f1b220376d88c08b6301cb114ca71a2ed851030b5fe29fa75fe39b86"
+    },
+    "shared-p1-batch": {
+      "trials": 20,
+      "frontend": "managed",
+      "records_verified": 6020000,
+      "sha256": "9fff401fc2260dd20e817273e9099d5c6be9ad765fcb2f4f16292236635b7112"
+    }
+  },
+  "resource_trials": 70,
+  "candidate_archive_matches_all_source_hashes": true,
+  "production_src_matches_baseline": true,
+  "pilot_scope_correction": "workflow-comparison.json says managed, but all original row.frontend and commands use runtime. Early pilot trials also overlap a build. Excluded from adoption decision.",
+  "interrupted_repeat": "12 completed Runtime trials retained; no completion or combined-window claim."
+}

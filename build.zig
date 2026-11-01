@@ -482,6 +482,12 @@ pub fn build(b: *std.Build) void {
     const run_managed_bench = b.addRunArtifact(managed_bench);
     if (b.args) |args| run_managed_bench.addArgs(args);
     b.step("bench-managed-outputs", "Measure a managed complete workflow; arguments: mode directory iterations [outputs=1|2]").dependOn(&run_managed_bench.step);
+    const resources_module = b.createModule(.{ .root_source_file = b.path("bench/runtime_resources.zig"), .target = target, .optimize = optimize });
+    resources_module.addImport("kron", module);
+    const resources_bench = b.addExecutable(.{ .name = "kron-runtime-resources", .root_module = resources_module });
+    const run_resources = b.addRunArtifact(resources_bench);
+    if (b.args) |args| run_resources.addArgs(args);
+    b.step("bench-runtime-resources", "Report Runtime requested memory; arguments: sync|memory|mmap directory thread-budget").dependOn(&run_resources.step);
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);

@@ -1,0 +1,15 @@
+shared-repeat pair 0 async/memory P1 schema=False batch: 2/80 trials verified
+shared-repeat pair 0 async/memory P1 schema=False sampled: 4/80 trials verified
+shared-repeat pair 0 async/memory P4 schema=False batch: 6/80 trials verified
+shared-repeat pair 0 async/memory P4 schema=False sampled: 8/80 trials verified
+shared-repeat pair 0 async/mmap P1 schema=False batch: 10/80 trials verified
+shared-repeat pair 0 async/mmap P1 schema=False sampled: 12/80 trials verified
+Traceback (most recent call last):
+  File "/home/passchaos/project-z/kron/bench/evidence/2026-11-02-thread-state-budget/measure.py", line 168, in <module>
+    main()
+  File "/home/passchaos/project-z/kron/bench/evidence/2026-11-02-thread-state-budget/measure.py", line 112, in main
+    oracle.verify(row, artifact, events, 1000)
+  File "/home/passchaos/project-z/kron/bench/cpp_reference/run.py", line 178, in verify
+    assert set(attrs) == {f"field{i}" for i in range(5)}, event
+                          ^^^^^^^^^^^
+KeyboardInterrupt

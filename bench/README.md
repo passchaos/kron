@@ -6,11 +6,12 @@
 
 | 目的 | 入口/说明 |
 | --- | --- |
-| 完整日志流程 | [main.zig](main.zig)、`zig build bench -Doptimize=ReleaseFast -- --mode=spsc --producers=4 --sink=file --backend=portable` |
+| 完整日志流程 | [main.zig](main.zig)、`zig build bench -Doptimize=ReleaseFast -- --mode=async --storage=memory --producers=4 --sink=file --backend=portable` |
 | 应用计算与无 logger 基线 | [application.zig](application.zig)、[应用说明](../docs/application-benchmark.md)、[比较脚本](application_compare.py) |
 | 受控重复与回归 | [regression.py](regression.py)、[回归方法](../docs/performance-regression.md) |
 | 主程序输出核验 | [validate.py](validate.py) |
 | C++/Foundation 完整对照 | [cpp_reference/](cpp_reference/)、[复现说明](../docs/cpp-comparison.md)、[完整流程](../docs/cpp-full-workflow.md) |
+| Runtime请求的内存与线程预算 | [runtime_resources.zig](runtime_resources.zig)、`zig build bench-runtime-resources -Doptimize=ReleaseFast -- memory /tmp/existing-directory 0`；不含全部OS资源 |
 | 时钟、capture、schema、filter 等局部成本 | `bench-dispatch`、`bench-capture`、`bench-snapshot`、`bench-sampling`、`bench-encoding`、`bench-regex`、`bench-time`；命令详见专题文档 |
 
 ## 主要证据
@@ -23,6 +24,7 @@
 | [prepared measure](evidence/2026-11-01-prepared-measure/README.md) | prepared 长度复用、节点/旧 codec 差分、完整文件与 PMU；负向尾部分位保留 |
 | [消费者批处理](evidence/2026-11-01-coalesced-delivery/README.md) | ready 批次合并、确认边界、文件与故障；两后端各自的 before/after |
 | [io_uring 对照](evidence/2026-11-01-uring-current/README.md) | 指定源码的实际后端比较；不能更新 Foundation 排名 |
+| [线程状态预算实验](evidence/2026-11-02-thread-state-budget/README.md) | 按预算分配能减少普通Runtime空间，但P1吞吐风险未排除，候选已撤回；保留资源与完整JSON对照 |
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 

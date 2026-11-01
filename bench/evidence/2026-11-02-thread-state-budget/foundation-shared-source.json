@@ -1,0 +1,10 @@
+{
+  "source_root": "/home/passchaos/robotics/onboard-monorepo/foundation/logging",
+  "source_sha256": {
+    "rust/src/config.rs": "f6f949d9ee840e6969607cf98eb927df5b1c69a4dd9d55e59a1c6cf4c2567f8b",
+    "rust/src/backend.rs": "6a7ed2394d3205a6dac60b7d46e36c0701d2fcca5a21dd4b9218c8f76a021652",
+    "rust/src/memory/queue.rs": "15905b7bf1873b34a4548c82cf158cafdd76402d3f6474a8de7d92c15dc60dba",
+    "rust/src/mmap/mod.rs": "960eb98f69b8347e1e4b61903bde1a2eb488424b3686ed32864649dfca648442"
+  },
+  "observation": "Public BackendMode exposes Memory and Mmap. BackendInner holds Arc backends; both queue states use parking_lot Mutex/Condvar. No public SPSC mode. This inspection supplies architectural context, not a new cross-library measurement."
+}

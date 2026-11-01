@@ -21,6 +21,8 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 
 两种模式都支持共享producer和显式注册SPSC：`.submission = .low_latency` 配合 `max_thread_channels`，每个channel按照所选存储在初始化时预分配。内存模式不要求required custom sink具有跨重启身份；mmap模式仍要求。`max_journal_bytes`现为所有queue存储的总预算上限，包含共享队列与channel，名称保留兼容已有API。
 
+普通多producer程序使用共享队列即可，不需要注册thread logger。将线程计数器与配置缓存按预算分配的实验能让普通Runtime少请求15KiB，但两轮P1 batch吞吐出现负向中位数，尚未排除主路径代价，已撤回候选。当前Runtime仍保留原固定状态布局；后续资源优化需要同时通过shared性能对照。完整源码、资源与负向结果见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)。
+
 统一应用入口的完整Mmap例子见 [mmap.zig](../examples/mmap.zig)，运行 `zig build run-mmap -Doptimize=ReleaseSafe`。Logging使用 `.mode=.asynchronous` 与 `.queue=.{ .mmap=options }`，管理required JSON文件和best_effort stdout，消费者按系统本地时间格式化；程序显式durable确认并关闭。重开使用相同路径、layout和恢复目标身份。
 
 `runtime.queueStorage()`/`health().queue_storage`返回none、memory或mmap。`queue_reserved_bytes`报告总queue空间；`journal_reserved_bytes`只报告文件映射空间，普通异步为零。
