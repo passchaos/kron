@@ -1,8 +1,18 @@
 # 完整日志工作流性能比较
 
-按最新要求，仅Memory/Mmap的当前源码`182fc9e`已同轮比较Foundation真实spdlog前端＋Rust后台与kron默认四批配置：120/120试验、1212万条物理JSON逐条核对，accepted=written且pending/drop=0。Memory中位结果kron领先，Mmap P1中位领先、P4仍落后；所有Foundation吞吐组均超10%波动门限，所以仍未证明两种存储稳定全面超越。原始数据与源码见[当前Memory/Mmap对照](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。
+最新源码 **`e8bd353`** 已重新同轮比较Foundation真实spdlog C++前端＋Rust后台，仅Memory/Mmap、P1/P4、shared/SPSC，并单列inline/schema：**200/200试验、2020万条物理JSON**逐条核对，accepted=written且pending/drop=0，kron实际后端全部portable。正式吞吐包括producer、后台格式化/写出、最终written flush、shutdown和清理，初始化/preparation单列。普通inline SPSC中位在四组均高于Foundation，所有完整关闭吞吐跨库组仍因波动超门限标 **inconclusive**；schema多数配置较慢，p99.9与Mmap初始化仍有明显差距。完整新数据、源码/binary/依赖身份及CV/spread/区间见[最新详细对照](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。
 
-| 当前Memory/Mmap配置 | P1包含关闭 M条/s | P4包含关闭 M条/s | P4完整生命周期 ms |
+| 普通inline，M条/s | Memory P1 | Memory P4 | Mmap P1 | Mmap P4 |
+| --- | ---: | ---: | ---: | ---: |
+| Foundation＋spdlog |2.155|2.317|1.886|2.097|
+| kron shared |2.213|2.215|2.227|2.239|
+| kron SPSC |2.342|2.391|2.322|2.360|
+
+SPSC P4 Memory/Mmap调用p99中位605/663ns，Foundation28689/7982ns；p99.9却为345167/347492ns，对Foundation36936/12750ns，百分位资格同样inconclusive。SPSC inline Mmap P4初始化中位1248.936ms、100k完整生命周期1290.771ms，Foundation为22.728ms/70.924ms。Foundation Memory P1/P4另有806.442ms/233.880ms shutdown慢值，全部保留。宿主load约84，不能用中位表宣布稳定全面领先；SPSC额外每producer队列和各库协议/资源区别见[新轮说明](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/README.md)。以下旧轮数据按其源码保留，不用于当前排名。
+
+此前仅Memory/Mmap的源码`182fc9e`已同轮比较Foundation真实spdlog前端＋Rust后台与kron默认四批配置：120/120试验、1212万条物理JSON逐条核对，accepted=written且pending/drop=0。Memory中位结果kron领先，Mmap P1中位领先、P4仍落后；所有Foundation吞吐组均超10%波动门限，所以仍未证明两种存储稳定全面超越。原始数据与源码见[当前Memory/Mmap对照](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。
+
+| 182fc9e配置 | P1包含关闭 M条/s | P4包含关闭 M条/s | P4完整生命周期 ms |
 | --- | ---: | ---: | ---: |
 | Foundation Memory |1.932|1.990|51.31|
 | kron shared Memory |2.136|2.063|50.10|
@@ -13,9 +23,9 @@
 
 包含关闭吞吐计入producer、后台格式化/实际文件写出、最终written flush、shutdown和文件/对象清理；生命周期还计入初始化与预热。Mmap SPSC P4初始化中位368.10ms，对方13.01ms，慢值全部保留。P4 SPSC producer p99.9中位Memory387µs、Mmap372µs，Foundation约66µs/19µs；这些是调用attempt延迟，不是最终可见延迟。只有kron SPSC Memory P4包含关闭吞吐满足本轮局部重复性门限，不能用一侧稳定替代跨库优势资格。可选一批budget的p99/p99.9取舍另见[消费者服务预算](consumer-scheduling.md)，不混入默认排名。下方是各自较早源码的归档对照。
 
-当前源码`4447fe6`已重新与Foundation（真实spdlog C++前端＋Rust后台）和独立spdlog 1.17做同轮完整文件流程对照：140个试验逐条验证1414万条JSON。kron的完整流程中位成绩高于独立spdlog，仍未全面超过Foundation组合；P4 memory约落后9%，P4 mmap稳态接近且差异小于波动，SPSC mmap完整生命周期初始化成本仍较高。源码归档、全部慢值与资格见[当前完整对照](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+此前源码`4447fe6`重新与Foundation（真实spdlog C++前端＋Rust后台）和独立spdlog 1.17做同轮完整文件流程对照：140个试验逐条验证1414万条JSON。kron的完整流程中位成绩高于独立spdlog，仍未全面超过Foundation组合；P4 memory约落后9%，P4 mmap稳态接近且差异小于波动，SPSC mmap完整生命周期初始化成本仍较高。源码归档、全部慢值与资格见[当前完整对照](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
 
-| 当前源码配置 | P1包含关闭 M条/s | P4包含关闭 M条/s | P4完整生命周期 ms |
+| 4447fe6配置 | P1包含关闭 M条/s | P4包含关闭 M条/s | P4完整生命周期 ms |
 | --- | ---: | ---: | ---: |
 | Foundation memory | 2.116 | 2.309 | 44.17 |
 | Foundation mmap | 1.800 | 2.079 | 58.09 |

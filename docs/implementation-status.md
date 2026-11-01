@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+用户要求的最新Foundation＋spdlog详细对照已完成：源码`e8bd353`与冻结Foundation真实C++spdlog前端/Rust release后台共200项同轮试验、2020万条JSON逐条核对，Memory/Mmap共享/SPSC、P1/P4、inline/schema、sampled/batch全部完整，kron实际portable、accepted=written且pending/drop=0。普通inline SPSC完整吞吐中位高于Foundation四组8.67%/3.21%/23.09%/12.58%，shared Memory P4仍低4.41%；各关闭吞吐跨库组因spread超门限保持inconclusive。schema多数配置较慢，SPSC p99.9和Mmap init/lifecycle仍差；Foundation Memory806ms/234ms关闭慢值完整保留。源码/Git/归档/binary/输出/完成边界审计和所有CV/spread/bootstrap见`bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/qualification.json`及[详细报告](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。没有更新为业界最快或稳定全面超越资格。
+
 当前admission View转移源码通过完整ReleaseSafe门禁 **93/93步骤、549/549 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，含独立五模式/单线程/源码分发包、Linux宿主资格、配置/deadline/错误/旧新wire矩阵和12个实际随机SIGKILL恢复场景。最终源码、binary、归档、正式5437万条测量与负向限制绑定于`bench/evidence/2026-11-01-admission-view/qualification.json`；跨库同轮排名和其他平台设备运行仍需单独验证。
 
 普通共享admission已复用begin取得的已验证配置View，end释放reader；accepted journal record继续commit前独立retain pending pin，SPSC/control/deadline沿用原协议。三个新的实际runtime测试锁定Memory/Mmap的reader/pin差额、并发replacement旧lease在reserve前和worker ack后仍受admission保护，以及filtered/sampled/capture/sync错误准确释放；旧filter-overlay和SPSC缓存回归保持，相关Debug/Safe/Fast各15/15通过。正式320项完整文件、40项PMU和独立10项百万条复查核对5437万条JSON，shared schema Mmap P1长流程中位1.746M→1.829M条/s（+4.79%）、CV/spread通过且中位区间不重叠；多数P4/其他组未资格，PMU shared Memory P4负向中位3.36%且区间不重叠，所有慢值与尾分位保留。首对测试退出重叠的另10项长流程独立保存，不计入正式资格。源码/归档/binary和完整限制见`bench/evidence/2026-11-01-admission-view/`；没有新增heap、queue/file预算或跨库排名。

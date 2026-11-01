@@ -99,11 +99,13 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 ## 调用路径与性能
 
+最新源码`e8bd353`与Foundation Logging真实spdlog前端＋Rust后台完成 **200项同轮完整Memory/Mmap对照、2020万条JSON核对**。普通inline SPSC的Memory P1/P4吞吐中位2.342M/2.391M条/s、Mmap2.322M/2.360M，分别高于Foundation8.67%/3.21%和23.09%/12.58%；全部完整关闭吞吐跨库组仍因波动超门限inconclusive，shared Memory P4仍落后4.41%。schema多数配置较慢，SPSC p99.9约345–347µs和Mmap P4初始化约1.25秒仍有差距。完整阶段、资源、慢值和资格见[新同轮详细报告](bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)及[说明](bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/README.md)。后面的历史与局部before/after数据保留自己的源码身份，不叠加成当前跨库排名。
+
 常规 `scoped()` 保留运行时时钟注入。`loggerWithClock(kron.StandardClock, scope)` 静态选择标准 I/O 时钟，`loggerWithClock(kron.NativeClock, scope)` 在 Linux 直接使用 vDSO-aware clock_gettime；`ZeroClock` 省略墙钟时间戳。SPSC 对应 `attachThreadWithClock`。静态路径仍复用相同字段、filter、journal 和交付语义。
 
 `std.Io` 用于显式应用环境、初始化、平台等待与 portable 后端；mmap reserve/commit 不经 I/O vtable，Linux io_uring 是直接内核接口。性能报告区分前端分位数、批量平均、最终 written drain 和 durable flush，见 [基准方法](docs/benchmark-methodology.md)。现有小规模结果不是“业界最快”的证据。
 
-最新 [C++/Foundation完整工作流对照](docs/cpp-full-workflow.md) 包括spdlog 1.17、Quill 13.1、本地Foundation Logging和对照时的kron源码快照，统一完整JSON并分别报告调用延迟、written flush、关闭和启动。300个实测试验逐条验证3030万条日志；该快照的kron尚未领先，大多数性能指标仍受host波动影响。后续native PCLMUL CRC、decoded delivery校验复用、fused wire-to-record和配置View/批内统计均有独立before/after证据。2026-11-01负载窗口同轮复测已完成120个试验、1212万条记录验证，全部组因spread超门限标inconclusive；同轮中位数显示P1 kron领先、P4 Foundation略领先，稳定排名仍需宿主安静窗口复测，数据见 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。
+归档 [C++/Foundation完整工作流对照](docs/cpp-full-workflow.md) 包括spdlog 1.17、Quill 13.1、本地Foundation Logging和对照时的kron源码快照，统一完整JSON并分别报告调用延迟、written flush、关闭和启动。300个实测试验逐条验证3030万条日志；该快照的kron尚未领先，大多数性能指标仍受host波动影响。后续native PCLMUL CRC、decoded delivery校验复用、fused wire-to-record和配置View/批内统计均有独立before/after证据。2026-11-01负载窗口同轮复测已完成120个试验、1212万条记录验证，全部组因spread超门限标inconclusive；同轮中位数显示P1 kron领先、P4 Foundation略领先，稳定排名仍需宿主安静窗口复测，数据见 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。
 
 [业界实现与优化方向](docs/industry-performance-lessons.md)记录从Quill/Foundation实际源码、fmtlog/NanoLog/Reckless/BqLog设计中确认的机制，按完整流程profile推进批处理、配置复用与CRC工作量优化。
 
@@ -115,7 +117,7 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 后续schema融合以 `366adc3` 为基线完成最终240项完整文件与40项完整PMU对照，另20项百万条P1复查，共5630万条物理JSON核对。Prepared Memory P4共享/SPSC吞吐中位提升6.35%/8.03%，通过本轮重复性门限且中位区间不重叠；schema用户态指令减少约1.8%–1.9%。Mmap多数组与调用尾部仍inconclusive，P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠，原慢值保留。最终完整ReleaseSafe门禁93/93步骤、545/545测试与九目标编译通过。原始候选、否决的指针版本、中断捕获、额外消费者栈和最终资格边界见[schema完整对照](bench/evidence/2026-11-01-consumer-post-coalescing/README.md)；不据此宣布新的跨库排名。
 
-共享admission进一步直接持有已验证的配置View，结束时释放reader，accepted记录保留独立pin。正式370项完整文件/PMU/百万条复查核对5437万条JSON；shared schema Mmap单producer长流程中位提升4.79%，重复性通过且置信区间不重叠。其他路径没有一般收益资格，PMU shared Memory四producer负向中位3.36%也保留。被否决的文件缓冲callback候选及admission数据分别归档；当前结果和并发lease验证见[admission View对照](bench/evidence/2026-11-01-admission-view/README.md)，新跨库排名仍需同轮复测。
+共享admission进一步直接持有已验证的配置View，结束时释放reader，accepted记录保留独立pin。正式370项完整文件/PMU/百万条复查核对5437万条JSON；shared schema Mmap单producer长流程中位提升4.79%，重复性通过且置信区间不重叠。其他路径没有一般收益资格，PMU shared Memory四producer负向中位3.36%也保留。被否决的文件缓冲callback候选及admission数据分别归档；当前结果和并发lease验证见[admission View对照](bench/evidence/2026-11-01-admission-view/README.md)，新的跨库结果见本节最新同轮报告。
 
 ## 实施顺序
 
