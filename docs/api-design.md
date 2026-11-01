@@ -23,7 +23,7 @@
 
 Logging 只在冷路径管理输出资源，不参与每条日志的动态转发。它返回的 logger 与既有 Runtime logger 是相同类型，持有同一 Runtime/线程 token/prepared binding；emit 不再经过 Logging 虚拟调用，也不为每条事件构造通用 layer 链。
 
-typed 字段和格式串在 producer 上捕获，异步消费者负责最终 text/JSON/logfmt 格式化。禁用级别在捕获前决定，昂贵字段通过 lazy provider 在入场后构造。输出组合在初始化时校验并发布，既有 route 掩码和不可变配置协议继续处理事件决策。
+typed 字段和格式串在 producer 上捕获，异步消费者负责最终 text/JSON/logfmt 格式化。禁用级别在捕获前决定，昂贵字段通过 lazy provider 在入场后构造。输出组合在初始化时校验并发布，既有 route 掩码和不可变配置协议继续处理事件决策。显式系统local时间在消费者按事件秒缓存，producer继续捕获Unix纳秒；同步/fallback_sync保留调用线程交付。
 
 tracing Event 的借用值只覆盖通知调用。异步 logger 必须拥有自己的快照：kron 在 accepted 返回前复制消息、字符串、bytes 和嵌套描述符；不会把栈上的 event 或任意 formatter 借给后台。动态配置继续保留旧记录的目标身份与 lease，Mmap 恢复继续校验稳定 identity。
 

@@ -6,6 +6,9 @@
 
 ## 当前单机门禁
 
+系统本地时间已按用户选择采用消费者侧格式化与按秒缓存：显式 `.timestamp=.{ .zone=.local }`，producer仍只捕获Unix纳秒；跨秒/回拨刷新，DST由系统规则处理。八组Memory/Mmap×shared/SPSC×inline/schema确定性计数验证producer转换0次、消费者每96条同秒转换1次与Runtime初始化后无分配；独立zoneinfo核对6时区×5模式及恢复共372条时间戳，改变时区恢复被拒绝且原journal不变。最终完整ReleaseSafe门禁109/109步骤成功，576项通过、1项local缓存测试在无libc构建中按能力跳过；local专项与oracle实际运行通过，最终九目标对象编译10/10成功。独立包local/单线程选项通过，局部格式化70样本/700万条hash一致，不推导完整吞吐或跨库排名。源码、全部测量与平台边界见 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。
+
+
 应用影响基准已补充：相同确定性compute/cache工作量分别使用无logger、共享Memory、SPSC Memory、共享Mmap和SPSC Mmap，P1/P4/P16、每request或稀疏日志五次重复，共300项核对360万应用请求和165.756万完整JSON。独立Python模型核对每worker状态计算与日志result；所有输出/身份/FIFO与runtime零初始化后分配通过。完整应用吞吐组均因波动保持inconclusive；PMU计数覆盖率至少91%，部分CPU工作量差异有局部资格。该合成负载不代替真实服务/cold-cache/durable和跨库验证，P16在六核mask超额订阅、every16日志源集中于producer0，均明确标记。接口测试、oracle负向测试、15项smoke和包含新入口的ReleaseSafe完整门禁97/97步骤、559/559 Zig测试通过。源实现保持`6e774b0`；证据见`bench/evidence/2026-11-01-application-impact/`。项目默认使用建议见[默认日志接入](default-logging.md)，四个非Linux平台仍需设备运行资格。
 
 Prepared测量复用的最终源码通过完整ReleaseSafe **93/93步骤、556/556 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，独立五模式/单线程/源码分发包、配置/过滤/生命周期/文件故障、随机SIGKILL和wire/schema损坏矩阵均通过。正式380项/6438万条数据、节点计数、4096项旧/新codec差分、额外提交函数栈帧与P1极端分位负向绑定于`bench/evidence/2026-11-01-prepared-measure/qualification.json`。当前目标仍有稳定完整性能、业务/durable基线、长期fuzz与其他平台设备运行等缺口，见下方剩余验收项。

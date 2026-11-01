@@ -1,0 +1,13 @@
+1/12 root.test_0...OK
+2/12 civil.test.calendar covers the complete Gregorian 400 year cycle and civil bounds...OK
+3/12 civil.test.calendar arithmetic rejects overflow and requires explicit month clamping...OK
+4/12 types.test.timestamp civil conversion uses floor for negative epochs and checks every bound...OK
+5/12 types.test.duration and timestamp arithmetic never silently wraps...OK
+6/12 types.test.fixed UTC offset parsing rejects implicit geography malformed input and unknown zero...OK
+7/12 rfc3339.test.RFC3339 exact fractions offsets negative epochs and leap year round trips...OK
+8/12 rfc3339.test.RFC3339 rejects invalid dates leap seconds unknown offsets and lost precision...OK
+9/12 rfc3339.test.RFC3339 cache recomputes on clock rollback offset change and every second...OK
+10/12 rfc3339.test.RFC3339 seeded full timestamp range and parser mutations preserve exact instants...OK
+11/12 local_tests.test.system local time cache refreshes once per event second and rejects partial output...OK
+12/12 local_tests.test.system local time fingerprints distinguish rule sources and retain fixed compatibility...OK
+All 12 tests passed.

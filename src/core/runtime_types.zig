@@ -52,8 +52,8 @@ pub const RouteOptions = struct {
     name: []const u8,
     sink: Sink,
     format: encoder.Format = .json,
-    /// Opt-in readable RFC3339 wall time, with fixed offset and precision.
-    /// Owned by the immutable route version; no DST/system-zone lookups.
+    /// Opt-in RFC3339 with fixed offset or system local time and precision.
+    /// A route-owned second cache is updated only during serialized delivery.
     timestamp: ?@import("../time/root.zig").FormatOptions = null,
     /// An independent route filter; null inherits the runtime filter.
     filter: ?[]const u8 = null,

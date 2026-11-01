@@ -16,7 +16,7 @@
 
 公共接口仅提供 Zig API；五个平台通过同一个 Zig 包导入。应用的 target、优化级别与线程配置传入库模块，接入示例和源码分发验收见 [Zig 包接入](package.md)。
 
-时间处理按用户补充采用UTC与显式固定偏移，不实现夏令时、地理时区/IANA数据库。可读RFC3339时间在交付阶段生成，同秒日期缓存由配置版本拥有；事件仍保存原始Unix纳秒，单调时钟继续负责deadline、采样和轮转。日期、Timestamp、Duration类型及配置/恢复契约见 [时间处理](time.md)。
+时间处理提供UTC与显式固定偏移，并可显式启用系统local；local采用平台时区/DST规则与按秒缓存，异步消费者负责格式化，不内置自己的地理时区/IANA数据库。可读RFC3339时间在交付阶段生成，同秒日期缓存由配置版本拥有；事件仍保存原始Unix纳秒，单调时钟继续负责deadline、采样和轮转。日期、Timestamp、Duration类型及配置/恢复契约见 [时间处理](time.md)。
 
 单线程构建支持 `.submission = .sync`，初始化不创建控制线程或后台线程。普通 flush、durable 文件确认、配置 reload 和 shutdown 继续有效；异步/SPSC 返回 `ThreadsUnavailable`，带 deadline 的控制接口返回 `TimedControlUnavailable`，避免以阻塞 sink 调用冒充有限时间保证。
 

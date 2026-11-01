@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const single_threaded = b.option(bool, "single-threaded", "Build the imported kron module for a single-threaded application");
+    const system_local_time = b.option(bool, "system-local-time", "Link libc for opt-in system local time on Linux") orelse false;
     const module = b.addModule("kron", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -11,7 +12,7 @@ pub fn build(b: *std.Build) void {
         .single_threaded = single_threaded,
         .link_libc = switch (target.result.os.tag) {
             .macos, .ios => true,
-            else => if (target.result.abi == .android) true else null,
+            else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,
         },
     });
 
@@ -37,7 +38,8 @@ pub fn build(b: *std.Build) void {
         const platform_target = b.resolveTargetQuery(query);
         const platform_module = b.createModule(.{ .root_source_file = b.path("src/platform_check.zig"), .target = platform_target, .optimize = .ReleaseSafe, .link_libc = switch (query.os_tag.?) {
             .macos, .ios => true,
-            else => if (query.abi == .android) true else null,
+            .linux => true,
+            else => null,
         } });
         const object = b.addObject(.{ .name = b.fmt("kron-{s}-{s}-{s}", .{ @tagName(query.cpu_arch.?), @tagName(query.os_tag.?), @tagName(query.abi orelse .none) }), .root_module = platform_module });
         _ = object.getEmittedBin();
@@ -81,7 +83,7 @@ pub fn build(b: *std.Build) void {
 
     const single_kron = b.createModule(.{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize, .single_threaded = true, .link_libc = switch (target.result.os.tag) {
         .macos, .ios => true,
-        else => if (target.result.abi == .android) true else null,
+        else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,
     } });
     const single_module = b.createModule(.{ .root_source_file = b.path("tests/single_threaded.zig"), .target = target, .optimize = optimize, .single_threaded = true });
     single_module.addImport("kron", single_kron);
@@ -126,6 +128,22 @@ pub fn build(b: *std.Build) void {
     time_step.dependOn(&run_time_tests.step);
     time_step.dependOn(&check_time.step);
     test_step.dependOn(&check_time.step);
+    const local_module = b.createModule(.{ .root_source_file = b.path("tests/local_time_integration.zig"), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
+    local_module.addImport("kron", module);
+    const local_tests = b.addTest(.{ .name = "kron-local-time", .root_module = local_module });
+    const run_local_tests = b.addRunArtifact(local_tests);
+    const local_step = b.step("test-local-time", "Verify consumer local-time cache and independent timezone/recovery oracle");
+    local_step.dependOn(&run_local_tests.step);
+    test_step.dependOn(&run_local_tests.step);
+    if (target.result.os.tag == .linux or target.result.os.tag == .macos) {
+        const local_oracle_module = b.createModule(.{ .root_source_file = b.path("tests/local_time_oracle.zig"), .target = target, .optimize = optimize, .link_libc = true });
+        local_oracle_module.addImport("kron", module);
+        const local_oracle = b.addExecutable(.{ .name = "kron-local-time-oracle", .root_module = local_oracle_module });
+        const check_local = b.addSystemCommand(&.{ "python3", "tests/local_time_oracle.py", "--writer" });
+        check_local.addArtifactArg(local_oracle);
+        local_step.dependOn(&check_local.step);
+        test_step.dependOn(&check_local.step);
+    }
     const time_bench_module = b.createModule(.{ .root_source_file = b.path("bench/time.zig"), .target = target, .optimize = optimize });
     time_bench_module.addImport("kron", module);
     const time_bench = b.addExecutable(.{ .name = "kron-time-bench", .root_module = time_bench_module });
@@ -465,6 +483,12 @@ pub fn build(b: *std.Build) void {
         b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example").dependOn(&run.step);
         verify.dependOn(&exe.step);
     }
+
+    const local_example_module = b.createModule(.{ .root_source_file = b.path("examples/local_time.zig"), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
+    local_example_module.addImport("kron", module);
+    const local_example = b.addExecutable(.{ .name = "kron-local-time-example", .root_module = local_example_module });
+    b.step("run-local-time", "Run consumer-formatted system local timestamps").dependOn(&b.addRunArtifact(local_example).step);
+    verify.dependOn(&local_example.step);
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);

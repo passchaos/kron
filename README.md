@@ -61,6 +61,7 @@ zig build test-regex-equivalence -Doptimize=ReleaseSafe --fuzz=1M -j1
 zig build run-quick-start
 zig build run-file-logging
 zig build run-structured
+zig build run-local-time
 zig build run-threaded
 zig build run-rolling
 zig build run-basic

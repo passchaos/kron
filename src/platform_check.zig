@@ -37,6 +37,10 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     defer console.destroy();
     _ = try console.scoped("managed").tryEmit(.info, "console", .{});
     try console.shutdown();
+    const local_logging = try kron.Logging.create(allocator, io, .{ .timestamp = .{ .zone = .local } });
+    defer local_logging.destroy();
+    _ = try local_logging.scoped("local").tryEmit(.info, "system local", .{});
+    try local_logging.shutdown();
     const file = try kron.FileSink.create(allocator, io, .{ .path = path, .backend = .portable });
     defer file.deinit();
     const sync = try kron.Runtime.create(allocator, io, .{ .routes = &.{.{ .name = "file", .sink = file.sink(), .timestamp = .{ .offset = try kron.time.UtcOffset.init(480) } }} });

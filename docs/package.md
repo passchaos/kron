@@ -59,6 +59,8 @@ pub fn main(init: std.process.Init) !void {
 
 单线程消费项目使用 `-Dsingle-threaded=true`，Logging 使用默认 `.mode = .sync`，Runtime 使用 `.submission = .sync`，不配置异步队列。普通 flush/shutdown可用，异步/SPSC和带deadline的控制接口有明确能力错误。库模块和应用应传入一致线程配置。
 
+系统本地时间是显式选项：Linux应用在 `b.dependency` 参数中加入 `.@"system-local-time" = true`，或在应用模块设置 `.link_libc=true`，再配置 `.timestamp=.{ .zone=.local }`。默认固定偏移路径不依赖libc。完整转换、缓存和恢复身份契约见 [时间文档](time.md#系统本地时间)。
+
 ## 独立消费项目验收
 
 `tests/package_consumer/` 是完整的另一个 Zig 包，具有自己的 `build.zig`、`build.zig.zon` 和源文件，通过 `b.dependency("kron")` 导入库。`test-package`构建并实际运行sync、memory、mmap、SPSC-memory、SPSC-mmap，验证written/pending、文件数量、JSON字段、时间戳、源覆写快照和脱敏。`test-package-single-threaded`另构建单线程包，Linux验证只有一个OS线程，异步模式在创建文件前失败。

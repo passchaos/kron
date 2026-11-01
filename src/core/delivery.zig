@@ -50,7 +50,7 @@ pub fn emit(routes: []const types.Route, scratch: []u8, event: Event, diagnostic
 }
 
 fn sameTime(left: ?*@import("../time/root.zig").Formatter, right: ?*@import("../time/root.zig").Formatter) bool {
-    if (left) |cache| return if (right) |other| cache.options.eql(other.options) else false;
+    if (left) |cache| return if (right) |other| cache.eql(other) else false;
     return right == null;
 }
 

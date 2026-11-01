@@ -129,7 +129,7 @@ pub fn main(init: std.process.Init) !void {
 | `mode` | `.sync` | `.sync` / `.asynchronous`（共享）/ `.spsc`（附着线程） |
 | `queue` | `null` | async/SPSC 自动采用 Memory；sync 必须保持 null；可显式选 `.memory` 或 `.mmap` |
 | `format` | `.text` | `.text` / `.json` / `.logfmt` / `.binary` |
-| `timestamp` | `null` | 可读 RFC3339 时间配置，binary 不支持此设置 |
+| `timestamp` | `null` | 可读 RFC3339：UTC/固定偏移或 `.zone=.local`，binary 不支持 |
 | `filter` | `"info"` | 默认阈值与 scope 覆盖 |
 | `overflow` | `.block` | 满队列时 block / drop_newest / fallback_sync |
 | `max_threads` | `4` | SPSC 预分配 channel 数，支持 1..64；共享模式不创建这些 channel |
@@ -455,7 +455,7 @@ Bridge 使用有界 16 KiB producer 格式化缓冲；它支持标准 formatter�
 },
 ```
 
-text 使用 RFC3339 前缀，JSON/logfmt 保留 `timestamp_ns` 并增加可读时间。只有 UTC/固定分钟偏移，没有夏令时或隐式系统时区查询；墙钟可回拨，deadline、采样和轮转使用单调时钟。见 [时间处理](time.md)。
+text 使用 RFC3339 前缀，JSON/logfmt 保留 `timestamp_ns` 并增加可读时间。显式 `.timestamp = .{ .zone = .local }` 使用系统本地时区与其DST规则；默认UTC/固定偏移不查询系统时区。local同秒转换一次，异步由消费者格式化，墙钟回拨会刷新缓存。Linux包需启用 `.@"system-local-time"=true` 或在应用链接libc；运行期间保持时区环境稳定。恢复身份、平台与错误边界见 [时间处理](time.md#系统本地时间)。
 
 trace 显式传递，不自动生成 ID，也不依赖 TLS：
 
@@ -591,6 +591,7 @@ try logging.shutdownUntil(kron.Deadline.after(io, 5 * std.time.ns_per_s));
 | `zig build run-quick-start` | 默认 stderr、typed 字段、格式化与关闭 |
 | `zig build run-file-logging` | 共享异步 Memory、JSON 文件、脱敏与 reload |
 | `zig build run-async-memory` | stdout 的共享 Memory 日志 |
+| `zig build run-local-time` | 系统本地时间、消费者格式化与同秒缓存 |
 | `zig build run-structured` | owned/borrowed context、嵌套、bytes/secret、trace/source、lazy、可读日期 |
 | `zig build run-threaded` | 双线程 SPSC、attach/detach、join 后关闭 |
 | `zig build run-prepared` | Mmap/SPSC 预注册与 durable |
@@ -608,6 +609,7 @@ zig build test-single-threaded -Doptimize=ReleaseSafe -j1
 zig build test-package -Doptimize=ReleaseSafe -j1
 zig build test-package-single-threaded -Doptimize=ReleaseSafe -j1
 zig build test-package-distribution -Doptimize=ReleaseSafe -j1
+zig build test-local-time -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 ```

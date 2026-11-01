@@ -224,7 +224,7 @@ pub const Manager = struct {
         if (options.capacity == 0 or options.capacity > max_capacity or
             options.initial_generation == 0 or options.max_config_bytes == 0)
             return error.InvalidOptions;
-        const payload = try Payload.init(allocator, options.initial_routes, .{
+        const payload = try Payload.init(allocator, io, options.initial_routes, .{
             .redaction = options.redaction,
             .sampling = options.sampling,
             .sample_bypass = options.sample_bypass,
@@ -328,7 +328,7 @@ pub const Manager = struct {
     /// A prevalidated effective default filter can be inherited by a runtime
     /// transaction without serializing/parsing its owned offsets again.
     pub fn installWithFilter(self: *Manager, routes: []const RouteOptions, policy: Policy, effective_filter: ?Filter, filter_generation: u64) !Version {
-        var payload = try Payload.init(self.allocator, routes, policy, self.require_recovery_identity, self.max_config_bytes);
+        var payload = try Payload.init(self.allocator, self.io, routes, policy, self.require_recovery_identity, self.max_config_bytes);
         errdefer payload.deinit(self.allocator);
         if (effective_filter) |filter| payload.default_filter = filter;
         payload.filter_generation = filter_generation;
@@ -355,7 +355,7 @@ pub const Manager = struct {
     /// Generation zero is reserved for legacy records without a version.
     pub fn addRecovery(self: *Manager, generation: u64, routes: []const RouteOptions, policy: Policy) !void {
         if (generation == 0) return error.InvalidConfigGeneration;
-        const payload = try Payload.init(self.allocator, routes, policy, self.require_recovery_identity, self.max_config_bytes);
+        const payload = try Payload.init(self.allocator, self.io, routes, policy, self.require_recovery_identity, self.max_config_bytes);
         errdefer payload.deinit(self.allocator);
         self.writer_mutex.lockUncancelable(self.io);
         defer self.writer_mutex.unlock(self.io);
@@ -686,7 +686,7 @@ const Payload = struct {
     filter_generation: u64 = 1,
     predicate: ?Predicate,
 
-    fn init(allocator: std.mem.Allocator, options: []const RouteOptions, policy: Policy, require_identity: bool, budget: usize) !Payload {
+    fn init(allocator: std.mem.Allocator, io: std.Io, options: []const RouteOptions, policy: Policy, require_identity: bool, budget: usize) !Payload {
         if (options.len == 0 or options.len > max_routes) return error.InvalidOptions;
         const redactor = try redact.Redactor.init(policy.redaction);
         const sampler = try sampling.Sampler.init(policy.sampling);
@@ -737,7 +737,7 @@ const Payload = struct {
             const timestamp = if (option.timestamp) |format_options| blk: {
                 const cache = try allocator.create(time.Formatter);
                 errdefer allocator.destroy(cache);
-                cache.* = try time.Formatter.init(format_options);
+                cache.* = try time.Formatter.initWithIo(io, format_options);
                 break :blk cache;
             } else null;
             var sink = option.sink;
@@ -804,6 +804,10 @@ pub fn fingerprint(routes: []const Route) u64 {
             std.mem.writeInt(i16, &offset, timestamp.options.offset.minutes, .little);
             hash.update(&offset);
             hash.update(&.{@intFromEnum(timestamp.options.precision)});
+            if (timestamp.options.zone == .local) {
+                hash.update("\x00KRONLOCAL1");
+                if (timestamp.local_identity) |local_identity| hash.update(&local_identity) else hash.update("unbound");
+            }
         }
     }
     return hash.final();
@@ -846,7 +850,7 @@ fn routesEqual(a: []const Route, b: []const Route) bool {
 }
 
 fn sameTimestamp(left: ?*time.Formatter, right: ?*time.Formatter) bool {
-    if (left) |cache| return if (right) |other| cache.options.eql(other.options) else false;
+    if (left) |cache| return if (right) |other| cache.eql(other) else false;
     return right == null;
 }
 

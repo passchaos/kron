@@ -14,6 +14,8 @@
 
 `kron.platform` 提供编译期 `target`、`synchronous`、`shared_journal`、`asynchronous`、`spsc`、`directory_durable_protocol`、`io_uring` 和 `tsc`。能力值表示实现存在；运行时磁盘、权限、内核、app沙盒或文件系统仍可返回明确错误。自动后端在io_uring不可用时选择portable。
 
+系统本地时间是显式可选能力：`.timestamp = .{ .zone = .local }`。Linux通过dependency的 `system-local-time=true` 或应用链接libc启用，默认固定偏移不增加libc依赖；Apple/Android采用系统libc的localtime转换，Windows采用原生动态时区API。异步消费者按事件Unix整秒缓存，producer保持原始时间戳捕获。时区来源身份、运行期间保持时区环境稳定及历史非分钟偏移的错误边界见 [时间文档](time.md#系统本地时间)。本地时间的Linux实测和其他目标对象编译分别记录，不代替非Linux设备资格。
+
 ## 同步与durable
 
 各平台的显式durable协议区分页同步与文件同步。mmap journal初始化与schema-ready通过文件发布协议完成；Linux/Android全文件fsync已经覆盖共享映射脏页，冷发布省去前面的重复msync，其他平台保留映射flush，源码与验证见[Mmap发布](mmap-publication.md)。accepted表示事件已完整提交到共享文件映射，内存异步的accepted只进入进程内queue。两者都不能替代设备断电的durable确认，详见 [异步存储](async-storage.md)。

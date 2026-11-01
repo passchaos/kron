@@ -1,4 +1,4 @@
-//! Fixed-offset RFC3339 formatting with a full-output hash. Reports standalone
+//! Fixed/system-local RFC3339 formatting with a full-output hash. Standalone
 //! conversion/cache cost, not logging producer or complete-file throughput.
 const std = @import("std");
 const kron = @import("kron");
@@ -6,8 +6,9 @@ const kron = @import("kron");
 pub fn main(init: std.process.Init) !void {
     var report_bytes: [4096]u8 = undefined;
     var report = std.Io.File.stdout().writerStreaming(init.io, &report_bytes);
-    const cases = [_][]const u8{ "same-second", "changing-second", "offset-change", "clock-rollback" };
+    const cases = [_][]const u8{ "same-second", "changing-second", "offset-change", "clock-rollback", "local-same-second", "local-changing-second", "local-clock-rollback" };
     for (cases, 0..) |case, kind| {
+        if (kind >= 4 and !kron.time.local.supported) continue;
         for (0..5) |repetition| {
             var expected_checksum: ?u64 = null;
             var expected_bytes: ?u64 = null;
@@ -22,11 +23,11 @@ pub fn main(init: std.process.Init) !void {
                 for (0..iterations) |index| {
                     const delta: i64 = @intCast(index);
                     const timestamp: kron.time.Timestamp = .{ .nanoseconds = switch (kind) {
-                        1 => 1793462400000000000 + delta * 1000000000,
-                        3 => 1793462400000000000 - @mod(delta, 2000) * 1000000,
+                        1, 5 => 1793462400000000000 + delta * 1000000000,
+                        3, 6 => 1793462400000000000 - @mod(delta, 2000) * 1000000,
                         else => 1793462400000000000 + delta,
                     } };
-                    const options: kron.time.FormatOptions = .{ .offset = try kron.time.UtcOffset.init(if (kind == 2 and index % 2 == 0) 480 else 0) };
+                    const options: kron.time.FormatOptions = .{ .zone = if (kind >= 4) .local else .fixed, .offset = try kron.time.UtcOffset.init(if (kind == 2 and index % 2 == 0) 480 else 0) };
                     formatter.options = options;
                     const result = if (cached) try formatter.format(timestamp, &output) else try kron.time.rfc3339.format(timestamp, options, &output);
                     checksum +%= std.hash.Wyhash.hash(index, result);

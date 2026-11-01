@@ -1,22 +1,26 @@
-//! Locale-independent RFC3339 with exact Unix nanoseconds and fixed offsets.
-//! No OS time-zone state, calendar normalization, DST or hidden precision loss.
+//! RFC3339 with exact Unix nanoseconds and route-owned second caches.
 const std = @import("std");
 const types = @import("types.zig");
 const Timestamp = types.Timestamp;
 const UtcOffset = types.UtcOffset;
 const civil = types.civil;
-pub const Error = types.Error || error{ InvalidSyntax, PrecisionLoss, LeapSecondUnsupported, UnknownOffset, BufferTooSmall };
+const local = @import("local.zig");
+pub const Error = local.Error || error{ InvalidSyntax, PrecisionLoss, LeapSecondUnsupported, UnknownOffset, BufferTooSmall };
 pub const Precision = enum(u8) { seconds, milliseconds, microseconds, nanoseconds, auto };
+pub const Zone = enum { fixed, local };
 pub const Options = struct {
+    zone: Zone = .fixed,
     offset: UtcOffset = .utc,
     precision: Precision = .nanoseconds,
 
     pub fn validate(self: Options) Error!void {
         try self.offset.validate();
+        if (self.zone == .local and !local.supported) return error.LocalTimeUnavailable;
+        if (self.zone == .local and self.offset.minutes != 0) return error.InvalidOffset;
     }
 
     pub fn eql(self: Options, other: Options) bool {
-        return self.offset.minutes == other.offset.minutes and self.precision == other.precision;
+        return self.zone == other.zone and self.offset.minutes == other.offset.minutes and self.precision == other.precision;
     }
 };
 pub const max_length = 35;
@@ -79,18 +83,32 @@ fn digits(output: []u8, value: u32) void {
 }
 
 /// A caller-owned cache for repeated dates in the same Unix second. It must be
-/// externally serialized; there is no global/threadlocal state. Both backwards
-/// timestamps and changed offsets miss the cache, including midnight crossings.
+/// externally serialized; kron has no global/threadlocal date cache. Backwards
+/// timestamps, changed modes and fixed offsets miss it, including midnight.
 pub const Formatter = struct {
     options: Options = .{},
     second: ?i64 = null,
+    cached_zone: ?Zone = null,
     offset_minutes: i16 = 0,
     prefix: [19]u8 = undefined,
     calendar_conversions: usize = 0,
+    local_identity: ?local.Identity = null,
 
     pub fn init(options: Options) Error!Formatter {
         try options.validate();
         return .{ .options = options };
+    }
+
+    /// Runtime uses this cold-path initializer to bind recovery to timezone
+    /// provenance. Ordinary fixed-offset initialization does not read files.
+    pub fn initWithIo(io: std.Io, options: Options) !Formatter {
+        var result = try init(options);
+        if (options.zone == .local) result.local_identity = try local.identity(io);
+        return result;
+    }
+
+    pub fn eql(self: *const Formatter, other: *const Formatter) bool {
+        return self.options.eql(other.options) and (self.options.zone == .fixed or std.meta.eql(self.local_identity, other.local_identity));
     }
 
     pub fn format(self: *Formatter, timestamp: Timestamp, output: []u8) Error![]const u8 {
@@ -106,12 +124,14 @@ pub const Formatter = struct {
         if (self.options.precision == .auto) while (count != 0 and fraction_bytes[count - 1] == '0') {
             count -= 1;
         };
-        const suffix_size: usize = if (self.options.offset.minutes == 0) 1 else 6;
+        const second = timestamp.unixSeconds();
+        const refreshed = if (self.options.zone == .local and (self.second != second or self.cached_zone != .local)) try local.convert(second) else null;
+        const offset = if (refreshed) |converted| converted.offset else if (self.options.zone == .local) try UtcOffset.init(self.offset_minutes) else self.options.offset;
+        const suffix_size: usize = if (offset.minutes == 0) 1 else 6;
         const length = 19 + @as(usize, if (count == 0) 0 else 1 + count) + suffix_size;
         if (output.len < length) return error.BufferTooSmall;
-        const second = timestamp.unixSeconds();
-        if (self.second != second or self.offset_minutes != self.options.offset.minutes) {
-            const value = try timestamp.toCivil(self.options.offset);
+        if (self.second != second or self.cached_zone != self.options.zone or self.offset_minutes != offset.minutes) {
+            const value = if (refreshed) |converted| converted.date_time else try timestamp.toCivil(offset);
             digits(self.prefix[0..4], value.date.year);
             self.prefix[4] = '-';
             digits(self.prefix[5..7], value.date.month);
@@ -124,7 +144,8 @@ pub const Formatter = struct {
             self.prefix[16] = ':';
             digits(self.prefix[17..19], value.second);
             self.second = second;
-            self.offset_minutes = self.options.offset.minutes;
+            self.cached_zone = self.options.zone;
+            self.offset_minutes = offset.minutes;
             self.calendar_conversions +%= 1;
         }
         @memcpy(output[0..19], &self.prefix);
@@ -138,9 +159,8 @@ pub const Formatter = struct {
         if (suffix_size == 1) {
             output[end] = 'Z';
         } else {
-            const offset = self.options.offset.minutes;
-            const magnitude: u32 = @abs(offset);
-            output[end] = if (offset < 0) '-' else '+';
+            const magnitude: u32 = @abs(offset.minutes);
+            output[end] = if (offset.minutes < 0) '-' else '+';
             digits(output[end + 1 ..][0..2], magnitude / 60);
             output[end + 3] = ':';
             digits(output[end + 4 ..][0..2], magnitude % 60);
