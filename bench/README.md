@@ -18,6 +18,7 @@
 | 证据 | 范围与边界 |
 | --- | --- |
 | [e8bd353 Foundation 详细对照](cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md) | 200 项同轮完整 Memory/Mmap；真实 spdlog 前端＋Rust 后台；中位、资源、尾部与噪声 |
+| [当前初始化诊断](evidence/2026-11-02-current-init-profile/README.md) | ce5aae9四配置strace与8800条JSON核对；不提供重复性/跨库排名 |
 | [应用影响](evidence/2026-11-01-application-impact/README.md) | 确定性业务模型、无 logger/P1/P4/P16、JSON/结果 oracle、用户态 PMU；合成负载边界 |
 | [prepared measure](evidence/2026-11-01-prepared-measure/README.md) | prepared 长度复用、节点/旧 codec 差分、完整文件与 PMU；负向尾部分位保留 |
 | [消费者批处理](evidence/2026-11-01-coalesced-delivery/README.md) | ready 批次合并、确认边界、文件与故障；两后端各自的 before/after |

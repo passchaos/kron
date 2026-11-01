@@ -1,0 +1,27 @@
+{
+  "status": "diagnostic-complete",
+  "source_commit": "ce5aae9910bdd36e0ae84abc44e04b6a8b1849a7",
+  "sources": {
+    "src/core/runtime_init.zig": "be4aef4137e7582de7df221c2fb0e2f191e6312b709faf443dcb973aae6026b4",
+    "src/core/thread_registry.zig": "b73e0e8100a26755e2920e642563e2582d57dc237da34da573b60b9fc6e5f09e",
+    "src/journal/journal.zig": "0edf44dcf01f7238f2d600e623030174af7b85db3fa828af1e1e388b36fdefb7",
+    "src/journal/storage.zig": "9e5cda5a5b6661ea4fa9d01f36447ec14608262e1c6d223f605b51369e5e0b31",
+    "src/journal/format.zig": "42f51820eb57462968cd68ccce6dbf9f4c590ea96b278d5698c751c750992f1d",
+    "src/platform/mapping.zig": "b6a42c1725a2cabf3e58e9ce21c9fac5e2d985a24dc7bc0ba6396ea8d7e881a4",
+    "src/platform/mapping/linux.zig": "73cd84302e553a1ed757d2f932e7c7a15cd86d9715148a26120462b793f270a2",
+    "bench/main.zig": "d2291e1e692a6b163a4d4f685d0bcd82f9f1d67a198235549c9ffbe1577be738",
+    "bench/measurement.zig": "8199b39fd9a1cd499f0d8bf698ad9db95ef31473138cb3f2e67c84cbc1be35a2",
+    "bench/args.zig": "496b967537dfd8d47bdc5a9164adc837a1044560d12ebee023ed5cf6cd5d0680"
+  },
+  "traced_processes": 4,
+  "phases": 8,
+  "records_checked": 8800,
+  "status_per_phase": "all ok, measured accepted=written=1000, warmup=100, no drop/errors/pending",
+  "limitations": [
+    "strace perturbs wall time",
+    "one traced process per configuration, not repeated ranking",
+    "syscall sums cover both initialization and remainder of the process",
+    "no comparison to Foundation or alternate implementation"
+  ],
+  "next_candidate": "Study initialization dirty-page and publication workload with explicit before/after/failure/recovery checks; preserve required file and directory publication barriers."
+}

@@ -1,0 +1,33 @@
+kron-bench: UnknownArgument
+Usage: kron-bench [--KEY=VALUE | --KEY VALUE] [--filtered] [--durable]
+Runs independent sampled-latency and batch-average trials with final drain.
+  --mode sync|async|spsc          Default sync; spsc attaches each producer.
+  --storage mmap|memory          Queue storage; default mmap; sync reports none.
+  --sink memory|file             Default memory.
+  --backend portable|auto|linux_uring  File backend; default portable.
+  --events N                     Total attempts per trial; default 10000.
+  --producers 1|4|16              Default 1; events split across producers.
+  --fields 0|5|10                Default 5 typed attributes.
+  --payload numeric|short|long    Default numeric.
+  --string-bytes N               Long message/attribute size; default 256.
+  --temperature warm|cold        Default warm; cold means no emit warmup.
+  --warmup-events N              Total excluded warmup attempts; default 1000.
+  --samples N                    Maximum latency samples; default 10000.
+  --format json|text|logfmt       Encoder output; default json.
+  --output json|csv              Benchmark report; default JSON Lines.
+  --overflow block|drop_newest    Journal overload policy; default block.
+  --memory-bytes N               Memory sink budget; default 67108864.
+  --journal-slots N              Power of two; default 256.
+  --channel-slots N              Per SPSC channel capacity; default 256.
+  --journal-bytes N              Total shared + SPSC budget; default 268435456.
+  --idle auto|sleep|spin          Auto uses runtime defaults.
+  --clock dynamic|std_io|native|none  Event timestamp path; default dynamic.
+  --schema                       Prepared metadata v2; async/SPSC + dynamic clock.
+  --max-record-bytes N           Journal/runtime record bound; default 16384.
+  --buffer-bytes N               File staging/batch budget; default 65536.
+  --queue-depth N                Power of two, <=256; default 4.
+  --work-dir PATH                Default .zig-cache/kron-bench; keeps artifacts.
+  --filtered                     Emit info while runtime filter is off.
+  --durable                      Time an additional final durable flush.
+  --help, -h                     Show this help.
+All sizes are decimal bytes. Unknown or incompatible arguments are errors.

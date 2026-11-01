@@ -39,7 +39,7 @@ Zig 0.16 的 Windows/Linux/macOS/Android/iOS 单机日志，覆盖同步、共�
 | --- | --- | --- |
 | 1 | 稳定完整流程与跨库性能 | 对明确源码在低噪声环境建立同语义基线，包括 init/warmup/producer/written/shutdown/cleanup；不叠加历史百分比 |
 | 1 | 尾延迟和过载对应用的影响 | burst、持续满队列、慢 sink、更多 producer；检查阻塞、积压年龄、CPU/cache/调度竞争及无 logger 基线 |
-| 1 | Mmap 启动与资源成本 | 冷发布/channel 准备、实际 payload 分布、预分配空间与总生命周期；保持发布/恢复协议 |
+| 1 | Mmap 启动与资源成本 | 当前ce5aae9的四配置strace诊断核对8800条JSON，Mmap主要时间在文件/目录fsync；研究fresh初始化dirty-page/发布工作量，保持prefault与恢复/持久化边界。见 [启动诊断](../bench/evidence/2026-11-02-current-init-profile/README.md) |
 | 2 | 更广业务/durable 回归覆盖 | 0/5/10 fields、长短字符串、P1/P4/P16、warm/cold、attach/detach、reload/rolling 与独立 durable 测量 |
 | 2 | 更广故障、升级与持续 fuzz | 多文件系统/设备系统停机、物理掉电、长期 seed/sanitizer、nested/轮转/版本升级组合 |
 | 2 | 非 Linux 平台运行 | 对目标设备实际日志、生命周期、journal 恢复及可用 durable 能力给出报告 |
