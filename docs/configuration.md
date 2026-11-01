@@ -62,6 +62,8 @@ admission固定实际filter generation与route snapshot。嵌套另一Runtime期
 
 每个成功 admission 固定同一快照，直到字段捕获、脱敏和提交完成。accepted journal record 另持有该快照，后台按记录的 `route_generation + route_fingerprint` 找回原目标；最新 filter、格式或 sink 不会重新解释旧事件。
 
+普通共享admission直接持有begin阶段已经验证的配置View，在end或错误展开时释放reader；不再先将该View转换成pending pin后立刻释放reader。accepted journal record仍在commit前另持有pending pin，因此后台可能先写出/回收record，尚未结束的admission reader仍保护旧配置与sink lease。registry原有reader/pending双重保护继续阻止collect/reuse。filtered/sampled在begin内释放本地View，capture或sync失败也释放admission reader；SPSC继续使用channel缓存，控制/deadline资源仍使用原pending-pin协议。真实Memory/Mmap计数与并发旧lease回归、完整对照和性能范围见[admission View证据](../bench/evidence/2026-11-01-admission-view/README.md)。
+
 省略 `RouteOptions.release` 时，sink 由调用者拥有。调用者不能只因为新配置已发布就销毁旧 sink；先 flush，再使用 `configurationReadyToCollect(version)` 和 `collectConfigurations()` 确认旧版本可以回收。
 
 显式提供 `release = .{ .context = owner, .release = callback }` 时，成功发布转移该资源 lease 的责任。相同 context+callback 的 lease 在全部版本间计数，最后依赖消失才调用一次。发布失败或 Runtime 初始化失败不接管 caller ownership。release 回调在路由写锁和 Runtime delivery/configuration 锁外运行；可发布其他配置，但不能重入关闭/销毁正在清理的 Runtime。

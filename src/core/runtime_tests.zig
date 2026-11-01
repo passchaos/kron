@@ -2,6 +2,9 @@ const std = @import("std");
 const Runtime = @import("runtime.zig").Runtime;
 const EmitResult = @import("logger.zig").EmitResult;
 const MemorySink = @import("../sink/memory.zig").MemorySink;
+test {
+    _ = @import("runtime_admission_view_tests.zig");
+}
 const fields = @import("field.zig");
 
 test "admission paused after old snapshot retains its already completed filter overlay" {

@@ -115,6 +115,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 后续schema融合以 `366adc3` 为基线完成最终240项完整文件与40项完整PMU对照，另20项百万条P1复查，共5630万条物理JSON核对。Prepared Memory P4共享/SPSC吞吐中位提升6.35%/8.03%，通过本轮重复性门限且中位区间不重叠；schema用户态指令减少约1.8%–1.9%。Mmap多数组与调用尾部仍inconclusive，P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠，原慢值保留。最终完整ReleaseSafe门禁93/93步骤、545/545测试与九目标编译通过。原始候选、否决的指针版本、中断捕获、额外消费者栈和最终资格边界见[schema完整对照](bench/evidence/2026-11-01-consumer-post-coalescing/README.md)；不据此宣布新的跨库排名。
 
+共享admission进一步直接持有已验证的配置View，结束时释放reader，accepted记录保留独立pin。正式370项完整文件/PMU/百万条复查核对5437万条JSON；shared schema Mmap单producer长流程中位提升4.79%，重复性通过且置信区间不重叠。其他路径没有一般收益资格，PMU shared Memory四producer负向中位3.36%也保留。被否决的文件缓冲callback候选及admission数据分别归档；当前结果和并发lease验证见[admission View对照](bench/evidence/2026-11-01-admission-view/README.md)，新跨库排名仍需同轮复测。
+
 ## 实施顺序
 
 1. 固定事件、字段、配置和可靠性契约，建立 Zig 0.16 构建骨架。

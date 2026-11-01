@@ -1,0 +1,16 @@
+src/core/runtime_admission_view_tests.zig:15:55: error: struct 'core.runtime.Runtime' has no member named 'RouteOptions'
+    fn route(self: *@This(), name: []const u8) Runtime.RouteOptions {
+                                               ~~~~~~~^~~~~~~~~~~~~
+src/core/runtime.zig:64:21: note: struct declared here
+pub const Runtime = struct {
+                    ^~~~~~
+referenced by:
+    test.shared admission old view preserves retired lease before reserve and after worker acknowledgement: src/core/runtime_admission_view_tests.zig:89:25
+    test_0: src/core/runtime_tests.zig:6:17
+    4 reference(s) hidden; use '-freference-trace=6' to see all references
+src/core/runtime_admission_view_tests.zig:50:45: error: struct 'core.runtime.Runtime' has no member named 'EmitResult'
+        try std.testing.expectEqual(Runtime.EmitResult.accepted, try runtime.submit(admission, .{ .level = .info, .scope = "view", .message = "held", .timestamp_ns = 0, .fields = &.{} }));
+                                            ^~~~~~~~~~
+src/core/runtime.zig:64:21: note: struct declared here
+pub const Runtime = struct {
+                    ^~~~~~

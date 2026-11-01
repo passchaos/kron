@@ -363,7 +363,8 @@ pub const Runtime = struct {
     fn beginDecision(self: *Runtime, level: Level, scope: []const u8) BeginResult {
         const bound = self.dynamicFilter().boundDecision(scope);
         const view = self.configurationManager().acquire();
-        defer view.release();
+        var transferred = false;
+        defer if (!transferred) view.release();
         const snapshot = view.snapshot;
         if (@import("builtin").is_test) if (TestingHooks.after_snapshot) |hook| hook(TestingHooks.context.?);
         const mask = routeMaskIn(snapshot, level, scope, bound);
@@ -380,7 +381,11 @@ pub const Runtime = struct {
                 return .sampled;
             }
         }
-        self.attachSnapshot(snapshot);
+        // The checked View already protects this snapshot. Transfer its reader
+        // to the admitted call instead of converting it to another pending pin.
+        // Accepted records still retain their independent pin before commit.
+        admission_protocol.attachResource(self, snapshot, releaseAdmissionView);
+        transferred = true;
         admission_protocol.attachFilterDecision(self, scope, bound);
         return .{ .ready = .{ .route_mask = mask, .config_generation = filterGeneration(snapshot, bound), .route_generation = snapshot.generation, .route_fingerprint = snapshot.fingerprint } };
     }
@@ -429,9 +434,9 @@ pub const Runtime = struct {
         return .{ .ready = .{ .route_mask = mask, .config_generation = filterGeneration(snapshot, bound), .route_generation = snapshot.generation, .route_fingerprint = snapshot.fingerprint } };
     }
 
-    fn attachSnapshot(self: *Runtime, snapshot: *configurations.Snapshot) void {
-        snapshot.retain();
-        admission_protocol.attachResource(self, snapshot, releaseSnapshot);
+    fn releaseAdmissionView(raw: *anyopaque) void {
+        const snapshot: *configurations.Snapshot = @ptrCast(@alignCast(raw));
+        (@as(configurations.View, .{ .snapshot = snapshot })).release();
     }
 
     fn retainSnapshot(raw: *anyopaque) void {
