@@ -1,0 +1,1513 @@
+
+bench/evidence/2026-11-01-cross-queue-delivery/kron-ref-after:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000001113270 <core.consumer_delivery.emit__anon_38181>:
+ 1113270:	push   %rbp
+ 1113271:	mov    %rsp,%rbp
+ 1113274:	push   %r15
+ 1113276:	push   %r14
+ 1113278:	push   %r13
+ 111327a:	push   %r12
+ 111327c:	push   %rbx
+ 111327d:	sub    $0x55a8,%rsp
+ 1113284:	mov    0x3110(%rdi),%r14
+ 111328b:	mov    0x3118(%rdi),%rbx
+ 1113292:	mov    $0x1,%r10d
+ 1113298:	xor    %eax,%eax
+ 111329a:	lock cmpxchg %r10d,0x31d4(%rdi)
+ 11132a3:	setne  -0x398(%rbp)
+ 11132aa:	mov    %rcx,%r15
+ 11132ad:	mov    %r9,-0xc0(%rbp)
+ 11132b4:	mov    %r8,-0x88(%rbp)
+ 11132bb:	mov    %rdx,-0x58(%rbp)
+ 11132bf:	mov    %rdi,-0x30(%rbp)
+ 11132c3:	lea    0x31d4(%rdi),%rcx
+ 11132ca:	mov    %rcx,-0x68(%rbp)
+ 11132ce:	setne  %cl
+ 11132d1:	test   %cl,%cl
+ 11132d3:	mov    %r15,-0x48(%rbp)
+ 11132d7:	jne    1114a15 <core.consumer_delivery.emit__anon_38181+0x17a5>
+ 11132dd:	mov    %rsi,-0x16d0(%rbp)
+ 11132e4:	lea    -0x16c8(%rbp),%r14
+ 11132eb:	movq   $0x0,-0xcc8(%rbp)
+ 11132f6:	test   %r15,%r15
+ 11132f9:	je     1113ce9 <core.consumer_delivery.emit__anon_38181+0xa79>
+ 11132ff:	mov    -0x58(%rbp),%rax
+ 1113303:	lea    0x10(%rax),%rcx
+ 1113307:	xor    %edx,%edx
+ 1113309:	nopl   0x0(%rax)
+ 1113310:	mov    (%rcx),%r13
+ 1113313:	mov    0x8(%rcx),%rbx
+ 1113317:	cmpb   $0x0,0x30(%rcx)
+ 111331b:	mov    %rcx,-0x78(%rbp)
+ 111331f:	mov    %rdx,-0x70(%rbp)
+ 1113323:	je     1113650 <core.consumer_delivery.emit__anon_38181+0x3e0>
+ 1113329:	mov    %rbx,%r12
+ 111332c:	mov    -0x88(%rbp),%rax
+ 1113333:	mov    (%rax,%rdx,8),%rbx
+ 1113337:	mov    0x28(%rcx),%rax
+ 111333b:	mov    %rax,-0xf0(%rbp)
+ 1113342:	vmovups 0x18(%rcx),%xmm0
+ 1113347:	vmovaps %xmm0,-0x100(%rbp)
+ 111334f:	cmpb   $0x0,0x248(%rbx)
+ 1113356:	je     1113e51 <core.consumer_delivery.emit__anon_38181+0xbe1>
+ 111335c:	lea    0x1c8(%rbx),%rdi
+ 1113363:	mov    -0x100(%rbp),%r14d
+ 111336a:	lea    -0x100(%rbp),%rsi
+ 1113371:	call   1122d60 <journal.schema.Registry.validateReady>
+ 1113376:	test   %ax,%ax
+ 1113379:	jne    1114723 <core.consumer_delivery.emit__anon_38181+0x14b3>
+ 111337f:	dec    %r14d
+ 1113382:	imul   $0xd8,%r14,%rax
+ 1113389:	mov    0x230(%rbx),%rcx
+ 1113390:	vmovups 0xa8(%rcx,%rax,1),%ymm0
+ 1113399:	vmovups %ymm0,-0x1f0(%rbp)
+ 11133a1:	vmovups 0x88(%rcx,%rax,1),%ymm0
+ 11133aa:	vmovups %ymm0,-0x210(%rbp)
+ 11133b2:	vmovups 0x8(%rcx,%rax,1),%ymm0
+ 11133b8:	vmovups 0x28(%rcx,%rax,1),%ymm1
+ 11133be:	vmovups 0x48(%rcx,%rax,1),%ymm2
+ 11133c4:	vmovups 0x68(%rcx,%rax,1),%ymm3
+ 11133ca:	vmovups %ymm3,-0x230(%rbp)
+ 11133d2:	vmovups %ymm2,-0x250(%rbp)
+ 11133da:	vmovups %ymm1,-0x270(%rbp)
+ 11133e2:	vmovups %ymm0,-0x290(%rbp)
+ 11133ea:	movb   $0x1,-0x1d0(%rbp)
+ 11133f1:	lea    -0x290(%rbp),%r14
+ 11133f8:	cmp    $0x40,%r15
+ 11133fc:	mov    %r12,%rbx
+ 11133ff:	jb     1113874 <core.consumer_delivery.emit__anon_38181+0x604>
+ 1113405:	cmp    $0x6,%rbx
+ 1113409:	jb     11140a0 <core.consumer_delivery.emit__anon_38181+0xe30>
+ 111340f:	movzbl -0x238(%rbp),%r14d
+ 1113417:	mov    -0x230(%rbp),%r12
+ 111341e:	mov    -0x228(%rbp),%r15
+ 1113425:	mov    %r13,%rax
+ 1113428:	movzbl -0x1d8(%rbp),%r13d
+ 1113430:	mov    %rax,-0x40(%rbp)
+ 1113434:	movzwl 0x4(%rax),%ecx
+ 1113438:	cmp    $0x2,%ecx
+ 111343b:	je     1113446 <core.consumer_delivery.emit__anon_38181+0x1d6>
+ 111343d:	cmp    $0x5,%ecx
+ 1113440:	jne    11143da <core.consumer_delivery.emit__anon_38181+0x116a>
+ 1113446:	lea    -0x398(%rbp),%rdi
+ 111344d:	mov    -0x40(%rbp),%rsi
+ 1113451:	mov    %rbx,%rdx
+ 1113454:	vzeroupper
+ 1113457:	call   1120c00 <core.codec.readHeader>
+ 111345c:	movzwl -0x298(%rbp),%r8d
+ 1113464:	test   %r8w,%r8w
+ 1113468:	jne    1114145 <core.consumer_delivery.emit__anon_38181+0xed5>
+ 111346e:	cmp    %r12,-0x2b8(%rbp)
+ 1113475:	jne    1113e7c <core.consumer_delivery.emit__anon_38181+0xc0c>
+ 111347b:	mov    %r15,%r9
+ 111347e:	cmp    %r15,-0x2b0(%rbp)
+ 1113485:	jne    1113e7c <core.consumer_delivery.emit__anon_38181+0xc0c>
+ 111348b:	movzbl -0x2db(%rbp),%eax
+ 1113492:	xor    %al,%r13b
+ 1113495:	test   $0x1,%r13b
+ 1113499:	jne    1113e7c <core.consumer_delivery.emit__anon_38181+0xc0c>
+ 111349f:	movzwl -0x2a0(%rbp),%ecx
+ 11134a6:	mov    %ecx,%edx
+ 11134a8:	and    $0x1,%dl
+ 11134ab:	test   %r14b,%r14b
+ 11134ae:	setne  %sil
+ 11134b2:	cmp    %dl,%sil
+ 11134b5:	jne    1113e7c <core.consumer_delivery.emit__anon_38181+0xc0c>
+ 11134bb:	mov    $0x100,%edx
+ 11134c0:	sub    %r12,%rdx
+ 11134c3:	jb     11140ba <core.consumer_delivery.emit__anon_38181+0xe4a>
+ 11134c9:	cmp    %rdx,%r9
+ 11134cc:	ja     11140ba <core.consumer_delivery.emit__anon_38181+0xe4a>
+ 11134d2:	vmovups -0x2fb(%rbp),%ymm0
+ 11134da:	vmovups %ymm0,-0x123(%rbp)
+ 11134e2:	vmovups -0x318(%rbp),%ymm0
+ 11134ea:	vmovups %ymm0,-0x140(%rbp)
+ 11134f2:	vmovups -0x398(%rbp),%ymm0
+ 11134fa:	vmovups -0x358(%rbp),%ymm1
+ 1113502:	vmovups -0x338(%rbp),%ymm2
+ 111350a:	vmovups %ymm2,-0x160(%rbp)
+ 1113512:	vmovups %ymm1,-0x180(%rbp)
+ 111351a:	vmovups -0x378(%rbp),%ymm1
+ 1113522:	vmovups %ymm1,-0x1a0(%rbp)
+ 111352a:	vmovups %ymm0,-0x1c0(%rbp)
+ 1113532:	lea    -0x2da(%rbp),%rsi
+ 1113539:	vmovups (%rsi),%ymm0
+ 111353d:	vmovups %ymm0,-0xb0(%rbp)
+ 1113545:	movzwl 0x20(%rsi),%edx
+ 1113549:	mov    %dx,-0x90(%rbp)
+ 1113550:	mov    0x3c(%rsi),%edx
+ 1113553:	mov    %edx,-0x38(%rbp)
+ 1113556:	movzwl 0x40(%rsi),%edx
+ 111355a:	mov    %dx,-0x34(%rbp)
+ 111355e:	vmovups -0x123(%rbp),%ymm0
+ 1113566:	vmovups %ymm0,-0x443(%rbp)
+ 111356e:	vmovups -0x140(%rbp),%ymm0
+ 1113576:	vmovups %ymm0,-0x460(%rbp)
+ 111357e:	vmovups -0x1c0(%rbp),%ymm0
+ 1113586:	vmovups -0x1a0(%rbp),%ymm1
+ 111358e:	vmovups -0x180(%rbp),%ymm2
+ 1113596:	vmovups -0x160(%rbp),%ymm3
+ 111359e:	vmovups %ymm3,-0x480(%rbp)
+ 11135a6:	vmovups %ymm2,-0x4a0(%rbp)
+ 11135ae:	vmovups %ymm1,-0x4c0(%rbp)
+ 11135b6:	vmovups %ymm0,-0x4e0(%rbp)
+ 11135be:	mov    %al,-0x423(%rbp)
+ 11135c4:	mov    -0x2a8(%rbp),%rdx
+ 11135cb:	movzwl -0x90(%rbp),%esi
+ 11135d2:	lea    -0x422(%rbp),%rdi
+ 11135d9:	mov    %si,0x20(%rdi)
+ 11135dd:	vmovups -0xb0(%rbp),%ymm0
+ 11135e5:	vmovups %ymm0,(%rdi)
+ 11135e9:	mov    %r12,-0x400(%rbp)
+ 11135f0:	mov    %r9,-0x3f8(%rbp)
+ 11135f7:	mov    %rdx,-0x3f0(%rbp)
+ 11135fe:	mov    %cx,-0x3e8(%rbp)
+ 1113605:	movzwl -0x34(%rbp),%ecx
+ 1113609:	mov    %cx,0x40(%rdi)
+ 111360d:	mov    -0x38(%rbp),%ecx
+ 1113610:	mov    %ecx,0x3c(%rdi)
+ 1113613:	lea    -0x1d0(%rbp),%r15
+ 111361a:	lea    -0x290(%rbp),%r14
+ 1113621:	lea    -0x4e0(%rbp),%r13
+ 1113628:	test   $0x1,%al
+ 111362a:	mov    %rbx,-0x50(%rbp)
+ 111362e:	je     1113729 <core.consumer_delivery.emit__anon_38181+0x4b9>
+ 1113634:	mov    -0x40(%rbp),%r13
+ 1113638:	cmpb   $0x0,(%r15)
+ 111363c:	mov    -0x50(%rbp),%rbx
+ 1113640:	jne    1113874 <core.consumer_delivery.emit__anon_38181+0x604>
+ 1113646:	jmp    11139a6 <core.consumer_delivery.emit__anon_38181+0x736>
+ 111364b:	nopl   0x0(%rax,%rax,1)
+ 1113650:	lea    -0x8b8(%rbp),%rdi
+ 1113657:	mov    %r13,%rsi
+ 111365a:	mov    %rbx,%rdx
+ 111365d:	mov    $0x4,%ecx
+ 1113662:	call   1120c00 <core.codec.readHeader>
+ 1113667:	movzwl -0x7b8(%rbp),%r8d
+ 111366f:	test   %r8d,%r8d
+ 1113672:	jne    111397e <core.consumer_delivery.emit__anon_38181+0x70e>
+ 1113678:	mov    %r13,-0x40(%rbp)
+ 111367c:	vmovups -0x818(%rbp),%ymm0
+ 1113684:	vmovups %ymm0,-0x540(%rbp)
+ 111368c:	vmovups -0x7d8(%rbp),%ymm0
+ 1113694:	vmovups %ymm0,-0x500(%rbp)
+ 111369c:	vmovups -0x7f8(%rbp),%ymm0
+ 11136a4:	vmovups %ymm0,-0x520(%rbp)
+ 11136ac:	vmovups -0x838(%rbp),%ymm0
+ 11136b4:	vmovups %ymm0,-0x560(%rbp)
+ 11136bc:	vmovups -0x8b8(%rbp),%ymm0
+ 11136c4:	vmovups -0x898(%rbp),%ymm1
+ 11136cc:	vmovups -0x878(%rbp),%ymm2
+ 11136d4:	vmovups -0x858(%rbp),%ymm3
+ 11136dc:	vmovups %ymm3,-0x580(%rbp)
+ 11136e4:	vmovups %ymm2,-0x5a0(%rbp)
+ 11136ec:	vmovups %ymm1,-0x5c0(%rbp)
+ 11136f4:	vmovups %ymm0,-0x5e0(%rbp)
+ 11136fc:	movzbl -0x523(%rbp),%eax
+ 1113703:	mov    $0x1066b88,%r14d
+ 1113709:	mov    $0x1066c48,%r15d
+ 111370f:	mov    -0x4f8(%rbp),%r9
+ 1113716:	lea    -0x5e0(%rbp),%r13
+ 111371d:	test   $0x1,%al
+ 111371f:	mov    %rbx,-0x50(%rbp)
+ 1113723:	jne    1113634 <core.consumer_delivery.emit__anon_38181+0x3c4>
+ 1113729:	test   %r9,%r9
+ 111372c:	jne    1113862 <core.consumer_delivery.emit__anon_38181+0x5f2>
+ 1113732:	mov    0x58(%r13),%r12
+ 1113736:	mov    0xb8(%r13),%eax
+ 111373d:	mov    %eax,-0x7c(%rbp)
+ 1113740:	mov    0x60(%r13),%rcx
+ 1113744:	mov    0x68(%r13),%rdx
+ 1113748:	lea    -0xd0(%rbp),%rdi
+ 111374f:	lea    -0x16d0(%rbp),%rsi
+ 1113756:	vzeroupper
+ 1113759:	call   1110210 <core.delivery_batch.Configurations.select>
+ 111375e:	movzwl -0xc8(%rbp),%r8d
+ 1113766:	test   %r8w,%r8w
+ 111376a:	jne    1113f1c <core.consumer_delivery.emit__anon_38181+0xcac>
+ 1113770:	mov    -0xd0(%rbp),%rbx
+ 1113777:	mov    (%rbx),%rcx
+ 111377a:	mov    0x7448(%rcx),%rdx
+ 1113781:	cmp    $0x40,%rdx
+ 1113785:	je     1113795 <core.consumer_delivery.emit__anon_38181+0x525>
+ 1113787:	shrx   %rdx,%r12,%rax
+ 111378c:	test   %rax,%rax
+ 111378f:	jne    1113fe0 <core.consumer_delivery.emit__anon_38181+0xd70>
+ 1113795:	mov    %rbx,-0xb8(%rbp)
+ 111379c:	mov    %rcx,%rbx
+ 111379f:	mov    0x7440(%rcx),%rsi
+ 11137a6:	mov    -0x30(%rbp),%rax
+ 11137aa:	vmovups 0x3168(%rax),%xmm0
+ 11137b2:	mov    -0xc0(%rbp),%rax
+ 11137b9:	mov    %rax,0x28(%rsp)
+ 11137be:	lea    -0x55a0(%rbp),%rax
+ 11137c5:	mov    %rax,0x20(%rsp)
+ 11137ca:	vmovups %xmm0,0x10(%rsp)
+ 11137d0:	mov    %r14,0x8(%rsp)
+ 11137d5:	mov    %r13,(%rsp)
+ 11137d9:	lea    -0x5c(%rbp),%rdi
+ 11137dd:	mov    %r12,%rcx
+ 11137e0:	mov    -0x40(%rbp),%r13
+ 11137e4:	mov    %r13,%r8
+ 11137e7:	mov    -0x50(%rbp),%r9
+ 11137eb:	call   1110460 <core.delivery.emitWireFused>
+ 11137f0:	movzwl -0x5c(%rbp),%r8d
+ 11137f5:	test   %r8w,%r8w
+ 11137f9:	jne    1114791 <core.consumer_delivery.emit__anon_38181+0x1521>
+ 11137ff:	cmpb   $0x1,-0x5a(%rbp)
+ 1113803:	jne    1113866 <core.consumer_delivery.emit__anon_38181+0x5f6>
+ 1113805:	mov    -0x70(%rbp),%rdx
+ 1113809:	mov    -0x7c(%rbp),%eax
+ 111380c:	mov    %eax,-0x1da0(%rbp,%rdx,4)
+ 1113813:	mov    %rbx,-0x25a0(%rbp,%rdx,8)
+ 111381b:	mov    -0xb8(%rbp),%rbx
+ 1113822:	or     %r12,0x10(%rbx)
+ 1113826:	mov    0x20(%rbx),%rax
+ 111382a:	test   %r12,%rax
+ 111382d:	je     1113833 <core.consumer_delivery.emit__anon_38181+0x5c3>
+ 111382f:	or     %r12,0x18(%rbx)
+ 1113833:	test   %r12,%rax
+ 1113836:	setne  -0x17d0(%rbp,%rdx,1)
+ 111383e:	lea    -0x16c8(%rbp),%r14
+ 1113845:	mov    -0x78(%rbp),%rcx
+ 1113849:	mov    -0x48(%rbp),%r15
+ 111384d:	inc    %rdx
+ 1113850:	add    $0x48,%rcx
+ 1113854:	cmp    %rdx,%r15
+ 1113857:	jne    1113310 <core.consumer_delivery.emit__anon_38181+0xa0>
+ 111385d:	jmp    1113b16 <core.consumer_delivery.emit__anon_38181+0x8a6>
+ 1113862:	mov    -0x40(%rbp),%r13
+ 1113866:	cmpb   $0x0,(%r15)
+ 111386a:	mov    -0x50(%rbp),%rbx
+ 111386e:	je     11139a6 <core.consumer_delivery.emit__anon_38181+0x736>
+ 1113874:	vmovups 0xa0(%r14),%ymm0
+ 111387d:	vmovups %ymm0,-0xa60(%rbp)
+ 1113885:	vmovups 0x80(%r14),%ymm0
+ 111388e:	vmovups %ymm0,-0xa80(%rbp)
+ 1113896:	vmovups (%r14),%ymm0
+ 111389b:	vmovups 0x20(%r14),%ymm1
+ 11138a1:	vmovups 0x40(%r14),%ymm2
+ 11138a7:	vmovups 0x60(%r14),%ymm3
+ 11138ad:	vmovups %ymm3,-0xaa0(%rbp)
+ 11138b5:	vmovups %ymm2,-0xac0(%rbp)
+ 11138bd:	vmovups %ymm1,-0xae0(%rbp)
+ 11138c5:	vmovups %ymm0,-0xb00(%rbp)
+ 11138cd:	lea    -0x6c8(%rbp),%rdi
+ 11138d4:	mov    %r13,%rsi
+ 11138d7:	mov    %rbx,%rdx
+ 11138da:	lea    -0xb00(%rbp),%rcx
+ 11138e1:	lea    -0x55a0(%rbp),%r8
+ 11138e8:	vzeroupper
+ 11138eb:	call   1122180 <core.schema_codec.resolve>
+ 11138f0:	movzwl -0x5e8(%rbp),%r8d
+ 11138f8:	test   %r8w,%r8w
+ 11138fc:	jne    1114742 <core.consumer_delivery.emit__anon_38181+0x14d2>
+ 1113902:	vmovups -0x608(%rbp),%ymm0
+ 111390a:	vmovups %ymm0,-0xb20(%rbp)
+ 1113912:	vmovups -0x628(%rbp),%ymm0
+ 111391a:	vmovups %ymm0,-0xb40(%rbp)
+ 1113922:	vmovups -0x648(%rbp),%ymm0
+ 111392a:	vmovups %ymm0,-0xb60(%rbp)
+ 1113932:	vmovups -0x6c8(%rbp),%ymm0
+ 111393a:	vmovups -0x6a8(%rbp),%ymm1
+ 1113942:	vmovups -0x688(%rbp),%ymm2
+ 111394a:	vmovups -0x668(%rbp),%ymm3
+ 1113952:	vmovups %ymm3,-0xb80(%rbp)
+ 111395a:	vmovups %ymm2,-0xba0(%rbp)
+ 1113962:	vmovups %ymm1,-0xbc0(%rbp)
+ 111396a:	vmovups %ymm0,-0xbe0(%rbp)
+ 1113972:	lea    -0xbe0(%rbp),%r14
+ 1113979:	jmp    1113a4b <core.consumer_delivery.emit__anon_38181+0x7db>
+ 111397e:	cmp    $0x7a,%r8d
+ 1113982:	jne    1114a74 <core.consumer_delivery.emit__anon_38181+0x1804>
+ 1113988:	mov    %rbx,-0x50(%rbp)
+ 111398c:	mov    $0x1066c48,%r15d
+ 1113992:	mov    $0x1066b88,%r14d
+ 1113998:	cmpb   $0x0,(%r15)
+ 111399c:	mov    -0x50(%rbp),%rbx
+ 11139a0:	jne    1113874 <core.consumer_delivery.emit__anon_38181+0x604>
+ 11139a6:	lea    -0x7b0(%rbp),%rdi
+ 11139ad:	mov    %r13,%rsi
+ 11139b0:	mov    %rbx,%rdx
+ 11139b3:	lea    -0x55a0(%rbp),%rcx
+ 11139ba:	vzeroupper
+ 11139bd:	call   1121710 <core.codec.decode>
+ 11139c2:	movzwl -0x6d0(%rbp),%r8d
+ 11139ca:	test   %r8w,%r8w
+ 11139ce:	jne    1114b64 <core.consumer_delivery.emit__anon_38181+0x18f4>
+ 11139d4:	vmovups -0x6f0(%rbp),%ymm0
+ 11139dc:	vmovups %ymm0,-0xc00(%rbp)
+ 11139e4:	vmovups -0x710(%rbp),%ymm0
+ 11139ec:	vmovups %ymm0,-0xc20(%rbp)
+ 11139f4:	vmovups -0x730(%rbp),%ymm0
+ 11139fc:	vmovups %ymm0,-0xc40(%rbp)
+ 1113a04:	vmovups -0x7b0(%rbp),%ymm0
+ 1113a0c:	vmovups -0x790(%rbp),%ymm1
+ 1113a14:	vmovups -0x770(%rbp),%ymm2
+ 1113a1c:	vmovups -0x750(%rbp),%ymm3
+ 1113a24:	vmovups %ymm3,-0xc60(%rbp)
+ 1113a2c:	vmovups %ymm2,-0xc80(%rbp)
+ 1113a34:	vmovups %ymm1,-0xca0(%rbp)
+ 1113a3c:	vmovups %ymm0,-0xcc0(%rbp)
+ 1113a44:	lea    -0xcc0(%rbp),%r14
+ 1113a4b:	mov    0x58(%r14),%r12
+ 1113a4f:	mov    0x60(%r14),%rcx
+ 1113a53:	mov    0x68(%r14),%rdx
+ 1113a57:	mov    0xb8(%r14),%r13d
+ 1113a5e:	lea    -0xe0(%rbp),%rdi
+ 1113a65:	lea    -0x16d0(%rbp),%rsi
+ 1113a6c:	vzeroupper
+ 1113a6f:	call   1110210 <core.delivery_batch.Configurations.select>
+ 1113a74:	movzwl -0xd8(%rbp),%r8d
+ 1113a7c:	test   %r8w,%r8w
+ 1113a80:	jne    11146d4 <core.consumer_delivery.emit__anon_38181+0x1464>
+ 1113a86:	mov    -0xe0(%rbp),%r15
+ 1113a8d:	mov    (%r15),%rbx
+ 1113a90:	mov    0x7448(%rbx),%rdx
+ 1113a97:	cmp    $0x40,%rdx
+ 1113a9b:	je     1113aab <core.consumer_delivery.emit__anon_38181+0x83b>
+ 1113a9d:	shrx   %rdx,%r12,%rax
+ 1113aa2:	test   %rax,%rax
+ 1113aa5:	jne    1113e2b <core.consumer_delivery.emit__anon_38181+0xbbb>
+ 1113aab:	mov    0x7440(%rbx),%rsi
+ 1113ab2:	mov    -0x30(%rbp),%rdi
+ 1113ab6:	mov    %r14,%rcx
+ 1113ab9:	call   10fc6d0 <core.runtime.Runtime.deliverWith>
+ 1113abe:	test   %ax,%ax
+ 1113ac1:	jne    11146fa <core.consumer_delivery.emit__anon_38181+0x148a>
+ 1113ac7:	mov    -0x70(%rbp),%rdx
+ 1113acb:	mov    %r13d,-0x1da0(%rbp,%rdx,4)
+ 1113ad3:	mov    %rbx,-0x25a0(%rbp,%rdx,8)
+ 1113adb:	or     %r12,0x10(%r15)
+ 1113adf:	mov    0x20(%r15),%rax
+ 1113ae3:	test   %r12,%rax
+ 1113ae6:	je     1113aec <core.consumer_delivery.emit__anon_38181+0x87c>
+ 1113ae8:	or     %r12,0x18(%r15)
+ 1113aec:	test   %r12,%rax
+ 1113aef:	setne  -0x17d0(%rbp,%rdx,1)
+ 1113af7:	lea    -0x16c8(%rbp),%r14
+ 1113afe:	mov    -0x48(%rbp),%r15
+ 1113b02:	mov    -0x78(%rbp),%rcx
+ 1113b06:	inc    %rdx
+ 1113b09:	add    $0x48,%rcx
+ 1113b0d:	cmp    %rdx,%r15
+ 1113b10:	jne    1113310 <core.consumer_delivery.emit__anon_38181+0xa0>
+ 1113b16:	mov    -0xcc8(%rbp),%rbx
+ 1113b1d:	test   %rbx,%rbx
+ 1113b20:	mov    -0x58(%rbp),%r15
+ 1113b24:	jne    1113b59 <core.consumer_delivery.emit__anon_38181+0x8e9>
+ 1113b26:	mov    -0x30(%rbp),%rax
+ 1113b2a:	lea    0x3000(%rax),%rcx
+ 1113b31:	mov    %rcx,-0x78(%rbp)
+ 1113b35:	add    $0xffffffffffffff40,%rax
+ 1113b3b:	mov    %rax,-0x70(%rbp)
+ 1113b3f:	xor    %r12d,%r12d
+ 1113b42:	xor    %ebx,%ebx
+ 1113b44:	xor    %r14d,%r14d
+ 1113b47:	jmp    1113c0b <core.consumer_delivery.emit__anon_38181+0x99b>
+ 1113b4c:	nopl   0x0(%rax)
+ 1113b50:	add    $0x28,%r14
+ 1113b54:	dec    %rbx
+ 1113b57:	je     1113b26 <core.consumer_delivery.emit__anon_38181+0x8b6>
+ 1113b59:	mov    (%r14),%rax
+ 1113b5c:	mov    0x10(%r14),%rcx
+ 1113b60:	mov    0x7440(%rax),%rsi
+ 1113b67:	mov    0x7448(%rax),%rdx
+ 1113b6e:	mov    -0x30(%rbp),%rdi
+ 1113b72:	mov    $0x1,%r8d
+ 1113b78:	xor    %r9d,%r9d
+ 1113b7b:	call   1084d00 <core.runtime.Runtime.flushWith>
+ 1113b80:	test   %ax,%ax
+ 1113b83:	jne    1114768 <core.consumer_delivery.emit__anon_38181+0x14f8>
+ 1113b89:	mov    0x18(%r14),%rcx
+ 1113b8d:	test   %rcx,%rcx
+ 1113b90:	je     1113b50 <core.consumer_delivery.emit__anon_38181+0x8e0>
+ 1113b92:	mov    (%r14),%rax
+ 1113b95:	mov    0x7440(%rax),%rsi
+ 1113b9c:	mov    0x7448(%rax),%rdx
+ 1113ba3:	mov    -0x30(%rbp),%rdi
+ 1113ba7:	mov    $0x2,%r8d
+ 1113bad:	mov    $0x1,%r9d
+ 1113bb3:	call   1084d00 <core.runtime.Runtime.flushWith>
+ 1113bb8:	test   %ax,%ax
+ 1113bbb:	je     1113b50 <core.consumer_delivery.emit__anon_38181+0x8e0>
+ 1113bbd:	mov    %eax,%r8d
+ 1113bc0:	mov    -0xcc8(%rbp),%rcx
+ 1113bc7:	test   %rcx,%rcx
+ 1113bca:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1113bd0:	mov    %ecx,%eax
+ 1113bd2:	and    $0x7,%eax
+ 1113bd5:	cmp    $0x8,%rcx
+ 1113bd9:	jae    1114c54 <core.consumer_delivery.emit__anon_38181+0x19e4>
+ 1113bdf:	xor    %edx,%edx
+ 1113be1:	jmp    1114ce3 <core.consumer_delivery.emit__anon_38181+0x1a73>
+ 1113be6:	cs nopw 0x0(%rax,%rax,1)
+ 1113bf0:	inc    %r14
+ 1113bf3:	mov    -0x48(%rbp),%rcx
+ 1113bf7:	mov    -0x58(%rbp),%r15
+ 1113bfb:	inc    %r12
+ 1113bfe:	add    $0x48,%r15
+ 1113c02:	cmp    %r12,%rcx
+ 1113c05:	je     1113cde <core.consumer_delivery.emit__anon_38181+0xa6e>
+ 1113c0b:	mov    0x40(%r15),%rax
+ 1113c0f:	mov    %rax,-0x3a0(%rbp)
+ 1113c16:	vmovups (%r15),%ymm0
+ 1113c1b:	mov    %r15,-0x58(%rbp)
+ 1113c1f:	vmovups 0x20(%r15),%ymm1
+ 1113c25:	vmovups %ymm1,-0x3c0(%rbp)
+ 1113c2d:	vmovups %ymm0,-0x3e0(%rbp)
+ 1113c35:	mov    -0x1da0(%rbp,%r12,4),%r13d
+ 1113c3d:	mov    -0x25a0(%rbp,%r12,8),%r15
+ 1113c45:	mov    -0x88(%rbp),%rax
+ 1113c4c:	mov    (%rax,%r12,8),%rdi
+ 1113c50:	movzbl -0x17d0(%rbp,%r12,1),%edx
+ 1113c59:	lea    -0x3e0(%rbp),%rsi
+ 1113c60:	vzeroupper
+ 1113c63:	call   1110840 <journal.journal.Journal.releaseAfter>
+ 1113c68:	test   %ax,%ax
+ 1113c6b:	jne    11146a2 <core.consumer_delivery.emit__anon_38181+0x1432>
+ 1113c71:	test   %r13d,%r13d
+ 1113c74:	je     1113c90 <core.consumer_delivery.emit__anon_38181+0xa20>
+ 1113c76:	mov    %r13,%rax
+ 1113c79:	shl    $0x6,%rax
+ 1113c7d:	add    %rax,%r15
+ 1113c80:	add    $0xffffffffffffffc0,%r15
+ 1113c84:	jmp    1113c97 <core.consumer_delivery.emit__anon_38181+0xa27>
+ 1113c86:	cs nopw 0x0(%rax,%rax,1)
+ 1113c90:	add    $0x9800,%r15
+ 1113c97:	movslq %r13d,%rax
+ 1113c9a:	lock decq (%r15)
+ 1113c9e:	lea    (%rax,%rax,2),%rax
+ 1113ca2:	shl    $0x6,%rax
+ 1113ca6:	add    -0x70(%rbp),%rax
+ 1113caa:	test   %r13,%r13
+ 1113cad:	cmove  -0x78(%rbp),%rax
+ 1113cb2:	add    $0x40,%rax
+ 1113cb6:	cmp    %rax,%rbx
+ 1113cb9:	je     1113bf0 <core.consumer_delivery.emit__anon_38181+0x980>
+ 1113cbf:	test   %r14,%r14
+ 1113cc2:	mov    -0x48(%rbp),%rcx
+ 1113cc6:	mov    -0x58(%rbp),%r15
+ 1113cca:	je     1113cd0 <core.consumer_delivery.emit__anon_38181+0xa60>
+ 1113ccc:	lock add %r14,(%rbx)
+ 1113cd0:	mov    %rax,%rbx
+ 1113cd3:	mov    $0x1,%r14d
+ 1113cd9:	jmp    1113bfb <core.consumer_delivery.emit__anon_38181+0x98b>
+ 1113cde:	lock add %r14,(%rbx)
+ 1113ce2:	lea    -0x16c8(%rbp),%r14
+ 1113ce9:	mov    -0x30(%rbp),%rax
+ 1113ced:	lea    0x31c4(%rax),%rsi
+ 1113cf4:	lock incl 0x31c4(%rax)
+ 1113cfb:	mov    0x3110(%rax),%rdi
+ 1113d02:	mov    0x3118(%rax),%rax
+ 1113d09:	mov    $0xffffffff,%edx
+ 1113d0e:	call   *0x70(%rax)
+ 1113d11:	mov    -0xcc8(%rbp),%rcx
+ 1113d18:	test   %rcx,%rcx
+ 1113d1b:	je     1113df5 <core.consumer_delivery.emit__anon_38181+0xb85>
+ 1113d21:	mov    %ecx,%eax
+ 1113d23:	and    $0x7,%eax
+ 1113d26:	cmp    $0x8,%rcx
+ 1113d2a:	jae    1113d33 <core.consumer_delivery.emit__anon_38181+0xac3>
+ 1113d2c:	xor    %edx,%edx
+ 1113d2e:	jmp    1113dbb <core.consumer_delivery.emit__anon_38181+0xb4b>
+ 1113d33:	and    $0xfffffffffffffff8,%rcx
+ 1113d37:	add    $0x118,%r14
+ 1113d3e:	xor    %edx,%edx
+ 1113d40:	mov    -0x118(%r14),%rsi
+ 1113d47:	lock decq 0x97f8(%rsi)
+ 1113d4f:	mov    -0xf0(%r14),%rsi
+ 1113d56:	lock decq 0x97f8(%rsi)
+ 1113d5e:	mov    -0xc8(%r14),%rsi
+ 1113d65:	lock decq 0x97f8(%rsi)
+ 1113d6d:	mov    -0xa0(%r14),%rsi
+ 1113d74:	lock decq 0x97f8(%rsi)
+ 1113d7c:	mov    -0x78(%r14),%rsi
+ 1113d80:	lock decq 0x97f8(%rsi)
+ 1113d88:	mov    -0x50(%r14),%rsi
+ 1113d8c:	lock decq 0x97f8(%rsi)
+ 1113d94:	mov    -0x28(%r14),%rsi
+ 1113d98:	lock decq 0x97f8(%rsi)
+ 1113da0:	mov    (%r14),%rsi
+ 1113da3:	lock decq 0x97f8(%rsi)
+ 1113dab:	add    $0x8,%rdx
+ 1113daf:	add    $0x140,%r14
+ 1113db6:	cmp    %rdx,%rcx
+ 1113db9:	jne    1113d40 <core.consumer_delivery.emit__anon_38181+0xad0>
+ 1113dbb:	test   %rax,%rax
+ 1113dbe:	je     1113df5 <core.consumer_delivery.emit__anon_38181+0xb85>
+ 1113dc0:	lea    (%rdx,%rdx,4),%rcx
+ 1113dc4:	lea    -0x16c8(,%rcx,8),%rcx
+ 1113dcc:	add    %rbp,%rcx
+ 1113dcf:	shl    $0x3,%eax
+ 1113dd2:	lea    (%rax,%rax,4),%rax
+ 1113dd6:	xor    %edx,%edx
+ 1113dd8:	nopl   0x0(%rax,%rax,1)
+ 1113de0:	mov    (%rcx,%rdx,1),%rsi
+ 1113de4:	lock decq 0x97f8(%rsi)
+ 1113dec:	add    $0x28,%rdx
+ 1113df0:	cmp    %rdx,%rax
+ 1113df3:	jne    1113de0 <core.consumer_delivery.emit__anon_38181+0xb70>
+ 1113df5:	movq   $0x0,-0xcc8(%rbp)
+ 1113e00:	mov    -0x30(%rbp),%rdx
+ 1113e04:	mov    0x3110(%rdx),%rdi
+ 1113e0b:	mov    0x3118(%rdx),%rax
+ 1113e12:	xor    %ecx,%ecx
+ 1113e14:	xchg   %ecx,0x31d4(%rdx)
+ 1113e1a:	xor    %r8d,%r8d
+ 1113e1d:	cmp    $0x2,%ecx
+ 1113e20:	jne    1114573 <core.consumer_delivery.emit__anon_38181+0x1303>
+ 1113e26:	jmp    1114688 <core.consumer_delivery.emit__anon_38181+0x1418>
+ 1113e2b:	mov    -0xcc8(%rbp),%rcx
+ 1113e32:	test   %rcx,%rcx
+ 1113e35:	je     1114655 <core.consumer_delivery.emit__anon_38181+0x13e5>
+ 1113e3b:	mov    %ecx,%eax
+ 1113e3d:	and    $0x7,%eax
+ 1113e40:	cmp    $0x8,%rcx
+ 1113e44:	jae    111423a <core.consumer_delivery.emit__anon_38181+0xfca>
+ 1113e4a:	xor    %edx,%edx
+ 1113e4c:	jmp    11142cb <core.consumer_delivery.emit__anon_38181+0x105b>
+ 1113e51:	mov    $0x80,%r8w
+ 1113e56:	mov    -0xcc8(%rbp),%rcx
+ 1113e5d:	test   %rcx,%rcx
+ 1113e60:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1113e66:	mov    %ecx,%eax
+ 1113e68:	and    $0x7,%eax
+ 1113e6b:	cmp    $0x8,%rcx
+ 1113e6f:	jae    111430a <core.consumer_delivery.emit__anon_38181+0x109a>
+ 1113e75:	xor    %edx,%edx
+ 1113e77:	jmp    111439b <core.consumer_delivery.emit__anon_38181+0x112b>
+ 1113e7c:	vmovups -0xabde7(%rip),%ymm0        # 106809d <__anon_38560+0x9d>
+ 1113e84:	vmovups %ymm0,-0x123(%rbp)
+ 1113e8c:	vmovups -0xabe14(%rip),%ymm0        # 1068080 <__anon_38560+0x80>
+ 1113e94:	vmovups %ymm0,-0x140(%rbp)
+ 1113e9c:	vmovups -0xabe44(%rip),%ymm0        # 1068060 <__anon_38560+0x60>
+ 1113ea4:	vmovups %ymm0,-0x160(%rbp)
+ 1113eac:	vmovups -0xabe74(%rip),%ymm0        # 1068040 <__anon_38560+0x40>
+ 1113eb4:	vmovups %ymm0,-0x180(%rbp)
+ 1113ebc:	vmovups -0xabea4(%rip),%ymm0        # 1068020 <__anon_38560+0x20>
+ 1113ec4:	vmovups %ymm0,-0x1a0(%rbp)
+ 1113ecc:	vmovups -0xabed4(%rip),%ymm0        # 1068000 <__anon_38560>
+ 1113ed4:	vmovups %ymm0,-0x1c0(%rbp)
+ 1113edc:	vmovups -0xabe26(%rip),%ymm0        # 10680be <__anon_38560+0xbe>
+ 1113ee4:	vmovups %ymm0,-0xb0(%rbp)
+ 1113eec:	movw   $0x0,-0x90(%rbp)
+ 1113ef5:	movl   $0x0,-0x38(%rbp)
+ 1113efc:	movw   $0x0,-0x34(%rbp)
+ 1113f02:	mov    $0x90,%r8w
+ 1113f07:	mov    -0xcc8(%rbp),%rcx
+ 1113f0e:	test   %rcx,%rcx
+ 1113f11:	jne    1114155 <core.consumer_delivery.emit__anon_38181+0xee5>
+ 1113f17:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1113f1c:	cmpb   $0x0,(%r15)
+ 1113f20:	je     1113fba <core.consumer_delivery.emit__anon_38181+0xd4a>
+ 1113f26:	vmovups 0xa0(%r14),%ymm0
+ 1113f2f:	vmovups %ymm0,-0x8e0(%rbp)
+ 1113f37:	vmovups 0x80(%r14),%ymm0
+ 1113f40:	vmovups %ymm0,-0x900(%rbp)
+ 1113f48:	vmovups (%r14),%ymm0
+ 1113f4d:	vmovups 0x20(%r14),%ymm1
+ 1113f53:	vmovups 0x40(%r14),%ymm2
+ 1113f59:	vmovups 0x60(%r14),%ymm3
+ 1113f5f:	vmovups %ymm3,-0x920(%rbp)
+ 1113f67:	vmovups %ymm2,-0x940(%rbp)
+ 1113f6f:	vmovups %ymm1,-0x960(%rbp)
+ 1113f77:	vmovups %ymm0,-0x980(%rbp)
+ 1113f7f:	lea    -0x18b8(%rbp),%rdi
+ 1113f86:	lea    -0x980(%rbp),%rcx
+ 1113f8d:	mov    %r8d,%ebx
+ 1113f90:	lea    -0x55a0(%rbp),%r8
+ 1113f97:	mov    -0x40(%rbp),%rsi
+ 1113f9b:	mov    -0x50(%rbp),%rdx
+ 1113f9f:	vzeroupper
+ 1113fa2:	call   1122180 <core.schema_codec.resolve>
+ 1113fa7:	mov    %ebx,%r8d
+ 1113faa:	movzwl -0x17d8(%rbp),%ecx
+ 1113fb1:	test   %cx,%cx
+ 1113fb4:	jne    1114f75 <core.consumer_delivery.emit__anon_38181+0x1d05>
+ 1113fba:	mov    -0xcc8(%rbp),%rcx
+ 1113fc1:	test   %rcx,%rcx
+ 1113fc4:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1113fca:	mov    %ecx,%eax
+ 1113fcc:	and    $0x7,%eax
+ 1113fcf:	cmp    $0x8,%rcx
+ 1113fd3:	jae    111447a <core.consumer_delivery.emit__anon_38181+0x120a>
+ 1113fd9:	xor    %edx,%edx
+ 1113fdb:	jmp    111450b <core.consumer_delivery.emit__anon_38181+0x129b>
+ 1113fe0:	cmpb   $0x0,(%r15)
+ 1113fe4:	je     111407a <core.consumer_delivery.emit__anon_38181+0xe0a>
+ 1113fea:	vmovups 0xa0(%r14),%ymm0
+ 1113ff3:	vmovups %ymm0,-0x9a0(%rbp)
+ 1113ffb:	vmovups 0x80(%r14),%ymm0
+ 1114004:	vmovups %ymm0,-0x9c0(%rbp)
+ 111400c:	vmovups (%r14),%ymm0
+ 1114011:	vmovups 0x20(%r14),%ymm1
+ 1114017:	vmovups 0x40(%r14),%ymm2
+ 111401d:	vmovups 0x60(%r14),%ymm3
+ 1114023:	vmovups %ymm3,-0x9e0(%rbp)
+ 111402b:	vmovups %ymm2,-0xa00(%rbp)
+ 1114033:	vmovups %ymm1,-0xa20(%rbp)
+ 111403b:	vmovups %ymm0,-0xa40(%rbp)
+ 1114043:	lea    -0x19a0(%rbp),%rdi
+ 111404a:	lea    -0xa40(%rbp),%rcx
+ 1114051:	lea    -0x55a0(%rbp),%r8
+ 1114058:	mov    -0x40(%rbp),%rsi
+ 111405c:	mov    -0x50(%rbp),%rdx
+ 1114060:	vzeroupper
+ 1114063:	call   1122180 <core.schema_codec.resolve>
+ 1114068:	movzwl -0x18c0(%rbp),%r8d
+ 1114070:	test   %r8w,%r8w
+ 1114074:	jne    1114f97 <core.consumer_delivery.emit__anon_38181+0x1d27>
+ 111407a:	mov    -0xcc8(%rbp),%rcx
+ 1114081:	test   %rcx,%rcx
+ 1114084:	je     1114655 <core.consumer_delivery.emit__anon_38181+0x13e5>
+ 111408a:	mov    %ecx,%eax
+ 111408c:	and    $0x7,%eax
+ 111408f:	cmp    $0x8,%rcx
+ 1114093:	jae    111458b <core.consumer_delivery.emit__anon_38181+0x131b>
+ 1114099:	xor    %edx,%edx
+ 111409b:	jmp    111461b <core.consumer_delivery.emit__anon_38181+0x13ab>
+ 11140a0:	mov    $0x88,%r8w
+ 11140a5:	mov    -0xcc8(%rbp),%rcx
+ 11140ac:	test   %rcx,%rcx
+ 11140af:	jne    1114155 <core.consumer_delivery.emit__anon_38181+0xee5>
+ 11140b5:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11140ba:	vmovups -0xabf1d(%rip),%ymm0        # 10681a5 <__anon_38562+0x9d>
+ 11140c2:	vmovups %ymm0,-0x123(%rbp)
+ 11140ca:	vmovups -0xabf4a(%rip),%ymm0        # 1068188 <__anon_38562+0x80>
+ 11140d2:	vmovups %ymm0,-0x140(%rbp)
+ 11140da:	vmovups -0xabf7a(%rip),%ymm0        # 1068168 <__anon_38562+0x60>
+ 11140e2:	vmovups %ymm0,-0x160(%rbp)
+ 11140ea:	vmovups -0xabfaa(%rip),%ymm0        # 1068148 <__anon_38562+0x40>
+ 11140f2:	vmovups %ymm0,-0x180(%rbp)
+ 11140fa:	vmovups -0xabfda(%rip),%ymm0        # 1068128 <__anon_38562+0x20>
+ 1114102:	vmovups %ymm0,-0x1a0(%rbp)
+ 111410a:	vmovups -0xac00a(%rip),%ymm0        # 1068108 <__anon_38562>
+ 1114112:	vmovups %ymm0,-0x1c0(%rbp)
+ 111411a:	vmovups -0xabf5c(%rip),%ymm0        # 10681c6 <__anon_38562+0xbe>
+ 1114122:	vmovups %ymm0,-0xb0(%rbp)
+ 111412a:	movw   $0x0,-0x90(%rbp)
+ 1114133:	movl   $0x0,-0x38(%rbp)
+ 111413a:	movw   $0x0,-0x34(%rbp)
+ 1114140:	mov    $0x43,%r8w
+ 1114145:	mov    -0xcc8(%rbp),%rcx
+ 111414c:	test   %rcx,%rcx
+ 111414f:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114155:	mov    %ecx,%eax
+ 1114157:	and    $0x7,%eax
+ 111415a:	cmp    $0x8,%rcx
+ 111415e:	jae    1114167 <core.consumer_delivery.emit__anon_38181+0xef7>
+ 1114160:	xor    %edx,%edx
+ 1114162:	jmp    11141fb <core.consumer_delivery.emit__anon_38181+0xf8b>
+ 1114167:	and    $0xfffffffffffffff8,%rcx
+ 111416b:	lea    -0x16c8(%rbp),%rdi
+ 1114172:	add    $0x118,%rdi
+ 1114179:	xor    %edx,%edx
+ 111417b:	nopl   0x0(%rax,%rax,1)
+ 1114180:	mov    -0x118(%rdi),%rsi
+ 1114187:	lock decq 0x97f8(%rsi)
+ 111418f:	mov    -0xf0(%rdi),%rsi
+ 1114196:	lock decq 0x97f8(%rsi)
+ 111419e:	mov    -0xc8(%rdi),%rsi
+ 11141a5:	lock decq 0x97f8(%rsi)
+ 11141ad:	mov    -0xa0(%rdi),%rsi
+ 11141b4:	lock decq 0x97f8(%rsi)
+ 11141bc:	mov    -0x78(%rdi),%rsi
+ 11141c0:	lock decq 0x97f8(%rsi)
+ 11141c8:	mov    -0x50(%rdi),%rsi
+ 11141cc:	lock decq 0x97f8(%rsi)
+ 11141d4:	mov    -0x28(%rdi),%rsi
+ 11141d8:	lock decq 0x97f8(%rsi)
+ 11141e0:	mov    (%rdi),%rsi
+ 11141e3:	lock decq 0x97f8(%rsi)
+ 11141eb:	add    $0x8,%rdx
+ 11141ef:	add    $0x140,%rdi
+ 11141f6:	cmp    %rdx,%rcx
+ 11141f9:	jne    1114180 <core.consumer_delivery.emit__anon_38181+0xf10>
+ 11141fb:	test   %rax,%rax
+ 11141fe:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114204:	lea    (%rdx,%rdx,4),%rcx
+ 1114208:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114210:	add    %rbp,%rcx
+ 1114213:	shl    $0x3,%eax
+ 1114216:	lea    (%rax,%rax,4),%rax
+ 111421a:	xor    %edx,%edx
+ 111421c:	nopl   0x0(%rax)
+ 1114220:	mov    (%rcx,%rdx,1),%rsi
+ 1114224:	lock decq 0x97f8(%rsi)
+ 111422c:	add    $0x28,%rdx
+ 1114230:	cmp    %rdx,%rax
+ 1114233:	jne    1114220 <core.consumer_delivery.emit__anon_38181+0xfb0>
+ 1114235:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111423a:	and    $0xfffffffffffffff8,%rcx
+ 111423e:	lea    -0x16c8(%rbp),%rdi
+ 1114245:	add    $0x118,%rdi
+ 111424c:	xor    %edx,%edx
+ 111424e:	xchg   %ax,%ax
+ 1114250:	mov    -0x118(%rdi),%rsi
+ 1114257:	lock decq 0x97f8(%rsi)
+ 111425f:	mov    -0xf0(%rdi),%rsi
+ 1114266:	lock decq 0x97f8(%rsi)
+ 111426e:	mov    -0xc8(%rdi),%rsi
+ 1114275:	lock decq 0x97f8(%rsi)
+ 111427d:	mov    -0xa0(%rdi),%rsi
+ 1114284:	lock decq 0x97f8(%rsi)
+ 111428c:	mov    -0x78(%rdi),%rsi
+ 1114290:	lock decq 0x97f8(%rsi)
+ 1114298:	mov    -0x50(%rdi),%rsi
+ 111429c:	lock decq 0x97f8(%rsi)
+ 11142a4:	mov    -0x28(%rdi),%rsi
+ 11142a8:	lock decq 0x97f8(%rsi)
+ 11142b0:	mov    (%rdi),%rsi
+ 11142b3:	lock decq 0x97f8(%rsi)
+ 11142bb:	add    $0x8,%rdx
+ 11142bf:	add    $0x140,%rdi
+ 11142c6:	cmp    %rdx,%rcx
+ 11142c9:	jne    1114250 <core.consumer_delivery.emit__anon_38181+0xfe0>
+ 11142cb:	test   %rax,%rax
+ 11142ce:	je     1114655 <core.consumer_delivery.emit__anon_38181+0x13e5>
+ 11142d4:	lea    (%rdx,%rdx,4),%rcx
+ 11142d8:	lea    -0x16c8(,%rcx,8),%rcx
+ 11142e0:	add    %rbp,%rcx
+ 11142e3:	shl    $0x3,%eax
+ 11142e6:	lea    (%rax,%rax,4),%rax
+ 11142ea:	xor    %edx,%edx
+ 11142ec:	nopl   0x0(%rax)
+ 11142f0:	mov    (%rcx,%rdx,1),%rsi
+ 11142f4:	lock decq 0x97f8(%rsi)
+ 11142fc:	add    $0x28,%rdx
+ 1114300:	cmp    %rdx,%rax
+ 1114303:	jne    11142f0 <core.consumer_delivery.emit__anon_38181+0x1080>
+ 1114305:	jmp    1114655 <core.consumer_delivery.emit__anon_38181+0x13e5>
+ 111430a:	and    $0xfffffffffffffff8,%rcx
+ 111430e:	add    $0x118,%r14
+ 1114315:	xor    %edx,%edx
+ 1114317:	nopw   0x0(%rax,%rax,1)
+ 1114320:	mov    -0x118(%r14),%rsi
+ 1114327:	lock decq 0x97f8(%rsi)
+ 111432f:	mov    -0xf0(%r14),%rsi
+ 1114336:	lock decq 0x97f8(%rsi)
+ 111433e:	mov    -0xc8(%r14),%rsi
+ 1114345:	lock decq 0x97f8(%rsi)
+ 111434d:	mov    -0xa0(%r14),%rsi
+ 1114354:	lock decq 0x97f8(%rsi)
+ 111435c:	mov    -0x78(%r14),%rsi
+ 1114360:	lock decq 0x97f8(%rsi)
+ 1114368:	mov    -0x50(%r14),%rsi
+ 111436c:	lock decq 0x97f8(%rsi)
+ 1114374:	mov    -0x28(%r14),%rsi
+ 1114378:	lock decq 0x97f8(%rsi)
+ 1114380:	mov    (%r14),%rsi
+ 1114383:	lock decq 0x97f8(%rsi)
+ 111438b:	add    $0x8,%rdx
+ 111438f:	add    $0x140,%r14
+ 1114396:	cmp    %rdx,%rcx
+ 1114399:	jne    1114320 <core.consumer_delivery.emit__anon_38181+0x10b0>
+ 111439b:	test   %rax,%rax
+ 111439e:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11143a4:	lea    (%rdx,%rdx,4),%rcx
+ 11143a8:	lea    -0x16c8(,%rcx,8),%rcx
+ 11143b0:	add    %rbp,%rcx
+ 11143b3:	shl    $0x3,%eax
+ 11143b6:	lea    (%rax,%rax,4),%rax
+ 11143ba:	xor    %edx,%edx
+ 11143bc:	nopl   0x0(%rax)
+ 11143c0:	mov    (%rcx,%rdx,1),%rsi
+ 11143c4:	lock decq 0x97f8(%rsi)
+ 11143cc:	add    $0x28,%rdx
+ 11143d0:	cmp    %rdx,%rax
+ 11143d3:	jne    11143c0 <core.consumer_delivery.emit__anon_38181+0x1150>
+ 11143d5:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11143da:	vmovups -0xac44d(%rip),%ymm0        # 1067f95 <__anon_38558+0x9d>
+ 11143e2:	vmovups %ymm0,-0x123(%rbp)
+ 11143ea:	vmovups -0xac47a(%rip),%ymm0        # 1067f78 <__anon_38558+0x80>
+ 11143f2:	vmovups %ymm0,-0x140(%rbp)
+ 11143fa:	vmovups -0xac4aa(%rip),%ymm0        # 1067f58 <__anon_38558+0x60>
+ 1114402:	vmovups %ymm0,-0x160(%rbp)
+ 111440a:	vmovups -0xac4da(%rip),%ymm0        # 1067f38 <__anon_38558+0x40>
+ 1114412:	vmovups %ymm0,-0x180(%rbp)
+ 111441a:	vmovups -0xac50a(%rip),%ymm0        # 1067f18 <__anon_38558+0x20>
+ 1114422:	vmovups %ymm0,-0x1a0(%rbp)
+ 111442a:	vmovups -0xac53a(%rip),%ymm0        # 1067ef8 <__anon_38558>
+ 1114432:	vmovups %ymm0,-0x1c0(%rbp)
+ 111443a:	vmovups -0xac48c(%rip),%ymm0        # 1067fb6 <__anon_38558+0xbe>
+ 1114442:	vmovups %ymm0,-0xb0(%rbp)
+ 111444a:	movw   $0x0,-0x90(%rbp)
+ 1114453:	movl   $0x0,-0x38(%rbp)
+ 111445a:	movw   $0x0,-0x34(%rbp)
+ 1114460:	mov    $0x7a,%r8w
+ 1114465:	mov    -0xcc8(%rbp),%rcx
+ 111446c:	test   %rcx,%rcx
+ 111446f:	jne    1114155 <core.consumer_delivery.emit__anon_38181+0xee5>
+ 1114475:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111447a:	and    $0xfffffffffffffff8,%rcx
+ 111447e:	lea    -0x16c8(%rbp),%rdi
+ 1114485:	add    $0x118,%rdi
+ 111448c:	xor    %edx,%edx
+ 111448e:	xchg   %ax,%ax
+ 1114490:	mov    -0x118(%rdi),%rsi
+ 1114497:	lock decq 0x97f8(%rsi)
+ 111449f:	mov    -0xf0(%rdi),%rsi
+ 11144a6:	lock decq 0x97f8(%rsi)
+ 11144ae:	mov    -0xc8(%rdi),%rsi
+ 11144b5:	lock decq 0x97f8(%rsi)
+ 11144bd:	mov    -0xa0(%rdi),%rsi
+ 11144c4:	lock decq 0x97f8(%rsi)
+ 11144cc:	mov    -0x78(%rdi),%rsi
+ 11144d0:	lock decq 0x97f8(%rsi)
+ 11144d8:	mov    -0x50(%rdi),%rsi
+ 11144dc:	lock decq 0x97f8(%rsi)
+ 11144e4:	mov    -0x28(%rdi),%rsi
+ 11144e8:	lock decq 0x97f8(%rsi)
+ 11144f0:	mov    (%rdi),%rsi
+ 11144f3:	lock decq 0x97f8(%rsi)
+ 11144fb:	add    $0x8,%rdx
+ 11144ff:	add    $0x140,%rdi
+ 1114506:	cmp    %rdx,%rcx
+ 1114509:	jne    1114490 <core.consumer_delivery.emit__anon_38181+0x1220>
+ 111450b:	test   %rax,%rax
+ 111450e:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114510:	lea    (%rdx,%rdx,4),%rcx
+ 1114514:	lea    -0x16c8(,%rcx,8),%rcx
+ 111451c:	add    %rbp,%rcx
+ 111451f:	shl    $0x3,%eax
+ 1114522:	lea    (%rax,%rax,4),%rax
+ 1114526:	xor    %edx,%edx
+ 1114528:	nopl   0x0(%rax,%rax,1)
+ 1114530:	mov    (%rcx,%rdx,1),%rsi
+ 1114534:	lock decq 0x97f8(%rsi)
+ 111453c:	add    $0x28,%rdx
+ 1114540:	cmp    %rdx,%rax
+ 1114543:	jne    1114530 <core.consumer_delivery.emit__anon_38181+0x12c0>
+ 1114545:	movq   $0x0,-0xcc8(%rbp)
+ 1114550:	mov    -0x30(%rbp),%rdx
+ 1114554:	mov    0x3110(%rdx),%rdi
+ 111455b:	mov    0x3118(%rdx),%rax
+ 1114562:	xor    %ecx,%ecx
+ 1114564:	xchg   %ecx,0x31d4(%rdx)
+ 111456a:	cmp    $0x2,%ecx
+ 111456d:	je     1114688 <core.consumer_delivery.emit__anon_38181+0x1418>
+ 1114573:	mov    %r8d,%eax
+ 1114576:	add    $0x55a8,%rsp
+ 111457d:	pop    %rbx
+ 111457e:	pop    %r12
+ 1114580:	pop    %r13
+ 1114582:	pop    %r14
+ 1114584:	pop    %r15
+ 1114586:	pop    %rbp
+ 1114587:	vzeroupper
+ 111458a:	ret
+ 111458b:	and    $0xfffffffffffffff8,%rcx
+ 111458f:	lea    -0x16c8(%rbp),%rdi
+ 1114596:	add    $0x118,%rdi
+ 111459d:	xor    %edx,%edx
+ 111459f:	nop
+ 11145a0:	mov    -0x118(%rdi),%rsi
+ 11145a7:	lock decq 0x97f8(%rsi)
+ 11145af:	mov    -0xf0(%rdi),%rsi
+ 11145b6:	lock decq 0x97f8(%rsi)
+ 11145be:	mov    -0xc8(%rdi),%rsi
+ 11145c5:	lock decq 0x97f8(%rsi)
+ 11145cd:	mov    -0xa0(%rdi),%rsi
+ 11145d4:	lock decq 0x97f8(%rsi)
+ 11145dc:	mov    -0x78(%rdi),%rsi
+ 11145e0:	lock decq 0x97f8(%rsi)
+ 11145e8:	mov    -0x50(%rdi),%rsi
+ 11145ec:	lock decq 0x97f8(%rsi)
+ 11145f4:	mov    -0x28(%rdi),%rsi
+ 11145f8:	lock decq 0x97f8(%rsi)
+ 1114600:	mov    (%rdi),%rsi
+ 1114603:	lock decq 0x97f8(%rsi)
+ 111460b:	add    $0x8,%rdx
+ 111460f:	add    $0x140,%rdi
+ 1114616:	cmp    %rdx,%rcx
+ 1114619:	jne    11145a0 <core.consumer_delivery.emit__anon_38181+0x1330>
+ 111461b:	test   %rax,%rax
+ 111461e:	je     1114655 <core.consumer_delivery.emit__anon_38181+0x13e5>
+ 1114620:	lea    (%rdx,%rdx,4),%rcx
+ 1114624:	lea    -0x16c8(,%rcx,8),%rcx
+ 111462c:	add    %rbp,%rcx
+ 111462f:	shl    $0x3,%eax
+ 1114632:	lea    (%rax,%rax,4),%rax
+ 1114636:	xor    %edx,%edx
+ 1114638:	nopl   0x0(%rax,%rax,1)
+ 1114640:	mov    (%rcx,%rdx,1),%rsi
+ 1114644:	lock decq 0x97f8(%rsi)
+ 111464c:	add    $0x28,%rdx
+ 1114650:	cmp    %rdx,%rax
+ 1114653:	jne    1114640 <core.consumer_delivery.emit__anon_38181+0x13d0>
+ 1114655:	movq   $0x0,-0xcc8(%rbp)
+ 1114660:	mov    -0x30(%rbp),%rdx
+ 1114664:	mov    0x3110(%rdx),%rdi
+ 111466b:	mov    0x3118(%rdx),%rax
+ 1114672:	xor    %ecx,%ecx
+ 1114674:	xchg   %ecx,0x31d4(%rdx)
+ 111467a:	mov    $0x13d,%r8w
+ 111467f:	cmp    $0x2,%ecx
+ 1114682:	jne    1114573 <core.consumer_delivery.emit__anon_38181+0x1303>
+ 1114688:	mov    -0x68(%rbp),%rsi
+ 111468c:	mov    $0x1,%edx
+ 1114691:	mov    %r8d,%ebx
+ 1114694:	vzeroupper
+ 1114697:	call   *0x70(%rax)
+ 111469a:	mov    %ebx,%r8d
+ 111469d:	jmp    1114573 <core.consumer_delivery.emit__anon_38181+0x1303>
+ 11146a2:	mov    %eax,%r8d
+ 11146a5:	test   %r14,%r14
+ 11146a8:	je     11146ae <core.consumer_delivery.emit__anon_38181+0x143e>
+ 11146aa:	lock add %r14,(%rbx)
+ 11146ae:	mov    -0xcc8(%rbp),%rcx
+ 11146b5:	test   %rcx,%rcx
+ 11146b8:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11146be:	mov    %ecx,%eax
+ 11146c0:	and    $0x7,%eax
+ 11146c3:	cmp    $0x8,%rcx
+ 11146c7:	jae    11147b7 <core.consumer_delivery.emit__anon_38181+0x1547>
+ 11146cd:	xor    %edx,%edx
+ 11146cf:	jmp    1114846 <core.consumer_delivery.emit__anon_38181+0x15d6>
+ 11146d4:	mov    -0xcc8(%rbp),%rcx
+ 11146db:	test   %rcx,%rcx
+ 11146de:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11146e4:	mov    %ecx,%eax
+ 11146e6:	and    $0x7,%eax
+ 11146e9:	cmp    $0x8,%rcx
+ 11146ed:	jae    1114881 <core.consumer_delivery.emit__anon_38181+0x1611>
+ 11146f3:	xor    %edx,%edx
+ 11146f5:	jmp    1114910 <core.consumer_delivery.emit__anon_38181+0x16a0>
+ 11146fa:	mov    %eax,%r8d
+ 11146fd:	mov    -0xcc8(%rbp),%rcx
+ 1114704:	test   %rcx,%rcx
+ 1114707:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111470d:	mov    %ecx,%eax
+ 111470f:	and    $0x7,%eax
+ 1114712:	cmp    $0x8,%rcx
+ 1114716:	jae    111494b <core.consumer_delivery.emit__anon_38181+0x16db>
+ 111471c:	xor    %edx,%edx
+ 111471e:	jmp    11149da <core.consumer_delivery.emit__anon_38181+0x176a>
+ 1114723:	mov    %eax,%r8d
+ 1114726:	lea    -0x16c8(%rbp),%r14
+ 111472d:	mov    -0xcc8(%rbp),%rcx
+ 1114734:	test   %rcx,%rcx
+ 1114737:	jne    1113e66 <core.consumer_delivery.emit__anon_38181+0xbf6>
+ 111473d:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114742:	mov    -0xcc8(%rbp),%rcx
+ 1114749:	test   %rcx,%rcx
+ 111474c:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114752:	mov    %ecx,%eax
+ 1114754:	and    $0x7,%eax
+ 1114757:	cmp    $0x8,%rcx
+ 111475b:	jae    1114a9a <core.consumer_delivery.emit__anon_38181+0x182a>
+ 1114761:	xor    %edx,%edx
+ 1114763:	jmp    1114b29 <core.consumer_delivery.emit__anon_38181+0x18b9>
+ 1114768:	mov    %eax,%r8d
+ 111476b:	mov    -0xcc8(%rbp),%rcx
+ 1114772:	test   %rcx,%rcx
+ 1114775:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111477b:	mov    %ecx,%eax
+ 111477d:	and    $0x7,%eax
+ 1114780:	cmp    $0x8,%rcx
+ 1114784:	jae    1114b8a <core.consumer_delivery.emit__anon_38181+0x191a>
+ 111478a:	xor    %edx,%edx
+ 111478c:	jmp    1114c19 <core.consumer_delivery.emit__anon_38181+0x19a9>
+ 1114791:	mov    -0xcc8(%rbp),%rcx
+ 1114798:	test   %rcx,%rcx
+ 111479b:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11147a1:	mov    %ecx,%eax
+ 11147a3:	and    $0x7,%eax
+ 11147a6:	cmp    $0x8,%rcx
+ 11147aa:	jae    1114d1e <core.consumer_delivery.emit__anon_38181+0x1aae>
+ 11147b0:	xor    %edx,%edx
+ 11147b2:	jmp    1114dad <core.consumer_delivery.emit__anon_38181+0x1b3d>
+ 11147b7:	and    $0xfffffffffffffff8,%rcx
+ 11147bb:	lea    -0x16c8(%rbp),%rdi
+ 11147c2:	add    $0x118,%rdi
+ 11147c9:	xor    %edx,%edx
+ 11147cb:	mov    -0x118(%rdi),%rsi
+ 11147d2:	lock decq 0x97f8(%rsi)
+ 11147da:	mov    -0xf0(%rdi),%rsi
+ 11147e1:	lock decq 0x97f8(%rsi)
+ 11147e9:	mov    -0xc8(%rdi),%rsi
+ 11147f0:	lock decq 0x97f8(%rsi)
+ 11147f8:	mov    -0xa0(%rdi),%rsi
+ 11147ff:	lock decq 0x97f8(%rsi)
+ 1114807:	mov    -0x78(%rdi),%rsi
+ 111480b:	lock decq 0x97f8(%rsi)
+ 1114813:	mov    -0x50(%rdi),%rsi
+ 1114817:	lock decq 0x97f8(%rsi)
+ 111481f:	mov    -0x28(%rdi),%rsi
+ 1114823:	lock decq 0x97f8(%rsi)
+ 111482b:	mov    (%rdi),%rsi
+ 111482e:	lock decq 0x97f8(%rsi)
+ 1114836:	add    $0x8,%rdx
+ 111483a:	add    $0x140,%rdi
+ 1114841:	cmp    %rdx,%rcx
+ 1114844:	jne    11147cb <core.consumer_delivery.emit__anon_38181+0x155b>
+ 1114846:	test   %rax,%rax
+ 1114849:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111484f:	lea    (%rdx,%rdx,4),%rcx
+ 1114853:	lea    -0x16c8(,%rcx,8),%rcx
+ 111485b:	add    %rbp,%rcx
+ 111485e:	shl    $0x3,%eax
+ 1114861:	lea    (%rax,%rax,4),%rax
+ 1114865:	xor    %edx,%edx
+ 1114867:	mov    (%rcx,%rdx,1),%rsi
+ 111486b:	lock decq 0x97f8(%rsi)
+ 1114873:	add    $0x28,%rdx
+ 1114877:	cmp    %rdx,%rax
+ 111487a:	jne    1114867 <core.consumer_delivery.emit__anon_38181+0x15f7>
+ 111487c:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114881:	and    $0xfffffffffffffff8,%rcx
+ 1114885:	lea    -0x16c8(%rbp),%rdi
+ 111488c:	add    $0x118,%rdi
+ 1114893:	xor    %edx,%edx
+ 1114895:	mov    -0x118(%rdi),%rsi
+ 111489c:	lock decq 0x97f8(%rsi)
+ 11148a4:	mov    -0xf0(%rdi),%rsi
+ 11148ab:	lock decq 0x97f8(%rsi)
+ 11148b3:	mov    -0xc8(%rdi),%rsi
+ 11148ba:	lock decq 0x97f8(%rsi)
+ 11148c2:	mov    -0xa0(%rdi),%rsi
+ 11148c9:	lock decq 0x97f8(%rsi)
+ 11148d1:	mov    -0x78(%rdi),%rsi
+ 11148d5:	lock decq 0x97f8(%rsi)
+ 11148dd:	mov    -0x50(%rdi),%rsi
+ 11148e1:	lock decq 0x97f8(%rsi)
+ 11148e9:	mov    -0x28(%rdi),%rsi
+ 11148ed:	lock decq 0x97f8(%rsi)
+ 11148f5:	mov    (%rdi),%rsi
+ 11148f8:	lock decq 0x97f8(%rsi)
+ 1114900:	add    $0x8,%rdx
+ 1114904:	add    $0x140,%rdi
+ 111490b:	cmp    %rdx,%rcx
+ 111490e:	jne    1114895 <core.consumer_delivery.emit__anon_38181+0x1625>
+ 1114910:	test   %rax,%rax
+ 1114913:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114919:	lea    (%rdx,%rdx,4),%rcx
+ 111491d:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114925:	add    %rbp,%rcx
+ 1114928:	shl    $0x3,%eax
+ 111492b:	lea    (%rax,%rax,4),%rax
+ 111492f:	xor    %edx,%edx
+ 1114931:	mov    (%rcx,%rdx,1),%rsi
+ 1114935:	lock decq 0x97f8(%rsi)
+ 111493d:	add    $0x28,%rdx
+ 1114941:	cmp    %rdx,%rax
+ 1114944:	jne    1114931 <core.consumer_delivery.emit__anon_38181+0x16c1>
+ 1114946:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111494b:	and    $0xfffffffffffffff8,%rcx
+ 111494f:	lea    -0x16c8(%rbp),%rdi
+ 1114956:	add    $0x118,%rdi
+ 111495d:	xor    %edx,%edx
+ 111495f:	mov    -0x118(%rdi),%rsi
+ 1114966:	lock decq 0x97f8(%rsi)
+ 111496e:	mov    -0xf0(%rdi),%rsi
+ 1114975:	lock decq 0x97f8(%rsi)
+ 111497d:	mov    -0xc8(%rdi),%rsi
+ 1114984:	lock decq 0x97f8(%rsi)
+ 111498c:	mov    -0xa0(%rdi),%rsi
+ 1114993:	lock decq 0x97f8(%rsi)
+ 111499b:	mov    -0x78(%rdi),%rsi
+ 111499f:	lock decq 0x97f8(%rsi)
+ 11149a7:	mov    -0x50(%rdi),%rsi
+ 11149ab:	lock decq 0x97f8(%rsi)
+ 11149b3:	mov    -0x28(%rdi),%rsi
+ 11149b7:	lock decq 0x97f8(%rsi)
+ 11149bf:	mov    (%rdi),%rsi
+ 11149c2:	lock decq 0x97f8(%rsi)
+ 11149ca:	add    $0x8,%rdx
+ 11149ce:	add    $0x140,%rdi
+ 11149d5:	cmp    %rdx,%rcx
+ 11149d8:	jne    111495f <core.consumer_delivery.emit__anon_38181+0x16ef>
+ 11149da:	test   %rax,%rax
+ 11149dd:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 11149e3:	lea    (%rdx,%rdx,4),%rcx
+ 11149e7:	lea    -0x16c8(,%rcx,8),%rcx
+ 11149ef:	add    %rbp,%rcx
+ 11149f2:	shl    $0x3,%eax
+ 11149f5:	lea    (%rax,%rax,4),%rax
+ 11149f9:	xor    %edx,%edx
+ 11149fb:	mov    (%rcx,%rdx,1),%rsi
+ 11149ff:	lock decq 0x97f8(%rsi)
+ 1114a07:	add    $0x28,%rdx
+ 1114a0b:	cmp    %rdx,%rax
+ 1114a0e:	jne    11149fb <core.consumer_delivery.emit__anon_38181+0x178b>
+ 1114a10:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114a15:	cmp    $0x2,%eax
+ 1114a18:	jne    1114a33 <core.consumer_delivery.emit__anon_38181+0x17c3>
+ 1114a1a:	mov    %r14,%rdi
+ 1114a1d:	mov    %rsi,%r15
+ 1114a20:	mov    -0x68(%rbp),%rsi
+ 1114a24:	mov    $0x2,%edx
+ 1114a29:	call   *0x68(%rbx)
+ 1114a2c:	mov    %r15,%rsi
+ 1114a2f:	mov    -0x48(%rbp),%r15
+ 1114a33:	mov    $0x2,%eax
+ 1114a38:	mov    -0x68(%rbp),%rcx
+ 1114a3c:	xchg   %eax,(%rcx)
+ 1114a3e:	test   %eax,%eax
+ 1114a40:	je     11132dd <core.consumer_delivery.emit__anon_38181+0x6d>
+ 1114a46:	mov    -0x68(%rbp),%r12
+ 1114a4a:	mov    %r14,%rdi
+ 1114a4d:	mov    %rsi,%r15
+ 1114a50:	mov    %r12,%rsi
+ 1114a53:	mov    $0x2,%edx
+ 1114a58:	call   *0x68(%rbx)
+ 1114a5b:	mov    %r15,%rsi
+ 1114a5e:	mov    -0x48(%rbp),%r15
+ 1114a62:	mov    $0x2,%eax
+ 1114a67:	xchg   %eax,(%r12)
+ 1114a6b:	test   %eax,%eax
+ 1114a6d:	jne    1114a4a <core.consumer_delivery.emit__anon_38181+0x17da>
+ 1114a6f:	jmp    11132dd <core.consumer_delivery.emit__anon_38181+0x6d>
+ 1114a74:	mov    -0xcc8(%rbp),%rcx
+ 1114a7b:	test   %rcx,%rcx
+ 1114a7e:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114a84:	mov    %ecx,%eax
+ 1114a86:	and    $0x7,%eax
+ 1114a89:	cmp    $0x8,%rcx
+ 1114a8d:	jae    1114de8 <core.consumer_delivery.emit__anon_38181+0x1b78>
+ 1114a93:	xor    %edx,%edx
+ 1114a95:	jmp    1114e70 <core.consumer_delivery.emit__anon_38181+0x1c00>
+ 1114a9a:	and    $0xfffffffffffffff8,%rcx
+ 1114a9e:	lea    -0x16c8(%rbp),%rdi
+ 1114aa5:	add    $0x118,%rdi
+ 1114aac:	xor    %edx,%edx
+ 1114aae:	mov    -0x118(%rdi),%rsi
+ 1114ab5:	lock decq 0x97f8(%rsi)
+ 1114abd:	mov    -0xf0(%rdi),%rsi
+ 1114ac4:	lock decq 0x97f8(%rsi)
+ 1114acc:	mov    -0xc8(%rdi),%rsi
+ 1114ad3:	lock decq 0x97f8(%rsi)
+ 1114adb:	mov    -0xa0(%rdi),%rsi
+ 1114ae2:	lock decq 0x97f8(%rsi)
+ 1114aea:	mov    -0x78(%rdi),%rsi
+ 1114aee:	lock decq 0x97f8(%rsi)
+ 1114af6:	mov    -0x50(%rdi),%rsi
+ 1114afa:	lock decq 0x97f8(%rsi)
+ 1114b02:	mov    -0x28(%rdi),%rsi
+ 1114b06:	lock decq 0x97f8(%rsi)
+ 1114b0e:	mov    (%rdi),%rsi
+ 1114b11:	lock decq 0x97f8(%rsi)
+ 1114b19:	add    $0x8,%rdx
+ 1114b1d:	add    $0x140,%rdi
+ 1114b24:	cmp    %rdx,%rcx
+ 1114b27:	jne    1114aae <core.consumer_delivery.emit__anon_38181+0x183e>
+ 1114b29:	test   %rax,%rax
+ 1114b2c:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114b32:	lea    (%rdx,%rdx,4),%rcx
+ 1114b36:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114b3e:	add    %rbp,%rcx
+ 1114b41:	shl    $0x3,%eax
+ 1114b44:	lea    (%rax,%rax,4),%rax
+ 1114b48:	xor    %edx,%edx
+ 1114b4a:	mov    (%rcx,%rdx,1),%rsi
+ 1114b4e:	lock decq 0x97f8(%rsi)
+ 1114b56:	add    $0x28,%rdx
+ 1114b5a:	cmp    %rdx,%rax
+ 1114b5d:	jne    1114b4a <core.consumer_delivery.emit__anon_38181+0x18da>
+ 1114b5f:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114b64:	mov    -0xcc8(%rbp),%rcx
+ 1114b6b:	test   %rcx,%rcx
+ 1114b6e:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114b74:	mov    %ecx,%eax
+ 1114b76:	and    $0x7,%eax
+ 1114b79:	cmp    $0x8,%rcx
+ 1114b7d:	jae    1114eab <core.consumer_delivery.emit__anon_38181+0x1c3b>
+ 1114b83:	xor    %edx,%edx
+ 1114b85:	jmp    1114f3a <core.consumer_delivery.emit__anon_38181+0x1cca>
+ 1114b8a:	and    $0xfffffffffffffff8,%rcx
+ 1114b8e:	lea    -0x16c8(%rbp),%rdi
+ 1114b95:	add    $0x118,%rdi
+ 1114b9c:	xor    %edx,%edx
+ 1114b9e:	mov    -0x118(%rdi),%rsi
+ 1114ba5:	lock decq 0x97f8(%rsi)
+ 1114bad:	mov    -0xf0(%rdi),%rsi
+ 1114bb4:	lock decq 0x97f8(%rsi)
+ 1114bbc:	mov    -0xc8(%rdi),%rsi
+ 1114bc3:	lock decq 0x97f8(%rsi)
+ 1114bcb:	mov    -0xa0(%rdi),%rsi
+ 1114bd2:	lock decq 0x97f8(%rsi)
+ 1114bda:	mov    -0x78(%rdi),%rsi
+ 1114bde:	lock decq 0x97f8(%rsi)
+ 1114be6:	mov    -0x50(%rdi),%rsi
+ 1114bea:	lock decq 0x97f8(%rsi)
+ 1114bf2:	mov    -0x28(%rdi),%rsi
+ 1114bf6:	lock decq 0x97f8(%rsi)
+ 1114bfe:	mov    (%rdi),%rsi
+ 1114c01:	lock decq 0x97f8(%rsi)
+ 1114c09:	add    $0x8,%rdx
+ 1114c0d:	add    $0x140,%rdi
+ 1114c14:	cmp    %rdx,%rcx
+ 1114c17:	jne    1114b9e <core.consumer_delivery.emit__anon_38181+0x192e>
+ 1114c19:	test   %rax,%rax
+ 1114c1c:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114c22:	lea    (%rdx,%rdx,4),%rcx
+ 1114c26:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114c2e:	add    %rbp,%rcx
+ 1114c31:	shl    $0x3,%eax
+ 1114c34:	lea    (%rax,%rax,4),%rax
+ 1114c38:	xor    %edx,%edx
+ 1114c3a:	mov    (%rcx,%rdx,1),%rsi
+ 1114c3e:	lock decq 0x97f8(%rsi)
+ 1114c46:	add    $0x28,%rdx
+ 1114c4a:	cmp    %rdx,%rax
+ 1114c4d:	jne    1114c3a <core.consumer_delivery.emit__anon_38181+0x19ca>
+ 1114c4f:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114c54:	and    $0xfffffffffffffff8,%rcx
+ 1114c58:	lea    -0x16c8(%rbp),%rdi
+ 1114c5f:	add    $0x118,%rdi
+ 1114c66:	xor    %edx,%edx
+ 1114c68:	mov    -0x118(%rdi),%rsi
+ 1114c6f:	lock decq 0x97f8(%rsi)
+ 1114c77:	mov    -0xf0(%rdi),%rsi
+ 1114c7e:	lock decq 0x97f8(%rsi)
+ 1114c86:	mov    -0xc8(%rdi),%rsi
+ 1114c8d:	lock decq 0x97f8(%rsi)
+ 1114c95:	mov    -0xa0(%rdi),%rsi
+ 1114c9c:	lock decq 0x97f8(%rsi)
+ 1114ca4:	mov    -0x78(%rdi),%rsi
+ 1114ca8:	lock decq 0x97f8(%rsi)
+ 1114cb0:	mov    -0x50(%rdi),%rsi
+ 1114cb4:	lock decq 0x97f8(%rsi)
+ 1114cbc:	mov    -0x28(%rdi),%rsi
+ 1114cc0:	lock decq 0x97f8(%rsi)
+ 1114cc8:	mov    (%rdi),%rsi
+ 1114ccb:	lock decq 0x97f8(%rsi)
+ 1114cd3:	add    $0x8,%rdx
+ 1114cd7:	add    $0x140,%rdi
+ 1114cde:	cmp    %rdx,%rcx
+ 1114ce1:	jne    1114c68 <core.consumer_delivery.emit__anon_38181+0x19f8>
+ 1114ce3:	test   %rax,%rax
+ 1114ce6:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114cec:	lea    (%rdx,%rdx,4),%rcx
+ 1114cf0:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114cf8:	add    %rbp,%rcx
+ 1114cfb:	shl    $0x3,%eax
+ 1114cfe:	lea    (%rax,%rax,4),%rax
+ 1114d02:	xor    %edx,%edx
+ 1114d04:	mov    (%rcx,%rdx,1),%rsi
+ 1114d08:	lock decq 0x97f8(%rsi)
+ 1114d10:	add    $0x28,%rdx
+ 1114d14:	cmp    %rdx,%rax
+ 1114d17:	jne    1114d04 <core.consumer_delivery.emit__anon_38181+0x1a94>
+ 1114d19:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114d1e:	and    $0xfffffffffffffff8,%rcx
+ 1114d22:	lea    -0x16c8(%rbp),%rdi
+ 1114d29:	add    $0x118,%rdi
+ 1114d30:	xor    %edx,%edx
+ 1114d32:	mov    -0x118(%rdi),%rsi
+ 1114d39:	lock decq 0x97f8(%rsi)
+ 1114d41:	mov    -0xf0(%rdi),%rsi
+ 1114d48:	lock decq 0x97f8(%rsi)
+ 1114d50:	mov    -0xc8(%rdi),%rsi
+ 1114d57:	lock decq 0x97f8(%rsi)
+ 1114d5f:	mov    -0xa0(%rdi),%rsi
+ 1114d66:	lock decq 0x97f8(%rsi)
+ 1114d6e:	mov    -0x78(%rdi),%rsi
+ 1114d72:	lock decq 0x97f8(%rsi)
+ 1114d7a:	mov    -0x50(%rdi),%rsi
+ 1114d7e:	lock decq 0x97f8(%rsi)
+ 1114d86:	mov    -0x28(%rdi),%rsi
+ 1114d8a:	lock decq 0x97f8(%rsi)
+ 1114d92:	mov    (%rdi),%rsi
+ 1114d95:	lock decq 0x97f8(%rsi)
+ 1114d9d:	add    $0x8,%rdx
+ 1114da1:	add    $0x140,%rdi
+ 1114da8:	cmp    %rdx,%rcx
+ 1114dab:	jne    1114d32 <core.consumer_delivery.emit__anon_38181+0x1ac2>
+ 1114dad:	test   %rax,%rax
+ 1114db0:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114db6:	lea    (%rdx,%rdx,4),%rcx
+ 1114dba:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114dc2:	add    %rbp,%rcx
+ 1114dc5:	shl    $0x3,%eax
+ 1114dc8:	lea    (%rax,%rax,4),%rax
+ 1114dcc:	xor    %edx,%edx
+ 1114dce:	mov    (%rcx,%rdx,1),%rsi
+ 1114dd2:	lock decq 0x97f8(%rsi)
+ 1114dda:	add    $0x28,%rdx
+ 1114dde:	cmp    %rdx,%rax
+ 1114de1:	jne    1114dce <core.consumer_delivery.emit__anon_38181+0x1b5e>
+ 1114de3:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114de8:	and    $0xfffffffffffffff8,%rcx
+ 1114dec:	add    $0x118,%r14
+ 1114df3:	xor    %edx,%edx
+ 1114df5:	mov    -0x118(%r14),%rsi
+ 1114dfc:	lock decq 0x97f8(%rsi)
+ 1114e04:	mov    -0xf0(%r14),%rsi
+ 1114e0b:	lock decq 0x97f8(%rsi)
+ 1114e13:	mov    -0xc8(%r14),%rsi
+ 1114e1a:	lock decq 0x97f8(%rsi)
+ 1114e22:	mov    -0xa0(%r14),%rsi
+ 1114e29:	lock decq 0x97f8(%rsi)
+ 1114e31:	mov    -0x78(%r14),%rsi
+ 1114e35:	lock decq 0x97f8(%rsi)
+ 1114e3d:	mov    -0x50(%r14),%rsi
+ 1114e41:	lock decq 0x97f8(%rsi)
+ 1114e49:	mov    -0x28(%r14),%rsi
+ 1114e4d:	lock decq 0x97f8(%rsi)
+ 1114e55:	mov    (%r14),%rsi
+ 1114e58:	lock decq 0x97f8(%rsi)
+ 1114e60:	add    $0x8,%rdx
+ 1114e64:	add    $0x140,%r14
+ 1114e6b:	cmp    %rdx,%rcx
+ 1114e6e:	jne    1114df5 <core.consumer_delivery.emit__anon_38181+0x1b85>
+ 1114e70:	test   %rax,%rax
+ 1114e73:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114e79:	lea    (%rdx,%rdx,4),%rcx
+ 1114e7d:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114e85:	add    %rbp,%rcx
+ 1114e88:	shl    $0x3,%eax
+ 1114e8b:	lea    (%rax,%rax,4),%rax
+ 1114e8f:	xor    %edx,%edx
+ 1114e91:	mov    (%rcx,%rdx,1),%rsi
+ 1114e95:	lock decq 0x97f8(%rsi)
+ 1114e9d:	add    $0x28,%rdx
+ 1114ea1:	cmp    %rdx,%rax
+ 1114ea4:	jne    1114e91 <core.consumer_delivery.emit__anon_38181+0x1c21>
+ 1114ea6:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114eab:	and    $0xfffffffffffffff8,%rcx
+ 1114eaf:	lea    -0x16c8(%rbp),%rdi
+ 1114eb6:	add    $0x118,%rdi
+ 1114ebd:	xor    %edx,%edx
+ 1114ebf:	mov    -0x118(%rdi),%rsi
+ 1114ec6:	lock decq 0x97f8(%rsi)
+ 1114ece:	mov    -0xf0(%rdi),%rsi
+ 1114ed5:	lock decq 0x97f8(%rsi)
+ 1114edd:	mov    -0xc8(%rdi),%rsi
+ 1114ee4:	lock decq 0x97f8(%rsi)
+ 1114eec:	mov    -0xa0(%rdi),%rsi
+ 1114ef3:	lock decq 0x97f8(%rsi)
+ 1114efb:	mov    -0x78(%rdi),%rsi
+ 1114eff:	lock decq 0x97f8(%rsi)
+ 1114f07:	mov    -0x50(%rdi),%rsi
+ 1114f0b:	lock decq 0x97f8(%rsi)
+ 1114f13:	mov    -0x28(%rdi),%rsi
+ 1114f17:	lock decq 0x97f8(%rsi)
+ 1114f1f:	mov    (%rdi),%rsi
+ 1114f22:	lock decq 0x97f8(%rsi)
+ 1114f2a:	add    $0x8,%rdx
+ 1114f2e:	add    $0x140,%rdi
+ 1114f35:	cmp    %rdx,%rcx
+ 1114f38:	jne    1114ebf <core.consumer_delivery.emit__anon_38181+0x1c4f>
+ 1114f3a:	test   %rax,%rax
+ 1114f3d:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114f43:	lea    (%rdx,%rdx,4),%rcx
+ 1114f47:	lea    -0x16c8(,%rcx,8),%rcx
+ 1114f4f:	add    %rbp,%rcx
+ 1114f52:	shl    $0x3,%eax
+ 1114f55:	lea    (%rax,%rax,4),%rax
+ 1114f59:	xor    %edx,%edx
+ 1114f5b:	mov    (%rcx,%rdx,1),%rsi
+ 1114f5f:	lock decq 0x97f8(%rsi)
+ 1114f67:	add    $0x28,%rdx
+ 1114f6b:	cmp    %rdx,%rax
+ 1114f6e:	jne    1114f5b <core.consumer_delivery.emit__anon_38181+0x1ceb>
+ 1114f70:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114f75:	mov    -0xcc8(%rbp),%rdx
+ 1114f7c:	test   %rdx,%rdx
+ 1114f7f:	je     111507e <core.consumer_delivery.emit__anon_38181+0x1e0e>
+ 1114f85:	mov    %edx,%eax
+ 1114f87:	and    $0x7,%eax
+ 1114f8a:	cmp    $0x8,%rdx
+ 1114f8e:	jae    1114fbd <core.consumer_delivery.emit__anon_38181+0x1d4d>
+ 1114f90:	xor    %esi,%esi
+ 1114f92:	jmp    111504c <core.consumer_delivery.emit__anon_38181+0x1ddc>
+ 1114f97:	mov    -0xcc8(%rbp),%rcx
+ 1114f9e:	test   %rcx,%rcx
+ 1114fa1:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 1114fa7:	mov    %ecx,%eax
+ 1114fa9:	and    $0x7,%eax
+ 1114fac:	cmp    $0x8,%rcx
+ 1114fb0:	jae    11150b4 <core.consumer_delivery.emit__anon_38181+0x1e44>
+ 1114fb6:	xor    %edx,%edx
+ 1114fb8:	jmp    1115143 <core.consumer_delivery.emit__anon_38181+0x1ed3>
+ 1114fbd:	and    $0xfffffffffffffff8,%rdx
+ 1114fc1:	lea    -0x16c8(%rbp),%r8
+ 1114fc8:	add    $0x118,%r8
+ 1114fcf:	xor    %esi,%esi
+ 1114fd1:	mov    -0x118(%r8),%rdi
+ 1114fd8:	lock decq 0x97f8(%rdi)
+ 1114fe0:	mov    -0xf0(%r8),%rdi
+ 1114fe7:	lock decq 0x97f8(%rdi)
+ 1114fef:	mov    -0xc8(%r8),%rdi
+ 1114ff6:	lock decq 0x97f8(%rdi)
+ 1114ffe:	mov    -0xa0(%r8),%rdi
+ 1115005:	lock decq 0x97f8(%rdi)
+ 111500d:	mov    -0x78(%r8),%rdi
+ 1115011:	lock decq 0x97f8(%rdi)
+ 1115019:	mov    -0x50(%r8),%rdi
+ 111501d:	lock decq 0x97f8(%rdi)
+ 1115025:	mov    -0x28(%r8),%rdi
+ 1115029:	lock decq 0x97f8(%rdi)
+ 1115031:	mov    (%r8),%rdi
+ 1115034:	lock decq 0x97f8(%rdi)
+ 111503c:	add    $0x8,%rsi
+ 1115040:	add    $0x140,%r8
+ 1115047:	cmp    %rsi,%rdx
+ 111504a:	jne    1114fd1 <core.consumer_delivery.emit__anon_38181+0x1d61>
+ 111504c:	test   %rax,%rax
+ 111504f:	je     111507e <core.consumer_delivery.emit__anon_38181+0x1e0e>
+ 1115051:	lea    (%rsi,%rsi,4),%rdx
+ 1115055:	lea    -0x16c8(,%rdx,8),%rdx
+ 111505d:	add    %rbp,%rdx
+ 1115060:	shl    $0x3,%eax
+ 1115063:	lea    (%rax,%rax,4),%rax
+ 1115067:	xor    %esi,%esi
+ 1115069:	mov    (%rdx,%rsi,1),%rdi
+ 111506d:	lock decq 0x97f8(%rdi)
+ 1115075:	add    $0x28,%rsi
+ 1115079:	cmp    %rsi,%rax
+ 111507c:	jne    1115069 <core.consumer_delivery.emit__anon_38181+0x1df9>
+ 111507e:	movq   $0x0,-0xcc8(%rbp)
+ 1115089:	mov    -0x30(%rbp),%rsi
+ 111508d:	mov    0x3110(%rsi),%rdi
+ 1115094:	mov    0x3118(%rsi),%rax
+ 111509b:	xor    %edx,%edx
+ 111509d:	xchg   %edx,0x31d4(%rsi)
+ 11150a3:	mov    %ecx,%r8d
+ 11150a6:	cmp    $0x2,%edx
+ 11150a9:	jne    1114573 <core.consumer_delivery.emit__anon_38181+0x1303>
+ 11150af:	jmp    1114688 <core.consumer_delivery.emit__anon_38181+0x1418>
+ 11150b4:	and    $0xfffffffffffffff8,%rcx
+ 11150b8:	lea    -0x16c8(%rbp),%rdi
+ 11150bf:	add    $0x118,%rdi
+ 11150c6:	xor    %edx,%edx
+ 11150c8:	mov    -0x118(%rdi),%rsi
+ 11150cf:	lock decq 0x97f8(%rsi)
+ 11150d7:	mov    -0xf0(%rdi),%rsi
+ 11150de:	lock decq 0x97f8(%rsi)
+ 11150e6:	mov    -0xc8(%rdi),%rsi
+ 11150ed:	lock decq 0x97f8(%rsi)
+ 11150f5:	mov    -0xa0(%rdi),%rsi
+ 11150fc:	lock decq 0x97f8(%rsi)
+ 1115104:	mov    -0x78(%rdi),%rsi
+ 1115108:	lock decq 0x97f8(%rsi)
+ 1115110:	mov    -0x50(%rdi),%rsi
+ 1115114:	lock decq 0x97f8(%rsi)
+ 111511c:	mov    -0x28(%rdi),%rsi
+ 1115120:	lock decq 0x97f8(%rsi)
+ 1115128:	mov    (%rdi),%rsi
+ 111512b:	lock decq 0x97f8(%rsi)
+ 1115133:	add    $0x8,%rdx
+ 1115137:	add    $0x140,%rdi
+ 111513e:	cmp    %rdx,%rcx
+ 1115141:	jne    11150c8 <core.consumer_delivery.emit__anon_38181+0x1e58>
+ 1115143:	test   %rax,%rax
+ 1115146:	je     1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>
+ 111514c:	lea    (%rdx,%rdx,4),%rcx
+ 1115150:	lea    -0x16c8(,%rcx,8),%rcx
+ 1115158:	add    %rbp,%rcx
+ 111515b:	shl    $0x3,%eax
+ 111515e:	lea    (%rax,%rax,4),%rax
+ 1115162:	xor    %edx,%edx
+ 1115164:	mov    (%rcx,%rdx,1),%rsi
+ 1115168:	lock decq 0x97f8(%rsi)
+ 1115170:	add    $0x28,%rdx
+ 1115174:	cmp    %rdx,%rax
+ 1115177:	jne    1115164 <core.consumer_delivery.emit__anon_38181+0x1ef4>
+ 1115179:	jmp    1114545 <core.consumer_delivery.emit__anon_38181+0x12d5>

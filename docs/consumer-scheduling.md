@@ -24,3 +24,5 @@ Mmap使用同一选项，只将queue配置替换为journal文件配置。预算�
 `bench/cpp_reference/kron_reference.zig`支持`--consumer-batches=1`至4并在JSON报告中保存值。Memory/Mmap完整性能报告与测量源码、原始失败和默认预算对照位于`bench/evidence/2026-11-01-channel-fairness/`。
 
 同一可执行文件的40项完整文件对照分别验证Memory/Mmap四producer，100k测量记录＋1k预热，五对sampled/batch，共核对404万条JSON。预算4→1的Memory p99中位约10.9→82.8µs、p99.9约377.7→114.7µs；Mmap p99约9.1→84.5µs、p99.9约391.0→110.7µs。所有分位数与吞吐组均因spread超门限标inconclusive；取舍在更早的独立候选对照中也观察到。默认4保持，显式1不能被描述为整体更快或所有尾延迟更低。原始每项计数、顺序、hash、关闭和初始化结果见`tuned-results.jsonl`与`tuned-comparison.json`。
+
+基于`714c470/e8bd353`另测跨队列64条轮次合并窗口：每队列保留原1..4量子，总窗口最多256条，输出屏障共享且逐条CRC/回收保持。四队列Memory/Mmap×inline/schema、稀疏六队列容量分割、peek/flush/durable与晚期损坏定向Debug/Safe/Fast各26项通过，原1/65/129/161 peer位置保持。但440项完整流程/PMU/单量子控制核对5244万条JSON后，吞吐/尾延迟全部因波动保持inconclusive；inline SPSC Memory/Mmap P4 p99.9中位约352µs→86µs，p99却约0.6µs→72–73µs，用户态指令增加约0.58%–0.71%。额外80项与现有一量子控制也未证明一般优势，候选已全量否决，生产恢复原调度。完整失败、资源和正负分布见`bench/evidence/2026-11-01-cross-queue-delivery/`。下一步等待路径优化需从实际进度/唤醒证据出发，不能只挑低p99.9推广默认策略。

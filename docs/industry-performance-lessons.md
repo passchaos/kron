@@ -63,4 +63,6 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 随后shared admission已直接复用已验证View，直到end释放reader，accepted record的独立pending pin与原CRC/barrier/reclaim保持。相关真实Memory/Mmap计数、并发旧lease与filtered/sampled/error回归通过。最终320项完整文件、40项PMU及独立10项百万条检查共核对5437万条JSON；shared schema Mmap P1短流程中位+9.55%、独立长流程+4.79%，CV/spread通过且区间不重叠。PMU shared Memory P4却有−3.36%负向中位且区间不重叠；完整workflow多数P4差异区间重叠，不能宣布一般P4收益或完整CPU指令下降。早期测试退出重叠长流程独立保留，不计入正式370项资格。来源与所有限制见`bench/evidence/2026-11-01-admission-view/`；保留该有范围的优化后继续按当前热点推进。
 
+跨队列64条轮次合并窗口已实际验证并否决。完整440项/5244万条JSON显示p99.9降低与p99/p50显著升高并存，吞吐与单量子控制均未取得整体资格，用户态指令增加0.58%–0.71%；候选的调度/跨来源确认成本及更大transitive stack不推广。生产恢复同轮对照的`e8bd353`逻辑；源码、真实FIFO/故障/服务预算门禁与全量分布保留在`bench/evidence/2026-11-01-cross-queue-delivery/`。后续应针对满队列等待者与progress_epoch的跨队列唤醒进行有界诊断；保留worker错误、shutdown和reservation gap的正确唤醒，避免从表面批次大小推导整体低尾延迟。
+
 参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。

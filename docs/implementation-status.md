@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+跨队列64条轮次交付候选已实验并否决：真实四队列Memory/Mmap×inline/schema、稀疏tracking容量、peek/flush/durable/late reclaim损坏与原peer服务位置在Debug/Safe/Fast定向各26/26通过；440项完整文件/PMU/现有单量子控制核对5244万条JSON。p99.9中位降低但p50/p99明显负向，多数组吞吐负向且所有完整性能资格仍inconclusive；四组指令中位增加0.58%–0.71%，新增调度/跨来源确认与栈空间未取得整体收益。生产src精确恢复`714c470/e8bd353`，现有调度/API与549项综合资格保持。完整候选/失败/原始慢值/控制和否决理由见`bench/evidence/2026-11-01-cross-queue-delivery/qualification.json`；不改变已归档Foundation同轮排名。
+
 用户要求的最新Foundation＋spdlog详细对照已完成：源码`e8bd353`与冻结Foundation真实C++spdlog前端/Rust release后台共200项同轮试验、2020万条JSON逐条核对，Memory/Mmap共享/SPSC、P1/P4、inline/schema、sampled/batch全部完整，kron实际portable、accepted=written且pending/drop=0。普通inline SPSC完整吞吐中位高于Foundation四组8.67%/3.21%/23.09%/12.58%，shared Memory P4仍低4.41%；各关闭吞吐跨库组因spread超门限保持inconclusive。schema多数配置较慢，SPSC p99.9和Mmap init/lifecycle仍差；Foundation Memory806ms/234ms关闭慢值完整保留。源码/Git/归档/binary/输出/完成边界审计和所有CV/spread/bootstrap见`bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/qualification.json`及[详细报告](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。没有更新为业界最快或稳定全面超越资格。
 
 当前admission View转移源码通过完整ReleaseSafe门禁 **93/93步骤、549/549 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，含独立五模式/单线程/源码分发包、Linux宿主资格、配置/deadline/错误/旧新wire矩阵和12个实际随机SIGKILL恢复场景。最终源码、binary、归档、正式5437万条测量与负向限制绑定于`bench/evidence/2026-11-01-admission-view/qualification.json`；跨库同轮排名和其他平台设备运行仍需单独验证。
