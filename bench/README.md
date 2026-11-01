@@ -25,3 +25,5 @@
 | [io_uring 对照](evidence/2026-11-01-uring-current/README.md) | 指定源码的实际后端比较；不能更新 Foundation 排名 |
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
+
+`managed_outputs.zig`测量管理入口的单输出完整流程，区分初始化、producer提交和written关闭时间，覆盖sync/Memory/Mmap/SPSC；`managed_outputs_compare.py`按before/after轮换配对运行，核对每条实际文件JSON，报告置信区间。用法：`zig build bench-managed-outputs -Doptimize=ReleaseFast -- memory /tmp/existing-directory 20000`。多输出独立管线会增加队列、后台线程和编码成本，此基准不代表多输出吞吐。

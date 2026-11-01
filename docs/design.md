@@ -48,20 +48,29 @@ filter/sampler入场在昂贵字段构造前，字段predicate需要捕获后的
 
 ## 4. 公共接口
 
-统一应用入口是 `kron.Logging.create(allocator, io, options)`。一个owner管理单输出、多输出与轮转；`scoped`、`attachThread`、prepared helpers返回直接借用底层Runtime的logger，没有新增每事件owner转发。
+统一应用入口是 `kron.Logging.create(allocator, io, options)`。一个owner管理outputs列表和轮转；每route独立Runtime，scoped/attachThread/prepared先捕获一次字段与时间，再向选中的管线分别提交。scopedOutput提供单目标直接路径。
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
-    .mode = .asynchronous,
-    .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
-    .format = .json,
+    .outputs = &.{
+        .{
+            .target = .{
+                .file = .{
+                    .path = "app.jsonl",
+                    .backend = .portable,
+                },
+            },
+            .mode = .asynchronous,
+            .format = .json,
+        },
+    },
 });
 defer logging.destroy();
 logging.scoped("app").info("started", .{});
 try logging.shutdown();
 ```
 
-输出策略集中在defaults并由各route覆盖，捕获前保护在capture。默认stderr/sync/text/info。async/SPSC默认有界Memory，Mmap显式路径，SPSC显式线程预算。多目标使用 `output.multiple`；required Mmap目标需要稳定文件身份，stdout/writer可作为best_effort。底层Runtime保留为外部sink、复杂配置事务、跨代恢复和时钟扩展。
+mode/queue/overflow、采样、脱敏、格式等策略直接在各route定义，未填写则使用Route字段默认值；有效脱敏在各自队列接受前执行。默认stderr/sync/text/info。async/SPSC默认有界Memory，Mmap显式路径，SPSC显式线程预算。所有目标统一使用outputs列表；每个Mmap目标需要稳定文件身份，stdout/writer配置独立Memory或sync。底层Runtime保留为外部sink、复杂配置事务、跨代恢复和时钟扩展。
 
 logger的 `tryEmit/tryLogf` 返回错误和精确接受结果，普通void方法通过diagnostics报告错误。带 `At` 的入口显式传source；编译期 `source.fromModule` 或根入口保证项目相对文件路径。text输出无外围引号的 `路径:行:列`，控制字符继续转义。
 
@@ -71,7 +80,7 @@ Event保存level/scope/message、typed fields/format args、Unix纳秒、session
 
 支持内建标量、optional、enum/error名称、bytes、duration/timestamp和显式array/group。任意对象指针/图不自动遍历；Adapter只捕获明确选择的成员。顶层字段64项，attributes/args共用8层/256节点预算，循环/重复key/超限明确拒绝。
 
-borrowed context依赖存储覆盖所有logger使用；owned context初始化时深拷贝父子合并内容，销毁一次。事件接受前复制消息、key、string/bytes和嵌套描述符，不借用producer栈给消费者。合并顺序parent < child < event；Secret原值不进入捕获，capture/global redaction在队列前执行，route输出redaction只改变自己的渲染结果。详见 [capture](capture.md) 和 [structured values](structured-values.md)。
+borrowed context依赖存储覆盖所有logger使用；owned context初始化时深拷贝父子合并内容，销毁一次。事件接受前复制消息、key、string/bytes和嵌套描述符，不借用producer栈给消费者。合并顺序parent < child < event；Secret原值不进入捕获，Logging各route redaction在其独立队列前执行；高级Runtime全局redaction在共享队列前执行，其route附加redaction只改变自己的渲染结果。详见 [capture](capture.md) 和 [structured values](structured-values.md)。
 
 ## 6. Queue协议与恢复
 
@@ -91,7 +100,7 @@ shared按reservation交付；SPSC提供每channel FIFO，跨channel没有全局�
 
 ## 8. 输出、文件与io_uring
 
-encoder共享重逻辑，typed frontend不把完整JSON算法复制到每个调用点。同format/time相邻目标复用编码，其他格式单独渲染；fast wire/reference路径须保留完整checked边界及fallback。文件输出串行管理显式offset、staging和在途buffer。
+encoder共享重逻辑，typed frontend不把完整JSON算法复制到每个调用点。高级Runtime内同format/time相邻目标复用编码，Logging独立管线分别复制和渲染；fast wire/reference路径须保留完整checked边界及fallback。文件输出串行管理显式offset、staging和在途buffer。
 
 portable和io_uring共同保证完整批次写出；CQE完成、短写/零进展、错误、buffer lease和shutdown明确处理。SQE提交成功不是written，flush必须等待用户态buffer和在途I/O。目录持久化等平台能力不可用时durable明确拒绝。自动后端选择与实际后端报告分开，见 [文件可靠性](file-reliability.md)。
 

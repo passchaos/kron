@@ -1,29 +1,41 @@
-//! Shared Mmap capture, a required JSON file and best-effort stdout text.
+//! An independent Mmap file pipeline and a Memory stdout pipeline.
 //! Reopening with the same paths/options automatically replays pending records.
 const std = @import("std");
 const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .mode = .asynchronous,
-        .queue = .{ .mmap = .{
-            .path = "kron-mmap.journal",
-            .capacity = 256,
-            .max_record_bytes = 8192,
-        } },
-        .timestamp = .{ .zone = .local },
-        .output = .{
-            .multiple = &.{
-                .{
-                    .name = "file",
-                    .target = .{ .file = .{
+        .outputs = &.{
+            .{
+                .name = "file",
+                .queue = .{
+                    .mmap = .{
+                        .path = "kron-mmap.journal",
+                        .capacity = 256,
+                        .max_record_bytes = 8192,
+                    },
+                },
+                .target = .{
+                    .file = .{
                         .path = "kron-mmap.jsonl",
                         .backend = .portable,
-                    } },
-                    .format = .json,
+                    },
                 },
-                // stdout has no stable cross-process recovery identity.
-                .{ .name = "stdout", .target = .stdout, .format = .text, .delivery = .best_effort },
+                .format = .json,
+                .mode = .asynchronous,
+                .timestamp = .{
+                    .zone = .local,
+                },
+            },
+            .{
+                .name = "stdout",
+                .target = .stdout,
+                .format = .text,
+                .delivery = .best_effort,
+                .mode = .asynchronous,
+                .timestamp = .{
+                    .zone = .local,
+                },
             },
         },
     });

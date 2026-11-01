@@ -33,7 +33,8 @@ pub const RollingFileSink = struct {
     pub const Options = struct {
         path: []const u8,
         dir: ?std.Io.Dir = null,
-        max_bytes: u64,
+        /// null disables size rotation; then rotation_interval_ns is required.
+        max_bytes: ?u64 = null,
         /// Number of archived files in addition to the active file; zero
         /// truncates at rollover. Automatic retention is intentionally bounded.
         retention: u16,
@@ -47,12 +48,18 @@ pub const RollingFileSink = struct {
         rotation_interval_ns: ?u64 = null,
         /// Only monotonic_now is used. Context is borrowed for the sink lifetime.
         clock: Clock = .{},
+
+        pub fn validate(self: Options) !void {
+            if (self.path.len == 0 or self.retention > 1024) return error.InvalidRollingOptions;
+            if (self.max_bytes) |limit| if (limit == 0) return error.InvalidRollingOptions;
+            if (self.max_bytes == null and self.rotation_interval_ns == null) return error.InvalidRollingOptions;
+            if (std.fs.path.isSep(self.path[self.path.len - 1])) return error.InvalidRollingOptions;
+            if (self.rotation_interval_ns) |interval| if (interval == 0) return error.InvalidRollingOptions;
+        }
     };
 
     pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*RollingFileSink {
-        if (options.max_bytes == 0 or options.path.len == 0 or options.retention > 1024) return error.InvalidRollingOptions;
-        if (std.fs.path.isSep(options.path[options.path.len - 1])) return error.InvalidRollingOptions;
-        if (options.rotation_interval_ns) |interval| if (interval == 0) return error.InvalidRollingOptions;
+        try options.validate();
         const dir = options.dir orelse std.Io.Dir.cwd();
         const self = try allocator.create(RollingFileSink);
         errdefer allocator.destroy(self);
@@ -116,10 +123,11 @@ pub const RollingFileSink = struct {
 
     pub fn writeRecord(self: *RollingFileSink, record: []const u8) !void {
         try self.check();
-        if (record.len > self.options.max_bytes or record.len > self.options.buffer_bytes) return error.RecordTooLarge;
+        if (record.len > self.options.buffer_bytes) return error.RecordTooLarge;
+        if (self.options.max_bytes) |limit| if (record.len > limit) return error.RecordTooLarge;
         const size = self.current.?.acceptedBytes();
         const now = if (self.options.rotation_interval_ns != null and record.len != 0) self.rotationNow() else null;
-        const size_due = size > self.options.max_bytes or record.len > self.options.max_bytes - size;
+        const size_due = if (self.options.max_bytes) |limit| size > limit or record.len > limit - size else false;
         const time_due = if (now) |value| size != 0 and self.rotationTimeDue(value) else false;
         if (size_due or time_due) {
             self.rollover() catch |err| {

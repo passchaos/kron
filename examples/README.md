@@ -9,13 +9,13 @@
 | async-memory | [async_memory.zig](async_memory.zig) | stdout 的共享 Memory |
 | structured | [structured.zig](structured.zig) | borrowed/owned、array/group、secret/bytes、lazy、trace/source、日期 |
 | threaded | [threaded.zig](threaded.zig) | 两个 OS 线程的 SPSC，attach/detach、join 与错误传播 |
-| rolling | [rolling.zig](rolling.zig) | 统一 owner 的轮转 JSON 文件＋stderr、独立 filter、文件 durable |
+| rolling | [rolling.zig](rolling.zig) | 独立按大小/时间轮转 JSON 文件＋stderr、文件 durable |
 | prepared | [prepared.zig](prepared.zig) | Mmap/SPSC schema、隐藏 channel 索引的 helper |
 | local-time | [local_time.zig](local_time.zig) | 消费者侧系统local日期与同秒缓存 |
 | file-stdout-local-time | [file_stdout_local_time.zig](file_stdout_local_time.zig) | JSON文件＋stdout text，本地时间和源码位置 |
-| mmap | [mmap.zig](mmap.zig) | 共享Mmap、required文件＋best_effort stdout、local和durable |
+| mmap | [mmap.zig](mmap.zig) | 独立Mmap文件＋Memory stdout、local和durable |
 | source-location | [source_location.zig](source_location.zig) | JSON完整module/file/function/line/column |
-| route-policies | [route_policies.zig](route_policies.zig) | 输出defaults、route独立采样/脱敏与capture保护 |
+| route-policies | [route_policies.zig](route_policies.zig) | outputs列表、独立mode/queue/overflow与采样/脱敏 |
 | std-log | [std_log.zig](std_log.zig) | 根 std_options、bind/unbind 与动态 filter |
 
 高级接口示例用于自定义配置、时钟或底层资源：

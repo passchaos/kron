@@ -11,11 +11,23 @@ const Details = struct {
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .output = .stdout,
-        .mode = .asynchronous,
-        .format = .json,
-        .timestamp = .{ .offset = try kron.time.UtcOffset.init(480) },
-        .redaction = &.{.{ .key = "password", .action = .mask }},
+        .outputs = &.{
+            .{
+                .name = "stdout",
+                .target = .stdout,
+                .mode = .asynchronous,
+                .format = .json,
+                .timestamp = .{
+                    .offset = try kron.time.UtcOffset.init(480),
+                },
+                .redaction = &.{
+                    .{
+                        .key = "password",
+                        .action = .mask,
+                    },
+                },
+            },
+        },
     });
     defer logging.destroy();
     const base = logging.scoped("http").withBorrowed(.{ .service = "example", .status = @as(u16, 0) });

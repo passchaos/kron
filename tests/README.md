@@ -27,3 +27,5 @@
 真实故障记录保留ACK、物理JSON、完整性/FIFO和重放身份。Memory丢失未交付记录是契约，Mmap至少一次重复是允许边界；normal shutdown或只读重开不冒充SIGKILL/系统断电。平台对象/链接不冒充目标设备执行。
 
 临时文件与缓存使用 `.zig-cache` 或由fixture拥有的临时目录，保留失败现场时记录其身份。冻结历史结果位于 `bench/evidence` 与 `power_loss/evidence`，不会被当前测试路径整理改变。
+
+`independent_outputs.zig`（`zig build test-outputs`）验证Logging.outputs独立mode/queue/overflow、逐route采样与队列前脱敏、partial success、64输出、thread/prepared回滚与deadline关闭。`test_managed_outputs_compare.py`校验完整流程基准的JSON oracle，拒绝漏项、重复、截断与工作负载改变。

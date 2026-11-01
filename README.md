@@ -24,13 +24,16 @@ pub fn main(init: std.process.Init) !void {
 
 ```zig
 .{
-    .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
-    .mode = .asynchronous,
-    .format = .json,
+    .outputs = &.{.{
+        .name = "file",
+        .target = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
+        .mode = .asynchronous,
+        .format = .json,
+    }},
 }
 ```
 
-这里的异步队列默认是有界 Memory。系统本地时间可选 `.timestamp=.{ .zone=.local }`，Linux显式启用libc支持；带 `At` 的源码位置使用仓库相对路径，text以无引号的 `路径:行:列` 输出。输出defaults与route覆盖、完整参数、context、线程、多个输出、std.log 和关闭错误处理见 [详细使用指南](docs/usage.md)。可运行源码见 [examples/](examples/README.md)。
+这里的异步队列默认是有界 Memory。系统本地时间可在route选 `.timestamp=.{ .zone=.local }`，Linux显式启用libc支持；带 `At` 的源码位置使用仓库相对路径，text以无引号的 `路径:行:列` 输出。输出统一使用outputs列表；mode/queue/overflow/redaction/sampling等均逐route设置，未填写字段采用Route默认值。完整参数、context、线程、多个输出、std.log 和关闭错误处理见 [详细使用指南](docs/usage.md)。可运行源码见 [examples/](examples/README.md)。
 
 ## 模式与完成边界
 

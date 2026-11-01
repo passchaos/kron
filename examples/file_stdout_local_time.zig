@@ -5,19 +5,31 @@ const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .mode = .asynchronous,
-        .timestamp = .{ .zone = .local },
-        .output = .{ .multiple = &.{
+        .outputs = &.{
             .{
                 .name = "file",
-                .target = .{ .file = .{
-                    .path = "kron-file-stdout-local-time.jsonl",
-                    .backend = .portable,
-                } },
+                .target = .{
+                    .file = .{
+                        .path = "kron-file-stdout-local-time.jsonl",
+                        .backend = .portable,
+                    },
+                },
                 .format = .json,
+                .mode = .asynchronous,
+                .timestamp = .{
+                    .zone = .local,
+                },
             },
-            .{ .name = "stdout", .target = .stdout, .format = .text },
-        } },
+            .{
+                .name = "stdout",
+                .target = .stdout,
+                .format = .text,
+                .mode = .asynchronous,
+                .timestamp = .{
+                    .zone = .local,
+                },
+            },
+        },
     });
     defer logging.destroy();
 

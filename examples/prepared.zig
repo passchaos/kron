@@ -3,17 +3,29 @@ const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .output = .{ .file = .{ .path = "kron-prepared.jsonl", .backend = .portable } },
-        .format = .json,
-        .mode = .spsc,
-        .max_threads = 1,
-        .queue = .{ .mmap = .{
-            .path = "kron-prepared.journal",
-            .capacity = 64,
-            .max_record_bytes = 4096,
-            .schema_capacity = 16,
-            .max_schema_bytes = 4096,
-        } },
+        .outputs = &.{
+            .{
+                .name = "file",
+                .target = .{
+                    .file = .{
+                        .path = "kron-prepared.jsonl",
+                        .backend = .portable,
+                    },
+                },
+                .format = .json,
+                .mode = .spsc,
+                .max_threads = 1,
+                .queue = .{
+                    .mmap = .{
+                        .path = "kron-prepared.journal",
+                        .capacity = 64,
+                        .max_record_bytes = 4096,
+                        .schema_capacity = 16,
+                        .max_schema_bytes = 4096,
+                    },
+                },
+            },
+        },
     });
     defer logging.destroy();
     const template: kron.Event = .{

@@ -4,13 +4,31 @@ const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .mode = .asynchronous,
-        .format = .json,
-        .timestamp = .{ .zone = .local },
-        .output = .{ .multiple = &.{
-            .{ .name = "file", .target = .{ .file = .{ .path = "kron-source-location.jsonl", .backend = .portable } } },
-            .{ .name = "stdout", .target = .stdout },
-        } },
+        .outputs = &.{
+            .{
+                .name = "file",
+                .target = .{
+                    .file = .{
+                        .path = "kron-source-location.jsonl",
+                        .backend = .portable,
+                    },
+                },
+                .mode = .asynchronous,
+                .format = .json,
+                .timestamp = .{
+                    .zone = .local,
+                },
+            },
+            .{
+                .name = "stdout",
+                .target = .stdout,
+                .mode = .asynchronous,
+                .format = .json,
+                .timestamp = .{
+                    .zone = .local,
+                },
+            },
+        },
     });
     defer logging.destroy();
 

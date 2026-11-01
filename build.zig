@@ -150,6 +150,12 @@ pub fn build(b: *std.Build) void {
     const route_policy_tests = b.addTest(.{ .name = "kron-route-policies", .root_module = route_policy_module });
     const run_route_policy = b.addRunArtifact(route_policy_tests);
     b.step("test-route-policies", "Verify per-output sampling, redaction, defaults and recovery identity").dependOn(&run_route_policy.step);
+    const outputs_module = b.createModule(.{ .root_source_file = b.path("tests/independent_outputs.zig"), .target = target, .optimize = optimize });
+    outputs_module.addImport("kron", module);
+    const outputs_tests = b.addTest(.{ .name = "kron-independent-outputs", .root_module = outputs_module });
+    const run_outputs = b.addRunArtifact(outputs_tests);
+    b.step("test-outputs", "Verify independent output pipelines, backpressure, capture and lifetime").dependOn(&run_outputs.step);
+    test_step.dependOn(&run_outputs.step);
     test_step.dependOn(&run_route_policy.step);
 
     const route_filter_module = b.createModule(.{ .root_source_file = b.path("tests/route_filter_integration.zig"), .target = target, .optimize = optimize });
@@ -301,6 +307,9 @@ pub fn build(b: *std.Build) void {
     const regression_tests = b.addSystemCommand(&.{ "python3", "tests/test_regression.py" });
     b.step("test-regression", "Verify controlled performance regression accounting").dependOn(&regression_tests.step);
     verify.dependOn(&regression_tests.step);
+    const managed_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_managed_outputs_compare.py" });
+    b.step("test-managed-output-report", "Reject missing, duplicate and malformed managed benchmark output").dependOn(&managed_report_tests.step);
+    verify.dependOn(&managed_report_tests.step);
     const cpp_reference_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_reference.py" });
     const cpp_reference_report = b.step("test-cpp-reference-report", "Reject incomplete workflow output, backend fallback and changed workload budgets");
     cpp_reference_report.dependOn(&cpp_reference_report_tests.step);
@@ -467,6 +476,12 @@ pub fn build(b: *std.Build) void {
     verify.dependOn(&run_capture_bench_tests.step);
 
     validation.addExamples(b, target, optimize, module, verify);
+    const managed_bench_module = b.createModule(.{ .root_source_file = b.path("bench/managed_outputs.zig"), .target = target, .optimize = optimize });
+    managed_bench_module.addImport("kron", module);
+    const managed_bench = b.addExecutable(.{ .name = "kron-managed-outputs", .root_module = managed_bench_module });
+    const run_managed_bench = b.addRunArtifact(managed_bench);
+    if (b.args) |args| run_managed_bench.addArgs(args);
+    b.step("bench-managed-outputs", "Measure a managed single-output complete workflow; arguments: mode directory iterations").dependOn(&run_managed_bench.step);
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);

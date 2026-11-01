@@ -66,15 +66,12 @@ pub fn main(init: std.process.Init) !void {
     // The application owner preserves sync/no-thread behavior and rejects
     // unsupported modes before opening or truncating its managed output.
     inline for (.{ .asynchronous, .spsc }) |mode| {
-        try std.testing.expectError(error.ThreadsUnavailable, kron.Logging.create(forbidden.allocator(), io, .{
-            .output = .{ .file = .{ .dir = dir, .path = "must-not-create.jsonl", .append = false } },
-            .mode = mode,
-        }));
+        try std.testing.expectError(error.ThreadsUnavailable, kron.Logging.create(forbidden.allocator(), io, .{ .outputs = &.{.{ .target = .{ .file = .{ .dir = dir, .path = "must-not-create.jsonl", .append = false } }, .mode = mode }} }));
     }
     try expect(!forbidden.has_induced_failure);
     var managed_bytes: [4096]u8 = undefined;
     var managed_writer = std.Io.Writer.fixed(&managed_bytes);
-    const logging = try kron.Logging.create(allocator, io, .{ .output = .{ .writer = &managed_writer }, .format = .json });
+    const logging = try kron.Logging.create(allocator, io, .{ .outputs = &.{.{ .target = .{ .writer = &managed_writer }, .format = .json }} });
     defer logging.destroy();
     try expect(try logging.scoped("managed").tryEmit(.info, "single", .{}) == .accepted);
     try logging.flush();
@@ -82,7 +79,7 @@ pub fn main(init: std.process.Init) !void {
     try std.testing.expectError(error.TimedControlUnavailable, logging.flushDurableUntil(deadline));
     try std.testing.expectError(error.TimedControlUnavailable, logging.shutdownUntil(deadline));
     try logging.shutdown();
-    try expect(logging.health().written == 1 and !logging.runtime().controlStatus().available);
+    try expect(logging.health().written == 1 and !(try logging.runtime("stderr")).controlStatus().available);
     try onlyOneThread(io);
 
     try runtime.shutdown(.drain);

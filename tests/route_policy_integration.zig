@@ -103,19 +103,12 @@ test "route policy all-route sampling skips lazy construction and explicit bypas
     try std.testing.expectEqual(@as(usize, 1), sink_b.records);
 }
 
-test "route policy managed defaults support explicit empty redaction and disabled inherited metadata" {
+test "route policy managed routes support empty redaction and disabled metadata" {
     var bytes_a: [8192]u8 = undefined;
     var bytes_b: [8192]u8 = undefined;
     var writer_a = std.Io.Writer.fixed(&bytes_a);
     var writer_b = std.Io.Writer.fixed(&bytes_b);
-    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{
-        .defaults = .{ .format = .json, .timestamp = .{}, .sampling = .{ .count = 0 }, .redaction = &.{.{ .key = "password", .action = .mask }}, .predicate = "status >= 500" },
-        .capture = .{ .redaction = &.{.{ .key = "token", .action = .mask }} },
-        .output = .{ .multiple = &.{
-            .{ .name = "inherited", .target = .{ .writer = &writer_a } },
-            .{ .name = "override", .target = .{ .writer = &writer_b }, .sampling = .none, .timestamp_enabled = false, .redaction = &.{}, .predicate_enabled = false },
-        } },
-    });
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{ .{ .name = "inherited", .target = .{ .writer = &writer_a }, .format = .json, .timestamp = .{}, .sampling = .{ .count = 0 }, .redaction = &.{.{ .key = "password", .action = .mask }}, .predicate = "status >= 500" }, .{ .name = "override", .target = .{ .writer = &writer_b }, .sampling = .none, .redaction = &.{}, .format = .json, .timestamp = null, .predicate = null } } });
     defer logging.destroy();
     _ = try logging.scoped("route").tryEmit(.info, "overridden", .{ .status = @as(u16, 200), .password = "keep-for-output", .token = "never-queue" });
     try logging.shutdown();
@@ -124,7 +117,7 @@ test "route policy managed defaults support explicit empty redaction and disable
     defer parsed.deinit();
     try std.testing.expect(parsed.value.object.get("timestamp") == null);
     try std.testing.expectEqualStrings("keep-for-output", parsed.value.object.get("attributes").?.object.get("password").?.string);
-    try std.testing.expectEqualStrings("[REDACTED]", parsed.value.object.get("attributes").?.object.get("token").?.string);
+    try std.testing.expectEqualStrings("never-queue", parsed.value.object.get("attributes").?.object.get("token").?.string);
 }
 
 test "route policy output budgets fail required routes and skip best effort routes without writing prefixes" {
@@ -251,14 +244,7 @@ test "route policy output redaction recurses through attributes and deferred arg
     var bytes_b: [8192]u8 = undefined;
     var writer_a = std.Io.Writer.fixed(&bytes_a);
     var writer_b = std.Io.Writer.fixed(&bytes_b);
-    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{
-        .mode = .asynchronous,
-        .defaults = .{ .format = .json },
-        .output = .{ .multiple = &.{
-            .{ .name = "private", .target = .{ .writer = &writer_a }, .redaction = &.{.{ .key = "password", .action = .mask }} },
-            .{ .name = "original", .target = .{ .writer = &writer_b } },
-        } },
-    });
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{ .{ .name = "private", .target = .{ .writer = &writer_a }, .redaction = &.{.{ .key = "password", .action = .mask }}, .mode = .asynchronous, .format = .json }, .{ .name = "original", .target = .{ .writer = &writer_b }, .mode = .asynchronous, .format = .json } } });
     defer logging.destroy();
     const values = [_]kron.Field{ kron.kv("password", "original-secret"), kron.kv("status", @as(u16, 200)) };
     const group = kron.group(&values);
@@ -325,10 +311,12 @@ test "route policy managed validation rejects malformed output overrides before 
         .{ .name = "bad", .target = target, .redaction = &.{.{ .key = "", .action = .mask }} },
         .{ .name = "bad", .target = target, .sampling = .{ .every = 0 } },
         .{ .name = "bad", .target = target, .max_encoded_record_bytes = 0 },
-        .{ .name = "bad", .target = target, .max_encoded_record_bytes = 128 * 1024 },
+        .{ .name = "bad", .target = target, .max_encoded_record_bytes = std.math.maxInt(usize) },
     };
     for (routes) |route| {
-        if (kron.Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .multiple = &.{route} } })) |owner| {
+        if (kron.Logging.create(std.testing.allocator, std.testing.io, .{
+            .outputs = &.{route},
+        })) |owner| {
             owner.destroy();
             return error.InvalidOverrideAccepted;
         } else |_| {}

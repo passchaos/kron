@@ -35,16 +35,9 @@ pub fn run(allocator: std.mem.Allocator, io: std.Io, mode: Mode, directory: []co
     const attached = mode == .spsc_memory or mode == .spsc_mmap;
     const mapped = mode == .mmap or mode == .spsc_mmap;
     const memory = mode == .memory or mode == .spsc_memory;
-    const logging = try kron.Logging.create(allocator, io, .{
-        .output = .{ .file = .{ .dir = dir, .path = "events.jsonl", .backend = .portable } },
-        .format = .json,
-        .mode = if (mode == .sync) .sync else if (attached) .spsc else .asynchronous,
-        .queue = if (memory) .{ .memory = .{ .capacity = 16, .max_record_bytes = 4096 } } else if (mapped) .{ .mmap = .{ .path = journal_path, .capacity = 16, .max_record_bytes = 4096 } } else null,
-        .max_threads = 1,
-        .redaction = &.{.{ .key = "password", .action = .mask }},
-    });
+    const logging = try kron.Logging.create(allocator, io, .{ .outputs = &.{.{ .name = "file", .target = .{ .file = .{ .dir = dir, .path = "events.jsonl", .backend = .portable } }, .format = .json, .mode = if (mode == .sync) .sync else if (attached) .spsc else .asynchronous, .queue = if (memory) .{ .memory = .{ .capacity = 16, .max_record_bytes = 4096 } } else if (mapped) .{ .mmap = .{ .path = journal_path, .capacity = 16, .max_record_bytes = 4096 } } else null, .max_threads = 1, .redaction = &.{.{ .key = "password", .action = .mask }} }} });
     defer logging.destroy();
-    const runtime = logging.runtime();
+    const runtime = try logging.runtime("file");
     if (attached) {
         const log = try logging.attachThread("consumer");
         defer log.detach() catch {};

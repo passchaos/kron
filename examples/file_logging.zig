@@ -3,10 +3,25 @@ const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .output = .{ .file = .{ .path = "kron-service.jsonl", .backend = .portable } },
-        .mode = .asynchronous,
-        .format = .json,
-        .redaction = &.{.{ .key = "password", .action = .mask }},
+        .outputs = &.{
+            .{
+                .name = "file",
+                .target = .{
+                    .file = .{
+                        .path = "kron-service.jsonl",
+                        .backend = .portable,
+                    },
+                },
+                .mode = .asynchronous,
+                .format = .json,
+                .redaction = &.{
+                    .{
+                        .key = "password",
+                        .action = .mask,
+                    },
+                },
+            },
+        },
     });
     defer logging.destroy();
     const log = logging.scoped("http").withBorrowed(.{ .service = "example" });

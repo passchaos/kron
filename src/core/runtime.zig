@@ -1070,13 +1070,26 @@ pub const Runtime = struct {
     }
 
     fn checkControlCaller(self: *Runtime) !void {
+        try self.checkControlContext();
+        if (self.control == null) return error.TimedControlUnavailable;
+    }
+
+    /// Preflight a composed owner's blocking operation before touching any
+    /// pipeline. This rejects callbacks which could wait for themselves.
+    pub fn checkControlContext(self: *Runtime) !void {
         if (self.diagnostics.inHook()) return error.DiagnosticReentrant;
         if (cleanup_owner == self) return error.ConfigurationReentrant;
         if (self.worker_id.load(.acquire) == std.Thread.getCurrentId()) return error.WorkerReentrant;
         if (self.ownsAdmission()) return error.ProducerReentrant;
-        const control = self.control orelse return error.TimedControlUnavailable;
-        if (control.isWorker()) return error.ControlReentrant;
+        if (self.control) |control| if (control.isWorker()) return error.ControlReentrant;
         if (self.inSinkCall()) return error.SinkReentrant;
+    }
+
+    /// Close admission without waiting, so a composed owner can stop all
+    /// pipelines before draining any of them. Resources remain owned.
+    pub fn stopAccepting(self: *Runtime) !void {
+        try self.checkControlContext();
+        self.closeAdmission();
     }
 
     fn namedMask(snapshot: *const configurations.Snapshot, names: []const []const u8) !u64 {

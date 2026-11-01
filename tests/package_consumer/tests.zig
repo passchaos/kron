@@ -2,18 +2,12 @@ const std = @import("std");
 const kron = @import("kron");
 const consumer = @import("consumer");
 
-test "independent consumer uses output defaults and explicit route overrides" {
+test "independent consumer uses independent output policies and route defaults" {
     var bytes_a: [8192]u8 = undefined;
     var bytes_b: [8192]u8 = undefined;
     var a = std.Io.Writer.fixed(&bytes_a);
     var b = std.Io.Writer.fixed(&bytes_b);
-    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{
-        .defaults = .{ .format = .json, .sampling = .{ .count = 0 }, .redaction = &.{.{ .key = "private", .action = .mask }} },
-        .output = .{ .multiple = &.{
-            .{ .name = "inherited", .target = .{ .writer = &a } },
-            .{ .name = "overridden", .target = .{ .writer = &b }, .sampling = .none, .redaction = &.{} },
-        } },
-    });
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{ .{ .name = "inherited", .target = .{ .writer = &a }, .format = .json, .sampling = .{ .count = 0 }, .redaction = &.{.{ .key = "private", .action = .mask }} }, .{ .name = "overridden", .target = .{ .writer = &b }, .sampling = .none, .redaction = &.{}, .format = .json } } });
     defer logging.destroy();
     _ = try logging.scoped("consumer").tryEmit(.info, "route override", .{ .private = "retained" });
     try logging.shutdown();
@@ -29,7 +23,9 @@ test "independent consumer maps its module source root for terminal paths" {
     const location = comptime kron.source.fromModule(".", @src());
     var bytes: [4096]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
-    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &writer } });
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{
+        .outputs = &.{.{ .target = .{ .writer = &writer } }},
+    });
     defer logging.destroy();
     _ = try logging.scoped("app").tryEmitAt(location, .info, "repository relative", .{});
     try logging.shutdown();
@@ -43,7 +39,7 @@ test "independent consumer maps its module source root for terminal paths" {
 test "independent consumer system local time capability and dependency option" {
     var bytes: [4096]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
-    const options: kron.Logging.Options = .{ .output = .{ .writer = &writer }, .format = .json, .timestamp = .{ .zone = .local } };
+    const options: kron.Logging.Options = .{ .outputs = &.{.{ .target = .{ .writer = &writer }, .format = .json, .timestamp = .{ .zone = .local } }} };
     if (!kron.time.local.supported) {
         try std.testing.expectError(error.LocalTimeUnavailable, kron.Logging.create(std.testing.allocator, std.testing.io, options));
         return;
@@ -63,7 +59,7 @@ test "independent consumer system local time capability and dependency option" {
 test "independent consumer uses managed public setup and keeps its writer" {
     var bytes: [4096]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
-    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &writer }, .format = .json });
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{.{ .target = .{ .writer = &writer }, .format = .json }} });
     var alive = true;
     defer if (alive) logging.destroy();
     try std.testing.expectEqual(kron.EmitResult.accepted, try logging.scoped("managed").tryEmit(.info, "package owner", .{ .answer = @as(u32, 42) }));

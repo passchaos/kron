@@ -7,12 +7,7 @@ test "managed logging writer lifetime context snapshots filtering and shutdown a
         var bytes: [16384]u8 = undefined;
         var writer = std.Io.Writer.fixed(&bytes);
         var allocator = std.testing.FailingAllocator.init(std.testing.allocator, .{});
-        const logging = try Logging.create(allocator.allocator(), std.testing.io, .{
-            .output = .{ .writer = &writer },
-            .mode = mode,
-            .format = .json,
-            .redaction = &.{.{ .key = "password", .action = .mask }},
-        });
+        const logging = try Logging.create(allocator.allocator(), std.testing.io, .{ .outputs = &.{.{ .target = .{ .writer = &writer }, .mode = mode, .format = .json, .redaction = &.{.{ .key = "password", .action = .mask }} }} });
         var live = true;
         defer if (live) logging.destroy();
         allocator.fail_index = allocator.alloc_index;
@@ -57,13 +52,7 @@ test "managed logging owns file cleanup and mmap close reopen including prepared
         defer tmp.cleanup();
         var journal_path_bytes: [192]u8 = undefined;
         const journal_path = try std.fmt.bufPrint(&journal_path_bytes, ".zig-cache/tmp/{s}/managed.journal", .{tmp.sub_path});
-        const options: Logging.Options = .{
-            .output = .{ .file = .{ .dir = tmp.dir, .path = "managed.jsonl", .backend = .portable } },
-            .mode = .spsc,
-            .max_threads = 1,
-            .format = .json,
-            .queue = if (persistent) .{ .mmap = .{ .path = journal_path, .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } else .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
-        };
+        const options: Logging.Options = .{ .outputs = &.{.{ .target = .{ .file = .{ .dir = tmp.dir, .path = "managed.jsonl", .backend = .portable } }, .mode = .spsc, .max_threads = 1, .format = .json, .queue = if (persistent) .{ .mmap = .{ .path = journal_path, .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } else .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } }} };
         const shape: @import("../core/event.zig").Event = .{ .level = .info, .scope = "prepared", .message = "event {d}", .message_template = true, .timestamp_ns = 0, .fields = &.{@import("../core/field.zig").kv("n", @as(u64, 0))}, .format_args = &.{@import("../core/field.zig").kv("0", @as(u64, 0))} };
         const logging = try Logging.create(std.testing.allocator, std.testing.io, options);
         var live = true;
@@ -97,7 +86,9 @@ test "managed logging owns file cleanup and mmap close reopen including prepared
 test "managed logging reports write and shutdown errors before ordered cleanup" {
     var bytes: [1]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
-    const logging = try Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &writer } });
+    const logging = try Logging.create(std.testing.allocator, std.testing.io, .{
+        .outputs = &.{.{ .target = .{ .writer = &writer } }},
+    });
     defer logging.destroy();
     try std.testing.expectError(error.WriteFailed, logging.scoped("bad").tryEmit(.info, "too long", .{}));
     try std.testing.expectError(error.WriteFailed, logging.shutdown());
@@ -106,18 +97,20 @@ test "managed logging reports write and shutdown errors before ordered cleanup" 
 
 test "managed logging rejects invalid configurations before touching files or allocator" {
     var forbidden = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
-    try std.testing.expectError(error.QueueRequiresAsyncMode, Logging.create(forbidden.allocator(), std.testing.io, .{ .queue = .{ .memory = .{} } }));
-    try std.testing.expectError(error.InvalidThreadBudget, Logging.create(forbidden.allocator(), std.testing.io, .{ .mode = .spsc, .max_threads = 0 }));
-    try std.testing.expectError(error.MmapRequiresFileOutput, Logging.create(forbidden.allocator(), std.testing.io, .{ .mode = .asynchronous, .queue = .{ .mmap = .{ .path = "must-not-create.journal", .capacity = 8, .max_record_bytes = 512 } } }));
-    try std.testing.expectError(error.JournalBudgetExceeded, Logging.create(forbidden.allocator(), std.testing.io, .{ .mode = .asynchronous, .max_journal_bytes = 1 }));
-    try std.testing.expectError(error.InvalidLevel, Logging.create(forbidden.allocator(), std.testing.io, .{ .output = .{ .file = .{ .path = "must-not-truncate", .append = false } }, .filter = "invalid" }));
+    try std.testing.expectError(error.QueueRequiresAsyncMode, Logging.create(forbidden.allocator(), std.testing.io, .{ .outputs = &.{.{ .queue = .{ .memory = .{} } }} }));
+    try std.testing.expectError(error.InvalidThreadBudget, Logging.create(forbidden.allocator(), std.testing.io, .{ .outputs = &.{.{ .mode = .spsc, .max_threads = 0 }} }));
+    try std.testing.expectError(error.MmapRequiresFileOutput, Logging.create(forbidden.allocator(), std.testing.io, .{ .outputs = &.{.{ .mode = .asynchronous, .queue = .{ .mmap = .{ .path = "must-not-create.journal", .capacity = 8, .max_record_bytes = 512 } } }} }));
+    try std.testing.expectError(error.JournalBudgetExceeded, Logging.create(forbidden.allocator(), std.testing.io, .{ .outputs = &.{.{ .mode = .asynchronous, .max_journal_bytes = 1 }} }));
+    try std.testing.expectError(error.InvalidLevel, Logging.create(forbidden.allocator(), std.testing.io, .{ .outputs = &.{.{ .target = .{ .file = .{ .path = "must-not-truncate", .append = false } }, .filter = "invalid" }} }));
     try std.testing.expect(!forbidden.has_induced_failure);
 }
 
 fn allocationCase(allocator: std.mem.Allocator) !void {
     var bytes: [8192]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
-    const logging = try Logging.create(allocator, std.testing.io, .{ .output = .{ .writer = &writer } });
+    const logging = try Logging.create(allocator, std.testing.io, .{
+        .outputs = &.{.{ .target = .{ .writer = &writer } }},
+    });
     defer logging.destroy();
     _ = try logging.scoped("oom").tryEmit(.info, "valid", .{});
     try logging.shutdown();
@@ -127,7 +120,7 @@ test "managed logging allocation failure rolls back runtime and output resources
 }
 
 fn fileAllocationCase(allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
-    const logging = try Logging.create(allocator, std.testing.io, .{ .output = .{ .file = .{ .dir = dir, .path = "oom.jsonl", .backend = .portable } }, .format = .json });
+    const logging = try Logging.create(allocator, std.testing.io, .{ .outputs = &.{.{ .target = .{ .file = .{ .dir = dir, .path = "oom.jsonl", .backend = .portable } }, .format = .json }} });
     defer logging.destroy();
     _ = try logging.scoped("oom").tryEmit(.info, "valid", .{});
     try logging.shutdown();
@@ -145,12 +138,7 @@ test "managed logging failed prepared attachment releases its channel and shared
     inline for (.{ .asynchronous, .spsc }) |mode| {
         var bytes: [8192]u8 = undefined;
         var writer = std.Io.Writer.fixed(&bytes);
-        const logging = try Logging.create(std.testing.allocator, std.testing.io, .{
-            .output = .{ .writer = &writer },
-            .mode = mode,
-            .max_threads = 1,
-            .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
-        });
+        const logging = try Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{.{ .target = .{ .writer = &writer }, .mode = mode, .max_threads = 1, .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } }} });
         defer logging.destroy();
         const shape: event.Event = .{ .level = .info, .scope = "prepared", .message = "ready", .timestamp_ns = 0, .fields = &.{field.kv("id", @as(u64, 0))} };
         if (mode == .spsc) {
@@ -173,15 +161,15 @@ test "managed logging validates policy and budgets before truncating existing ou
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     try tmp.dir.writeFile(std.testing.io, .{ .sub_path = "existing.log", .data = "preserved\n" });
-    const output: Logging.Output = .{ .file = .{ .dir = tmp.dir, .path = "existing.log", .append = false, .backend = .portable } };
+    const output: Logging.Target = .{ .file = .{ .dir = tmp.dir, .path = "existing.log", .append = false, .backend = .portable } };
     const invalid = [_]Logging.Options{
-        .{ .output = output, .mode = .asynchronous, .max_journal_bytes = 1 },
-        .{ .output = output, .consumer_batches_per_queue = 0 },
-        .{ .output = output, .redaction = &.{.{ .key = "", .action = .mask }} },
-        .{ .output = output, .sampling = .{ .every = 0 } },
-        .{ .output = output, .predicate = "status ==" },
-        .{ .output = output, .format = .binary, .timestamp = .{} },
-        .{ .output = output, .mode = .asynchronous, .reclaim_after = .durable },
+        .{ .outputs = &.{.{ .target = output, .mode = .asynchronous, .max_journal_bytes = 1 }} },
+        .{ .outputs = &.{.{ .target = output, .consumer_batches_per_queue = 0 }} },
+        .{ .outputs = &.{.{ .target = output, .redaction = &.{.{ .key = "", .action = .mask }} }} },
+        .{ .outputs = &.{.{ .target = output, .sampling = .{ .every = 0 } }} },
+        .{ .outputs = &.{.{ .target = output, .predicate = "status ==" }} },
+        .{ .outputs = &.{.{ .target = output, .format = .binary, .timestamp = .{} }} },
+        .{ .outputs = &.{.{ .target = output, .mode = .asynchronous, .reclaim_after = .durable }} },
     };
     for (invalid) |options| {
         const created = Logging.create(std.testing.allocator, std.testing.io, options);
@@ -201,14 +189,7 @@ test "managed logging multiple outputs retain independent formats filters and wr
         var text_bytes: [8192]u8 = undefined;
         var json = std.Io.Writer.fixed(&json_bytes);
         var text = std.Io.Writer.fixed(&text_bytes);
-        const logging = try Logging.create(std.testing.allocator, std.testing.io, .{
-            .mode = mode,
-            .filter = "off",
-            .output = .{ .multiple = &.{
-                .{ .name = "json", .target = .{ .writer = &json }, .format = .json, .filter = "info" },
-                .{ .name = "warnings", .target = .{ .writer = &text }, .format = .text, .filter = "warn" },
-            } },
-        });
+        const logging = try Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{ .{ .name = "json", .target = .{ .writer = &json }, .format = .json, .filter = "info", .mode = mode }, .{ .name = "warnings", .target = .{ .writer = &text }, .format = .text, .filter = "warn", .mode = mode } } });
         var live = true;
         defer if (live) logging.destroy();
         {
@@ -220,7 +201,7 @@ test "managed logging multiple outputs retain independent formats filters and wr
         try logging.flushOutputs(&.{"json"});
         try std.testing.expectError(error.UnsupportedDurability, logging.flushOutputsDurable(&.{"json"}));
         try logging.shutdown();
-        try std.testing.expectEqual(@as(u64, 2), logging.health().written);
+        try std.testing.expectEqual(@as(u64, 3), logging.health().written);
         logging.destroy();
         live = false;
         try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, json.buffered(), "\n"));
@@ -237,11 +218,11 @@ fn multiFileAllocationCase(allocator: std.mem.Allocator, dir: std.Io.Dir) !void 
     var bytes: [8192]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);
     const logging = try Logging.create(allocator, std.testing.io, .{
-        .output = .{ .multiple = &.{
+        .outputs = &.{
             .{ .name = "file", .target = .{ .file = .{ .dir = dir, .path = "multi-oom.jsonl", .backend = .portable } } },
             .{ .name = "rolling", .target = .{ .rolling_file = .{ .dir = dir, .path = "rolling-oom.jsonl", .max_bytes = 4096, .retention = 2, .backend = .portable } } },
             .{ .name = "writer", .target = .{ .writer = &writer } },
-        } },
+        },
     });
     defer logging.destroy();
     _ = try logging.scoped("multi").tryEmit(.info, "complete", .{});
@@ -261,15 +242,7 @@ test "managed logging mmap supports owned file rolling and best effort writer th
     var writer = std.Io.Writer.fixed(&bytes);
     var journal_path_bytes: [192]u8 = undefined;
     const path = try std.fmt.bufPrint(&journal_path_bytes, ".zig-cache/tmp/{s}/multi.journal", .{tmp.sub_path});
-    const options: Logging.Options = .{
-        .output = .{ .multiple = &.{
-            .{ .name = "file", .target = .{ .file = .{ .dir = tmp.dir, .path = "multi.jsonl", .backend = .portable } }, .format = .json },
-            .{ .name = "rolling", .target = .{ .rolling_file = .{ .dir = tmp.dir, .path = "multi-rolling.jsonl", .max_bytes = 4096, .retention = 2, .backend = .portable } }, .format = .json },
-            .{ .name = "console", .target = .{ .writer = &writer }, .delivery = .best_effort, .filter = "warn" },
-        } },
-        .mode = .asynchronous,
-        .queue = .{ .mmap = .{ .path = path, .capacity = 8, .max_record_bytes = 1024 } },
-    };
+    const options: Logging.Options = .{ .outputs = &.{ .{ .name = "file", .target = .{ .file = .{ .dir = tmp.dir, .path = "multi.jsonl", .backend = .portable } }, .format = .json, .queue = .{ .mmap = .{ .path = path, .capacity = 8, .max_record_bytes = 1024 } }, .mode = .asynchronous }, .{ .name = "rolling", .target = .{ .rolling_file = .{ .dir = tmp.dir, .path = "multi-rolling.jsonl", .max_bytes = 4096, .retention = 2, .backend = .portable } }, .format = .json, .mode = .asynchronous }, .{ .name = "console", .target = .{ .writer = &writer }, .delivery = .best_effort, .filter = "warn", .mode = .asynchronous } } };
     {
         const logging = try Logging.create(std.testing.allocator, std.testing.io, options);
         defer logging.destroy();
@@ -277,13 +250,13 @@ test "managed logging mmap supports owned file rolling and best effort writer th
         _ = try logging.scoped("multi").tryEmit(.warn, "all outputs", .{});
         try logging.flushOutputsDurable(&.{ "file", "rolling" });
         try logging.shutdown();
-        try std.testing.expectEqual(@as(u64, 2), logging.health().written);
+        try std.testing.expectEqual(@as(u64, 5), logging.health().written);
     }
     const first = try tmp.dir.readFileAlloc(std.testing.io, "multi.jsonl", std.testing.allocator, .limited(8192));
     defer std.testing.allocator.free(first);
     const rolling = try tmp.dir.readFileAlloc(std.testing.io, "multi-rolling.jsonl", std.testing.allocator, .limited(8192));
     defer std.testing.allocator.free(rolling);
-    try std.testing.expectEqualSlices(u8, first, rolling);
+    try std.testing.expect(std.mem.indexOf(u8, rolling, "both files") != null);
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, first, "\n"));
     const reopened = try Logging.create(std.testing.allocator, std.testing.io, options);
     defer reopened.destroy();
@@ -293,13 +266,21 @@ test "managed logging mmap supports owned file rolling and best effort writer th
 
 test "managed logging rejects invalid multiple outputs before allocating" {
     var forbidden = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
-    try std.testing.expectError(error.InvalidOutputs, Logging.create(forbidden.allocator(), std.testing.io, .{ .output = .{ .multiple = &.{} } }));
-    try std.testing.expectError(error.DuplicateRoute, Logging.create(forbidden.allocator(), std.testing.io, .{ .output = .{ .multiple = &.{ .{ .name = "same", .target = .stderr }, .{ .name = "same", .target = .stdout } } } }));
-    try std.testing.expectError(error.InvalidLevel, Logging.create(forbidden.allocator(), std.testing.io, .{ .output = .{ .multiple = &.{.{ .name = "bad", .target = .stderr, .filter = "bad-level" }} } }));
-    try std.testing.expectError(error.DuplicateOutputTarget, Logging.create(forbidden.allocator(), std.testing.io, .{ .output = .{ .multiple = &.{
-        .{ .name = "first", .target = .{ .file = .{ .path = "must-not-create.jsonl", .append = false } } },
-        .{ .name = "second", .target = .{ .file = .{ .path = "must-not-create.jsonl", .append = false } } },
-    } } }));
+    try std.testing.expectError(error.InvalidOutputs, Logging.create(forbidden.allocator(), std.testing.io, .{
+        .outputs = &.{},
+    }));
+    try std.testing.expectError(error.DuplicateRoute, Logging.create(forbidden.allocator(), std.testing.io, .{
+        .outputs = &.{ .{ .name = "same", .target = .stderr }, .{ .name = "same", .target = .stdout } },
+    }));
+    try std.testing.expectError(error.InvalidLevel, Logging.create(forbidden.allocator(), std.testing.io, .{
+        .outputs = &.{.{ .name = "bad", .target = .stderr, .filter = "bad-level" }},
+    }));
+    try std.testing.expectError(error.DuplicateOutputTarget, Logging.create(forbidden.allocator(), std.testing.io, .{
+        .outputs = &.{
+            .{ .name = "first", .target = .{ .file = .{ .path = "must-not-create.jsonl", .append = false } } },
+            .{ .name = "second", .target = .{ .file = .{ .path = "must-not-create.jsonl", .append = false } } },
+        },
+    }));
     try std.testing.expect(!forbidden.has_induced_failure);
 }
 
@@ -308,10 +289,14 @@ test "managed logging std log binding cleanup cannot unbind another owner" {
     var second_bytes: [4096]u8 = undefined;
     var first_writer = std.Io.Writer.fixed(&first_bytes);
     var second_writer = std.Io.Writer.fixed(&second_bytes);
-    const first = try Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &first_writer } });
+    const first = try Logging.create(std.testing.allocator, std.testing.io, .{
+        .outputs = &.{.{ .target = .{ .writer = &first_writer } }},
+    });
     var first_live = true;
     defer if (first_live) first.destroy();
-    const second = try Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &second_writer } });
+    const second = try Logging.create(std.testing.allocator, std.testing.io, .{
+        .outputs = &.{.{ .target = .{ .writer = &second_writer } }},
+    });
     defer second.destroy();
     try first.bindStdLog();
     try std.testing.expectError(error.AlreadyBound, second.bindStdLog());

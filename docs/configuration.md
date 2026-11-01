@@ -1,5 +1,9 @@
 # 路由与策略热替换
 
+常规应用通过Logging.outputs配置独立管线，mode/queue/overflow/redaction/sampling等直接逐route设置，未填写的字段采用Route类型默认值。每个route的脱敏在写入其队列前执行，各自拥有采样配额。统一用法见 [使用指南](usage.md)。
+
+下文描述高级Runtime内部同一管线的多route与不可变配置事务。它们共享队列/捕获保护，语义与Logging的多个独立管线不同。通过 `try logging.runtime(name)` 借用相应引擎，不得单独destroy。
+
 `replaceConfiguration(routes, policy)` 发布一个不可变配置版本。Policy 包含默认 scope filter、采样和递归 redaction；每个route可指定filter、format/timestamp、predicate、sampling/sample_bypass、输出redaction、编码上限、required/best_effort和written/durable回收边界。
 
 ```zig
@@ -19,11 +23,11 @@ _ = try runtime.collectConfigurations();
 
 `RouteOptions.sampling=null` 继承Runtime全局采样；显式 `.none` 或其他策略使用本route独立的全producer预算。采样在字段捕获前冻结route_mask，全部route拒绝则返回sampled；消费者与恢复不重新采样。filter-only更新保留所有采样相位，full replacement建立新的状态；旧accepted记录保留原mask。
 
-`RouteOptions.redaction` 是附加输出脱敏：只在当前route渲染，递归处理attributes和deferred参数的group，不修改另一个route或queue原始值。全局Policy.redaction仍在队列接受前改写事件，输出策略不能恢复已mask/drop或Secret原值。需要原值不落Mmap时配置捕获前Policy.redaction或Logging.capture.redaction。
+`RouteOptions.redaction` 是附加输出脱敏：只在当前route渲染，递归处理attributes和deferred参数的group，不修改另一个route或queue原始值。全局Policy.redaction仍在队列接受前改写事件，输出策略不能恢复已mask/drop或Secret原值。需要原值不落Mmap时配置捕获前Policy.redaction；Logging则在每个相关route设置有效redaction或用Secret禁止捕获原值。
 
 `RouteOptions.max_encoded_record_bytes` 是本输出完整编码上限，不大于Runtime输出scratch。required超限失败并保留未确认record；best_effort超限跳过且记录diagnostic。输出redaction/编码上限进入恢复fingerprint；修改后不能静默恢复到不同表示。采样状态不进入恢复fingerprint，因为route_mask已保存接受时的决策。默认未配置route策略不分配额外Policy/Redactor对象。
 
-配置发布复制规则并拥有route策略；它们随reader/pending/lease保护到旧记录交付与collection结束。测试入口 `zig build test-route-policies` 验证这些边界，统一defaults/route示例见 [使用指南](usage.md#接口与默认配置)。
+配置发布复制规则并拥有route策略；它们随reader/pending/lease保护到旧记录交付与collection结束。测试入口 `zig build test-route-policies` 验证这些边界，统一outputs/route示例见 [使用指南](usage.md#route配置与默认值)。
 
 ## 完整来源事务
 

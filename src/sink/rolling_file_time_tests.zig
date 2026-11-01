@@ -243,3 +243,32 @@ test "timed rolling ordinary record checks allocate nothing after initialization
     try testing.expectEqual(@as(usize, 0), output.rollover_count);
     try testing.expect(!failing.has_induced_failure);
 }
+
+test "timed rolling supports time-only rotation without a size threshold" {
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var clock: FakeClock = .{ .now = 100 };
+    const output = try RollingFileSink.create(testing.allocator, testing.io, .{
+        .path = "output.log",
+        .dir = tmp.dir,
+        .retention = 2,
+        .buffer_bytes = 32,
+        .backend = .portable,
+        .rotation_interval_ns = 10,
+        .clock = clock.clock(),
+    });
+    defer output.deinit();
+    for (0..4) |_| try output.writeRecord("record\n");
+    clock.now = 109;
+    try output.writeRecord("before\n");
+    try testing.expectEqual(@as(usize, 0), output.rollover_count);
+    clock.now = 110;
+    try output.writeRecord("after\n");
+    try output.flush();
+    try testing.expectEqual(@as(usize, 1), output.rollover_count);
+    try expectFile(tmp.dir, "output.log.1", "record\nrecord\nrecord\nrecord\nbefore\n");
+    try expectFile(tmp.dir, "output.log", "after\n");
+    var forbidden = testing.FailingAllocator.init(testing.allocator, .{ .fail_index = 0 });
+    try testing.expectError(error.InvalidRollingOptions, RollingFileSink.create(forbidden.allocator(), testing.io, .{ .path = "must-not-create", .retention = 1 }));
+    try testing.expect(!forbidden.has_induced_failure);
+}

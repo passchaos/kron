@@ -47,9 +47,18 @@ const kron = @import("kron");
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
-        .mode = .asynchronous,
-        .format = .json,
+        .outputs = &.{
+            .{
+                .target = .{
+                    .file = .{
+                        .path = "app.jsonl",
+                        .backend = .portable,
+                    },
+                },
+                .mode = .asynchronous,
+                .format = .json,
+            },
+        },
     });
     defer logging.destroy();
     _ = try logging.scoped("app").tryEmit(.info, "started", .{ .version = @as(u32, 1) });
@@ -57,9 +66,9 @@ pub fn main(init: std.process.Init) !void {
 }
 ```
 
-`Logging` 管理全部配置输出和底层 Runtime 的资源，应用停止所有 logger/token 用户后显式 shutdown，再 destroy owner，最后清理应用 I/O 环境。关闭错误应由应用显式处理；`defer` 清理不是 durable 确认。Mmap 设置 `.queue = .{ .mmap = journal_options }`，两者恢复语义不同。全部参数、context/线程所有权与示例见 [详细使用指南](usage.md)。多输出和轮转也使用 Logging；自定义 sink 和跨代恢复等底层扩展仍可使用 Runtime，按 Runtime → sink 顺序销毁。
+`Logging` 管理全部配置输出和底层 Runtime 的资源，应用停止所有 logger/token 用户后显式 shutdown，再 destroy owner，最后清理应用 I/O 环境。关闭错误应由应用显式处理；`defer` 清理不是 durable 确认。Mmap 在各route设置 `.queue = .{ .mmap = journal_options }`，两者恢复语义不同。全部参数、context/线程所有权与示例见 [详细使用指南](usage.md)。多输出和轮转也使用 Logging；自定义 sink 和跨代恢复等底层扩展仍可使用 Runtime，按 Runtime → sink 顺序销毁。
 
-单线程消费项目使用 `-Dsingle-threaded=true`，Logging 使用默认 `.mode = .sync`，Runtime 使用 `.submission = .sync`，不配置异步队列。普通 flush/shutdown可用，异步/SPSC和带deadline的控制接口有明确能力错误。库模块和应用应传入一致线程配置。
+单线程消费项目使用 `-Dsingle-threaded=true`，Logging 的route默认 `.mode = .sync`，Runtime 使用 `.submission = .sync`，不配置异步队列。普通 flush/shutdown可用，异步/SPSC和带deadline的控制接口有明确能力错误。库模块和应用应传入一致线程配置。
 
 系统本地时间是显式选项：Linux应用在 `b.dependency` 参数中加入 `.@"system-local-time" = true`，或在应用模块设置 `.link_libc=true`，再配置 `.timestamp=.{ .zone=.local }`。默认固定偏移路径不依赖libc。完整转换、缓存和恢复身份契约见 [时间文档](time.md#系统本地时间)。
 

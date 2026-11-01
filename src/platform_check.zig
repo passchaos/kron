@@ -8,12 +8,7 @@ export fn kron_platform_check(allocator: *const std.mem.Allocator, io: *const st
 }
 
 fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
-    const managed = try kron.Logging.create(allocator, io, .{
-        .output = .{ .file = .{ .path = path, .backend = .portable } },
-        .mode = .spsc,
-        .max_threads = 1,
-        .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
-    });
+    const managed = try kron.Logging.create(allocator, io, .{ .outputs = &.{.{ .name = "file", .target = .{ .file = .{ .path = path, .backend = .portable } }, .mode = .spsc, .max_threads = 1, .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } }} });
     defer managed.destroy();
     const managed_shape: kron.Event = .{ .level = .info, .scope = "managed", .message = "cross", .timestamp_ns = 0, .fields = &.{} };
     const managed_shared = try managed.prepared(managed_shape);
@@ -24,10 +19,10 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     try managed.reloadFilter("debug");
     try managed.setLevel(.info);
     _ = managed.health();
-    _ = managed.runtime();
+    _ = try managed.runtime("file");
     try managed.flush();
-    try managed.flushOutputs(&.{"output"});
-    managed.flushOutputsDurable(&.{"output"}) catch {};
+    try managed.flushOutputs(&.{"file"});
+    managed.flushOutputsDurable(&.{"file"}) catch {};
     managed.flushUntil(kron.Deadline.after(io, std.time.ns_per_s)) catch {};
     managed.flushDurableUntil(kron.Deadline.after(io, std.time.ns_per_s)) catch {};
     managed.flushDurable() catch {};
@@ -37,16 +32,13 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     defer console.destroy();
     _ = try console.scoped("managed").tryEmit(.info, "console", .{});
     try console.shutdown();
-    const local_logging = try kron.Logging.create(allocator, io, .{ .timestamp = .{ .zone = .local } });
+    const local_logging = try kron.Logging.create(allocator, io, .{ .outputs = &.{.{ .timestamp = .{ .zone = .local } }} });
     defer local_logging.destroy();
     _ = try local_logging.scoped("local").tryEmit(.info, "system local", .{});
     try local_logging.shutdown();
     var policy_bytes: [8192]u8 = undefined;
     var policy_writer = std.Io.Writer.fixed(&policy_bytes);
-    const policy_logging = try kron.Logging.create(allocator, io, .{
-        .defaults = .{ .format = .json, .sampling = .{ .every = 2 }, .redaction = &.{.{ .key = "secret", .action = .mask }} },
-        .output = .{ .multiple = &.{.{ .name = "policy", .target = .{ .writer = &policy_writer }, .sampling = .none, .max_encoded_record_bytes = 4096 }} },
-    });
+    const policy_logging = try kron.Logging.create(allocator, io, .{ .outputs = &.{.{ .name = "policy", .target = .{ .writer = &policy_writer }, .sampling = .none, .max_encoded_record_bytes = 4096, .format = .json, .redaction = &.{.{ .key = "secret", .action = .mask }} }} });
     defer policy_logging.destroy();
     _ = try policy_logging.scoped("policy").tryEmit(.info, "route", .{ .secret = "redacted" });
     try policy_logging.shutdown();

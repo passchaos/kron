@@ -6,7 +6,7 @@
 
 | 修改范围 | 优先运行 |
 | --- | --- |
-| Logging配置/输出/所有权 | `zig build test-logging -Doptimize=ReleaseSafe -j1` |
+| Logging配置/输出/所有权（含逐route队列） | `zig build test-logging test-outputs -Doptimize=ReleaseSafe -j1` |
 | codec/字段/线程注册等模块 | `zig test src/root.zig -O ReleaseSafe --test-filter 'codec'`；用实际test名称选择子集 |
 | source路径/文本位置 | `zig test src/root.zig -O ReleaseSafe --test-filter 'source'`；实际运行 `run-mmap` 和 `run-source-location` |
 | 字段/context/对象适配 | `test-capture`、`test-adapter`、`test-redaction-paths`、`test-compile-fail` |

@@ -1,5 +1,7 @@
 # 全局采样语义与性能
 
+Logging.outputs中的每个route都有独立采样器，同一采样配置也不共享配额；所有producer共享所属route的预算。全部输出过滤/采样拒绝时不构造lazy字段。下面的全局/覆盖描述针对高级Runtime内部共享管线。
+
 采样属于不可变配置版本。默认Runtime采样状态由所有继承默认的route及全部producer共享；route显式设置sampling后拥有独立状态，其配额仍由全部producer共享，不给每个线程单独一份。共享异步与SPSC采用同样语义。
 
 | 配置 | 决策 |

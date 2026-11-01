@@ -6,7 +6,7 @@
 
 | 目录/模块 | 职责与拥有的资源 |
 | --- | --- |
-| [logging/](../src/logging/root.zig) | 应用owner；configuration定义单/多输出与队列选项并前置校验，output持有稳定writer/file/rolling资源，root管理Runtime生命周期，tests验证错误和所有权 |
+| [logging/](../src/logging/root.zig) | 应用owner；configuration定义outputs列表、route独立策略与总预算并前置校验，output持有稳定writer/file/rolling资源，root管理每route的Runtime生命周期，handle完成一次捕获后的有界分发，tests验证错误和所有权 |
 | [core/logger.zig](../src/core/logger.zig)、field/context/adapter | typed producer、入场前过滤与lazy、显式字段、borrowed/owned context、对象成员选择 |
 | [core/runtime.zig](../src/core/runtime.zig) | 稳定Runtime owner，协调admission、queue、配置、worker、flush/control与销毁；集中保护生命周期和重入约束 |
 | core/runtime_init、runtime_configuration、runtime_redaction | 初始化/回滚、冷配置/collection、非空脱敏scratch；与producer稳态工作隔离 |
@@ -43,7 +43,7 @@ flowchart LR
 
 图是职责方向；实际源码的类型共享不是严格无环图。例如Runtime与配置/日志类型会共享声明，Zig懒分析支持这些依赖。移动代码不得为打破名义循环而公开私有方法、修改格式或改变owner保护协议。
 
-Logging仅在初始化配置/资源时工作；返回的logger直接持有Runtime或已验证线程/prepared owner。producer接受前复制动态字节，消费者借用checked记录完成渲染。系统local在异步消费者按事件秒转换；源码目录映射在编译期完成。同步/fallback_sync保留调用线程交付。
+Logging管理独立pipeline资源；scoped返回组合logger，handle按各输出入场决策分发一次捕获的事件，反序释放Runtime入场。scopedOutput返回直接Runtime logger。producer接受前复制动态字节，消费者借用checked记录完成渲染。系统local在异步消费者按事件秒转换；源码目录映射在编译期完成。同步/fallback_sync保留调用线程交付。
 
 Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关闭共享同一owner与私有gate。代码拆分优先稳定职责，例如初始化、配置、脱敏、交付和codec；不通过把每个私有方法公开来缩短文件。TSC也保留资格化与回退的一致状态机，后续拆分应保持单独验证能力。
 
@@ -57,7 +57,7 @@ Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关�
 
 ## 扩展与修改原则
 
-- 常规应用增加选项先放Logging配置层，提交handle保持直接路径。
+- 常规应用增加选项先放Logging配置层，为组合handle和scopedOutput分别检查无分配与开销。
 - 新输出资源在sink/backend边界实现，明确borrowed/owned、required/best_effort、written/durable和失败前缀。
 - 新schema/wire版本保持独立校验与旧fixture，Reader恢复不能依赖裸指针。
 - 配置/route修改保留旧record身份和pins/leases；filter-only与full replacement分别测试。

@@ -23,10 +23,20 @@ const Worker = struct {
 
 pub fn main(init: std.process.Init) !void {
     const logging = try kron.Logging.create(init.gpa, init.io, .{
-        .output = .{ .file = .{ .path = "kron-threaded.jsonl", .backend = .portable } },
-        .format = .json,
-        .mode = .spsc,
-        .max_threads = 2,
+        .outputs = &.{
+            .{
+                .name = "file",
+                .target = .{
+                    .file = .{
+                        .path = "kron-threaded.jsonl",
+                        .backend = .portable,
+                    },
+                },
+                .format = .json,
+                .mode = .spsc,
+                .max_threads = 2,
+            },
+        },
     });
     defer logging.destroy();
     var first: Worker = .{ .logging = logging, .index = 0 };

@@ -33,12 +33,22 @@
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
-    .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
-    .mode = .asynchronous,
-    .format = .json,
-    .timestamp = .{
-        .offset = try kron.time.UtcOffset.parse("+08:00"),
-        .precision = .nanoseconds,
+    .outputs = &.{
+        .{
+            .name = "file",
+            .target = .{
+                .file = .{
+                    .path = "app.jsonl",
+                    .backend = .portable,
+                },
+            },
+            .mode = .asynchronous,
+            .format = .json,
+            .timestamp = .{
+                .offset = try kron.time.UtcOffset.parse("+08:00"),
+                .precision = .nanoseconds,
+            },
+        },
     },
 });
 defer logging.destroy();
@@ -49,7 +59,7 @@ JSON/logfmt保留原timestamp_ns并增加可读timestamp；text将数字前缀�
 
 每个启用时间的路由版本拥有一个Formatter，纳入配置内存预算，初始化或配置替换时分配，交付时在原delivery锁下更新。新事件和旧pending事件各自使用所属版本的offset/precision；filter-only reload不重置该路由状态。偏移和精度属于输出身份，进入可选恢复指纹扩展，恢复时改变它们会返回RecoveryRouteMismatch；缓存内容不进入指纹。
 
-相同format及连续相同时间配置的目标复用本条编码结果；不同偏移或精度重新编码，避免把一个route的时间字符串用于另一个route。相同配置值的缓存命中、回拨、跨日和配置变更继续使用同一安全入口。所有权与销毁由原配置View/record pin生命周期保持，失败时不提前释放旧配置。
+高级Runtime共享管线内，相同format及连续相同时间配置的目标复用本条编码结果；Logging独立输出分别编码。不同偏移或精度重新编码，避免把一个route的时间字符串用于另一个route。相同配置值的缓存命中、回拨、跨日和配置变更继续使用同一安全入口。所有权与销毁由原配置View/record pin生命周期保持，失败时不提前释放旧配置。
 
 独立格式化可使用kron.time.rfc3339.format/parse，重复格式化可使用调用者拥有的kron.time.Formatter；完整encoder也提供encodeWithTime。示例见 [readable_time.zig](../examples/readable_time.zig)。`zig build test-time -Doptimize=ReleaseSafe -j1`运行五模式、热配置、恢复和独立Python日历oracle；`zig build bench-time -Doptimize=ReleaseFast -j1`测量同秒缓存和cache miss，完整输出参与checksum，不作为日志吞吐排名。
 
@@ -59,9 +69,15 @@ JSON/logfmt保留原timestamp_ns并增加可读timestamp；text将数字前缀�
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
-    .mode = .asynchronous,
-    .format = .json,
-    .timestamp = .{ .zone = .local },
+    .outputs = &.{
+        .{
+            .mode = .asynchronous,
+            .format = .json,
+            .timestamp = .{
+                .zone = .local,
+            },
+        },
+    },
 });
 defer logging.destroy();
 logging.scoped("app").info("local timestamp", .{});
@@ -76,11 +92,11 @@ try logging.shutdown();
 zig build run-file-stdout-local-time -Doptimize=ReleaseSafe
 ```
 
-一个Logging owner异步写出三条记录：`kron-file-stdout-local-time.jsonl`追加JSON Lines，stdout输出可读text，两者继承同一 `.timestamp=.{ .zone=.local }`。两个目标都采用required交付，shutdown确认written；该确认不等同durable。示例构建自动链接本地时间所需的系统库。
+一个Logging owner异步写出三条记录：`kron-file-stdout-local-time.jsonl`追加JSON Lines，stdout输出可读text，两者分别设置相同 `.timestamp=.{ .zone=.local }`。两个目标都采用required交付，shutdown确认written；该确认不等同durable。示例构建自动链接本地时间所需的系统库。
 
 每个route有自己的Formatter。缓存key包含事件Unix整秒和模式；同秒保留年月日时分秒与偏移，每条只更新小数部分，跨秒、回拨或模式/固定偏移变化刷新。local的系统转换直接提供日期，不再额外做一次Gregorian转换。使用事件timestamp而不是消费时的当前时间，积压和恢复记录保持原始instant。
 
-异步Memory/Mmap的shared/SPSC与inline/schema交付都在消费者侧转换。同步模式及显式 `fallback_sync` 在调用线程交付，因此同样会在该线程格式化；local缓存不改变这一契约。两个相同格式和时间身份的route继续复用本条编码结果。
+异步Memory/Mmap的shared/SPSC与inline/schema交付都在消费者侧转换。同步模式及显式 `fallback_sync` 在调用线程交付，因此同样会在该线程格式化；local缓存不改变这一契约。高级Runtime同一管线内两个相同格式和时间身份的route可复用本条编码结果；Logging的独立管线分别维护缓存和编码。
 
 POSIX使用 `localtime_r`，按照进程启动时的 `TZ` 或系统默认时区处理；Windows使用动态时区转换API。kron不调用tzset、不修改进程环境，也不监控系统时区的实时更改。运行期间应保持TZ和系统时区配置稳定；需要改时区时重新启动进程；平台libc对系统更新的缓存行为由平台决定，不能仅重建一个Formatter来承诺重载libc规则。DST按事件时间戳使用平台规则，不把启动时的单个offset冻结为全年规则。
 

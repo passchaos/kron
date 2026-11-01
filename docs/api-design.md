@@ -1,52 +1,62 @@
 # 应用入口、事件采集与输出架构
 
-应用只用 `kron.Logging.create` 接入：默认控制台、单文件、多文件、轮转和混合输出共享同一初始化、logger 获取与关闭方式。`Logging` 是资源 owner，`scoped/attachThread/prepared` 返回事件采集 handle；底层 Runtime 负责队列、配置版本、交付与恢复，保留作为高级扩展和已有 API 的兼容入口。
+应用从 `kron.Logging.create` 接入，统一提供 `outputs` 列表。一个Logging管理全部文件、轮转、标准流writer和Runtime生命周期，每个route是独立管线，可单独设置mode、queue、overflow、过滤、采样、脱敏、格式与确认边界。默认一个stderr/sync/text/info输出；增加目标直接增加列表元素。
 
-这次接口设计参考 Rust tracing 的职责划分。tracing 是结构化诊断架构的重要参考，尤其是 instrumentation 与 subscriber 分离、静态 callsite metadata、span context，以及通过 layer 组合输出和过滤。它的优雅主要体现在职责与组合方式；实际性能仍取决于 subscriber、格式化、存储、同步和负载。
+## 与 tracing 的对应
 
-## 参考与对应
+参考Rust tracing的职责分离、静态metadata与组合方式，保持事件采集入口独立于输出资源：
 
-| tracing 设计 | kron 的对应 |
+| tracing设计 | kron对应 |
 | --- | --- |
-| 事件/跨度采集与 subscriber 分离 | 轻量 logger 捕获 typed Event，内部 Runtime 消费并交付 |
-| 静态 metadata 与 callsite interest | Zig comptime 字段/格式验证、静态最低级别、已有 filter 掩码与 SPSC 配置缓存 |
-| 字段值与静态字段定义分离 | 普通 inline 捕获；显式 prepared/schema 注册静态 scope/模板/形状 |
-| layer 组合过滤与格式输出 | Logging 在初始化时把输出配置规范化为不可变 route；每个目标独立format/filter/predicate、sampling/redaction/编码限制/delivery，顶层defaults提供默认策略 |
-| 显式或作用域关联 span context | kron.withTrace 复制 TraceContext，withBorrowed/withOwned 组合 context；任务传播仍由应用负责 |
-| 应用配置一个 subscriber，调用端保持简单 | 一个 Logging owner，同一套 scoped、emit、flush 和 shutdown |
+| instrumentation与subscriber分离 | logger捕获typed Event，Logging管理输出管线 |
+| 静态metadata与callsite interest | Zig comptime字段/格式验证、静态最低级别、版本化过滤缓存 |
+| 值与静态定义分离 | 普通inline捕获；显式prepared注册scope/模板/形状 |
+| layer组合过滤与输出 | outputs列表中各route独立配置策略、队列和目标 |
+| span context | withTrace与borrowed/owned context；应用显式传递 |
+| 应用配置一个subscriber | 一个Logging owner，一套scoped/emit/flush/shutdown |
 
-以上是设计映射，不表示 kron 已实现 tracing 的全部 span 生命周期、registry、异步 task instrumentation 或生态 layer。现有 Span/TraceContext 是明确的日志关联能力，没有隐式任务继承或自动 ID 生成。
+这些对应不表示已实现tracing的全部span registry、任务instrumentation或生态layer。官方参考：[tracing](https://docs.rs/tracing/latest/tracing/)、[Layer](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Layer.html)、[Filter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Filter.html)。
 
-官方参考：[tracing 概念与 Subscriber](https://docs.rs/tracing/latest/tracing/)、[Layer](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Layer.html)、[Filter 的 callsite interest](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Filter.html)。其中静态 interest 缓存适用于始终/从不感兴趣的 callsite；动态 reload 的规则不能永久缓存，需要按版本失效。
+## 捕获与独立管线
 
-## 性能与生命周期约束
+组合logger先分别完成各输出的level/filter/sampling入场。没有任何输出接受入场时跳过typed字段、lazy provider与时钟。选中输出后只构造一次字段描述和时间戳，再把同一Event提交到各Runtime；Runtime在复制进自己的Memory/Mmap队列前执行有效redaction与predicate，并保留自己的配置版本、session和sequence。
 
-Logging 只在冷路径管理输出资源，不参与每条日志的动态转发。它返回的 logger 与既有 Runtime logger 是相同类型，持有同一 Runtime/线程 token/prepared binding；emit 不再经过 Logging 虚拟调用，也不为每条事件构造通用 layer 链。
+异步消费者完成text/JSON/logfmt格式化，包括按事件整秒缓存的local时间。同步与fallback_sync在调用线程交付。异步接受前深拷贝动态字节，后台不借用producer栈或任意formatter。
 
-typed 字段和格式串在 producer 上捕获，异步消费者负责最终 text/JSON/logfmt 格式化。禁用级别在捕获前决定，昂贵字段通过 lazy provider 在入场后构造。输出组合在初始化时校验并发布，既有 route 掩码和不可变配置协议继续处理事件决策。显式系统local时间在消费者按事件秒缓存，producer继续捕获Unix纳秒；同步/fallback_sync保留调用线程交付。
+每个Runtime独立持有采样配额、队列、worker、scratch、配置缓存、目标身份与恢复数据。Route字段自带默认值，各route分别设置sampling与redaction。需要禁止原值进入任何输出时用Secret，或确保每个相关route的有效规则覆盖该字段。
 
-tracing Event 的借用值只覆盖通知调用。异步 logger 必须拥有自己的快照：kron 在 accepted 返回前复制消息、字符串、bytes 和嵌套描述符；不会把栈上的 event 或任意 formatter 借给后台。动态配置继续保留旧记录的目标身份与 lease，Mmap 恢复继续校验稳定 identity。
+独立队列增加内存、线程、复制和编码成本。同一调用仍顺序提交各输出，block或慢同步sink会延长producer等待；best_effort不会自动改变backpressure。低优先级输出可显式异步drop_newest。
 
-多输出包含实际工作量：匹配、编码、写出与 required barrier。相同格式/时间设置可复用记录编码；不同设置需要对应编码。新增管理入口没有消除这些成本，也没有产生新的跨库性能排名。普通共享队列、SPSC、Memory/Mmap 与 prepared 的取舍仍需按完整流程测量。
+## 热路径与所有权
 
-所有 writer 对象及缓冲都位于稳定的初始化存储。文件/轮转输出由 Logging 清理，borrowed writer 由调用者管理；先停止全部 handle 用户，再关闭和销毁 owner。两个独立文件输出不能维护同一目标的独立偏移，因此重复目标会被拒绝。
+scoped返回值owner的泛型Frontend，避免通用动态layer链和每事件分配。单输出分支直接调用其Runtime入场/提交；多输出在有界TLS帧中保留至多64个入场，按反序释放，避免破坏Runtime的入场栈与版本保护。最多8层独立Logging嵌套，同一Logging递归被拒绝；底层Runtime同时入场上限仍为64。
 
-## API 的层次
+scopedOutput(name, scope)返回指定Runtime的原始logger，可用于单目标热点。attachThread在创建时预分配的attachment槽中取得各SPSC管线channel，scope复制，generation/thread校验防止跨线程使用与旧handle复活。prepared bindings在冷路径分配，由Logging拥有至destroy。
 
-常规指南只要求认识 Logging 和 logger：
+多输出分别编码，不能复用不同队列的encoded record。高级Runtime同一管线内仍可组合多个route并复用相同format/time编码，但其mode/queue和捕获保护共享；此入口用于明确需要这些取舍的应用，不增加普通接入的第二个owner。
+
+## 结果与完成边界
+
+一次调用不是跨输出事务：required输出失败仍尝试其他已入场输出，部分成功不会回滚；best_effort失败写入逐输出结果与diagnostics。lastResults返回当前OS线程最近一次分发的借用结果，顺序与outputs一致；异步后续I/O失败通过health和flush/shutdown报告。
+
+health按输出提交合计，一条事件写两处计两次。全局durable只确认required输出；按名durable确认所有显式选中输出。全部控制预先检查回调重入，shutdown先关闭全部入场再顺序排空，deadline共用一个绝对时间。超时不释放仍在使用的资源。
+
+每个Mmap管线独立校验journal路径、layout、稳定文件身份与记录版本。重启仍使用至少一次恢复，不承诺跨输出相同交付顺序或一致提交。共同事件关联用应用event_id，各输出内去重用session/channel/sequence。
+
+## 普通入口与高级扩展
 
 ```zig
-const logging = try kron.Logging.create(allocator, io, options);
+const logging = try kron.Logging.create(allocator, io, .{
+    .outputs = &.{
+        .{ .name = "file", .target = .{ .file = .{ .path = "app.jsonl" } }, .mode = .asynchronous, .format = .json },
+        .{ .name = "stderr", .target = .stderr, .filter = "warn" },
+    },
+});
 defer logging.destroy();
-const log = logging.scoped("http");
-log.info("completed", .{ .status = @as(u16, 200) });
+logging.scoped("http").info("completed", .{ .status = @as(u16, 200) });
 try logging.shutdown();
 ```
 
-多输出通过 `options.output.multiple` 表达，轮转通过 `.rolling_file` 表达。std.log 使用 `kron.Logging.std_log` 与 `bindStdLog/unbindStdLog`；deadline 和按输出名 flush 也由 Logging 直接提供。
+Runtime通过 `try logging.runtime(name)` 借用，适用于跨代配置、外部sink、显式schema metadata与时钟选择。不得单独destroy这个Runtime。跨输出过滤更新是顺序操作；需要单引擎原子配置事务时采用Runtime版本接口。
 
-`logging.runtime()` 是借用的高级扩展，用于外部 custom sink、跨代恢复、复杂策略事务或静态时钟选择。调用者不得单独销毁这个 Runtime。根模块原 Runtime API 保留兼容性，README 与使用指南不把它作为常规接入必须选择的第二个 owner。
-
-具体参数、完整程序、错误与恢复语义见 [使用指南](usage.md)。
-
-输出默认策略在 `Logging.Options.defaults`，各Route可显式覆盖；capture.redaction是入队前保护，route.redaction是输出脱敏。队列/线程/总预算仍属于实例，目标的文件后端与buffer位于target中。默认无route策略不分配Policy对象，采样在捕获前固定，输出脱敏的scratch仅在需要时使用。详见 [route策略](configuration.md#route策略与捕获保护)。
+详细参数、生命周期和完整示例见 [使用指南](usage.md)。性能需以完整流程实测；独立管线能力不自动带来对Foundation/spdlog的普遍优势。

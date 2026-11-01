@@ -2,11 +2,15 @@
 
 本页记录当前能力、最近门禁和未完成范围。设计目标见 [design.md](design.md)，使用入口见 [usage.md](usage.md)，历次实现和性能记录见 [历史验收快照](history/implementation-before-reorganization.md)。历史计数与测试结果绑定其当时源码，不能自动适用于后续 HEAD。
 
+
+独立输出与Route默认值的最终完整ReleaseSafe门禁151/151步骤，636项通过/1项系统能力skip，源码分发包和九目标编译通过；单输出完整流程重复对照核对504万JSON，统一分发带来约4%~7%的本机吞吐成本。精确源码、原始数据与语义边界见 [独立输出验证](../bench/evidence/2026-11-02-independent-outputs/README.md)。
 ## 当前范围
 
 Zig 0.16 的 Windows/Linux/macOS/Android/iOS 单机日志，覆盖同步、共享/SPSC 的 Memory/Mmap、text/JSON/logfmt/binary、结构化字段、配置、采样/脱敏、文件/轮转/归档、std.log 与显式 trace 关联。网络 sink/exporter 已移除。Linux 有实际运行资格，其他平台的运行资格独立跟踪。
 
-`Logging` 是统一应用 owner，管理单/多输出、轮转、稳定 writer 存储和底层 Runtime。常规接入不需要选择第二个资源 owner；底层 Runtime 保留为高级扩展与已有 API。
+`Logging` 是统一应用 owner，通过outputs列表管理独立route管线、轮转、稳定writer存储与各自Runtime。常规接入不需要选择第二个资源 owner；底层 Runtime 保留为高级扩展与已有 API。
+
+Logging.Options只保留outputs列表和合计队列预算，默认值直接位于Route字段上。每route独立mode/queue/overflow/redaction/sampling与状态；轮转支持大小、纯时间间隔或两者任一触发，时间轮转在记录边界检查。
 
 ## 最近验证
 

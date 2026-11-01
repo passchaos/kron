@@ -42,6 +42,8 @@ pub fn OwnedLogger(comptime Parent: type) type {
 }
 
 fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: type) type {
+    const SubmissionAdmission = if (@hasDecl(Owner, "AdmissionType")) Owner.AdmissionType else Admission;
+    const SubmissionBegin = if (@hasDecl(Owner, "BeginResult")) Owner.BeginResult else BeginResult;
     return struct {
         const Self = @This();
         pub const OwnerType = Owner;
@@ -149,7 +151,7 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
                 .sampled => return .sampled,
                 .closed => return .rejected_closing,
             };
-            defer self.owner.end();
+            defer self.finish(admission);
             return self.captureAndSubmit(admission, source, level, message, input, false, &.{});
         }
 
@@ -179,7 +181,7 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
                 .sampled => return .sampled,
                 .closed => return .rejected_closing,
             };
-            defer self.owner.end();
+            defer self.finish(admission);
             var arguments: [deferred_format.max_args]Field = undefined;
             const captured = deferred_format.capture(fmt, args, &arguments) catch |capture_error| {
                 self.owner.captureFailed(capture_error);
@@ -197,7 +199,7 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
                 .sampled => return .sampled,
                 .closed => return .rejected_closing,
             };
-            defer self.owner.end();
+            defer self.finish(admission);
             const message = std.fmt.bufPrint(buffer, fmt, args) catch |capture_error| {
                 self.owner.captureFailed(capture_error);
                 return capture_error;
@@ -221,7 +223,7 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
                 .sampled => return .sampled,
                 .closed => return .rejected_closing,
             };
-            defer self.owner.end();
+            defer self.finish(admission);
             return self.captureAndSubmit(admission, null, level, message, provider.fields(), false, &.{});
         }
 
@@ -310,12 +312,16 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
             };
         }
 
-        fn begin(self: Self, level: Level) BeginResult {
+        fn begin(self: Self, level: Level) SubmissionBegin {
             if (!min_level.allows(level)) return .filtered;
             return self.owner.begin(level, self.scope);
         }
 
-        fn captureAndSubmit(self: Self, admission: Admission, source: ?std.builtin.SourceLocation, level: Level, message: []const u8, input: anytype, message_template: bool, format_args: []const Field) anyerror!EmitResult {
+        fn finish(self: Self, admission: SubmissionAdmission) void {
+            if (@hasDecl(Owner, "endAdmission")) self.owner.endAdmission(admission) else self.owner.end();
+        }
+
+        fn captureAndSubmit(self: Self, admission: SubmissionAdmission, source: ?std.builtin.SourceLocation, level: Level, message: []const u8, input: anytype, message_template: bool, format_args: []const Field) anyerror!EmitResult {
             const Input = @TypeOf(input);
             const capacity = comptime if (Context == contexts.EmptyContext) switch (@typeInfo(Input)) {
                 .@"struct" => |input_info| @min(input_info.fields.len, contexts.max_fields),
