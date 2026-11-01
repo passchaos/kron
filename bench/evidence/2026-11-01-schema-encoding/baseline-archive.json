@@ -1,0 +1,19 @@
+{
+  "archive": "before-source.tar.gz",
+  "sha256": "e543a27254ee9557213e68f55ed0333b87e913cc7d8e9f12404b59fd7b81f0a4",
+  "bytes": 240874,
+  "scope": "Frozen benchmark and complete original src tree; no generated cache or binary.",
+  "build": [
+    "zig",
+    "build-exe",
+    "-O",
+    "ReleaseFast",
+    "--dep",
+    "kron",
+    "-Mroot=bench/encoding.zig",
+    "-O",
+    "ReleaseFast",
+    "-Mkron=src/root.zig",
+    "-femit-bin=before"
+  ]
+}

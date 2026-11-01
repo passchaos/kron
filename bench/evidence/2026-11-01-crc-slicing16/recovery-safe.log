@@ -1,0 +1,32 @@
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.009s
+
+OK
+local Vort: 416 cases passed; IEEE CRC32, alignment, incremental/combine, journal v1/v2 and archive block header; backend=hardware
+random SIGKILL seed=20261031 shared schema=False: ACK=2118 written=2118 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261032 shared schema=True: ACK=4005 written=4003 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261033 spsc schema=False: ACK=4251 written=4251 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261034 spsc schema=True: ACK=1110 written=1110 recovered=1 overlap=1 partial=0
+random SIGKILL seed=20261035 shared schema=False: ACK=2408 written=2406 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261036 shared schema=True: ACK=1474 written=1472 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261037 spsc schema=False: ACK=3163 written=3163 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261038 spsc schema=True: ACK=5337 written=5334 recovered=3 overlap=0 partial=0
+random SIGKILL seed=20261039 shared schema=False: ACK=3545 written=3543 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261040 shared schema=True: ACK=4521 written=4519 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261041 spsc schema=False: ACK=4850 written=4847 recovered=4 overlap=0 partial=0
+random SIGKILL seed=20261042 spsc schema=True: ACK=3643 written=3642 recovered=1 overlap=0 partial=0
+Random-time process-crash campaign passed: 12 cases, all ACKs covered by complete output or recovery
+Build Summary: 11/11 steps succeeded; 6/6 tests passed
+test-runtime-crash success
++- run python3 success 5s
+|  +- compile exe kron-runtime-crash-writer ReleaseSafe native success 17s MaxRSS:625M
+|  +- compile exe kroncat ReleaseSafe native success 15s MaxRSS:565M
++- run python3 success 56ms
+test-file-delivery success
++- run test kron-file-delivery-failures 6 pass (6 total) 1s MaxRSS:4M
+   +- compile test kron-file-delivery-failures ReleaseSafe native success 17s MaxRSS:637M
+check-local-reuse success
++- run exe kron-local-checksum-check success 8ms
+   +- compile exe kron-local-checksum-check ReleaseSafe native success 12s MaxRSS:472M
+

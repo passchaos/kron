@@ -1,0 +1,597 @@
+{
+  "status": "passed",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "release": "6.8.0-147-generic"
+  },
+  "writer_sha256": "8165c2647b6b9ff98081c32a3c43dddabb5179e21c72d26ef6975341f2b1a8f9",
+  "reader_sha256": "725227042ae66d1908b640e7aefbbfc05b5185d861c86b8717f61bcfb9bc3412",
+  "source_sha256": {
+    "tests/runtime_crash_writer.zig": "7186637d2cde9457a5205a9e206cbde98bcdcf067c138acee912449365df1e52",
+    "tests/runtime_crash_campaign.py": "b7ce7f0638cb36782368080adec81ecd8ff4ab55c2d96689716ccd05ba249f5c",
+    "tests/runtime_crash_oracle.py": "aeea10ef59431cd9d90a50470c0aefbad43d5df2de64dc29ce23b6b28aed69e4",
+    "src/core/runtime.zig": "7e1d7773e47c0af9c0577634ac902c29aacfa8f453f03d84f3cb482869ec26b8",
+    "src/journal/journal.zig": "b6ffc5176905702ceeb78a0c0a7031999e0d8808299636e20628394fbc5cefd5",
+    "src/archive/reader.zig": "dab050cd90ae23564bb74ad2d258926d448ced49bbed9afad739fc4d448787e1"
+  },
+  "scope": "Random-time SIGKILL during two live producers and file delivery; process crash only, no power-loss claim.",
+  "cases": [
+    {
+      "seed": 20261031,
+      "mode": "shared",
+      "schema": false,
+      "ready": {
+        "seed": 20261031,
+        "mode": "shared",
+        "schema": false,
+        "session": 8671222224157205310,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 28.486032681241845,
+      "observed_delay_ms": 28.508575007435866,
+      "acknowledgements_per_producer": [
+        1529,
+        1518
+      ],
+      "counts": {
+        "acknowledged": 3047,
+        "written": 3046,
+        "recovered": 1,
+        "unique": 3047,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "5d6706ad9831bf44a629625eb359ffd2e2261af15aaa02b354508666d8e6e2fe",
+      "announcements_sha256": "4ad69ccfaae3dcaf9ee1c3693677834b6e6063f4cf66b8f0288f0d21399c635b",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "ec3dac741857bef73f486b90eb54ed67c6b77c3df26b1462fe618503d43f2674",
+          "bytes": 70656,
+          "committed": 1,
+          "reserved": 0,
+          "recovery_sha256": "af7bcc841b33d5772be12d3bb423a2c802d77c940a625d8ac4f07ebc2b6da3d0"
+        }
+      ]
+    },
+    {
+      "seed": 20261032,
+      "mode": "shared",
+      "schema": true,
+      "ready": {
+        "seed": 20261032,
+        "mode": "shared",
+        "schema": true,
+        "session": 11204184983076391254,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 53.64697626330596,
+      "observed_delay_ms": 53.708358987933025,
+      "acknowledgements_per_producer": [
+        2764,
+        2754
+      ],
+      "counts": {
+        "acknowledged": 5518,
+        "written": 5518,
+        "recovered": 1,
+        "unique": 5518,
+        "overlap": 1,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "477bbd371ad0a5dc1eea9f16a822d1cade7015ae46a45639d8534ba0591b649a",
+      "announcements_sha256": "e35b807846a34676b082749f3b9d32d18803e7bfc5ce7ba36d41b1d0da9054b9",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "c028e2c3cd021fb207dc3f23d16c5e039b873f2dd314e779ef497f5a0c362c66",
+          "bytes": 90368,
+          "committed": 1,
+          "reserved": 2,
+          "recovery_sha256": "1845645c42d307f623596654e73c5d73c149074e4f3b4dfd426cdf4e7cd477d0"
+        }
+      ]
+    },
+    {
+      "seed": 20261033,
+      "mode": "spsc",
+      "schema": false,
+      "ready": {
+        "seed": 20261033,
+        "mode": "spsc",
+        "schema": false,
+        "session": 15479299362936892659,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 57.286036209041434,
+      "observed_delay_ms": 57.29838399565779,
+      "acknowledgements_per_producer": [
+        3081,
+        3030
+      ],
+      "counts": {
+        "acknowledged": 6111,
+        "written": 6110,
+        "recovered": 1,
+        "unique": 6111,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "e699a1a77f1377a5c4c392cffa158ecf236a9d8dba81501a7243c2f692b0307d",
+      "announcements_sha256": "610881258f1aa2026e1af59484317e24ae34970d836a81f3f9be5f00f2b91c3e",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "e3535972f6a296fec947b576e3f524021141e23bf5bccdd5cce552180bb9d7dd",
+          "bytes": 70656,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "d8e6ec59d65464b0d7f782d4db8a6aa50032c63e7d7ffa75225de0e5ec2e5446",
+          "bytes": 70656,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "d824ee98c558fa74523960695093ea1c1557760943f803cc785dc25c38fb7918",
+          "bytes": 70656,
+          "committed": 1,
+          "reserved": 0,
+          "recovery_sha256": "05371fae073ef7135d230e3ca3742980eb018cce2d78a62f96b16aa7276276d4"
+        }
+      ]
+    },
+    {
+      "seed": 20261034,
+      "mode": "spsc",
+      "schema": true,
+      "ready": {
+        "seed": 20261034,
+        "mode": "spsc",
+        "schema": true,
+        "session": 17526872202092421993,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 14.075983822278166,
+      "observed_delay_ms": 14.092892000917345,
+      "acknowledgements_per_producer": [
+        777,
+        778
+      ],
+      "counts": {
+        "acknowledged": 1555,
+        "written": 1555,
+        "recovered": 2,
+        "unique": 1555,
+        "overlap": 2,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "09c99f5c57e36e36abf9df7d840ac1841781b8d6477e4007df703b6e99bb4244",
+      "announcements_sha256": "16393554e7a82604adea5b453fd199d5e972efdbc8464efddd3b0882c318fb27",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "3365b8a4762fd3ed8276e99c3a9701aea426f9f4b4e7c74edce941f88827035c",
+          "bytes": 90368,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "c64d80ea4d221c84e565bf5ae747b282e15a9e28f4aab35571d7acb7aa237c34",
+          "bytes": 90368,
+          "committed": 2,
+          "reserved": 0,
+          "recovery_sha256": "87415c1c565e82f8848a492880dd9dc415269aa86f18829abdc8a4bd0082ccfb"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "e3cb2d5229a2b28ef7e909dda3706b93de1783275818129bee26cc8241a4a95e",
+          "bytes": 90368,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "seed": 20261035,
+      "mode": "shared",
+      "schema": false,
+      "ready": {
+        "seed": 20261035,
+        "mode": "shared",
+        "schema": false,
+        "session": 9815676892127084324,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 32.64685051562417,
+      "observed_delay_ms": 32.66981900378596,
+      "acknowledgements_per_producer": [
+        1721,
+        1734
+      ],
+      "counts": {
+        "acknowledged": 3455,
+        "written": 3454,
+        "recovered": 1,
+        "unique": 3455,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "f253ec92ca22b9e435b9a1aabb3659278d3c57082100dcdf62a79333ea8c39ec",
+      "announcements_sha256": "8b4c6c2dbaee5abf37bc759012a8c66a8b800bee96be7ba65e8f26b24e3e32c1",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "b19ca9e28b018693c6b5b39739178a99b980e6113287f82976a846ce5d522808",
+          "bytes": 70656,
+          "committed": 1,
+          "reserved": 0,
+          "recovery_sha256": "deccfbf7eb1809d070c902ab15009b3a4a2c0118e6d9ef205caf5eb69aff1d3a"
+        }
+      ]
+    },
+    {
+      "seed": 20261036,
+      "mode": "shared",
+      "schema": true,
+      "ready": {
+        "seed": 20261036,
+        "mode": "shared",
+        "schema": true,
+        "session": 6464099614643137710,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 19.104954973845594,
+      "observed_delay_ms": 19.121490011457354,
+      "acknowledgements_per_producer": [
+        1025,
+        1033
+      ],
+      "counts": {
+        "acknowledged": 2058,
+        "written": 2057,
+        "recovered": 1,
+        "unique": 2058,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "c60e3984db678afdb13ae09bee80dadda88fb223be9d4ac50b0b89e7e4862c32",
+      "announcements_sha256": "030528102693f5a5d5553b2419f140a8e23b409727c65e6efac3be86769e6ce1",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "ff21c99ec3010a0530f0e13adda2acaabc3b0f3aa6a8a570144e9794903fcedb",
+          "bytes": 90368,
+          "committed": 1,
+          "reserved": 0,
+          "recovery_sha256": "67cee886255c718a0bfa89dc80724afc422e1123e8be6df0367e024301e4c158"
+        }
+      ]
+    },
+    {
+      "seed": 20261037,
+      "mode": "spsc",
+      "schema": false,
+      "ready": {
+        "seed": 20261037,
+        "mode": "spsc",
+        "schema": false,
+        "session": 17055430300029281568,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 41.164747777677796,
+      "observed_delay_ms": 41.17732201120816,
+      "acknowledgements_per_producer": [
+        2172,
+        2159
+      ],
+      "counts": {
+        "acknowledged": 4331,
+        "written": 4328,
+        "recovered": 5,
+        "unique": 4331,
+        "overlap": 2,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "b602b8420bcb6dcbbdbcd9fe02c4e7dcd6ce4e3134dfdd4bd0cf1c4c4b933fb0",
+      "announcements_sha256": "b5c79f040ac90df8845de9578257d930a473611a4a10ddf3775b9459598c329c",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "d0a5e67681388a65c3ee7b02e3f847bcd227647fb1f45b2ddd45ed5b5d92aeff",
+          "bytes": 70656,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "0c70e7615a62ff7ac6977b756fd466306c1244a7b37f38f16f10ca9019ad5978",
+          "bytes": 70656,
+          "committed": 3,
+          "reserved": 0,
+          "recovery_sha256": "9cded7f2aa31d1c9ffc14787fcc2bef578ccc8f90051e0e89e5ce3dfae3afe91"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "b433004f99e8e6906a7556ddf75221ac4ecf9e53311b7a19c30f4f9d01b8d357",
+          "bytes": 70656,
+          "committed": 2,
+          "reserved": 0,
+          "recovery_sha256": "2860fb3b1b5f4a14bcb019431fcc2916f9704622b56cefa1dca11684227f7c2f"
+        }
+      ]
+    },
+    {
+      "seed": 20261038,
+      "mode": "spsc",
+      "schema": true,
+      "ready": {
+        "seed": 20261038,
+        "mode": "spsc",
+        "schema": true,
+        "session": 10113495945862542208,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 73.68619734172998,
+      "observed_delay_ms": 73.7479550007265,
+      "acknowledgements_per_producer": [
+        3795,
+        3806
+      ],
+      "counts": {
+        "acknowledged": 7601,
+        "written": 7598,
+        "recovered": 3,
+        "unique": 7601,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "91710630d9a5bc5f429689dcfb7c8d17568312e706f085d26b1e2a2f15d3d75e",
+      "announcements_sha256": "d635c98429eaf7910fc60ba2b678c5a49aca2167dab312107d93bd38d6022cbf",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "42089374a51cfe1dac1a1c3e3d4a70ab1f3abf70b67b316a21602a31205dc863",
+          "bytes": 90368,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "7f48a3c21463274510001feef6db2dc3c271b22986a85c7cc2dd17205532e64b",
+          "bytes": 90368,
+          "committed": 1,
+          "reserved": 0,
+          "recovery_sha256": "8877ac126a8858dc78838922863c685a2f32832a04f19391e426224078bb64a6"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "21088a7f0fe258770211ff982176297408e6b0cdf5ef12b39388f178b960e771",
+          "bytes": 90368,
+          "committed": 2,
+          "reserved": 0,
+          "recovery_sha256": "2182df4d11a794b7f9eb2bc1fcdc693edd84eefc2389ceffd074d11a927c4f74"
+        }
+      ]
+    },
+    {
+      "seed": 20261039,
+      "mode": "shared",
+      "schema": false,
+      "ready": {
+        "seed": 20261039,
+        "mode": "shared",
+        "schema": false,
+        "session": 10497455545614914791,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 47.83406150833573,
+      "observed_delay_ms": 47.91037499671802,
+      "acknowledgements_per_producer": [
+        2588,
+        2564
+      ],
+      "counts": {
+        "acknowledged": 5152,
+        "written": 5150,
+        "recovered": 2,
+        "unique": 5152,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "2b63fb6e9bd349fd1a0d9c956bee18f1606b6d3c181a6f72c7cb2c807b81fffb",
+      "announcements_sha256": "41e80b7693d751b83d797a0200fa1feb592dcb8ea68ae9a632917f00f13ed8d1",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "6cc5a6bcdf7e0041d91d6d3108072d019e2f745f3c5373ef8444aaa6ef2b7a3c",
+          "bytes": 70656,
+          "committed": 2,
+          "reserved": 0,
+          "recovery_sha256": "4b46ee94f5bc30e1cf3ecf506d54e2f3c8a2e10ac7461480b0616ce9e743b786"
+        }
+      ]
+    },
+    {
+      "seed": 20261040,
+      "mode": "shared",
+      "schema": true,
+      "ready": {
+        "seed": 20261040,
+        "mode": "shared",
+        "schema": true,
+        "session": 11083081172991125096,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 62.59420767438439,
+      "observed_delay_ms": 62.6921140064951,
+      "acknowledgements_per_producer": [
+        3237,
+        3167
+      ],
+      "counts": {
+        "acknowledged": 6404,
+        "written": 6399,
+        "recovered": 6,
+        "unique": 6405,
+        "overlap": 0,
+        "unacknowledged_commits": 1
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "70d81655d61a11a0de9a45a7fe740c353b4a6c7e22f747ba8d61434a1df59f7d",
+      "announcements_sha256": "dbc76e6c95ce12088bb00051edec68848548a667833b0b078fc09346d9554d77",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "c9dd44dea736c791315809f527a92def908ab1ba84ebba77513faf0283b0ff9d",
+          "bytes": 90368,
+          "committed": 6,
+          "reserved": 0,
+          "recovery_sha256": "8f579fd6a0fb86bad973dc7b2804eaa572d8a6bd09c27621fc51d01fd7f42270"
+        }
+      ]
+    },
+    {
+      "seed": 20261041,
+      "mode": "spsc",
+      "schema": false,
+      "ready": {
+        "seed": 20261041,
+        "mode": "spsc",
+        "schema": false,
+        "session": 3337687139503749829,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 65.19982946105459,
+      "observed_delay_ms": 65.22551500529516,
+      "acknowledgements_per_producer": [
+        3439,
+        3481
+      ],
+      "counts": {
+        "acknowledged": 6920,
+        "written": 6913,
+        "recovered": 7,
+        "unique": 6920,
+        "overlap": 0,
+        "unacknowledged_commits": 0
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "d9a9f37a0c510961e1079161fd0b9f91bdfdbf564563a42e3bf8117ccc1074b0",
+      "announcements_sha256": "07a97b9c8131be4f555ff48a0e3d71cbee3a6763d4c2e636d02e2e10d94697c8",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "e4995442c0704c764163142259107e72ff3b72dfbbfcd88e8aa087285db12404",
+          "bytes": 70656,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "be4b95aec34d51e79482da295bf8b45e04c62d50aeb65164a72542ead9ea54f5",
+          "bytes": 70656,
+          "committed": 5,
+          "reserved": 0,
+          "recovery_sha256": "4861b6adadb561ea1565ac8b07862701fcba34977b1222132ab00a2e703251ba"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "867ec1e5c6a7519cd6fe3292cbbafbb1979ec4b2a41b150149798c7733378977",
+          "bytes": 70656,
+          "committed": 2,
+          "reserved": 0,
+          "recovery_sha256": "9846a037fdcbc7daf4dd1c91657c45e7459bb15799adcfdf316ccb0f1e810ab2"
+        }
+      ]
+    },
+    {
+      "seed": 20261042,
+      "mode": "spsc",
+      "schema": true,
+      "ready": {
+        "seed": 20261042,
+        "mode": "spsc",
+        "schema": true,
+        "session": 12732726482270633197,
+        "producers": 2,
+        "warm_records": 64
+      },
+      "requested_delay_ms": 49.55586299580799,
+      "observed_delay_ms": 49.572616000659764,
+      "acknowledgements_per_producer": [
+        2544,
+        2546
+      ],
+      "counts": {
+        "acknowledged": 5090,
+        "written": 5081,
+        "recovered": 10,
+        "unique": 5091,
+        "overlap": 0,
+        "unacknowledged_commits": 1
+      },
+      "partial_output_bytes": 0,
+      "output_sha256": "dee747d802346535d211a48a2f061c7f7600160ecf5b8413d599ba470236b95b",
+      "announcements_sha256": "cd6f24d4f8b9e8b729f44108a0f482f56cc41b7d6c29be6c07f6ef76b93e1f99",
+      "journals": [
+        {
+          "file": "events.journal",
+          "sha256": "166110af381674567bf5f25770754e66b01b1a1464c8e9f668a0d3eae41e0827",
+          "bytes": 90368,
+          "committed": 0,
+          "reserved": 0,
+          "recovery_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "events.journal.thread-0.journal",
+          "sha256": "8f431252028f731c7f751520b2cc688588881623a67986b5393da7d03bc5f169",
+          "bytes": 90368,
+          "committed": 7,
+          "reserved": 0,
+          "recovery_sha256": "f2b8d0dcc940bc1e940332415c3429fa9a597483b49e78bbabfbf397562237d5"
+        },
+        {
+          "file": "events.journal.thread-1.journal",
+          "sha256": "436067cc2b6c1cd451d08709c754a0695d7fb1f676d4677a9eaa75338a3b8683",
+          "bytes": 90368,
+          "committed": 3,
+          "reserved": 0,
+          "recovery_sha256": "978ae7d6c62a46b120b9c305d790f4394d214e832f275d2b038ec79a51a61cfe"
+        }
+      ]
+    }
+  ]
+}

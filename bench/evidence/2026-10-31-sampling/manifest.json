@@ -1,0 +1,28 @@
+{
+  "before_command": "zig build-exe -O ReleaseFast --dep kron -Mroot=bench/sampling.zig -O ReleaseFast -Mkron=src/root.zig -femit-bin=/tmp/kron-sampler-before",
+  "final_command": "same command with final sampler; emit /tmp/kron-sampler-bit",
+  "affinity": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "before_trials": 105,
+  "final_trials": 105,
+  "intermediate_trials": 105,
+  "full_parameter_counts": "P1/4/16, 5 repetitions, 7 cases, 10000attempts; global exact accepted validated",
+  "source_sha256": {
+    "bench/sampling.zig": "cc523ddd49c21f9aa71990ba93ef17c54b5df9428daac2fd80e6fb34b717b629",
+    "src/pipeline/sampler.zig": "97c8324b36d43f2ef02b2c99ec7518350112ec3675d9800ac8da7ae4a5b78928",
+    "tests/configuration_transactions.zig": "0e4fa979a05d2e6c77822d076c83331802a9efcce76d333300c52f71681ac7b4"
+  },
+  "layout": {
+    "sampler_bytes": 48,
+    "sampler_alignment": 8
+  },
+  "scope": "No global governor/cache/host changes. Stable end-to-end performance not qualified."
+}

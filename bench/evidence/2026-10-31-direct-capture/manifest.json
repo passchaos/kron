@@ -1,0 +1,22 @@
+{
+  "build_baseline": "zig build-exe -O ReleaseFast --dep kron -Mroot=bench/capture.zig -O ReleaseFast -Mkron=/tmp/kron-capture-baseline-src/root.zig -femit-bin=/tmp/kron-capture-before-fixed",
+  "build_candidate": "same benchmark source -Mkron=src/root.zig emit /tmp/kron-capture-after-fixed",
+  "source_module_before_sha256": "046fb89fe6944f1e51a796562a8c66661a00126a39e1551601316d2af2b21ead",
+  "benchmark_contract": "Fixed session1 before producers; ZeroClock; sampled batch one clock pair,10kiterations,5repeats; full JSON bytes consumed by hash; runtime accepted/written10000",
+  "baseline_binary_sha256": "c6bd56ecaa510a074c95edb1bb31487f4e4fee17736e40e7f65f638ecf89bb46",
+  "candidate_binary_sha256": "2dca96c8a05c1490e47ec479211a27f36fb6aa0dfa064c2475709e581309fb78",
+  "sync_rows_each": 45,
+  "matched_sync_row_pairs": 45,
+  "sync_exact_output_checksum": "all pairs match",
+  "async_status": "inconclusive",
+  "async_trials_per_variant": 10,
+  "async_written_per_variant": 50000,
+  "scope": "Narrow static capture/synchronous output study, plus complete async memory SPSC. No industry ranking or universally stable speedup.",
+  "source_sha256": {
+    "src/core/logger.zig": "acfe2ca49b5da9731a2d0d993c6b7da7f2c1cbe69c0385ab07c227b15ecd5d2e",
+    "src/core/field.zig": "881a38db97869161d2e4399e4bae45cf6eb641b0241a76bd5922ca03288eb15e",
+    "bench/capture.zig": "5edcbaaf5b3bc3267e1b17834bc74027138b0502dac6a0bde7ddbdffb6a80cc8",
+    "tests/capture_integration.zig": "73c0f249480b9827e2cda64b3f0d12e205377bb8b2d47a38353af8fe63a14221",
+    "bench/snapshot.zig": "d5e9f37c39e6bd23d4d4754d1db4ecf55c64de916b63121e83712e358b02d559"
+  }
+}

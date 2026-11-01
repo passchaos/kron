@@ -1,0 +1,69 @@
+--- /tmp/kron-before-admission/src/core/codec.zig	2026-11-01 03:49:11.452337243 +0800
++++ src/core/codec.zig	2026-11-01 03:47:10.950044394 +0800
+@@ -39,6 +39,14 @@
+ 
+ pub fn encodedSize(event: Event) EncodeError!usize {
+     _ = try encodeLevel(event.level);
++    return measure(event);
++}
++
++/// Validate the complete borrowed tree and return the exact wire size without
++/// rejecting the event level. Admission uses this before route predicates and
++/// reuses the result for the accepted write; public encode keeps level-first
++/// error ordering.
++pub fn measure(event: Event) EncodeError!usize {
+     var visitor: SizeVisitor = .{ .total = header_size };
+     visitor.blob(event.scope.len, false);
+     visitor.blob(event.message.len, false);
+@@ -67,7 +75,15 @@
+ /// All validation occurs before touching destination. Typed numbers are copied
+ /// in binary form; formatting happens only when a collector invokes an encoder.
+ pub fn encode(event: Event, destination: []u8) EncodeError![]const u8 {
+-    const size = try encodedSize(event);
++    return encodeSized(event, try encodedSize(event), destination);
++}
++
++/// Writes an event whose exact size was measured for the same unchanged event.
++/// Level and capacity checks retain the public error order; the caller must not
++/// use a size measured for different fields, arguments, scope, message, trace,
++/// source or format-argument values.
++pub fn encodeSized(event: Event, size: usize, destination: []u8) EncodeError![]const u8 {
++    _ = try encodeLevel(event.level);
+     if (destination.len < size) return error.BufferTooSmall;
+     var output: Output = .{ .bytes = destination[0..size] };
+     try writeEvent(&output, event, size);
+@@ -819,6 +835,34 @@
+     try std.testing.expect(std.mem.allEqual(u8, &buffer, 0xa5));
+ }
+ 
++test "admission measurement skips level validation and sized writes stay byte-identical" {
++    const entries = [_]field.Field{
++        field.kv("n", 7),
++        field.kv("nested", field.group(&.{ field.kv("x", true), field.kv("y", field.array(&.{ .null_value, field.fromAny("z") })) })),
++    };
++    var event: Event = .{ .level = .info, .scope = "measure", .message = "hello {d}", .message_template = true, .timestamp_ns = 0, .fields = &entries, .format_args = &.{field.kv("0", @as(u64, 5))}, .trace_id = @splat(1), .source = @src() };
++    var expected: [2048]u8 = undefined;
++    const encoded = try encode(event, &expected);
++    const measured = try measure(event);
++    try std.testing.expectEqual(encoded.len, measured);
++    try std.testing.expectEqual(measured, try encodedSize(event));
++    var sized: [2048]u8 = undefined;
++    const written = try encodeSized(event, measured, &sized);
++    try std.testing.expectEqualSlices(u8, encoded, written);
++    // Capacity is checked against the measured size before writing.
++    try std.testing.expectError(error.BufferTooSmall, encodeSized(event, measured + 1, sized[0..measured]));
++    try std.testing.expectError(error.BufferTooSmall, encodeSized(event, measured, sized[0 .. measured - 1]));
++    // Admission measurement deliberately leaves level rejection to the write.
++    event.level = .off;
++    try std.testing.expectEqual(measured, try measure(event));
++    try std.testing.expectError(error.InvalidLevel, encodedSize(event));
++    try std.testing.expectError(error.InvalidLevel, encodeSized(event, measured, &sized));
++    // Invalid trees still fail measurement before any destination write.
++    event.level = .info;
++    event.fields = &.{ field.kv("dup", 1), field.kv("dup", 2) };
++    try std.testing.expectError(error.DuplicateKey, measure(event));
++}
++
+ test "size encode and streaming visit values once while preserving all scalar and nested wire sizes" {
+     const leaves = [_]field.Value{
+         .null_value,                          field.fromAny(true),              field.fromAny(@as(i128, -17)),          field.fromAny(@as(u128, 18)),

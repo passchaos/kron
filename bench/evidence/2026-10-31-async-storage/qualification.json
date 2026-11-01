@@ -1,0 +1,42 @@
+{
+  "command": "zig build verify-local -Doptimize=ReleaseFast -j1 --summary all",
+  "status": "passed",
+  "steps": 54,
+  "zig_tests": 424,
+  "python_regression_tests": 14,
+  "compile_fail_fixtures": 17,
+  "regex_exact_comparisons": 4096,
+  "original_sigkill_scenarios": 6,
+  "async_storage_crash_and_drain_scenarios": 6,
+  "examples": 8,
+  "memory_storage_tests": 7,
+  "redaction_path_tests": 3,
+  "storage_study": "10 complete trials per memory/mmap, 100000 written records each; 0 final pending/drop/runtime allocations; distinct recovery contracts",
+  "source_sha256": {
+    "src/core/runtime.zig": "7e1d7773e47c0af9c0577634ac902c29aacfa8f453f03d84f3cb482869ec26b8",
+    "src/core/runtime_types.zig": "7ce6ccfbacdcf92f5d3f7da73ff85e2b5291a1479d4be630bb98485c16db3868",
+    "src/core/runtime_init.zig": "837562624bac38e31a68f0f91c63614fa42330ca3c6ef116b61f45cf561cdc3f",
+    "src/core/runtime_configuration.zig": "1d016f5d0c45d9bfafc3dfc2bb64f5ed1625e2b8c784236a939f2e54d8a34c52",
+    "src/core/thread_registry.zig": "e6315a6c86a45418287fef17b87ce961a944184c27e532521579517b28d84d5c",
+    "src/journal/journal.zig": "b6ffc5176905702ceeb78a0c0a7031999e0d8808299636e20628394fbc5cefd5",
+    "src/journal/spsc.zig": "696e24597fcfb640af51075e1352c89b48b63994aa24e4b78190912956b4da9d",
+    "src/journal/storage.zig": "9e5cda5a5b6661ea4fa9d01f36447ec14608262e1c6d223f605b51369e5e0b31",
+    "src/platform/crc32.zig": "9c65a8f66c37d22e496a398273da623484923ceb456bca5c1168232461b3f249",
+    "src/journal/format.zig": "42f51820eb57462968cd68ccce6dbf9f4c590ea96b278d5698c751c750992f1d",
+    "tests/async_storage.zig": "0b5df396705928ba9b23e943ca022feadf55ff23f010c240c144ada91accc318",
+    "tests/async_crash_writer.zig": "c7edad7ade0c00582f3af2e06bb69c361b0865e86fdfae828c30a8308923757b",
+    "tests/async_storage_crash.py": "79e390bd8bcdb63111601b8f0b4093d13d3fda17b5b0ba230508ec477276440f",
+    "tests/redaction_paths.zig": "e0a4bc50287dd55f77df59f3c1fb8895f3818b135ce93c922fe9d0f0a2573c2b",
+    "build.zig": "82f7c603e4a5a137f0abfb7aaa0f77b08df83f3e48334a12c2e9c55cd1d19513",
+    "src/platform_check.zig": "80a121273728a290f2520e992955c52253523fc94411bb385245379195c4260b",
+    "src/platform/capabilities.zig": "1f9a139821abea21255c564bd98f0b28ab05ae6aa0291980a42e04b449db52d0"
+  },
+  "limits": [
+    "Linux runtime evidence only",
+    "No physical device power-loss guarantee",
+    "No stable industry-leading performance claim"
+  ],
+  "platform_command": "zig build check-platforms test-async-storage test-redaction-paths -Doptimize=ReleaseSafe -j1 --summary all",
+  "cross_compile_targets": 9,
+  "related_release_safe_tests": 10
+}

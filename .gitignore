@@ -1,0 +1,42 @@
+# Zig build caches, installed binaries and locally fetched package copies.
+.zig-cache/
+zig-out/
+/zig-pkg/
+
+# Native compilation outputs (including one-off cross-platform checks).
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+# Generated runtime files from examples, recovery and benchmark runs.
+*.journal
+*.journal.*
+*.jsonl
+*.jsonl.lock
+*.jsonl.spool
+*.kron
+/core
+/core.*
+
+# Keep benchmark reports and frozen source evidence; omit generated workload
+# files and executable copies. Reports retain source/binary hashes.
+!/bench/**/results.jsonl
+/bench/**/artifacts/
+/bench/evidence/*/kron-bench-*
+/bench/evidence/*/kron-ref-*
+/bench/evidence/*/kron-crc-*
+/bench/cpp_reference/evidence/*/reference-*
+target/
+
+# Python bytecode and operating-system metadata.
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db

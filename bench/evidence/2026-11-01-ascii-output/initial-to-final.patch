@@ -1,0 +1,18 @@
+--- initial/src/encoder/escaping.zig
++++ final/src/encoder/escaping.zig
+@@ -25,9 +25,14 @@
+ /// bytes too, but never a byte before the first real match; only the first
+ /// match is consumed. Short tails use the exact original scalar predicate.
+ fn asciiRun(input: []const u8) usize {
++    if (input.len == 0) return 0;
++    // UTF-8/control-heavy input must enter the scalar state machine without
++    // paying for a whole-word mask at every codepoint or escaped byte.
++    const first = input[0];
++    if (first < 0x20 or first >= 0x7f or first == '"' or first == '\\') return 0;
+     const high = 0x8080808080808080;
+     const ones = 0x0101010101010101;
+-    var index: usize = 0;
++    var index: usize = 1;
+     while (input.len - index >= 8) : (index += 8) {
+         const word = std.mem.readInt(u64, input[index..][0..8], .little);
+         const quotes = word ^ 0x2222222222222222;

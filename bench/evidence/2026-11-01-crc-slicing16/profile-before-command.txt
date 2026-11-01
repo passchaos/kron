@@ -1,0 +1,1 @@
+perf record -q -F 999 -e cpu_core/cycles/ --call-graph fp -o /tmp/kron-json-hotspot-profile/before.data -- taskset -c 0,2,4,6,8,10 /tmp/kron-json-hotspot-before --output=/tmp/kron-json-hotspot-profile/before.jsonl --events=1000000 --warmup=1000 --producers=4 --phase=batch --queue-slots=256 --mode=spsc --storage=memory --schema=false

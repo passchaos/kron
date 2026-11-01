@@ -1,0 +1,27 @@
+1/26 root.test_0...OK
+2/26 encoder.root.test.bounded encoders report overflow instead of treating a prefix as success...OK
+3/26 encoder.root.test.deferred rendering escapes all output formats without a message scratch limit...OK
+4/26 encoder.root.test.nested containers remain complete records with secret erasure and logfmt quoting...OK
+5/26 encoder.root.test.all encoders reject nested cycles depth duplicate keys and shared node budget before output...OK
+6/26 encoder.root.test_0...OK
+7/26 submit.format.test.nested deferred defaults stream JSON while scalar specifiers reject containers...OK
+8/26 journal.journal.test_0...OK
+9/26 core.runtime.test_0...OK
+10/26 config.routes.test_0...OK
+11/26 sink.rolling_file.test_0...OK
+12/26 journal.spsc.test_0...OK
+13/26 encoder.common.test.record encoding validates every value tag once with one shared attribute and argument budget...OK
+14/26 encoder.common.test.record encoding standalone values still reject invalid trees before output...OK
+15/26 encoder.escaping.test.quoted strings preserve UTF-8 and escape malformed bytes and record separators...OK
+16/26 encoder.escaping.test.streaming escaping preserves UTF-8 for every write boundary...OK
+17/26 encoder.decimal.test.decimal output matches the standard formatter for native widths and all u16 values...OK
+18/26 encoder.decimal.test.decimal output preserves wide decimal chunks signs and every binary boundary...OK
+19/26 encoder.decimal.test.decimal output preserves all fixed writer prefixes on capacity failure...OK
+20/26 encoder.text.test.text golden escapes message, keys and binary data...OK
+21/26 encoder.json.test.JSON golden keeps metadata separate from attributes...OK
+22/26 encoder.json.test.JSON malformed UTF-8, NaN/Inf, integer boundaries and bytes remain parseable...OK
+23/26 encoder.json.test.finite float extremes and subnormal values produce valid JSON...OK
+24/26 encoder.json.test.nested JSON and deferred arguments survive descriptor key and scalar source overwrites...OK
+25/26 encoder.logfmt.test.logfmt golden protects metadata and escapes keys injectively...OK
+26/26 encoder.logfmt.test.logfmt nested representation retains text scalar and malformed byte policies...OK
+All 26 tests passed.

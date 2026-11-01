@@ -1,0 +1,216 @@
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.812s
+
+OK
+Zig package consumer sync: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Independent single-threaded consumer: one OS thread verified through /proc; async modes rejected before file creation
+Zig package consumer sync: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer mmap: 2 written, pending=0, journal_files=1, source snapshots and redaction verified
+Zig package consumer spsc_memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer spsc_mmap: 2 written, pending=0, journal_files=2, source snapshots and redaction verified
+Native Zig platform qualification linux: 5 runtime modes, inline/schema journal reopen, rolling retention and explicit durability verified
+verify-local
++- verify
+   +- run test kron-fuzz-smoke w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1272 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1250 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1139 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1117 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged
+failed command: /tmp/kron-verify-cache/o/702c237e071cc2b2f4ddcdcf6e331360/kron-fuzz-smoke --cache-dir=/tmp/kron-verify-cache --seed=0x5b2248c1 --listen=-
+
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.011s
+
+OK
+random SIGKILL seed=20261031 shared schema=False: ACK=2971 written=2971 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261032 shared schema=True: ACK=5443 written=5442 recovered=5 overlap=4 partial=0
+random SIGKILL seed=20261033 spsc schema=False: ACK=5747 written=5747 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261034 spsc schema=True: ACK=1472 written=1472 recovered=2 overlap=1 partial=0
+random SIGKILL seed=20261035 shared schema=False: ACK=2715 written=2715 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261036 shared schema=True: ACK=1947 written=1937 recovered=16 overlap=6 partial=0
+random SIGKILL seed=20261037 spsc schema=False: ACK=4041 written=4040 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261038 spsc schema=True: ACK=7028 written=7026 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261039 shared schema=False: ACK=3507 written=3499 recovered=8 overlap=0 partial=0
+random SIGKILL seed=20261040 shared schema=True: ACK=6235 written=6235 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261041 spsc schema=False: ACK=6307 written=6306 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261042 spsc schema=True: ACK=4763 written=4763 recovered=0 overlap=0 partial=0
+Random-time process-crash campaign passed: 12 cases, all ACKs covered by complete output or recovery
+verify-local
++- verify
+   +- test
+      +- run test kron-compression w
+incompressible pilot: raw=65536 compressed=65646 ratio=1.0017
+compressed archive pilot: raw=27520 compressed=2650 ratio=0.0963 wall_ns=490963 cpu_ns=489027
+failed command: /tmp/kron-verify-cache/o/af0db659eddd55d76c870ff0e0914b0f/kron-compression --cache-dir=/tmp/kron-verify-cache --seed=0x5b2248c1 --listen=-
+
+Independent time oracle passed: 4166 nanosecond/offset timestamps, 5845 civil dates; sha256=55e96071bb0b9209918a7ec0378bb037595d7bed712ca0b9ccd9a4854535eeec
+seed=42 schema=False: written=78 pending=1 wraps=4 epoch thresholds=56,79
+seed=43 schema=True: written=68 pending=3 wraps=4 epoch thresholds=56,69
+seed=44 schema=False: written=116 pending=5 wraps=7 epoch thresholds=80,117
+seed=45 schema=True: written=98 pending=4 wraps=6 epoch thresholds=72,101
+seed=46 schema=False: written=73 pending=4 wraps=4 epoch thresholds=16,75
+seed=47 schema=True: written=109 pending=1 wraps=6 epoch thresholds=64,110
+seed=48 schema=False: written=104 pending=2 wraps=6 epoch thresholds=80,106
+seed=49 schema=True: written=72 pending=3 wraps=4 epoch thresholds=40,73
+seed=50 schema=False: written=127 pending=7 wraps=7 epoch thresholds=48,130
+seed=51 schema=True: written=95 pending=7 wraps=5 epoch thresholds=80,100
+Seeded exact-boundary process recovery campaign passed; no arbitrary-crash-point or power-loss claim
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 0.159s
+
+OK
+regex differential passed: 4096 exact comparisons
+regex differential seed=0x6b726f6e72656778, patterns=245, cases=4096 passed
+PASS bare_pointer.zig: kron cannot capture
+PASS array_by_value.zig: kron cannot capture
+PASS duplicate_tuple.zig: DuplicateKey
+PASS format_wrong_type.zig: ArgumentTypeMismatch
+PASS format_missing_argument.zig: TooFewArguments
+PASS format_custom_formatter.zig: explicit preencoded
+PASS configuration_snapshot_access.zig: no field named 'configuration'
+PASS runtime_filter_access.zig: no field named 'filter'
+PASS adapter_unsupported_member.zig: cannot capture selected member
+PASS adapter_byte_array.zig: cannot capture selected member
+PASS adapter_implicit_nested.zig: cannot capture selected member
+PASS adapter_duplicate_selection.zig: duplicate selected member
+PASS adapter_missing_member.zig: has no selected member
+PASS adapter_input_by_value.zig: input must be a pointer
+PASS adapter_tuple.zig: requires named struct members
+PASS adapter_selection_budget.zig: 64 selected-field budget
+PASS adapter_duplicate_key.zig: duplicate output key
+single-threaded: real JSON file, selected fields, redaction, reload, durable flush, shutdown, no allocations, unavailable timed/async paths passed
+SIGKILL reserved: recovered 0 committed events (expected payload v4)
+Traceback (most recent call last):
+  File "/home/passchaos/project-z/kron/tests/crash_recovery.py", line 167, in run_phase
+    await_ready(child, timeout)
+  File "/home/passchaos/project-z/kron/tests/crash_recovery.py", line 39, in await_ready
+    raise AssertionError("crash writer did not announce ready before deadline")
+AssertionError: crash writer did not announce ready before deadline
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/passchaos/project-z/kron/tests/crash_recovery.py", line 217, in <module>
+    main()
+  File "/home/passchaos/project-z/kron/tests/crash_recovery.py", line 213, in main
+    run_phase(writer, reader, directory, phase, expected_sequences, args.timeout)
+  File "/home/passchaos/project-z/kron/tests/crash_recovery.py", line 176, in run_phase
+    child.wait(timeout=timeout)
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/tmp/kron-verify-cache/o/04dcb0a63391aa77c2717967fcd9a06c/kron-crash-writer', '--journal', '/tmp/kron-crash-recovery-uw2zm4nc/committed.journal', '--phase', 'committed']' timed out after 10.0 seconds
+SIGKILL memory: accepted=3 written=0; pending events lost, 0 prior outputs preserved
+drain memory: accepted=written=3, pending=0, configured password masking verified
+SIGKILL memory: accepted=3 written=0; pending events lost, 3 prior outputs preserved
+SIGKILL mmap: recovered 3 accepted/unwritten events; 0 prior outputs preserved
+drain mmap: accepted=written=3, pending=0, configured password masking verified
+SIGKILL mmap: recovered 3 accepted/unwritten events; 3 prior outputs preserved
+Asynchronous storage SIGKILL/drain comparison passed (process crash; no power-loss claim)
+verify-local
++- verify
+   +- run python3 failure
+error: process exited with error code 1
+failed command: python3 tests/crash_recovery.py --writer /tmp/kron-verify-cache/o/04dcb0a63391aa77c2717967fcd9a06c/kron-crash-writer --reader /tmp/kron-verify-cache/o/6d86fa73cab5c773bf9de782dd6615fd/kroncat
+
+Build Summary: 78/81 steps succeeded (1 failed); 503/503 tests passed
+verify-local transitive failure
++- verify transitive failure
+   +- test success
+   |  +- run test 361 pass (361 total) 3s MaxRSS:9M
+   |  |  +- compile test ReleaseFast native success 57s MaxRSS:1G
+   |  +- run test kron-adapter 5 pass (5 total) 26ms MaxRSS:6M
+   |  |  +- compile test kron-adapter ReleaseFast native success 24s MaxRSS:616M
+   |  +- run test kron-redaction-paths 3 pass (3 total) 1m MaxRSS:7M
+   |  |  +- compile test kron-redaction-paths ReleaseFast native success 21s MaxRSS:636M
+   |  +- run test kron-async-storage 7 pass (7 total) 53s MaxRSS:7M
+   |  |  +- compile test kron-async-storage ReleaseFast native success 21s MaxRSS:757M
+   |  +- run test kron-file-delivery-failures 6 pass (6 total) 73ms MaxRSS:7M
+   |  |  +- compile test kron-file-delivery-failures ReleaseFast native success 22s MaxRSS:658M
+   |  +- run test kron-capture-integration 6 pass (6 total) 6ms MaxRSS:6M
+   |  |  +- compile test kron-capture-integration ReleaseFast native success 27s MaxRSS:672M
+   |  +- run test kron-integration 11 pass (11 total) 3s MaxRSS:6M
+   |  |  +- compile test kron-integration ReleaseFast native success 26s MaxRSS:643M
+   |  +- run test kron-time 5 pass (5 total) 6s MaxRSS:6M
+   |  |  +- compile test kron-time ReleaseFast native success 32s MaxRSS:762M
+   |  +- run python3 success 74ms
+   |  |  +- compile exe kron-time-oracle ReleaseFast native success 13s MaxRSS:471M
+   |  +- run test kron-configurations 12 pass (12 total) 1m MaxRSS:8M
+   |  |  +- compile test kron-configurations ReleaseFast native success 23s MaxRSS:750M
+   |  +- run test kron-transactions 8 pass (8 total) 5s MaxRSS:6M
+   |  |  +- compile test kron-transactions ReleaseFast native success 19s MaxRSS:653M
+   |  +- run test kron-route-filters 1 pass (1 total) 15ms MaxRSS:7M
+   |  |  +- compile test kron-route-filters ReleaseFast native success 19s MaxRSS:614M
+   |  +- run test kron-predicates 7 pass (7 total) 16s MaxRSS:6M
+   |  |  +- compile test kron-predicates ReleaseFast native success 26s MaxRSS:634M
+   |  +- run test kron-tsc-qualification 3 pass (3 total) 10ms MaxRSS:6M
+   |  |  +- compile test kron-tsc-qualification ReleaseFast native success 14s MaxRSS:488M
+   |  +- run test kron-compression 10 pass (10 total) 8ms MaxRSS:6M
+   |  |  +- compile test kron-compression ReleaseFast native success 15s MaxRSS:527M
+   |  +- run test kron-deadline 11 pass (11 total) 48s MaxRSS:7M
+   |  |  +- compile test kron-deadline ReleaseFast native success 20s MaxRSS:634M
+   |  +- run test kron-query 23 pass (23 total) 1m MaxRSS:8M
+   |     +- compile test kron-query ReleaseFast native success 23s MaxRSS:749M
+   +- run python3 failure
+   |  +- compile exe kron-crash-writer ReleaseFast native success 20s MaxRSS:587M
+   |  +- compile exe kroncat ReleaseFast native success 26s MaxRSS:544M
+   +- run python3 success 45s
+   |  +- compile exe kron-async-crash-writer ReleaseFast native success 16s MaxRSS:592M
+   |  +- compile exe kroncat ReleaseFast native (reused)
+   +- run python3 success 30s
+   |  +- compile exe kron-recovery-campaign-writer ReleaseFast native success 20s MaxRSS:604M
+   |  +- compile exe kroncat ReleaseFast native (reused)
+   +- test-runtime-crash success
+   |  +- run python3 success 7s
+   |  |  +- compile exe kron-runtime-crash-writer ReleaseFast native success 27s MaxRSS:602M
+   |  |  +- compile exe kroncat ReleaseFast native (reused)
+   |  +- run python3 success 182ms
+   +- run python3 success 35s
+   +- run python3 success 42s
+   +- run python3 success 401ms
+   +- run python3 success 10s
+   +- run test kron-fuzz-smoke 7 pass (7 total) 595ms MaxRSS:5M
+   |  +- compile test kron-fuzz-smoke ReleaseFast native success 25s MaxRSS:604M
+   +- run exe kron-single-threaded success 19s
+   |  +- compile exe kron-single-threaded ReleaseFast native success 24s MaxRSS:694M
+   +- run python3 success 233ms
+   +- run python3 success 1s
+   +- run python3 success 113ms
+   |  +- compile exe kron-regex-differential ReleaseFast native success 16s MaxRSS:484M
+   +- run test kron-bench-tests 10 pass (10 total) 1ms MaxRSS:9M
+   |  +- compile test kron-bench-tests ReleaseFast native success 13s MaxRSS:550M
+   +- run test kron-dispatch-tests 3 pass (3 total) 2ms MaxRSS:5M
+   |  +- compile test kron-dispatch-tests ReleaseFast native success 16s MaxRSS:490M
+   +- run test kron-snapshot-tests 1 pass (1 total) 1ms MaxRSS:8M
+   |  +- compile test kron-snapshot-tests ReleaseFast native success 11s MaxRSS:485M
+   +- run test kron-sampling-bench-tests 1 pass (1 total) 1ms MaxRSS:5M
+   |  +- compile test kron-sampling-bench-tests ReleaseFast native success 16s MaxRSS:487M
+   +- run test kron-encoding-bench-tests 1 pass (1 total) 1ms MaxRSS:5M
+   |  +- compile test kron-encoding-bench-tests ReleaseFast native success 19s MaxRSS:520M
+   +- run test kron-capture-bench-tests 1 pass (1 total) 4ms MaxRSS:5M
+   |  +- compile test kron-capture-bench-tests ReleaseFast native success 26s MaxRSS:614M
+   +- compile exe kron-basic ReleaseFast native success 16s MaxRSS:581M
+   +- compile exe kron-readable-time ReleaseFast native success 23s MaxRSS:602M
+   +- compile exe kron-async-memory ReleaseFast native success 23s MaxRSS:604M
+   +- compile exe kron-std-log ReleaseFast native success 21s MaxRSS:570M
+   +- compile exe kron-prepared ReleaseFast native success 16s MaxRSS:609M
+   +- compile exe kron-hot-configuration ReleaseFast native success 16s MaxRSS:636M
+   +- compile exe kron-configuration-sources ReleaseFast native success 27s MaxRSS:597M
+   +- compile exe kron-predicates ReleaseFast native success 26s MaxRSS:573M
+   +- compile exe kron-tsc-clock ReleaseFast native success 21s MaxRSS:573M
+
+error: the following build command failed with exit code 1:
+/tmp/kron-verify-cache/o/290d17f5b7704fc5c412c68c38ca7684/build /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib /home/passchaos/project-z/kron /tmp/kron-verify-cache /home/passchaos/.cache/zig --seed 0x5b2248c1 -Zc8ed813778d2e3f9 verify-local -Doptimize=ReleaseFast -j2 --summary all
+EXIT=1

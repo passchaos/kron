@@ -1,0 +1,87 @@
+
+/tmp/kron-sampler-before:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000107b3f0 <pipeline.sampler.Sampler.allow>:
+ 107b3f0:	55                   	push   %rbp
+ 107b3f1:	48 89 e5             	mov    %rsp,%rbp
+ 107b3f4:	48 8b 17             	mov    (%rdi),%rdx
+ 107b3f7:	0f b6 47 18          	movzbl 0x18(%rdi),%eax
+ 107b3fb:	83 e0 03             	and    $0x3,%eax
+ 107b3fe:	ff 24 c5 98 f0 00 01 	jmp    *0x100f098(,%rax,8)
+ 107b405:	b0 01                	mov    $0x1,%al
+ 107b407:	5d                   	pop    %rbp
+ 107b408:	c3                   	ret
+ 107b409:	48 8b 4f 20          	mov    0x20(%rdi),%rcx
+ 107b40d:	48 ff ca             	dec    %rdx
+ 107b410:	48 8d 41 01          	lea    0x1(%rcx),%rax
+ 107b414:	31 f6                	xor    %esi,%esi
+ 107b416:	48 39 d1             	cmp    %rdx,%rcx
+ 107b419:	48 0f 45 f0          	cmovne %rax,%rsi
+ 107b41d:	48 89 c8             	mov    %rcx,%rax
+ 107b420:	f0 48 0f b1 77 20    	lock cmpxchg %rsi,0x20(%rdi)
+ 107b426:	0f 95 45 f8          	setne  -0x8(%rbp)
+ 107b42a:	40 0f 95 c6          	setne  %sil
+ 107b42e:	40 84 f6             	test   %sil,%sil
+ 107b431:	74 27                	je     107b45a <pipeline.sampler.Sampler.allow+0x6a>
+ 107b433:	31 f6                	xor    %esi,%esi
+ 107b435:	66 66 2e 0f 1f 84 00 	data16 cs nopw 0x0(%rax,%rax,1)
+ 107b43c:	00 00 00 00 
+ 107b440:	48 89 c1             	mov    %rax,%rcx
+ 107b443:	4c 8d 40 01          	lea    0x1(%rax),%r8
+ 107b447:	48 39 d0             	cmp    %rdx,%rax
+ 107b44a:	4c 0f 44 c6          	cmove  %rsi,%r8
+ 107b44e:	f0 4c 0f b1 47 20    	lock cmpxchg %r8,0x20(%rdi)
+ 107b454:	0f 95 45 f8          	setne  -0x8(%rbp)
+ 107b458:	75 e6                	jne    107b440 <pipeline.sampler.Sampler.allow+0x50>
+ 107b45a:	48 85 c9             	test   %rcx,%rcx
+ 107b45d:	0f 94 c0             	sete   %al
+ 107b460:	5d                   	pop    %rbp
+ 107b461:	c3                   	ret
+ 107b462:	48 83 7f 08 00       	cmpq   $0x0,0x8(%rdi)
+ 107b467:	75 7c                	jne    107b4e5 <pipeline.sampler.Sampler.allow+0xf5>
+ 107b469:	48 8b 4f 20          	mov    0x20(%rdi),%rcx
+ 107b46d:	48 8b 77 28          	mov    0x28(%rdi),%rsi
+ 107b471:	48 39 f1             	cmp    %rsi,%rcx
+ 107b474:	77 6f                	ja     107b4e5 <pipeline.sampler.Sampler.allow+0xf5>
+ 107b476:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+ 107b47d:	00 00 00 
+ 107b480:	49 89 c8             	mov    %rcx,%r8
+ 107b483:	49 01 d0             	add    %rdx,%r8
+ 107b486:	0f 92 c0             	setb   %al
+ 107b489:	0f 92 45 e0          	setb   -0x20(%rbp)
+ 107b48d:	84 c0                	test   %al,%al
+ 107b48f:	75 54                	jne    107b4e5 <pipeline.sampler.Sampler.allow+0xf5>
+ 107b491:	48 89 c8             	mov    %rcx,%rax
+ 107b494:	f0 4c 0f b1 47 20    	lock cmpxchg %r8,0x20(%rdi)
+ 107b49a:	0f 95 45 e8          	setne  -0x18(%rbp)
+ 107b49e:	41 0f 95 c0          	setne  %r8b
+ 107b4a2:	48 89 c1             	mov    %rax,%rcx
+ 107b4a5:	45 84 c0             	test   %r8b,%r8b
+ 107b4a8:	0f 94 c0             	sete   %al
+ 107b4ab:	74 36                	je     107b4e3 <pipeline.sampler.Sampler.allow+0xf3>
+ 107b4ad:	48 39 f1             	cmp    %rsi,%rcx
+ 107b4b0:	76 ce                	jbe    107b480 <pipeline.sampler.Sampler.allow+0x90>
+ 107b4b2:	eb 2f                	jmp    107b4e3 <pipeline.sampler.Sampler.allow+0xf3>
+ 107b4b4:	48 8b 4f 20          	mov    0x20(%rdi),%rcx
+ 107b4b8:	48 85 c9             	test   %rcx,%rcx
+ 107b4bb:	74 28                	je     107b4e5 <pipeline.sampler.Sampler.allow+0xf5>
+ 107b4bd:	0f 1f 00             	nopl   (%rax)
+ 107b4c0:	48 8d 51 ff          	lea    -0x1(%rcx),%rdx
+ 107b4c4:	48 89 c8             	mov    %rcx,%rax
+ 107b4c7:	f0 48 0f b1 57 20    	lock cmpxchg %rdx,0x20(%rdi)
+ 107b4cd:	0f 95 45 f0          	setne  -0x10(%rbp)
+ 107b4d1:	0f 95 c2             	setne  %dl
+ 107b4d4:	48 89 c1             	mov    %rax,%rcx
+ 107b4d7:	84 d2                	test   %dl,%dl
+ 107b4d9:	0f 94 c0             	sete   %al
+ 107b4dc:	74 05                	je     107b4e3 <pipeline.sampler.Sampler.allow+0xf3>
+ 107b4de:	48 85 c9             	test   %rcx,%rcx
+ 107b4e1:	75 dd                	jne    107b4c0 <pipeline.sampler.Sampler.allow+0xd0>
+ 107b4e3:	5d                   	pop    %rbp
+ 107b4e4:	c3                   	ret
+ 107b4e5:	31 c0                	xor    %eax,%eax
+ 107b4e7:	5d                   	pop    %rbp
+ 107b4e8:	c3                   	ret

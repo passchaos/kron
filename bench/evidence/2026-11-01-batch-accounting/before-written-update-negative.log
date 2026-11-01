@@ -1,0 +1,21 @@
+1/8 root.test_0...OK
+2/8 encoder.root.test_0...OK
+3/8 journal.journal.test_0...OK
+4/8 core.runtime.test_0...OK
+5/8 config.routes.test_0...OK
+6/8 sink.rolling_file.test_0...OK
+7/8 journal.spsc.test_0...OK
+8/8 core.runtime_delivery_tests.test.real shared and SPSC batches perform one configuration lookup for 31 records...expected 1, found 31
+FAIL (TestExpectedEqual)
+/home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/std/testing.zig:118:17: 0x125b0d9 in expectEqualInner__anon_46079 (std.zig)
+                return error.TestExpectedEqual;
+                ^
+/home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/std/testing.zig:83:5: 0x1261570 in expectEqual (root.zig)
+    return expectEqualInner(T, expected, actual);
+    ^
+/tmp/kron-batch-accounting-counter-oracle/src/core/runtime_delivery_tests.zig:65:9: 0x1261603 in test.real shared and SPSC batches perform one configuration lookup for 31 records (root.zig)
+        try std.testing.expectEqual(@as(usize, 1), batch_module.TestingAudit.written_updates.load(.monotonic) - updates);
+        ^
+7 passed; 0 skipped; 1 failed.
+error: the following test command failed with exit code 1:
+.zig-cache/o/4bccfccb161b5081a512e5b12b24b790/test --seed=0xc3004b87

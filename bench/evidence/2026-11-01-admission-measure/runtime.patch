@@ -1,0 +1,48 @@
+--- /tmp/kron-before-admission/src/core/runtime.zig	2026-11-01 03:48:48.818094916 +0800
++++ src/core/runtime.zig	2026-11-01 03:43:50.257872955 +0800
+@@ -564,10 +564,19 @@
+         if (producer_token == null and original.channel != 0) return error.InvalidChannel;
+         if (producer_token != null and (original.channel == 0 or original.channel > (if (self.thread_registry) |registry| registry.channelCount() else 0))) return error.InvalidChannel;
+         const snapshot = try self.admittedSnapshot(admission);
+-        var validator: @import("field.zig").ValueValidator = .{};
+-        try validator.fields(original.fields);
+-        try validator.arguments(original.format_args);
+-        const context: SubmissionContext = .{ .admission = admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding };
++        // The default inline path validates the complete tree once here and
++        // carries the measured size into the accepted write. Redaction rewrites
++        // borrowed storage and prepared bindings use a different wire shape, so
++        // those paths keep their independent validation/measurement.
++        const measured: ?usize = if (binding == null and snapshot.redactor.rule_count == 0)
++            try codec.measure(original)
++        else blk: {
++            var validator: @import("field.zig").ValueValidator = .{};
++            try validator.fields(original.fields);
++            try validator.arguments(original.format_args);
++            break :blk null;
++        };
++        const context: SubmissionContext = .{ .admission = admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding, .encoded_size = measured };
+         if (snapshot.redactor.rule_count != 0)
+             return @import("runtime_redaction.zig").submit(self, &snapshot.redactor, original, context, submitSafeDestination);
+         return self.submitSafeDestination(original, context);
+@@ -579,6 +588,7 @@
+         destination: ?*Journal,
+         producer_token: ?JournalModule.SingleProducerToken,
+         binding: ?SchemaBinding,
++        encoded_size: ?usize = null,
+     };
+ 
+     fn submitSafeDestination(self: *Runtime, original: Event, context: SubmissionContext) !EmitResult {
+@@ -657,7 +667,12 @@
+                 };
+                 defer reservation.abort();
+                 event.sequence = reservation.sequence;
+-                const encoded = if (definition) |canonical| schema_codec.encodeReference(event, canonical, reservation.buffer()) else codec.encode(event, reservation.buffer());
++                const encoded = if (definition) |canonical|
++                    schema_codec.encodeReference(event, canonical, reservation.buffer())
++                else if (context.encoded_size) |size|
++                    codec.encodeSized(event, size, reservation.buffer())
++                else
++                    codec.encode(event, reservation.buffer());
+                 const payload = encoded catch |err| {
+                     reservation.abort();
+                     self.notify();

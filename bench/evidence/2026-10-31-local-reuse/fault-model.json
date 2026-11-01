@@ -1,0 +1,14 @@
+{
+  "command": "zig build check-local-faults -Dzkv-path=/home/passchaos/project-z/zkv -Doptimize=ReleaseSafe -j1 --summary all",
+  "status": "passed",
+  "prefix_cases": 3120,
+  "invalid_boundary_cases": 8,
+  "first_complete_prefix": 20,
+  "last_incomplete_prefix": 19,
+  "scope": "ZKV persistence model, actual kron journal protocol; not real mmap/fsync/physical power loss",
+  "source_sha256": {
+    "src/local_fault_check.zig": "3963436f3b17f6a15191d395643044dd19072b4e0d679eddae99cdb2bd95427b",
+    "src/journal/format.zig": "5801b849701f691fc44d7069302bb6036ea6303aa53d5c91ef15bd60c5aba7fd",
+    "/home/passchaos/project-z/zkv/src/storage/faultable_device.zig": "d02a0133bd0ec3ee36697ede42f79254ce20bfe29310b9144239ac3fd5e1da7a"
+  }
+}

@@ -1,0 +1,45 @@
+Independent time oracle passed: 4166 nanosecond/offset timestamps, 5845 civil dates; sha256=55e96071bb0b9209918a7ec0378bb037595d7bed712ca0b9ccd9a4854535eeec
+test
++- run test kron-compression w
+incompressible pilot: raw=65536 compressed=65646 ratio=1.0017
+compressed archive pilot: raw=27520 compressed=2650 ratio=0.0963 wall_ns=417438 cpu_ns=416080
+failed command: /tmp/kron-wire-cache/o/179ef8200a5610049e18e13eb6ca6281/kron-compression --cache-dir=/tmp/kron-wire-cache --seed=0x77110ccc --listen=-
+
+Build Summary: 35/35 steps succeeded; 483/483 tests passed
+test success
++- run test 365 pass (365 total) 3s MaxRSS:8M
+|  +- compile test ReleaseFast native success 1m MaxRSS:1G
++- run test kron-adapter 5 pass (5 total) 755ms MaxRSS:5M
+|  +- compile test kron-adapter ReleaseFast native success 27s MaxRSS:625M
++- run test kron-redaction-paths 3 pass (3 total) 906ms MaxRSS:6M
+|  +- compile test kron-redaction-paths ReleaseFast native success 28s MaxRSS:626M
++- run test kron-async-storage 7 pass (7 total) 319ms MaxRSS:6M
+|  +- compile test kron-async-storage ReleaseFast native success 34s MaxRSS:753M
++- run test kron-file-delivery-failures 6 pass (6 total) 921ms MaxRSS:6M
+|  +- compile test kron-file-delivery-failures ReleaseFast native success 30s MaxRSS:649M
++- run test kron-capture-integration 6 pass (6 total) 7ms MaxRSS:5M
+|  +- compile test kron-capture-integration ReleaseFast native success 32s MaxRSS:682M
++- run test kron-integration 11 pass (11 total) 3s MaxRSS:5M
+|  +- compile test kron-integration ReleaseFast native success 30s MaxRSS:644M
++- run test kron-time 5 pass (5 total) 685ms MaxRSS:5M
+|  +- compile test kron-time ReleaseFast native success 34s MaxRSS:741M
++- run python3 success 68ms
+|  +- compile exe kron-time-oracle ReleaseFast native success 16s MaxRSS:460M
++- run test kron-configurations 12 pass (12 total) 1s MaxRSS:6M
+|  +- compile test kron-configurations ReleaseFast native success 30s MaxRSS:773M
++- run test kron-transactions 8 pass (8 total) 459ms MaxRSS:5M
+|  +- compile test kron-transactions ReleaseFast native success 29s MaxRSS:672M
++- run test kron-route-filters 1 pass (1 total) 18ms MaxRSS:6M
+|  +- compile test kron-route-filters ReleaseFast native success 26s MaxRSS:615M
++- run test kron-predicates 7 pass (7 total) 1s MaxRSS:6M
+|  +- compile test kron-predicates ReleaseFast native success 29s MaxRSS:638M
++- run test kron-tsc-qualification 3 pass (3 total) 10ms MaxRSS:6M
+|  +- compile test kron-tsc-qualification ReleaseFast native success 18s MaxRSS:490M
++- run test kron-compression 10 pass (10 total) 6ms MaxRSS:6M
+|  +- compile test kron-compression ReleaseFast native success 23s MaxRSS:553M
++- run test kron-deadline 11 pass (11 total) 1s MaxRSS:4M
+|  +- compile test kron-deadline ReleaseFast native success 28s MaxRSS:619M
++- run test kron-query 23 pass (23 total) 631ms MaxRSS:5M
+   +- compile test kron-query ReleaseFast native success 32s MaxRSS:743M
+
+EXIT=0

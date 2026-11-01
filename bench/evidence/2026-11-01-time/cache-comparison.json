@@ -1,0 +1,216 @@
+{
+  "scope": "Standalone RFC3339 formatter + complete hash/input update; caller-owned cache vs stateless formatting; not full logging or end-to-end throughput.",
+  "records_hashed": 4000000,
+  "trials": 40,
+  "affinity": "not pinned in initial build run",
+  "assessments": {
+    "same-second": {
+      "uncached": {
+        "trials": 5,
+        "median": 52.32901,
+        "mean": 51.914364,
+        "q1": 50.98423,
+        "q3": 52.38799,
+        "min": 50.96555,
+        "max": 52.90504,
+        "cv": 0.017075003932408996,
+        "relative_spread": 0.037063380331483424,
+        "relative_iqr": 0.026825655597153577,
+        "median_bootstrap_ci95": [
+          50.96555,
+          52.90504
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached": {
+        "trials": 5,
+        "median": 21.53233,
+        "mean": 21.675440000000002,
+        "q1": 21.50955,
+        "q3": 22.00738,
+        "min": 21.30786,
+        "max": 22.02008,
+        "cv": 0.014807805363460021,
+        "relative_spread": 0.033076773391453616,
+        "relative_iqr": 0.023120117516311538,
+        "median_bootstrap_ci95": [
+          21.30786,
+          22.02008
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached_over_uncached": 0.41147978912652855,
+      "uncached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "cached_conversions": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "status": "stable_local_measurement"
+    },
+    "changing-second": {
+      "uncached": {
+        "trials": 5,
+        "median": 50.80834,
+        "mean": 50.80811,
+        "q1": 50.80247,
+        "q3": 50.81154,
+        "min": 50.80234,
+        "max": 50.81586,
+        "cv": 0.00011517811959617849,
+        "relative_spread": 0.00026609804610817347,
+        "relative_iqr": 0.00017851399986697545,
+        "median_bootstrap_ci95": [
+          50.80234,
+          50.81586
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached": {
+        "trials": 5,
+        "median": 51.6345,
+        "mean": 51.637146,
+        "q1": 51.63207,
+        "q3": 51.63759,
+        "min": 51.63051,
+        "max": 51.65106,
+        "cv": 0.00015928385797518634,
+        "relative_spread": 0.000397989716178138,
+        "relative_iqr": 0.00010690526682749301,
+        "median_bootstrap_ci95": [
+          51.63051,
+          51.65106
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached_over_uncached": 1.0162603226163265,
+      "uncached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "cached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "status": "stable_local_measurement"
+    },
+    "offset-change": {
+      "uncached": {
+        "trials": 5,
+        "median": 52.27346,
+        "mean": 52.29147,
+        "q1": 52.27167,
+        "q3": 52.31916,
+        "min": 52.27,
+        "max": 52.32306,
+        "cv": 0.0005186356282275238,
+        "relative_spread": 0.001015046641259159,
+        "relative_iqr": 0.0009084916131435772,
+        "median_bootstrap_ci95": [
+          52.27,
+          52.32306
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached": {
+        "trials": 5,
+        "median": 53.2265,
+        "mean": 53.23409,
+        "q1": 53.19766,
+        "q3": 53.2288,
+        "min": 53.19098,
+        "max": 53.32651,
+        "cv": 0.0010208316459070338,
+        "relative_spread": 0.0025462880332164563,
+        "relative_iqr": 0.0005850469221158749,
+        "median_bootstrap_ci95": [
+          53.19098,
+          53.32651
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached_over_uncached": 1.0182318140027464,
+      "uncached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "cached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "status": "stable_local_measurement"
+    },
+    "clock-rollback": {
+      "uncached": {
+        "trials": 5,
+        "median": 52.14503,
+        "mean": 52.14029,
+        "q1": 52.12767,
+        "q3": 52.15241,
+        "min": 52.11897,
+        "max": 52.15737,
+        "cv": 0.00031439789074381807,
+        "relative_spread": 0.0007364076691489654,
+        "relative_iqr": 0.0004744459826756513,
+        "median_bootstrap_ci95": [
+          52.11897,
+          52.15737
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached": {
+        "trials": 5,
+        "median": 22.85734,
+        "mean": 22.911948,
+        "q1": 22.83644,
+        "q3": 23.01023,
+        "min": 22.82208,
+        "max": 23.03365,
+        "cv": 0.00443115734432869,
+        "relative_spread": 0.00925610766607146,
+        "relative_iqr": 0.007603246921995312,
+        "median_bootstrap_ci95": [
+          22.82208,
+          23.03365
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "cached_over_uncached": 0.43834167896729564,
+      "uncached_conversions": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "cached_conversions": [
+        150,
+        150,
+        150,
+        150,
+        150
+      ],
+      "status": "stable_local_measurement"
+    }
+  }
+}

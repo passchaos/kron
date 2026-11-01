@@ -1,0 +1,1141 @@
+{
+  "scope": "Encoder-only scalar/nested/wide/long ASCII/Unicode/dense escaped shapes; input updates and complete hashes included; whole-process PMU includes all cases.",
+  "trials": 10,
+  "records_hashed": 6000000,
+  "source_sha256": {
+    "src/adapters/std_log.zig": "cf17a45bda6740140ace70fbdf9e06faa821ad884d2695ac8acf9a3891549192",
+    "src/archive/compression.zig": "31b74352644d917661312d53db7f8c14eb6da0fb26098b60751a5468bde0940a",
+    "src/archive/format.zig": "5a0f8857a696f24869213f03e6ccdd7f295c42fbd0e5af076337a138f68492ae",
+    "src/archive/reader.zig": "dab050cd90ae23564bb74ad2d258926d448ced49bbed9afad739fc4d448787e1",
+    "src/archive/writer.zig": "93df3b815942c3f1b1cf8831a278344707a4d34802200ea869cf25f7739efa03",
+    "src/backend/buffer_pool.zig": "3d3ed598a08c73b8d96efe4de7f526629bff6247e240af27c5fcf3c49eb04611",
+    "src/backend/directory_sync.zig": "88769ee2036a4da3a10f02fc2a58d52be775997776948064650dc38f492df05d",
+    "src/backend/interface.zig": "7faed7e010e0db8ff397e92924d169621279db208148be871b32ad15051917b4",
+    "src/backend/linux_uring.zig": "bcc06a1448e708e724449e05479c26fddf61202740f53846b2244957061eca20",
+    "src/backend/portable.zig": "9f704bb6374b81d99b66c3bda90fc37637578fe31bbf2b46b528b6f9ce50cd2a",
+    "src/config/cache.zig": "574e0cf826685949faf20902bf69ff74d5285fda164bf28f592a1db303a4d4f4",
+    "src/config/document.zig": "1df3180b1ce29af8b982a3d1a2d02377665761c4b91a78a8266f4fe7f9fdc5f5",
+    "src/config/env.zig": "bc8d7db7fbabb63df09d108865d154f5c31a7a9a55f77d49c410ada9dcaab59a",
+    "src/config/filter.zig": "2287da85c58e93037831bb1edb9382cbb06770ff10e754298c4db7c12f304b08",
+    "src/config/reload.zig": "25aa291eeb96bf6ec719205fc469d8ed5ae41eba1f90528cbff78fcf75f1d0fd",
+    "src/config/route_selection.zig": "de6febf54bc13b192170f4eb182dd4eaef3982ee581186cf52af8055577a168f",
+    "src/config/routes.zig": "adb8459974a3e9e45e26554933541953e4a1f9dc3ec21b76ee3889674e5e6626",
+    "src/config/routes_tests.zig": "b35153a4d786cc50838698778984ababdcb06ca61be457af89207c8f3dcbe051",
+    "src/config/sources.zig": "3a370ec9ee9397c1f268d3c9c47e2b33e06e33f450faa58fa6462e2e190546f8",
+    "src/core/adapter.zig": "0dbe593ce14df334f560060ea0735a891bbb6e267f34a056b7228e957de78cf8",
+    "src/core/admission.zig": "39b861e28f336c7b0ac15ed07c568526543943bb55a575e6e459b226c0f8a15e",
+    "src/core/codec.zig": "bc29867300d9991632c40a14fc50196870382b8014ee5f5657d288073581b0dc",
+    "src/core/context.zig": "dad1aca3e9c49e06181955b594940e047a33589ccd6c8e0ce21e4d0d4083c941",
+    "src/core/control.zig": "9b87de4f575f65266eccb90d0e2ca289bddcf52b55b7f6d6a95a100ce085394a",
+    "src/core/delivery.zig": "287f2b7f87266ebefb3370241c5ae2433fe288f699473d9f02e6275b711fc7b2",
+    "src/core/delivery_batch.zig": "b4ee52ae4f70a44291e657d86acd4571a909f62c1e842fec3106dd15496a2a79",
+    "src/core/diagnostics.zig": "d54bb1da65f0c9bb9cac8d58e5809a1bb40699792a3bc8d5d3801c6f945072a8",
+    "src/core/event.zig": "5d5fb3547c222df6185c1d2f6062196ff037ba4b87e1c3e97908257d76e776f1",
+    "src/core/field.zig": "881a38db97869161d2e4399e4bae45cf6eb641b0241a76bd5922ca03288eb15e",
+    "src/core/level.zig": "e67faec846af9c19355533513ecddf05d9185cc8c69cdf3de2b4f71fdf6e00b4",
+    "src/core/logger.zig": "acfe2ca49b5da9731a2d0d993c6b7da7f2c1cbe69c0385ab07c227b15ecd5d2e",
+    "src/core/prepared.zig": "7882fd2e59b8e1c5af2a4b097277df3662f5c89ee5b2df95e674ee6c3e86d9b7",
+    "src/core/runtime.zig": "91c3d7dc8858c5bb44f045aca7e925637437980f8d809b91bf2d3920d0c96886",
+    "src/core/runtime_configuration.zig": "1b4cf239adf7477fbe0ec88189e732504960b11d16014545fd597466b5bd3bc6",
+    "src/core/runtime_delivery_tests.zig": "097b7aa5de8b00b9fa1c63b69678ac6c3e3a934cac666f0cfc73ed2fd207893d",
+    "src/core/runtime_init.zig": "837562624bac38e31a68f0f91c63614fa42330ca3c6ef116b61f45cf561cdc3f",
+    "src/core/runtime_redaction.zig": "ec369eba6c601f69c2f0a03c3cba86228135127c1cc42da0dcac69d280991131",
+    "src/core/runtime_tests.zig": "61aafe3bce21a228b420d9f18f4f775195b9d636246aa680ae419151e7592764",
+    "src/core/runtime_types.zig": "a508b1baf89419c955060bacf071371b645e988b65ace4e50e3850b66b2c1850",
+    "src/core/schema_codec.zig": "62b8e42c308e540c141494df4cca70de69dcee831c97e5a5c4b605a09bdd3012",
+    "src/core/static_owner.zig": "1bc13b94eea4b4fbd253cf0fd3c1ad16dd35b4bb814ebe036fdbdeb82183d766",
+    "src/core/thread_registry.zig": "e6315a6c86a45418287fef17b87ce961a944184c27e532521579517b28d84d5c",
+    "src/core/wire_size.zig": "ba99eb989203fea584c8e43e7da04b191b15b55048b4dd3f718dc90c4f25806c",
+    "src/core/wire_write.zig": "bf2efa9b7342d2ea541f25c6d5af30b6c8e101259d490accfc375ce5a519815c",
+    "src/encoder/common.zig": "4df876a55f030934447f7c388ae5941b20cfd576361aa8c242fe122107f261b8",
+    "src/encoder/decimal.zig": "5fa723934a1d6af644ad29946744ce78db87ff1062dde7c14f107714cacf99d6",
+    "src/encoder/escaping.zig": "1c409f6e5843f64d19959cc93502d843e8ebae30c549843b79b806cf3927159c",
+    "src/encoder/json.zig": "16741a7f852140ccad1c0203ce1da8247292001c8a9d0a72189b03a2d35f1789",
+    "src/encoder/logfmt.zig": "8e95b18ee7bc93c2a618bd119ed764b751d3c655bf0f01be7d0dc245576c5d9d",
+    "src/encoder/root.zig": "bc86be2bcbf0b1d55caeffaa692162197b412788e247bbe9d3e0fb8aa80fa9b1",
+    "src/encoder/text.zig": "97f378ac1a07ee426467919e1aa65d02f2721a19e3a31ccdf3e5c1c6a8ae7c6b",
+    "src/journal/format.zig": "42f51820eb57462968cd68ccce6dbf9f4c590ea96b278d5698c751c750992f1d",
+    "src/journal/journal.zig": "b6ffc5176905702ceeb78a0c0a7031999e0d8808299636e20628394fbc5cefd5",
+    "src/journal/schema.zig": "e477a9fef5071da5686cc35563fe314d470b10ee2fb814e6d056aae0293a1672",
+    "src/journal/schema_journal_tests.zig": "c7e68b8d987d53eb8f81ab1206a96fce1c273bcac4aeb40e25f7259015efecaf",
+    "src/journal/spsc.zig": "696e24597fcfb640af51075e1352c89b48b63994aa24e4b78190912956b4da9d",
+    "src/journal/spsc_tests.zig": "5ef785f81c3e53f2951c875d782ffe48ef34870ce70550d1fc6f9a49afc60d04",
+    "src/journal/storage.zig": "9e5cda5a5b6661ea4fa9d01f36447ec14608262e1c6d223f605b51369e5e0b31",
+    "src/journal/tests.zig": "bdbc3d9554d2d6bfc8d78d3e9d1590ed169502c5003662519126cda945ab1bcb",
+    "src/local_checksum_check.zig": "4d0d94e20a3b8a215cd9bd6d7f6134e9b97d179d01893aa0b2b1ee30ce471264",
+    "src/local_fault_check.zig": "3963436f3b17f6a15191d395643044dd19072b4e0d679eddae99cdb2bd95427b",
+    "src/pipeline/flight_recorder.zig": "442e1a7aaa69a72157119debbab15a0cb03df80932546dcb20f3f12985b2210e",
+    "src/pipeline/predicate.zig": "f2b4938ee277a345db02ddfc7228340542d68fada6962edddc94d40ed07cd80f",
+    "src/pipeline/redact.zig": "e3ad1fb833f175c0ec2e392ccad4b2f66a60cd3a2928d8bf191e3ab237e8ad8c",
+    "src/pipeline/sampler.zig": "97c8324b36d43f2ef02b2c99ec7518350112ec3675d9800ac8da7ae4a5b78928",
+    "src/platform/capabilities.zig": "1f9a139821abea21255c564bd98f0b28ab05ae6aa0291980a42e04b449db52d0",
+    "src/platform/clock.zig": "a3bb8ddc0dcc65692de58099fadd8236ce012f3b7b1f0ea491a3d7177232f186",
+    "src/platform/crc32.zig": "d69f33c909da9eabf954fef51210c8a17a5c65ba38a3baa77cb288f1776076b5",
+    "src/platform/mapping/darwin.zig": "4e964552e8e9910f565d2b230231bb4eec02a1fbb6b3bf00f5e8890e886ad97c",
+    "src/platform/mapping/linux.zig": "7163c19d2a96a01e6a3273700297f99cfa1688c83c6657989bdc40505231dd8e",
+    "src/platform/mapping/unsupported.zig": "9f4c993c2680a6a9b01ffb6f43cf7d234d81344ee83c500e40dace845dc8428f",
+    "src/platform/mapping/windows.zig": "ab40703f13ff158e6f8ac236e34b98d0554d0dd25c72e46f096379cfb573beb2",
+    "src/platform/mapping.zig": "ff3286fcbf1e897d52438cde6b165ad8c7c0a32dffcdcc7e900d2686783b6d5f",
+    "src/platform/static_clock.zig": "04b8007d88d15ce21ba01feaf774a81c5b3d4c181fc6566c3001aef4801493cb",
+    "src/platform/tsc_clock.zig": "6db3acedd286e439f357f6e1943067e4c2b86218786f2933726e1ecb9c9f4d6f",
+    "src/platform_check.zig": "8f31058f5ebe3dad16f1a7a82c98c214bf91b3c63d9ef3904842f5089b7aaf13",
+    "src/root.zig": "dc227b79c54c419399229df551e31ba3560a1647e8e1f9f515142da70035c999",
+    "src/sink/compressed_archive.zig": "8c2a653f60623f5ed078abbfa8bd28428a9a01df204acdc3be67cdfe858fc053",
+    "src/sink/file.zig": "2208dc4bcbde416b4e45d9e48f4cfba9b9f328c81fced8a50f328416e28a2655",
+    "src/sink/interface.zig": "c0c63daaff9b4a02906ecd76d63c7446b330d32a1fedcd9fe4105e4ea0e99aae",
+    "src/sink/memory.zig": "f2af11aad5327bcec82079834403fc9e7e6c4dff4ab012d4e9803e57713e6bd4",
+    "src/sink/multi.zig": "8cd615fadec6515d7eddc6c815cb11c90c377ae210dbd09da213c47a83f6f22a",
+    "src/sink/rolling_file.zig": "31880b94aa583dc73f1cdaaf3b1e932a3fbd2160e8ee8b50eb275fe91cd9e60e",
+    "src/sink/rolling_file_reliability_tests.zig": "47294ad43a8874addb9978136ba3f41bd1a15e841e04213943974cfc8d0d905e",
+    "src/sink/rolling_file_time_tests.zig": "1bf0b42dde833dd95a83908b121b42f17a2338f13dd6fefa08b037e3779ef3c5",
+    "src/sink/writer.zig": "b05ac8ded91874ee93266e2a95bfda57404b91f68c8d052f8f7ee4020b2892c8",
+    "src/submit/callsite.zig": "531f450ca052f6277fe89da84b234f579d5eac07c6cb5378dcd75c254ae83189",
+    "src/submit/format.zig": "5bd69796e802596314ce6e3017f64ffc1f919a625a9082afceaf067d1f2f3ed2",
+    "src/submit/schema_site.zig": "a05035798bfe257afa2a06e3434a8de33347dba59165f2f8424e6b9932f37c9e",
+    "src/telemetry/span.zig": "e251876f39cd0c6e6cfa9663ec8e24a9264c229a7a5f52431d589c4cff26edd3",
+    "src/telemetry/trace_context.zig": "f1f03e333568f3c532af84d3aaed6c03e599c7ad8da2e736d513edfa1420ea03",
+    "src/time/civil.zig": "e04600a8475be3255ad0f234f22fb02dc8de173e4f47ab43383d8cd2dd17d3a1",
+    "src/time/rfc3339.zig": "d26317ffd2562cdd27bd4f29fb6541e82a29e954527251abceac1aefa0e52f7f",
+    "src/time/root.zig": "3a2debfaa0219dbc51630ab45ec27d810c41aafe797d31fbe4a613940998e65b",
+    "src/time/types.zig": "26d246ec8594890b3d1fb5b5a20adc399a5a903fbc3edd9fbf5f41b852debb11"
+  },
+  "driver_sha256": "f2c0c289c114edf4d633b462c745681b482a8b0276e4e92eaee9abdca3e812ea",
+  "rows": [
+    {
+      "label": "before",
+      "pair": 0,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-before-0.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-before"
+      ],
+      "binary_sha256": "d6c7d3fa80c3f4f738e08523f7f9f1737fe0cda6fcdf6d333ea5a781d92bcf55",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 65905763,
+          "ns_per_record": 659.05763,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 172507383,
+          "ns_per_record": 1725.07383,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 73866939,
+          "ns_per_record": 738.66939,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 101283479,
+          "ns_per_record": 1012.83479,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 379467213,
+          "ns_per_record": 3794.67213,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 401252882,
+          "ns_per_record": 4012.52882,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 10702806319,
+        "cpu_core/cycles/u": 2230098201
+      }
+    },
+    {
+      "label": "after",
+      "pair": 0,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-after-0.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-final"
+      ],
+      "binary_sha256": "89ea9846586014b6ccb9d293c881cf4a5e89ec18afd6685f3fa9dfad32724fc6",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 60674507,
+          "ns_per_record": 606.74507,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 148457748,
+          "ns_per_record": 1484.57748,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 70610146,
+          "ns_per_record": 706.10146,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 60052179,
+          "ns_per_record": 600.52179,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 394550142,
+          "ns_per_record": 3945.50142,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 351681825,
+          "ns_per_record": 3516.81825,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 9564907440,
+        "cpu_core/cycles/u": 2047395014
+      }
+    },
+    {
+      "label": "after",
+      "pair": 1,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-after-1.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-final"
+      ],
+      "binary_sha256": "89ea9846586014b6ccb9d293c881cf4a5e89ec18afd6685f3fa9dfad32724fc6",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 54629224,
+          "ns_per_record": 546.29224,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 160018245,
+          "ns_per_record": 1600.18245,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 70758470,
+          "ns_per_record": 707.5847,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 63794868,
+          "ns_per_record": 637.94868,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 391528236,
+          "ns_per_record": 3915.28236,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 356559003,
+          "ns_per_record": 3565.59003,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 9563822380,
+        "cpu_core/cycles/u": 2086032908
+      }
+    },
+    {
+      "label": "before",
+      "pair": 1,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-before-1.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-before"
+      ],
+      "binary_sha256": "d6c7d3fa80c3f4f738e08523f7f9f1737fe0cda6fcdf6d333ea5a781d92bcf55",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 62744793,
+          "ns_per_record": 627.44793,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 173370108,
+          "ns_per_record": 1733.70108,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 72276108,
+          "ns_per_record": 722.76108,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 101606310,
+          "ns_per_record": 1016.0631,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 401479620,
+          "ns_per_record": 4014.7962,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 368581062,
+          "ns_per_record": 3685.81062,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 10708681626,
+        "cpu_core/cycles/u": 2216572431
+      }
+    },
+    {
+      "label": "before",
+      "pair": 2,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-before-2.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-before"
+      ],
+      "binary_sha256": "d6c7d3fa80c3f4f738e08523f7f9f1737fe0cda6fcdf6d333ea5a781d92bcf55",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 62902079,
+          "ns_per_record": 629.02079,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 181584367,
+          "ns_per_record": 1815.84367,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 76723943,
+          "ns_per_record": 767.23943,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 103612998,
+          "ns_per_record": 1036.12998,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 411885204,
+          "ns_per_record": 4118.85204,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 383968765,
+          "ns_per_record": 3839.68765,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 10709009660,
+        "cpu_core/cycles/u": 2232566908
+      }
+    },
+    {
+      "label": "after",
+      "pair": 2,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-after-2.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-final"
+      ],
+      "binary_sha256": "89ea9846586014b6ccb9d293c881cf4a5e89ec18afd6685f3fa9dfad32724fc6",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 55439753,
+          "ns_per_record": 554.39753,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 151984660,
+          "ns_per_record": 1519.8466,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 70307201,
+          "ns_per_record": 703.07201,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 63944671,
+          "ns_per_record": 639.44671,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 393593573,
+          "ns_per_record": 3935.93573,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 354884677,
+          "ns_per_record": 3548.84677,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 9564407978,
+        "cpu_core/cycles/u": 2057489843
+      }
+    },
+    {
+      "label": "after",
+      "pair": 3,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-after-3.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-final"
+      ],
+      "binary_sha256": "89ea9846586014b6ccb9d293c881cf4a5e89ec18afd6685f3fa9dfad32724fc6",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 57252511,
+          "ns_per_record": 572.52511,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 147998563,
+          "ns_per_record": 1479.98563,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 67686327,
+          "ns_per_record": 676.86327,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 63318662,
+          "ns_per_record": 633.18662,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 386539580,
+          "ns_per_record": 3865.3958,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 355876543,
+          "ns_per_record": 3558.76543,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 9565024341,
+        "cpu_core/cycles/u": 2046333001
+      }
+    },
+    {
+      "label": "before",
+      "pair": 3,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-before-3.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-before"
+      ],
+      "binary_sha256": "d6c7d3fa80c3f4f738e08523f7f9f1737fe0cda6fcdf6d333ea5a781d92bcf55",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 63479437,
+          "ns_per_record": 634.79437,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 182162447,
+          "ns_per_record": 1821.62447,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 73577498,
+          "ns_per_record": 735.77498,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 102823506,
+          "ns_per_record": 1028.23506,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 410949493,
+          "ns_per_record": 4109.49493,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 377974672,
+          "ns_per_record": 3779.74672,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 10709560557,
+        "cpu_core/cycles/u": 2266656498
+      }
+    },
+    {
+      "label": "before",
+      "pair": 4,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-before-4.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-before"
+      ],
+      "binary_sha256": "d6c7d3fa80c3f4f738e08523f7f9f1737fe0cda6fcdf6d333ea5a781d92bcf55",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 63459322,
+          "ns_per_record": 634.59322,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 178093579,
+          "ns_per_record": 1780.93579,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 73320656,
+          "ns_per_record": 733.20656,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 105279684,
+          "ns_per_record": 1052.79684,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 396953648,
+          "ns_per_record": 3969.53648,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 377472957,
+          "ns_per_record": 3774.72957,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 10707395720,
+        "cpu_core/cycles/u": 2244960932
+      }
+    },
+    {
+      "label": "after",
+      "pair": 4,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-ascii-output/probe-final-perf-after-4.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-ascii-probe-final"
+      ],
+      "binary_sha256": "89ea9846586014b6ccb9d293c881cf4a5e89ec18afd6685f3fa9dfad32724fc6",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 100000,
+          "elapsed_ns": 59689495,
+          "ns_per_record": 596.89495,
+          "checksum": 3955666348665351675,
+          "output_bytes": 29933395
+        },
+        {
+          "case": "nested20",
+          "iterations": 100000,
+          "elapsed_ns": 148069297,
+          "ns_per_record": 1480.69297,
+          "checksum": 16888759457865974396,
+          "output_bytes": 56666895
+        },
+        {
+          "case": "wide5",
+          "iterations": 100000,
+          "elapsed_ns": 71316804,
+          "ns_per_record": 713.16804,
+          "checksum": 9437189030888299372,
+          "output_bytes": 47988895
+        },
+        {
+          "case": "ascii-long",
+          "iterations": 100000,
+          "elapsed_ns": 64519740,
+          "ns_per_record": 645.1974,
+          "checksum": 13575823981781133286,
+          "output_bytes": 75833395
+        },
+        {
+          "case": "unicode-message",
+          "iterations": 100000,
+          "elapsed_ns": 396277350,
+          "ns_per_record": 3962.7735,
+          "checksum": 1093459250918355597,
+          "output_bytes": 74233395
+        },
+        {
+          "case": "escaped-message",
+          "iterations": 100000,
+          "elapsed_ns": 359672024,
+          "ns_per_record": 3596.72024,
+          "checksum": 17484546780081465524,
+          "output_bytes": 112633395
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 9564950446,
+        "cpu_core/cycles/u": 2052684266
+      }
+    }
+  ],
+  "summary": {
+    "scalar5": {
+      "before": {
+        "trials": 5,
+        "median": 634.59322,
+        "mean": 636.982788,
+        "q1": 629.02079,
+        "q3": 634.79437,
+        "min": 627.44793,
+        "max": 659.05763,
+        "cv": 0.020044766482345586,
+        "relative_spread": 0.04981096394316973,
+        "relative_iqr": 0.009098080184342223,
+        "median_bootstrap_ci95": [
+          627.44793,
+          659.05763
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 572.52511,
+        "mean": 575.37098,
+        "q1": 554.39753,
+        "q3": 596.89495,
+        "min": 546.29224,
+        "max": 606.74507,
+        "cv": 0.04549778295236069,
+        "relative_spread": 0.10558983168441304,
+        "relative_iqr": 0.07422804564851318,
+        "median_bootstrap_ci95": [
+          546.29224,
+          606.74507
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.902192289416518,
+      "status": "inconclusive"
+    },
+    "nested20": {
+      "before": {
+        "trials": 5,
+        "median": 1780.93579,
+        "mean": 1775.435768,
+        "q1": 1733.70108,
+        "q3": 1815.84367,
+        "min": 1725.07383,
+        "max": 1821.62447,
+        "cv": 0.025306046980340308,
+        "relative_spread": 0.0542134312433577,
+        "relative_iqr": 0.046123274326470766,
+        "median_bootstrap_ci95": [
+          1725.07383,
+          1821.62447
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 1484.57748,
+        "mean": 1513.057026,
+        "q1": 1480.69297,
+        "q3": 1519.8466,
+        "min": 1479.98563,
+        "max": 1600.18245,
+        "cv": 0.03400522895469693,
+        "relative_spread": 0.08096365573321247,
+        "relative_iqr": 0.026373584758944357,
+        "median_bootstrap_ci95": [
+          1479.98563,
+          1600.18245
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.8335940511364534,
+      "status": "stable_local_measurement"
+    },
+    "wide5": {
+      "before": {
+        "trials": 5,
+        "median": 735.77498,
+        "mean": 739.530288,
+        "q1": 733.20656,
+        "q3": 738.66939,
+        "min": 722.76108,
+        "max": 767.23943,
+        "cv": 0.02246292449732618,
+        "relative_spread": 0.060451022675438046,
+        "relative_iqr": 0.007424593317919091,
+        "median_bootstrap_ci95": [
+          722.76108,
+          767.23943
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 706.10146,
+        "mean": 701.357896,
+        "q1": 703.07201,
+        "q3": 707.5847,
+        "min": 676.86327,
+        "max": 713.16804,
+        "cv": 0.020210245590696535,
+        "relative_spread": 0.05141579795062308,
+        "relative_iqr": 0.006390993724896165,
+        "median_bootstrap_ci95": [
+          676.86327,
+          713.16804
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.9596703872697601,
+      "status": "stable_local_measurement"
+    },
+    "ascii-long": {
+      "before": {
+        "trials": 5,
+        "median": 1028.23506,
+        "mean": 1029.2119539999999,
+        "q1": 1016.0631,
+        "q3": 1036.12998,
+        "min": 1012.83479,
+        "max": 1052.79684,
+        "cv": 0.01571321642065827,
+        "relative_spread": 0.038864702784983794,
+        "relative_iqr": 0.0195158488371326,
+        "median_bootstrap_ci95": [
+          1012.83479,
+          1052.79684
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 637.94868,
+        "mean": 631.26024,
+        "q1": 633.18662,
+        "q3": 639.44671,
+        "min": 600.52179,
+        "max": 645.1974,
+        "cv": 0.028054820466119602,
+        "relative_spread": 0.07003010022687092,
+        "relative_iqr": 0.009812842625522957,
+        "median_bootstrap_ci95": [
+          600.52179,
+          645.1974
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.6204307797090677,
+      "status": "stable_local_measurement"
+    },
+    "unicode-message": {
+      "before": {
+        "trials": 5,
+        "median": 4014.7962,
+        "mean": 4001.470356,
+        "q1": 3969.53648,
+        "q3": 4109.49493,
+        "min": 3794.67213,
+        "max": 4118.85204,
+        "cv": 0.032920269239736885,
+        "relative_spread": 0.08074629292515516,
+        "relative_iqr": 0.03486066117129423,
+        "median_bootstrap_ci95": [
+          3794.67213,
+          4118.85204
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 3935.93573,
+        "mean": 3924.977762,
+        "q1": 3915.28236,
+        "q3": 3945.50142,
+        "min": 3865.3958,
+        "max": 3962.7735,
+        "cv": 0.009544700254121817,
+        "relative_spread": 0.02474067329346356,
+        "relative_iqr": 0.007677732075162695,
+        "median_bootstrap_ci95": [
+          3865.3958,
+          3962.7735
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.9803575409381926,
+      "status": "stable_local_measurement"
+    },
+    "escaped-message": {
+      "before": {
+        "trials": 5,
+        "median": 3779.74672,
+        "mean": 3818.500676,
+        "q1": 3774.72957,
+        "q3": 3839.68765,
+        "min": 3685.81062,
+        "max": 4012.52882,
+        "cv": 0.03183795910366954,
+        "relative_spread": 0.08643917812567076,
+        "relative_iqr": 0.017185828790136467,
+        "median_bootstrap_ci95": [
+          3685.81062,
+          4012.52882
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 3558.76543,
+        "mean": 3557.348144,
+        "q1": 3548.84677,
+        "q3": 3565.59003,
+        "min": 3516.81825,
+        "max": 3596.72024,
+        "cv": 0.008116980136222767,
+        "relative_spread": 0.022452165384780728,
+        "relative_iqr": 0.0047047944938589945,
+        "median_bootstrap_ci95": [
+          3516.81825,
+          3596.72024
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.9415354238339018,
+      "status": "stable_local_measurement"
+    },
+    "cpu_core/instructions/u": {
+      "before": {
+        "trials": 5,
+        "median": 10708681626,
+        "mean": 10707490776.4,
+        "q1": 10707395720.0,
+        "q3": 10709009660.0,
+        "min": 10702806319,
+        "max": 10709560557,
+        "cv": 0.00025560530330241726,
+        "relative_spread": 0.0006307254465013825,
+        "relative_iqr": 0.0001507132302898478,
+        "median_bootstrap_ci95": [
+          10702806319,
+          10709560557
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 9564907440,
+        "mean": 9564622517,
+        "q1": 9564407978.0,
+        "q3": 9564950446.0,
+        "min": 9563822380,
+        "max": 9565024341,
+        "cv": 5.3219597559664375e-05,
+        "relative_spread": 0.0001256636310952111,
+        "relative_iqr": 5.671440140982692e-05,
+        "median_bootstrap_ci95": [
+          9563822380,
+          9565024341
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.893191876839163,
+      "status": "stable_local_measurement"
+    },
+    "cpu_core/cycles/u": {
+      "before": {
+        "trials": 5,
+        "median": 2232566908,
+        "mean": 2238170994,
+        "q1": 2230098201.0,
+        "q3": 2244960932.0,
+        "min": 2216572431,
+        "max": 2266656498,
+        "cv": 0.008420013385349031,
+        "relative_spread": 0.02243340023563585,
+        "relative_iqr": 0.006657238780500638,
+        "median_bootstrap_ci95": [
+          2216572431,
+          2266656498
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 2052684266,
+        "mean": 2057987006.4,
+        "q1": 2047395014.0,
+        "q3": 2057489843.0,
+        "min": 2046333001,
+        "max": 2086032908,
+        "cv": 0.007921050210028967,
+        "relative_spread": 0.01934048390080075,
+        "relative_iqr": 0.004917867383312422,
+        "median_bootstrap_ci95": [
+          2046333001,
+          2086032908
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.9194278830545132,
+      "status": "stable_local_measurement"
+    }
+  }
+}

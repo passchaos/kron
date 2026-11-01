@@ -1,0 +1,63 @@
+#!/bin/busybox sh
+set -u
+
+export PATH=/bin
+busybox mount -t devtmpfs devtmpfs /dev
+busybox mount -t proc proc /proc
+busybox mount -t sysfs sysfs /sys
+
+mode=write
+acked=0
+schema=0
+device=/dev/vda
+for arg in $(busybox cat /proc/cmdline); do
+    case "$arg" in
+        kron.mode=*) mode="${arg#kron.mode=}" ;;
+        kron.acked=*) acked="${arg#kron.acked=}" ;;
+        kron.schema=*) schema="${arg#kron.schema=}" ;;
+        kron.device=*) device="${arg#kron.device=}" ;;
+    esac
+done
+
+if [ -f /etc/kron-modules ]; then
+    while read -r module; do
+        busybox insmod "$module" || {
+            echo "KRON_GUEST_MODULE_FAILED module=$module"
+            busybox poweroff -f
+        }
+    done </etc/kron-modules
+fi
+
+# During verification QEMU supplies a temporary snapshot overlay. Ext4 may
+# replay its journal, but no write reaches the crash-evidence base image.
+busybox mount -t ext4 -o data=ordered "$device" /mnt || {
+    echo KRON_GUEST_MOUNT_FAILED
+    busybox poweroff -f
+}
+
+case "$mode" in
+    write)
+        /bin/testwriter write \
+            --journal /mnt/kron.journal \
+            --output /mnt/kron.log --schema "$schema"
+        rc=$?
+        echo "KRON_WRITER_EXIT rc=$rc"
+        while :; do busybox sleep 1; done
+        ;;
+    verify)
+        if /bin/testwriter verify \
+            --journal /mnt/kron.journal \
+            --output /mnt/kron.log \
+            --acked "$acked" --schema "$schema"
+        then
+            echo "KRON_VERIFY_OK acked=$acked"
+        else
+            echo "KRON_VERIFY_FAILED acked=$acked"
+        fi
+        busybox poweroff -f
+        ;;
+    *)
+        echo "KRON_GUEST_BAD_MODE mode=$mode"
+        busybox poweroff -f
+        ;;
+esac

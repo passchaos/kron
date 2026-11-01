@@ -1,0 +1,33 @@
+{
+  "status": "full_verify_passed",
+  "command": "zig build verify-local -Doptimize=ReleaseFast -j2 --summary all",
+  "steps": 62,
+  "zig_tests": 450,
+  "python_regression_tests": 15,
+  "compile_fail_fixtures": 17,
+  "regex_exact_comparisons": 4096,
+  "original_sigkill_scenarios": 6,
+  "async_storage_crash_drain_scenarios": 6,
+  "default_seeded_campaign_cases": 10,
+  "additional_high_u64_seed_campaign_cases": 8,
+  "examples": 8,
+  "related_config_and_transaction_release_safe_tests": 20,
+  "file_delivery_release_safe_tests": 6,
+  "scope": "Linux runtime, injected actual partial writes, seeded verified-boundary process kills. No non-Linux device run or physical power-loss guarantee.",
+  "source_sha256": {
+    "src/sink/file.zig": "2208dc4bcbde416b4e45d9e48f4cfba9b9f328c81fced8a50f328416e28a2655",
+    "src/sink/rolling_file.zig": "31880b94aa583dc73f1cdaaf3b1e932a3fbd2160e8ee8b50eb275fe91cd9e60e",
+    "src/sink/rolling_file_reliability_tests.zig": "47294ad43a8874addb9978136ba3f41bd1a15e841e04213943974cfc8d0d905e",
+    "src/backend/directory_sync.zig": "88769ee2036a4da3a10f02fc2a58d52be775997776948064650dc38f492df05d",
+    "src/core/runtime_configuration.zig": "1b4cf239adf7477fbe0ec88189e732504960b11d16014545fd597466b5bd3bc6",
+    "tests/configuration_integration.zig": "08d81cb8cefe252648920e206f75081e54ef27d19b0376abf6a31020f79f9191",
+    "tests/file_delivery_failures.zig": "8039551a68795dde051b21e3b2c47ade58e15f561091a17b2934e035fc9be9c5",
+    "tests/recovery_campaign_writer.zig": "c760ea6d6fc26ddf158ad46421ea0864032fa1fb86d5584749276d0aa466298f",
+    "tests/recovery_campaign.py": "b5d5de1bda481de00ad3f77c578c5ea23838c88b30725023bc51b1a364fc221b",
+    "src/platform_check.zig": "2a7227b438c506bb2aa503ad8d860b4f7f85ebe0ded19bf70ca5d10f1c361bce",
+    "build.zig": "b810fc22d4f94c91051201e2b3633df7f804f683c252935173d3a09abf9b6272"
+  },
+  "platform_command": "zig build check-platforms test-file-delivery -Doptimize=ReleaseSafe -j1 --summary all",
+  "cross_compile_targets": 9,
+  "related_platform_release_safe_tests": 6
+}

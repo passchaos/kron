@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "command": [
+    "/home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig",
+    "build",
+    "test-runtime-crash",
+    "-Doptimize=ReleaseFast",
+    "-j1",
+    "--summary",
+    "all",
+    "--verbose"
+  ],
+  "stdout": "random SIGKILL seed=20261031 shared schema=False: ACK=3027 written=3027 recovered=0 overlap=0 partial=0\nrandom SIGKILL seed=20261032 shared schema=True: ACK=5491 written=5489 recovered=2 overlap=0 partial=0\nrandom SIGKILL seed=20261033 spsc schema=False: ACK=6027 written=6027 recovered=2 overlap=2 partial=0\nrandom SIGKILL seed=20261034 spsc schema=True: ACK=1549 written=1545 recovered=4 overlap=0 partial=0\nrandom SIGKILL seed=20261035 shared schema=False: ACK=3484 written=3477 recovered=7 overlap=0 partial=0\nrandom SIGKILL seed=20261036 shared schema=True: ACK=2043 written=2043 recovered=0 overlap=0 partial=0\nrandom SIGKILL seed=20261037 spsc schema=False: ACK=4371 written=4364 recovered=12 overlap=5 partial=0\nrandom SIGKILL seed=20261038 spsc schema=True: ACK=7516 written=7515 recovered=1 overlap=0 partial=0\nrandom SIGKILL seed=20261039 shared schema=False: ACK=5043 written=5043 recovered=0 overlap=0 partial=0\nrandom SIGKILL seed=20261040 shared schema=True: ACK=6420 written=6415 recovered=5 overlap=0 partial=0\nrandom SIGKILL seed=20261041 spsc schema=False: ACK=6883 written=6878 recovered=5 overlap=0 partial=0\nrandom SIGKILL seed=20261042 spsc schema=True: ACK=5011 written=5007 recovered=5 overlap=1 partial=0\nRandom-time process-crash campaign passed: 12 cases, all ACKs covered by complete output or recovery\n",
+  "stderr": "python3 tests/test_runtime_crash_oracle.py\n/home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig build-exe -OReleaseFast --dep kron -Mroot=/home/passchaos/project-z/kron/tools/kroncat.zig -OReleaseFast -Mkron=/home/passchaos/project-z/kron/src/root.zig --cache-dir .zig-cache --global-cache-dir /home/passchaos/.cache/zig --name kroncat --zig-lib-dir /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/ --listen=-\n/home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig build-exe -OReleaseFast --dep kron -Mroot=/home/passchaos/project-z/kron/tests/runtime_crash_writer.zig -OReleaseFast -Mkron=/home/passchaos/project-z/kron/src/root.zig --cache-dir .zig-cache --global-cache-dir /home/passchaos/.cache/zig --name kron-runtime-crash-writer --zig-lib-dir /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/ --listen=-\n......\n----------------------------------------------------------------------\nRan 6 tests in 0.008s\n\nOK\npython3 tests/runtime_crash_campaign.py --writer ./.zig-cache/o/059acf047e7fe862c607055d2080fabb/kron-runtime-crash-writer --reader ./.zig-cache/o/2cc912be10788cd8f8370fb4367bc574/kroncat\nBuild Summary: 5/5 steps succeeded\ntest-runtime-crash success\n+- run python3 success 7s\n|  +- compile exe kron-runtime-crash-writer ReleaseFast native success 19s MaxRSS:585M\n|  +- compile exe kroncat ReleaseFast native cached 17ms MaxRSS:40M\n+- run python3 success 54ms\n\n",
+  "writer": ".zig-cache/o/059acf047e7fe862c607055d2080fabb/kron-runtime-crash-writer",
+  "reader": ".zig-cache/o/2cc912be10788cd8f8370fb4367bc574/kroncat",
+  "optimize": "ReleaseFast"
+}

@@ -1,0 +1,568 @@
+{
+  "scope": "Encoder-only JSON probe includes 5-scalar/20-nested scalar mutation and every-byte Wyhash consumption; per-case wall time is separate, PMU covers the whole process including setup/reporting. No file/queue/flush or industry ranking.",
+  "rows": [
+    {
+      "label": "before",
+      "pair": 0,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-before-0.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-before"
+      ],
+      "binary_sha256": "1b1a4146460e07cf4314cdda2221e10d997cb43ea56e17d8c194fe1432795320",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 209985946,
+          "ns_per_record": 699.9531533333334,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 731365866,
+          "ns_per_record": 2437.88622,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 8733186696,
+        "cpu_core/cycles/u": 1795844246
+      }
+    },
+    {
+      "label": "after",
+      "pair": 0,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-after-0.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-after"
+      ],
+      "binary_sha256": "cc9a8b7245c31165c19b5e2c930913ef8703d8406ea8752bf90d7aff98c02279",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 212257658,
+          "ns_per_record": 707.5255266666667,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 594790783,
+          "ns_per_record": 1982.6359433333334,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 7487094830,
+        "cpu_core/cycles/u": 1476848497
+      }
+    },
+    {
+      "label": "after",
+      "pair": 1,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-after-1.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-after"
+      ],
+      "binary_sha256": "cc9a8b7245c31165c19b5e2c930913ef8703d8406ea8752bf90d7aff98c02279",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 196614637,
+          "ns_per_record": 655.3821233333333,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 618150659,
+          "ns_per_record": 2060.502196666667,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 7486172086,
+        "cpu_core/cycles/u": 1473845432
+      }
+    },
+    {
+      "label": "before",
+      "pair": 1,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-before-1.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-before"
+      ],
+      "binary_sha256": "1b1a4146460e07cf4314cdda2221e10d997cb43ea56e17d8c194fe1432795320",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 257088961,
+          "ns_per_record": 856.9632033333334,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 756624610,
+          "ns_per_record": 2522.082033333333,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 8732953150,
+        "cpu_core/cycles/u": 1850585259
+      }
+    },
+    {
+      "label": "before",
+      "pair": 2,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-before-2.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-before"
+      ],
+      "binary_sha256": "1b1a4146460e07cf4314cdda2221e10d997cb43ea56e17d8c194fe1432795320",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 229180281,
+          "ns_per_record": 763.93427,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 601818208,
+          "ns_per_record": 2006.0606933333333,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 8732864946,
+        "cpu_core/cycles/u": 1792214287
+      }
+    },
+    {
+      "label": "after",
+      "pair": 2,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-after-2.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-after"
+      ],
+      "binary_sha256": "cc9a8b7245c31165c19b5e2c930913ef8703d8406ea8752bf90d7aff98c02279",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 85428492,
+          "ns_per_record": 284.76164,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 293974816,
+          "ns_per_record": 979.9160533333334,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 7486394798,
+        "cpu_core/cycles/u": 1476254330
+      }
+    },
+    {
+      "label": "after",
+      "pair": 3,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-after-3.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-after"
+      ],
+      "binary_sha256": "cc9a8b7245c31165c19b5e2c930913ef8703d8406ea8752bf90d7aff98c02279",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 86376497,
+          "ns_per_record": 287.92165666666665,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 469759972,
+          "ns_per_record": 1565.8665733333332,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 7486938858,
+        "cpu_core/cycles/u": 1474694557
+      }
+    },
+    {
+      "label": "before",
+      "pair": 3,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-before-3.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-before"
+      ],
+      "binary_sha256": "1b1a4146460e07cf4314cdda2221e10d997cb43ea56e17d8c194fe1432795320",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 233402696,
+          "ns_per_record": 778.0089866666667,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 722519946,
+          "ns_per_record": 2408.39982,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 8732752903,
+        "cpu_core/cycles/u": 1798101229
+      }
+    },
+    {
+      "label": "before",
+      "pair": 4,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-before-4.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-before"
+      ],
+      "binary_sha256": "1b1a4146460e07cf4314cdda2221e10d997cb43ea56e17d8c194fe1432795320",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 243514514,
+          "ns_per_record": 811.7150466666667,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 767255985,
+          "ns_per_record": 2557.51995,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 8730523416,
+        "cpu_core/cycles/u": 1806240121
+      }
+    },
+    {
+      "label": "after",
+      "pair": 4,
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "cpu_core/instructions/u,cpu_core/cycles/u",
+        "-o",
+        "/home/passchaos/project-z/kron/bench/evidence/2026-11-01-encoder-validation/probe-perf-after-4.csv",
+        "--",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/kron-encoder-probe-after"
+      ],
+      "binary_sha256": "cc9a8b7245c31165c19b5e2c930913ef8703d8406ea8752bf90d7aff98c02279",
+      "output": [
+        {
+          "case": "scalar5",
+          "iterations": 300000,
+          "elapsed_ns": 189164585,
+          "ns_per_record": 630.5486166666667,
+          "checksum": 15635477319816745168,
+          "output_bytes": 91133395
+        },
+        {
+          "case": "nested20",
+          "iterations": 300000,
+          "elapsed_ns": 594818590,
+          "ns_per_record": 1982.7286333333334,
+          "checksum": 11991724756893615167,
+          "output_bytes": 174666895
+        }
+      ],
+      "metrics": {
+        "cpu_core/instructions/u": 7483908809,
+        "cpu_core/cycles/u": 1481076408
+      }
+    }
+  ],
+  "summary": {
+    "cpu_core/instructions/u": {
+      "before": {
+        "trials": 5,
+        "median": 8732864946,
+        "mean": 8732456222.2,
+        "q1": 8732752903.0,
+        "q3": 8732953150.0,
+        "min": 8730523416,
+        "max": 8733186696,
+        "cv": 0.00012507022647689975,
+        "relative_spread": 0.000304972081495419,
+        "relative_iqr": 2.293027560121849e-05,
+        "median_bootstrap_ci95": [
+          8730523416,
+          8733186696
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 7486394798,
+        "mean": 7486101876.2,
+        "q1": 7486172086.0,
+        "q3": 7486938858.0,
+        "min": 7483908809,
+        "max": 7487094830,
+        "cv": 0.00017141569770751103,
+        "relative_spread": 0.00042557480415688866,
+        "relative_iqr": 0.00010242206304760258,
+        "median_bootstrap_ci95": [
+          7483908809,
+          7487094830
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.857266755445367
+    },
+    "cpu_core/cycles/u": {
+      "before": {
+        "trials": 5,
+        "median": 1798101229,
+        "mean": 1808597028.4,
+        "q1": 1795844246.0,
+        "q3": 1806240121.0,
+        "min": 1792214287,
+        "max": 1850585259,
+        "cv": 0.013286519934975575,
+        "relative_spread": 0.03246256165035968,
+        "relative_iqr": 0.005781584947684834,
+        "median_bootstrap_ci95": [
+          1792214287,
+          1850585259
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 1476254330,
+        "mean": 1476543844.8,
+        "q1": 1474694557.0,
+        "q3": 1476848497.0,
+        "min": 1473845432,
+        "max": 1481076408,
+        "cv": 0.0018981956308696674,
+        "relative_spread": 0.0048981912215627504,
+        "relative_iqr": 0.001459057532451065,
+        "median_bootstrap_ci95": [
+          1473845432,
+          1481076408
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.8210073527512171
+    },
+    "scalar5": {
+      "before": {
+        "trials": 5,
+        "median": 778.0089866666667,
+        "mean": 782.1149320000001,
+        "q1": 763.93427,
+        "q3": 811.7150466666667,
+        "min": 699.9531533333334,
+        "max": 856.9632033333334,
+        "cv": 0.0744888857329094,
+        "relative_spread": 0.20181007249376412,
+        "relative_iqr": 0.061414170640085565,
+        "median_bootstrap_ci95": [
+          699.9531533333334,
+          856.9632033333334
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 630.5486166666667,
+        "mean": 513.2279126666667,
+        "q1": 287.92165666666665,
+        "q3": 655.3821233333333,
+        "min": 284.76164,
+        "max": 707.5255266666667,
+        "cv": 0.4071790278893961,
+        "relative_spread": 0.6704699296646885,
+        "relative_iqr": 0.58276310018601,
+        "median_bootstrap_ci95": [
+          284.76164,
+          707.5255266666667
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.8104644386798343,
+      "status": "inconclusive"
+    },
+    "nested20": {
+      "before": {
+        "trials": 5,
+        "median": 2437.88622,
+        "mean": 2386.389743333333,
+        "q1": 2408.39982,
+        "q3": 2522.082033333333,
+        "min": 2006.0606933333333,
+        "max": 2557.51995,
+        "cv": 0.09263705761620662,
+        "relative_spread": 0.22620385321619585,
+        "relative_iqr": 0.04663146803189734,
+        "median_bootstrap_ci95": [
+          2006.0606933333333,
+          2557.51995
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after": {
+        "trials": 5,
+        "median": 1982.6359433333334,
+        "mean": 1714.32988,
+        "q1": 1565.8665733333332,
+        "q3": 1982.7286333333334,
+        "min": 979.9160533333334,
+        "max": 2060.502196666667,
+        "cv": 0.2649553375175877,
+        "relative_spread": 0.5450249941078862,
+        "relative_iqr": 0.2102564827404194,
+        "median_bootstrap_ci95": [
+          979.9160533333334,
+          2060.502196666667
+        ],
+        "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+      },
+      "after_over_before": 0.8132602444971093,
+      "status": "inconclusive"
+    }
+  },
+  "source_sha256": "c4626db73add3179357db000693674fa3243f2e0036d9a43b9b652f4d0e6c76f"
+}

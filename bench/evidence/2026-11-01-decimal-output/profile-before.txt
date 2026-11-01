@@ -1,0 +1,151 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/u'
+# Event count (approx.): 1471777239
+#
+# Overhead  Symbol                                               IPC   [IPC Coverage]
+# ........  ...................................................  ....................
+#
+    20.26%  [.] encoder.common.valueInner                        -      -            
+            |          
+            |--14.26%--encoder.common.encodeJson
+            |          start.posixCallMainAndExit
+            |          0x101dd2e
+            |          
+             --5.61%--encoder.common.valueInner
+                       encoder.common.encodeJson
+                       start.posixCallMainAndExit
+                       0x101dd2e
+
+    16.73%  [.] compiler_rt.memcpy.memcpyFast                    -      -            
+            |          
+            |--9.94%--Io.Writer.alignBuffer
+            |          |          
+            |           --9.74%--encoder.common.valueInner
+            |                     |          
+            |                     |--6.91%--encoder.common.valueInner
+            |                     |          encoder.common.encodeJson
+            |                     |          start.posixCallMainAndExit
+            |                     |          0x101dd2e
+            |                     |          
+            |                      --2.82%--encoder.common.encodeJson
+            |                                start.posixCallMainAndExit
+            |                                0x101dd2e
+            |          
+            |--2.75%--encoder.escaping.QuotedWriter.consume
+            |          encoder.escaping.QuotedWriter.drain
+            |          encoder.escaping.quoted
+            |          |          
+            |          |--1.44%--encoder.common.valueInner
+            |          |          encoder.common.encodeJson
+            |          |          start.posixCallMainAndExit
+            |          |          0x101dd2e
+            |          |          
+            |           --1.31%--encoder.common.encodeJson
+            |                     start.posixCallMainAndExit
+            |                     0x101dd2e
+            |          
+            |--1.57%--encoder.escaping.QuotedWriter.drain
+            |          encoder.escaping.quoted
+            |          
+             --1.50%--encoder.common.encodeJson
+                       start.posixCallMainAndExit
+                       0x101dd2e
+
+    12.83%  [.] encoder.escaping.QuotedWriter.consume            -      -            
+            |          
+             --11.86%--encoder.escaping.QuotedWriter.drain
+                       encoder.escaping.quoted
+                       |          
+                       |--6.71%--encoder.common.valueInner
+                       |          encoder.common.encodeJson
+                       |          start.posixCallMainAndExit
+                       |          0x101dd2e
+                       |          
+                        --5.15%--encoder.common.encodeJson
+                                  start.posixCallMainAndExit
+                                  0x101dd2e
+
+     8.83%  [.] encoder.escaping.quoted                          -      -            
+            |          
+            |--4.57%--encoder.common.valueInner
+            |          encoder.common.encodeJson
+            |          start.posixCallMainAndExit
+            |          0x101dd2e
+            |          
+             --3.64%--encoder.common.encodeJson
+                       start.posixCallMainAndExit
+                       0x101dd2e
+
+     7.31%  [.] core.field.ValueValidator.valueWith__anon_31233  -      -            
+            |          
+            |--5.61%--start.posixCallMainAndExit
+            |          0x101dd2e
+            |          
+             --1.24%--core.field.ValueValidator.valueWith__anon_31233
+                       start.posixCallMainAndExit
+                       0x101dd2e
+
+     7.05%  [.] mem.eql__anon_12431                              -      -            
+            |          
+            |--4.96%--core.field.ValueValidator.valueWith__anon_31233
+            |          start.posixCallMainAndExit
+            |          0x101dd2e
+            |          
+             --2.09%--start.posixCallMainAndExit
+                       0x101dd2e
+
+     6.81%  [.] encoder.escaping.QuotedWriter.drain              -      -            
+            |          
+             --5.64%--encoder.escaping.quoted
+                       |          
+                       |--2.87%--encoder.common.valueInner
+                       |          encoder.common.encodeJson
+                       |          start.posixCallMainAndExit
+                       |          0x101dd2e
+                       |          
+                        --2.76%--encoder.common.encodeJson
+                                  start.posixCallMainAndExit
+                                  0x101dd2e
+
+     5.81%  [.] start.posixCallMainAndExit                       -      -            
+            |
+            ---0x101dd2e
+
+     5.60%  [.] encoder.escaping.jsonKey                         -      -            
+            |          
+            |--3.71%--encoder.common.valueInner
+            |          encoder.common.encodeJson
+            |          start.posixCallMainAndExit
+            |          0x101dd2e
+            |          
+             --1.76%--encoder.common.encodeJson
+                       start.posixCallMainAndExit
+                       0x101dd2e
+
+     4.40%  [.] encoder.common.encodeJson                        -      -            
+            |          
+             --4.33%--start.posixCallMainAndExit
+                       0x101dd2e
+
+     4.36%  [.] Io.Writer.alignBuffer                            -      -            
+            |          
+             --3.64%--encoder.common.valueInner
+                       |          
+                       |--2.34%--encoder.common.valueInner
+                       |          encoder.common.encodeJson
+                       |          start.posixCallMainAndExit
+                       |          0x101dd2e
+                       |          
+                        --1.30%--encoder.common.encodeJson
+                                  start.posixCallMainAndExit
+                                  0x101dd2e
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

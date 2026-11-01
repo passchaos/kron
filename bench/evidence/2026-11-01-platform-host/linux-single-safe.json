@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "toolchain": "Zig 0.16.0",
+  "optimize": "ReleaseSafe",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "build_command": [
+    "/home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig",
+    "build",
+    "-Doptimize=ReleaseSafe",
+    "-j1",
+    "--prefix",
+    "/tmp/kron-zig-package-1jrf6u2y/install",
+    "--cache-dir",
+    "/home/passchaos/project-z/kron/.zig-cache/package-consumer",
+    "-Dsingle-threaded=true"
+  ],
+  "binary_sha256": "2e3db2290c89983e0449c4fb6a6295a582a0e09153d6fab111e23e5aea05211e",
+  "source_sha256": {
+    "build.zig": "bb3b41d40045b7b9184609104c64d2b3467441b5eaeadacc9e4401c762b7c74a",
+    "build.zig.zon": "0dc4af412d66d73b654d05a19104ff35e107c95199bc9979c892f7ae8b244a1e",
+    "src/root.zig": "c0126d1242d601248ddbd26a2cec73d92a8509b2032db3667d0516c387bcd695",
+    "tests/package_consumer.py": "133ab203186672d36d5991856d611867c2b8d2ed88d8259a621743b997e968d0",
+    "tests/package_consumer/build.zig": "271b1dd052d027b12543bdae4332ac0d8e63607e7d57305cfd6c0e1d519eb516",
+    "tests/package_consumer/build.zig.zon": "f6e816babf71c92ce4c60de208802942bd553916e24bfac83bd5287b3e7b2f83",
+    "tests/package_consumer/main.zig": "9da62faa17f14d11821feb9e36692ff4fd21e5758fb9007dd21f0b11e75da243",
+    "tests/package_consumer/platform.zig": "de88282309d6e6c2d88ce252fc1e22640ad3ec30435193cfc1e3e10df8436792",
+    "tests/package_consumer/tests.zig": "cce16a610bf2e1bc05857f3b56cb3fd0a18ba160685afadeeadc7fc9e0faa8eb"
+  },
+  "single_threaded": true,
+  "modes": [],
+  "platform_qualification": {
+    "target": "linux",
+    "arch": "x86_64",
+    "zig": "0.16.0",
+    "optimize": "ReleaseSafe",
+    "single_threaded": true,
+    "modes": [
+      {
+        "mode": "sync",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "none",
+        "runtime_allocations_after_setup": 0,
+        "file_durable": "confirmed"
+      },
+      null,
+      null,
+      null,
+      null
+    ],
+    "journals": [
+      {
+        "schema": false,
+        "recovered": 1,
+        "durable": "confirmed",
+        "inspection_unchanged": true
+      },
+      {
+        "schema": true,
+        "recovered": 1,
+        "durable": "confirmed",
+        "inspection_unchanged": true
+      }
+    ],
+    "rolling_durable": "confirmed",
+    "rolling_archives": 2,
+    "scope": "Native host file/runtime/queue/journal reopen checks; no process-kill or power-loss qualification."
+  },
+  "fetched_package_hash": null,
+  "fetched_archive_sha256": null,
+  "distribution_paths": null,
+  "scope": "Independent b.dependency/module import and native executable run; Zig APIs only."
+}

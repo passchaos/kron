@@ -1,0 +1,57 @@
+src/encoder/root.zig:2:23: error: import of file outside module path
+const Event = @import("../core/event.zig").Event;
+                      ^~~~~~~~~~~~~~~~~~~
+src/encoder/root.zig:7:28: error: import of file outside module path
+pub const binary = @import("../archive/writer.zig");
+                           ^~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/root.zig:27:27: error: import of file outside module path
+    const field = @import("../core/field.zig");
+                          ^~~~~~~~~~~~~~~~~~~
+src/encoder/text.zig:2:23: error: import of file outside module path
+const Event = @import("../core/event.zig").Event;
+                      ^~~~~~~~~~~~~~~~~~~
+src/encoder/text.zig:10:27: error: import of file outside module path
+    const field = @import("../core/field.zig");
+                          ^~~~~~~~~~~~~~~~~~~
+src/encoder/json.zig:2:23: error: import of file outside module path
+const Event = @import("../core/event.zig").Event;
+                      ^~~~~~~~~~~~~~~~~~~
+src/encoder/json.zig:14:28: error: import of file outside module path
+    const fields = @import("../core/field.zig");
+                           ^~~~~~~~~~~~~~~~~~~
+src/encoder/json.zig:71:27: error: import of file outside module path
+    const codec = @import("../core/codec.zig");
+                          ^~~~~~~~~~~~~~~~~~~
+src/encoder/logfmt.zig:2:23: error: import of file outside module path
+const Event = @import("../core/event.zig").Event;
+                      ^~~~~~~~~~~~~~~~~~~
+src/encoder/logfmt.zig:12:27: error: import of file outside module path
+    const field = @import("../core/field.zig");
+                          ^~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:4:24: error: import of file outside module path
+const fields = @import("../core/field.zig");
+                       ^~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:6:23: error: import of file outside module path
+const Event = @import("../core/event.zig").Event;
+                      ^~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:7:28: error: import of file outside module path
+const formatting = @import("../submit/format.zig");
+                           ^~~~~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:28:54: error: function parameter shadows declaration of 'escaping'
+pub fn message(writer: *std.Io.Writer, event: Event, escaping: Escaping) std.Io.Writer.Error!void {
+                                                     ^~~~~~~~
+src/encoder/common.zig:9:1: note: declared here
+const escaping = @import("escaping.zig");
+^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:158:52: error: function parameter shadows declaration of 'escaping'
+pub fn value(writer: *std.Io.Writer, typed: Value, escaping: Escaping) std.Io.Writer.Error!void {
+                                                   ^~~~~~~~
+src/encoder/common.zig:9:1: note: declared here
+const escaping = @import("escaping.zig");
+^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:163:53: error: function parameter shadows declaration of 'escaping'
+fn valueInner(writer: *std.Io.Writer, typed: Value, escaping: Escaping) std.Io.Writer.Error!void {
+                                                    ^~~~~~~~
+src/encoder/common.zig:9:1: note: declared here
+const escaping = @import("escaping.zig");
+^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

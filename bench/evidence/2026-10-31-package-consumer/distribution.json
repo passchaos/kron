@@ -1,0 +1,139 @@
+{
+  "status": "passed",
+  "toolchain": "Zig 0.16.0",
+  "optimize": "ReleaseSafe",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "build_command": [
+    "/home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig",
+    "build",
+    "-Doptimize=ReleaseSafe",
+    "-j1",
+    "--prefix",
+    "/tmp/kron-zig-package-85xci8hf/install",
+    "--cache-dir",
+    "/home/passchaos/project-z/kron/.zig-cache/package-consumer",
+    "--global-cache-dir",
+    "/tmp/kron-zig-package-85xci8hf/global-cache"
+  ],
+  "binary_sha256": "a276577d2e1b7b2987e9c0b9e72961ba3fd1537e494520679d64a24e6f6e8d0e",
+  "source_sha256": {
+    "build.zig": "c6fdc0e91bc08f96c11e02e6d34bedf6d4f2abf38273e24f64c8fd26c0f22da0",
+    "build.zig.zon": "0dc4af412d66d73b654d05a19104ff35e107c95199bc9979c892f7ae8b244a1e",
+    "src/root.zig": "c0126d1242d601248ddbd26a2cec73d92a8509b2032db3667d0516c387bcd695",
+    "tests/package_consumer.py": "8c11b406c6e1129ece169cf7cb31d395f3b85d47605d1b933781ff58098d0b01",
+    "tests/package_consumer/build.zig": "271b1dd052d027b12543bdae4332ac0d8e63607e7d57305cfd6c0e1d519eb516",
+    "tests/package_consumer/build.zig.zon": "5326f0e6d7658cf163651985336321db342d89f1fcf8d770c02bd84bca0ecc5a",
+    "tests/package_consumer/main.zig": "7d50c968adc2d38868cd02a47390eb1131d4b2b5243730819368464e6aa1408b",
+    "tests/package_consumer/tests.zig": "f35192bf7efe7eb208dd8753b398517d026ebfd7229406d049648d71a0c8f73a"
+  },
+  "single_threaded": false,
+  "modes": [
+    {
+      "mode": "sync",
+      "health": {
+        "mode": "sync",
+        "target": "linux",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "none",
+        "queue_bytes": 0,
+        "mapped_bytes": 0,
+        "single_threaded": false,
+        "thread_count": null
+      },
+      "records": 2,
+      "journal_files": 0,
+      "output_sha256": "9445a9dce70c88acec4910ccb110617bd49ea218bf2d4cc5d175c7fa22d4945c"
+    },
+    {
+      "mode": "memory",
+      "health": {
+        "mode": "memory",
+        "target": "linux",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "memory",
+        "queue_bytes": 70656,
+        "mapped_bytes": 0,
+        "single_threaded": false,
+        "thread_count": null
+      },
+      "records": 2,
+      "journal_files": 0,
+      "output_sha256": "dd74dd21b309405af0a1d71702b68fcf2827b60af4d65c44a312ecbf7e0e5344"
+    },
+    {
+      "mode": "mmap",
+      "health": {
+        "mode": "mmap",
+        "target": "linux",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "mmap",
+        "queue_bytes": 70656,
+        "mapped_bytes": 70656,
+        "single_threaded": false,
+        "thread_count": null
+      },
+      "records": 2,
+      "journal_files": 1,
+      "output_sha256": "dd3668d8148a4bb582c6a19e5ea3c20dffe9c0745149d8366820eee11a4d12e1"
+    },
+    {
+      "mode": "spsc_memory",
+      "health": {
+        "mode": "spsc_memory",
+        "target": "linux",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "memory",
+        "queue_bytes": 141312,
+        "mapped_bytes": 0,
+        "single_threaded": false,
+        "thread_count": null
+      },
+      "records": 2,
+      "journal_files": 0,
+      "output_sha256": "e88cc2cbea1ba125352d21a7e5592b67d778d592c876b055df2b48f0eaed2a0a"
+    },
+    {
+      "mode": "spsc_mmap",
+      "health": {
+        "mode": "spsc_mmap",
+        "target": "linux",
+        "accepted": 2,
+        "written": 2,
+        "pending": 0,
+        "storage": "mmap",
+        "queue_bytes": 141312,
+        "mapped_bytes": 141312,
+        "single_threaded": false,
+        "thread_count": null
+      },
+      "records": 2,
+      "journal_files": 2,
+      "output_sha256": "8c2ecb8f0fb7bee1a3d0db47c819c1491d282a13b5d4d916fd9b91ea8569fe0c"
+    }
+  ],
+  "fetched_package_hash": "kron-0.1.0-nX-6exm_QwDvVO35kQ1hKz3TYVSvZnLTl-MqHerGqZ4a",
+  "fetched_archive_sha256": "a09d4869169f3522ef5b9c38c7fc05e9603b67af4defef3fc55df3daad444008",
+  "distribution_paths": [
+    "build.zig",
+    "build.zig.zon",
+    "src",
+    "tests",
+    "examples",
+    "tools",
+    "bench",
+    "docs",
+    "README.md"
+  ],
+  "scope": "Independent b.dependency/module import and native executable run; Zig APIs only."
+}

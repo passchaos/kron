@@ -1,0 +1,139 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 57  of event 'cpu_atom/cycles/P'
+# Event count (approx.): 300571862
+#
+# Overhead  Command        Shared Object     Symbol                                                       
+# ........  .............  ................  .............................................................
+#
+    72.66%  kron-snapshot  kron-snapshot     [.] compiler_rt.memcpy.memcpyFast
+            |          
+             --71.96%--compiler_rt.memcpy.copyBlocks (inlined)
+                       compiler_rt.memcpy.copyBlocksAlignedSource (inlined)
+                       compiler_rt.memcpy.copyForwards (inlined)
+                       compiler_rt.memcpy.memcpyFast
+                       core.runtime.Runtime.routeMaskIn
+                       0xffffffffffffffff
+
+     6.82%  kron-snapshot  kron-snapshot     [.] core.runtime.Runtime.drainJournal
+            |
+            ---journal.journal.Journal.peekBatchChecked (inlined)
+               core.runtime.Runtime.drainJournal
+               0xffffffffffffffff
+
+     4.35%  kron-snapshot  kron-snapshot     [.] core.runtime.Runtime.threadSnapshot
+            |
+            ---config.routes.Manager.acquireChannel (inlined)
+               core.runtime.Runtime.threadSnapshot
+               core.runtime.Runtime.beginThread
+               core.thread_registry.ThreadOwner(core.runtime.Runtime).begin (inlined)
+               core.static_owner.StaticClockOwner(core.thread_registry.ThreadOwner(core.runtime.Runtime),platform.static_clock.ZeroClock).begin
+               snapshot.Worker.call__anon_37992
+               snapshot.Worker.runLogger__anon_31709 (inlined)
+               snapshot.Worker.run (inlined)
+               Thread.callFn__anon_31485 (inlined)
+               Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+               os.linux.x86_64.clone
+
+     2.45%  kron-snapshot  kron-snapshot     [.] Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+            |
+            ---snapshot.Worker.runLogger__anon_31709 (inlined)
+               snapshot.Worker.run (inlined)
+               Thread.callFn__anon_31485 (inlined)
+               Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+               os.linux.x86_64.clone
+
+     2.29%  kron-snapshot  [unknown]         [k] 0xffffffff87e011d3
+            |
+            ---0xffffffff87e011da
+
+     2.27%  kron-snapshot  kron-snapshot     [.] core.runtime.Runtime.routeMaskIn
+            |
+            ---core.runtime.Runtime.routeMaskIn
+               0xffffffffffffffff
+
+
+
+# Samples: 72  of event 'cpu_core/cycles/P'
+# Event count (approx.): 371570596
+#
+# Overhead  Command        Shared Object     Symbol                                                                                                                              
+# ........  .............  ................  ....................................................................................................................................
+#
+    43.42%  kron-snapshot  kron-snapshot     [.] compiler_rt.memcpy.memcpyFast
+            |
+            ---compiler_rt.memcpy.copyBlocks (inlined)
+               compiler_rt.memcpy.copyBlocksAlignedSource (inlined)
+               compiler_rt.memcpy.copyForwards (inlined)
+               compiler_rt.memcpy.memcpyFast
+               core.runtime.Runtime.routeMaskIn
+               0xffffffffffffffff
+
+    20.22%  kron-snapshot  kron-snapshot     [.] Thread.LinuxThreadImpl.spawn__anon_38246.Instance.entryFn
+            |          
+             --16.79%--atomic.spinLoopHint (inlined)
+                       core.runtime.Runtime.workerMain (inlined)
+                       Thread.callFn__anon_38265 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_38246.Instance.entryFn
+                       os.linux.x86_64.clone
+
+    11.23%  kron-snapshot  kron-snapshot     [.] core.runtime.Runtime.drainJournal
+            |          
+             --9.73%--core.runtime.Runtime.drainJournal
+                       0xffffffffffffffff
+
+     7.44%  kron-snapshot  kron-snapshot     [.] core.static_owner.StaticClockOwner(core.thread_registry.ThreadOwner(core.runtime.Runtime),platform.static_clock.ZeroClock).begin
+            |          
+            |--4.87%--atomic.Value(usize).cmpxchgWeak (inlined)
+            |          core.thread_registry.Registry(core.runtime.Runtime).Control.acquire (inlined)
+            |          core.thread_registry.ThreadOwner(core.runtime.Runtime).begin (inlined)
+            |          core.static_owner.StaticClockOwner(core.thread_registry.ThreadOwner(core.runtime.Runtime),platform.static_clock.ZeroClock).begin
+            |          snapshot.Worker.call__anon_37992
+            |          snapshot.Worker.runLogger__anon_31709 (inlined)
+            |          snapshot.Worker.run (inlined)
+            |          Thread.callFn__anon_31485 (inlined)
+            |          Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --2.57%--core.static_owner.StaticClockOwner(core.thread_registry.ThreadOwner(core.runtime.Runtime),platform.static_clock.ZeroClock).begin
+                       snapshot.Worker.call__anon_37992
+                       snapshot.Worker.runLogger__anon_31709 (inlined)
+                       snapshot.Worker.run (inlined)
+                       Thread.callFn__anon_31485 (inlined)
+                       Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     6.34%  kron-snapshot  kron-snapshot     [.] sort.block.block__anon_31169
+     4.46%  kron-snapshot  kron-snapshot     [.] core.runtime.Runtime.threadSnapshot
+            |
+            ---config.routes.Manager.acquireChannel (inlined)
+               core.runtime.Runtime.threadSnapshot
+               core.runtime.Runtime.filterThreadEnabled (inlined)
+               core.thread_registry.ThreadOwner(core.runtime.Runtime).begin (inlined)
+               core.static_owner.StaticClockOwner(core.thread_registry.ThreadOwner(core.runtime.Runtime),platform.static_clock.ZeroClock).begin
+               snapshot.Worker.call__anon_37992
+               snapshot.Worker.runLogger__anon_31709 (inlined)
+               snapshot.Worker.run (inlined)
+               Thread.callFn__anon_31485 (inlined)
+               Thread.LinuxThreadImpl.spawn__anon_31438.Instance.entryFn
+               os.linux.x86_64.clone
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
+
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.
+

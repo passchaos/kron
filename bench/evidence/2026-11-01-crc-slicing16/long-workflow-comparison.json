@@ -1,0 +1,42 @@
+{
+  "scope": "P1 SPSC-memory million-event workload, specifically audits the apparent short-run regression",
+  "trials": 10,
+  "records_verified": 10010000,
+  "before": {
+    "trials": 5,
+    "median": 1229827.2920451427,
+    "mean": 1137149.352669674,
+    "q1": 1154905.1196649454,
+    "q3": 1243777.1528057395,
+    "min": 811775.1736086131,
+    "max": 1245462.025223929,
+    "cv": 0.16326519072703471,
+    "relative_spread": 0.3526404515662649,
+    "relative_iqr": 0.07226383225973486,
+    "median_bootstrap_ci95": [
+      811775.1736086131,
+      1245462.025223929
+    ],
+    "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+  },
+  "after": {
+    "trials": 5,
+    "median": 1308961.5050613214,
+    "mean": 1010947.5919457286,
+    "q1": 854618.9339977045,
+    "q3": 1313125.1720825918,
+    "min": 264372.04687732406,
+    "max": 1313660.3017097015,
+    "cv": 0.4569424529484363,
+    "relative_spread": 0.8016188793750821,
+    "relative_iqr": 0.35028244628432176,
+    "median_bootstrap_ci95": [
+      264372.04687732406,
+      1313660.3017097015
+    ],
+    "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+  },
+  "after_over_before": 1.0643457935338079,
+  "status": "inconclusive",
+  "noise_limit": 0.1
+}

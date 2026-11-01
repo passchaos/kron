@@ -1,0 +1,254 @@
+--- before/src/core/delivery_batch.zig
++++ oracle/src/core/delivery_batch.zig
+@@ -4,6 +4,12 @@
+ //! allocation is involved; deinit releases only views, never record pins.
+ const std = @import("std");
+ const configurations = @import("../config/routes.zig");
++const types = @import("runtime_types.zig");
++const Atomic = std.atomic.Value;
++
++pub const TestingAudit = if (@import("builtin").is_test) struct {
++    pub var written_updates: Atomic(usize) = .init(0);
++} else struct {};
+ 
+ pub const max_records = 64;
+ 
+@@ -11,9 +17,52 @@
+     view: configurations.View,
+     route_mask: u64 = 0,
+     durable_mask: u64 = 0,
++    required_durable_routes: u64 = 0,
+ 
+     pub fn snapshot(self: *const Group) *configurations.Snapshot {
+         return self.view.snapshot;
++    }
++
++    pub fn include(self: *Group, mask: u64) @import("../journal/journal.zig").ReclaimBoundary {
++        self.route_mask |= mask;
++        if (mask & self.required_durable_routes == 0) return .written;
++        // Preserve the existing barrier: when any required route needs durable
++        // reclaim, synchronize every required target selected for this event.
++        self.durable_mask |= mask;
++        return .durable;
++    }
++};
++
++fn requiredDurableRoutes(routes: []const types.Route) u64 {
++    std.debug.assert(routes.len <= 64);
++    var mask: u64 = 0;
++    for (routes, 0..) |*route, index| {
++        if (route.delivery == .required and route.reclaim_after == .durable) mask |= @as(u64, 1) << @intCast(index);
++    }
++    return mask;
++}
++
++/// Consumer-local count of successfully acknowledged records. A channel
++/// change publishes its prior run; error unwinding flushes the acknowledged
++/// prefix as well. Use defer flush and explicitly flush before notifying a
++/// completed batch. Concurrent sync/fallback writes still use the same atomic.
++pub const WrittenCounts = struct {
++    counter: ?*Atomic(u64) = null,
++    count: u64 = 0,
++
++    pub fn acknowledged(self: *WrittenCounts, counter: *Atomic(u64)) void {
++        if (self.counter != counter) {
++            self.flush();
++            self.counter = counter;
++        }
++        self.count += 1;
++    }
++
++    pub fn flush(self: *WrittenCounts) void {
++        if (self.count == 0) return;
++        if (@import("builtin").is_test) _ = TestingAudit.written_updates.fetchAdd(1, .monotonic);
++        _ = self.counter.?.fetchAdd(self.count, .monotonic);
++        self.count = 0;
+     }
+ };
+ 
+@@ -44,7 +93,7 @@
+             return error.DeliveryBatchTooLarge;
+         }
+         const group = &self.storage[self.count];
+-        group.* = .{ .view = view };
++        group.* = .{ .view = view, .required_durable_routes = requiredDurableRoutes(view.snapshot.routes) };
+         self.count += 1;
+         return group;
+     }
+@@ -143,3 +192,81 @@
+     batch.deinit();
+     try std.testing.expectEqual(@as(usize, 63), try manager.collectRetired());
+ }
++
++test "precomputed durable masks retain required best effort and full event barrier semantics" {
++    const delivery = @import("delivery.zig");
++    var context: u8 = 0;
++    const sink: Sink = .{ .context = &context, .vtable = &EmptySink.vtable, .supports_durable = true };
++    var options: [64]configurations.RouteOptions = undefined;
++    var names: [64][12]u8 = undefined;
++    for (&options, &names, 0..) |*route, *name, index| {
++        route.* = .{ .name = try std.fmt.bufPrint(name, "route-{d}", .{index}), .sink = sink, .delivery = if (index % 3 == 0) .best_effort else .required, .reclaim_after = if (index % 2 == 0) .durable else .written };
++    }
++    const manager = try configurations.Manager.create(std.testing.allocator, std.testing.io, .{ .max_config_bytes = 4 * 1024 * 1024, .initial_routes = &options });
++    defer manager.destroy();
++    const version = manager.currentVersion();
++    var batch = Configurations.init(manager);
++    defer batch.deinit();
++    const group = try batch.select(version.generation, version.fingerprint);
++    var expected_union: u64 = 0;
++    var expected_durable: u64 = 0;
++    var random = std.Random.DefaultPrng.init(0x6261746368647572);
++    for (0..1024) |index| {
++        const mask = if (index < 64) @as(u64, 1) << @intCast(index) else random.random().int(u64);
++        const needs = delivery.needsDurableReclaim(group.snapshot().routes, mask);
++        try std.testing.expectEqual(if (needs) @import("../journal/journal.zig").ReclaimBoundary.durable else .written, group.include(mask));
++        expected_union |= mask;
++        if (needs) expected_durable |= mask;
++        try std.testing.expectEqual(expected_union, group.route_mask);
++        try std.testing.expectEqual(expected_durable, group.durable_mask);
++    }
++    // The top bit must work for an explicitly required durable route too.
++    group.required_durable_routes = @as(u64, 1) << 63;
++    group.route_mask = 0;
++    group.durable_mask = 0;
++    try std.testing.expectEqual(@import("../journal/journal.zig").ReclaimBoundary.durable, group.include(std.math.maxInt(u64)));
++    try std.testing.expectEqual(std.math.maxInt(u64), group.durable_mask);
++}
++
++test "written batch counts publish only acknowledged runs and preserve concurrent increments" {
++    var first: Atomic(u64) = .init(7);
++    var second: Atomic(u64) = .init(11);
++    var counts: WrittenCounts = .{};
++    const updates = TestingAudit.written_updates.load(.monotonic);
++    for (0..31) |_| counts.acknowledged(&first);
++    try std.testing.expectEqual(@as(u64, 7), first.load(.monotonic));
++    counts.acknowledged(&second);
++    try std.testing.expectEqual(@as(u64, 38), first.load(.monotonic));
++    counts.acknowledged(&first);
++    try std.testing.expectEqual(@as(u64, 12), second.load(.monotonic));
++    // A synchronous/fallback owner can increment the same counter before the
++    // pending batch count is published; fetchAdd preserves that update.
++    _ = first.fetchAdd(5, .monotonic);
++    counts.flush();
++    counts.flush();
++    try std.testing.expectEqual(@as(u64, 44), first.load(.monotonic));
++    try std.testing.expectEqual(@as(usize, 3), TestingAudit.written_updates.load(.monotonic) - updates);
++}
++
++test "written batch counts compose with a concurrent sync or fallback counter owner" {
++    if (@import("builtin").single_threaded) return error.SkipZigTest;
++    const Concurrent = struct {
++        counter: Atomic(u64) = .init(0),
++        start: std.Io.Event = .unset,
++
++        fn run(self: *@This()) void {
++            self.start.waitUncancelable(std.testing.io);
++            for (0..10000) |_| _ = self.counter.fetchAdd(1, .monotonic);
++        }
++    };
++    var context: Concurrent = .{};
++    const thread = try std.Thread.spawn(.{}, Concurrent.run, .{&context});
++    context.start.set(std.testing.io);
++    for (0..1000) |_| {
++        var counts: WrittenCounts = .{};
++        for (0..31) |_| counts.acknowledged(&context.counter);
++        counts.flush();
++    }
++    thread.join();
++    try std.testing.expectEqual(@as(u64, 41000), context.counter.load(.monotonic));
++}
+--- before/src/core/runtime.zig
++++ oracle/src/core/runtime.zig
+@@ -840,6 +840,7 @@
+                 const boundary: JournalModule.ReclaimBoundary = if (needsDurableReclaim(snapshot, mask)) .durable else .written;
+                 try journal.releaseAfter(record, boundary);
+                 snapshot.releaseChannel(channel);
++                if (@import("builtin").is_test) _ = delivery_batch.TestingAudit.written_updates.fetchAdd(1, .monotonic);
+                 _ = self.countersFor(channel).written.fetchAdd(1, .monotonic);
+             }
+             self.notifyProgress();
+--- before/src/core/runtime_delivery_tests.zig
++++ oracle/src/core/runtime_delivery_tests.zig
+@@ -5,6 +5,7 @@
+ const MemorySink = @import("../sink/memory.zig").MemorySink;
+ const Sink = @import("../sink/interface.zig").Sink;
+ const routes = @import("../config/routes.zig");
++const batch_module = @import("delivery_batch.zig");
+ 
+ const ObservedSink = struct {
+     memory: MemorySink,
+@@ -49,6 +50,7 @@
+         failing.resize_fail_index = failing.resize_index;
+         for (0..31) |index| try std.testing.expectEqual(@import("logger.zig").EmitResult.accepted, try log.tryEmit(.info, "same batch", .{ .id = @as(u64, index) }));
+         try std.testing.expectEqual(@as(usize, 32), journal.pending());
++        const updates = batch_module.TestingAudit.written_updates.load(.monotonic);
+         gap.abort();
+         try runtime.flush(.written);
+         try std.testing.expectEqual(@as(usize, 31), output.memory.records);
+@@ -60,6 +62,7 @@
+         try std.testing.expect(!failing.has_induced_failure);
+         try std.testing.expectEqual(@as(u64, 31), runtime.health().written);
+         try std.testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
++        try std.testing.expectEqual(@as(usize, 1), batch_module.TestingAudit.written_updates.load(.monotonic) - updates);
+     }
+ }
+ 
+@@ -119,3 +122,58 @@
+     live = false;
+     try std.testing.expectEqual(@as(usize, 1), old.releases);
+ }
++
++test "batched written counts retain the exact acknowledged prefix after late reclaim corruption" {
++    const CorruptOnFlush = struct {
++        memory: MemorySink,
++        journal: ?*@import("../journal/journal.zig").Journal = null,
++        corrupt: bool = true,
++
++        fn write(raw: *anyopaque, bytes: []const u8) anyerror!void {
++            const self: *@This() = @ptrCast(@alignCast(raw));
++            try self.memory.writeRecord(bytes);
++        }
++        fn flush(raw: *anyopaque) anyerror!void {
++            const self: *@This() = @ptrCast(@alignCast(raw));
++            try self.memory.flush();
++            if (self.corrupt and self.memory.records == 3) {
++                self.corrupt = false;
++                // All three payloads passed the initial checked peek and were
++                // encoded/written before this callback. Damage sequence 3 so
++                // sequence 2 reclaims successfully and the next reclaim fails.
++                const journal = self.journal.?;
++                journal.mapping.bytes[4096 + 2 * journal.stride + 64] ^= 1;
++            }
++        }
++        fn sink(self: *@This()) Sink {
++            return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush } };
++        }
++    };
++    var bytes: [16 * 1024]u8 = undefined;
++    var output: CorruptOnFlush = .{ .memory = MemorySink.initBuffer(&bytes) };
++    const runtime = try Runtime.create(std.testing.allocator, std.testing.io, .{
++        .submission = .asynchronous,
++        .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024 },
++        .routes = &.{.{ .name = "file", .sink = output.sink() }},
++        .idle = .sleep,
++    });
++    defer runtime.destroy();
++    output.journal = runtime.journal;
++    var gap = try runtime.journal.?.reserve();
++    defer gap.abort();
++    for (0..3) |index| _ = try runtime.scoped("prefix").tryEmit(.info, "written payload", .{ .index = index });
++    gap.abort();
++    try std.testing.expectError(error.CorruptRecord, runtime.flush(.written));
++    try std.testing.expectEqual(@as(usize, 3), output.memory.records);
++    try std.testing.expectEqual(@as(u64, 3), runtime.health().accepted);
++    try std.testing.expectEqual(@as(u64, 1), runtime.health().written);
++    try std.testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
++    try std.testing.expectEqual(@as(u64, 2), runtime.journal.?.writtenTarget());
++    try std.testing.expectError(error.CorruptRecord, runtime.journal.?.peekChecked());
++    const configuration = runtime.currentConfiguration();
++    const manager: *routes.Manager = @ptrCast(@alignCast(runtime.configuration_handle));
++    const view = try manager.find(configuration.generation, configuration.fingerprint);
++    defer view.release();
++    try std.testing.expectEqual(@as(usize, 2), view.snapshot.pendingCount());
++    try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
++}

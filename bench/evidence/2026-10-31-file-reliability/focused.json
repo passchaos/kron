@@ -1,0 +1,136 @@
+{
+  "status": "focused_checks_passed",
+  "campaign_command": "zig build test-recovery-campaign -j1 --summary all",
+  "campaign_cases": [
+    {
+      "seed": 42,
+      "schema": false,
+      "written": 78,
+      "pending": 1,
+      "wraps": 4,
+      "thresholds": [
+        56,
+        79
+      ]
+    },
+    {
+      "seed": 43,
+      "schema": true,
+      "written": 68,
+      "pending": 3,
+      "wraps": 4,
+      "thresholds": [
+        56,
+        69
+      ]
+    },
+    {
+      "seed": 44,
+      "schema": false,
+      "written": 116,
+      "pending": 5,
+      "wraps": 7,
+      "thresholds": [
+        80,
+        117
+      ]
+    },
+    {
+      "seed": 45,
+      "schema": true,
+      "written": 98,
+      "pending": 4,
+      "wraps": 6,
+      "thresholds": [
+        72,
+        101
+      ]
+    },
+    {
+      "seed": 46,
+      "schema": false,
+      "written": 73,
+      "pending": 4,
+      "wraps": 4,
+      "thresholds": [
+        16,
+        75
+      ]
+    },
+    {
+      "seed": 47,
+      "schema": true,
+      "written": 109,
+      "pending": 1,
+      "wraps": 6,
+      "thresholds": [
+        64,
+        110
+      ]
+    },
+    {
+      "seed": 48,
+      "schema": false,
+      "written": 104,
+      "pending": 2,
+      "wraps": 6,
+      "thresholds": [
+        80,
+        106
+      ]
+    },
+    {
+      "seed": 49,
+      "schema": true,
+      "written": 72,
+      "pending": 3,
+      "wraps": 4,
+      "thresholds": [
+        40,
+        73
+      ]
+    },
+    {
+      "seed": 50,
+      "schema": false,
+      "written": 127,
+      "pending": 7,
+      "wraps": 7,
+      "thresholds": [
+        48,
+        130
+      ]
+    },
+    {
+      "seed": 51,
+      "schema": true,
+      "written": 95,
+      "pending": 7,
+      "wraps": 5,
+      "thresholds": [
+        80,
+        100
+      ]
+    }
+  ],
+  "scope": "Seeded workloads killed at verified accepted/unwritten READY boundaries; not arbitrary crash-point or power-loss qualification",
+  "file_delivery_debug_and_release_safe_tests": 6,
+  "rolling_reliability_tests": 9,
+  "source_sha256": {
+    "tests/recovery_campaign_writer.zig": "c760ea6d6fc26ddf158ad46421ea0864032fa1fb86d5584749276d0aa466298f",
+    "tests/recovery_campaign.py": "b5d5de1bda481de00ad3f77c578c5ea23838c88b30725023bc51b1a364fc221b",
+    "tests/file_delivery_failures.zig": "8039551a68795dde051b21e3b2c47ade58e15f561091a17b2934e035fc9be9c5",
+    "src/sink/file.zig": "2208dc4bcbde416b4e45d9e48f4cfba9b9f328c81fced8a50f328416e28a2655",
+    "src/sink/rolling_file.zig": "31880b94aa583dc73f1cdaaf3b1e932a3fbd2160e8ee8b50eb275fe91cd9e60e",
+    "src/sink/rolling_file_reliability_tests.zig": "47294ad43a8874addb9978136ba3f41bd1a15e841e04213943974cfc8d0d905e",
+    "src/backend/directory_sync.zig": "88769ee2036a4da3a10f02fc2a58d52be775997776948064650dc38f492df05d",
+    "src/platform_check.zig": "2a7227b438c506bb2aa503ad8d860b4f7f85ebe0ded19bf70ca5d10f1c361bce",
+    "build.zig": "b810fc22d4f94c91051201e2b3633df7f804f683c252935173d3a09abf9b6272",
+    "src/core/runtime_configuration.zig": "1b4cf239adf7477fbe0ec88189e732504960b11d16014545fd597466b5bd3bc6",
+    "tests/configuration_integration.zig": "08d81cb8cefe252648920e206f75081e54ef27d19b0376abf6a31020f79f9191"
+  },
+  "cold_cleanup_repair": "Extra final durability UnsupportedDurability permits retired metadata collection after required written and zero pins; global historical durable revoked. Other I/O error retains lease for retry.",
+  "cold_cleanup_related_release_safe_tests": 20,
+  "high_u64_seed_cases": 8,
+  "high_u64_seed_log": "high-seed-campaign.txt"
+}
