@@ -7,26 +7,33 @@
 //! authoritative.
 const std = @import("std");
 const codec = @import("../core/codec.zig");
+const schema_codec = @import("../core/schema_codec.zig");
 const field = @import("../core/field.zig");
 const common = @import("common.zig");
 const time = @import("../time/root.zig");
 
-pub const Error = codec.DecodeError || std.Io.Writer.Error || error{Fallback};
+pub const Error = schema_codec.DecodeError || std.Io.Writer.Error || error{Fallback};
 pub const Format = enum { json, text, logfmt };
 
-const Context = struct {
-    input: *codec.WireInput,
-    count: usize,
-    keys: []field.Field,
-    failure: ?Error = null,
-};
+fn Context(comptime referenced: bool) type {
+    return struct {
+        input: *codec.WireInput,
+        count: usize,
+        keys: if (referenced) schema_codec.schema.FieldIterator else []field.Field,
+        failure: ?Error = null,
+    };
+}
 
-fn writeAttributesFallible(comptime format: Format, ctx: *Context, writer: *std.Io.Writer) Error!void {
+fn writeAttributesFallible(comptime format: Format, comptime referenced: bool, ctx: *Context(referenced), writer: *std.Io.Writer) Error!void {
     for (0..ctx.count) |index| {
-        const key = try ctx.input.blob();
-        try field.checkUnique(ctx.keys[0..index], key);
-        ctx.keys[index] = .{ .key = key, .value = .null_value };
+        const metadata = if (referenced) (try ctx.keys.next()) orelse return error.SchemaMismatch else {};
+        const key = if (referenced) metadata.key else try ctx.input.blob();
+        if (!referenced) {
+            try field.checkUnique(ctx.keys[0..index], key);
+            ctx.keys[index] = .{ .key = key, .value = .null_value };
+        }
         const value = try ctx.input.value();
+        if (referenced and metadata.kind_mask & schema_codec.schema.kindMask(codec.valueTag(value)) == 0) return error.SchemaMismatch;
         switch (format) {
             .json => {
                 if (index != 0) try writer.writeByte(',');
@@ -55,10 +62,10 @@ fn writeAttributesFallible(comptime format: Format, ctx: *Context, writer: *std.
     if (ctx.input.position != ctx.input.bytes.len) return error.InvalidLength;
 }
 
-fn Attributes(comptime format: Format) type {
+fn Attributes(comptime format: Format, comptime referenced: bool) type {
     return struct {
-        fn write(ctx: *Context, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-            writeAttributesFallible(format, ctx, writer) catch |err| {
+        fn write(ctx: *Context(referenced), writer: *std.Io.Writer) std.Io.Writer.Error!void {
+            writeAttributesFallible(format, referenced, ctx, writer) catch |err| {
                 ctx.failure = err;
                 return error.WriteFailed;
             };
@@ -68,23 +75,34 @@ fn Attributes(comptime format: Format) type {
 
 pub fn render(format: Format, payload: []const u8, header: codec.EventHeader, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
     return switch (format) {
-        .json => renderFormat(.json, payload, header, output, key_scratch, formatter),
-        .text => renderFormat(.text, payload, header, output, key_scratch, formatter),
-        .logfmt => renderFormat(.logfmt, payload, header, output, key_scratch, formatter),
+        .json => renderFormat(.json, false, payload, header, {}, output, key_scratch, formatter),
+        .text => renderFormat(.text, false, payload, header, {}, output, key_scratch, formatter),
+        .logfmt => renderFormat(.logfmt, false, payload, header, {}, output, key_scratch, formatter),
     };
 }
 
-fn renderFormat(comptime format: Format, payload: []const u8, header: codec.EventHeader, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
+pub fn renderReference(format: Format, payload: []const u8, header: codec.EventHeader, definition: schema_codec.Definition, output: []u8, scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
+    return switch (format) {
+        .json => renderFormat(.json, true, payload, header, definition, output, scratch, formatter),
+        .text => renderFormat(.text, true, payload, header, definition, output, scratch, formatter),
+        .logfmt => renderFormat(.logfmt, true, payload, header, definition, output, scratch, formatter),
+    };
+}
+
+fn renderFormat(comptime format: Format, comptime referenced: bool, payload: []const u8, header: codec.EventHeader, definition: if (referenced) schema_codec.Definition else void, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
     if (header.event.message_template or header.argument_count != 0) return error.Fallback;
     if (header.field_count > key_scratch.len) return error.TooManyFields;
     var arena = codec.DescriptorArena.init(key_scratch[header.field_count..]);
-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = true };
+    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true };
     var event = header.event;
-    event.scope = try input.blob();
-    event.message = try input.blob();
+    event.scope = if (referenced) definition.scope else try input.blob();
+    if (!referenced) event.message = try input.blob();
     if (header.flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
     if (header.flags & 4 != 0) event.span_id = (try input.take(8))[0..8].*;
-    if (header.flags & 1 != 0) event.source = .{
+    if (referenced) {
+        event.source = definition.source;
+        event.message = if (definition.message) |message| message else try input.blob();
+    } else if (header.flags & 1 != 0) event.source = .{
         .module = try input.terminated(),
         .file = try input.terminated(),
         .fn_name = try input.terminated(),
@@ -96,11 +114,11 @@ fn renderFormat(comptime format: Format, payload: []const u8, header: codec.Even
     var time_bytes: [time.rfc3339.max_length]u8 = undefined;
     const readable = if (formatter) |cache| cache.format(.{ .nanoseconds = event.timestamp_ns }, &time_bytes) catch return error.WriteFailed else null;
     var writer = std.Io.Writer.fixed(output);
-    var context: Context = .{ .input = &input, .count = header.field_count, .keys = key_scratch };
+    var context: Context(referenced) = .{ .input = &input, .count = header.field_count, .keys = if (referenced) definition.fields() else key_scratch };
     const result = switch (format) {
-        .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format).write),
-        .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format).write),
-        .logfmt => common.encodeLogfmtWithAttributes(event, readable, &writer, &context, Attributes(format).write),
+        .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+        .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+        .logfmt => common.encodeLogfmtWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
     };
     result catch |err| switch (err) {
         error.WriteFailed => return context.failure orelse error.WriteFailed,
@@ -235,4 +253,8 @@ test "fused wire text and logfmt match decoded encoders" {
         try common.encodeWithTime(record_format, decoded, null, &expected);
         try std.testing.expectEqualStrings(expected.buffered(), rendered);
     }
+}
+
+test {
+    _ = @import("wire_reference_tests.zig");
 }

@@ -844,24 +844,42 @@ pub const Runtime = struct {
             defer written_counts.flush();
             for (batch, 0..) |record, index| {
                 var fields: [codec.decode_scratch_fields]Field = undefined;
+                const definition: ?schema_module.Definition = if (record.schema_ref) |reference|
+                    (if (@hasDecl(Journal, "resolveReadySchema")) try journal.resolveReadySchema(reference) else try journal.resolveSchema(reference))
+                else
+                    null;
                 const fused = blk: {
-                    if (record.schema_ref != null) break :blk false;
-                    const header = codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
-                        error.UnsupportedVersion => break :blk false,
-                        else => return err,
-                    };
+                    // Reference setup is useful on backlog, but a producer-led
+                    // short window can lose locality to the larger renderer.
+                    // The original materialized path remains efficient there.
+                    if (definition != null and batch.len < delivery_batch.records_per_quantum) break :blk false;
+                    const header = if (definition) |canonical|
+                        try schema_codec.readReferenceHeader(record.payload, canonical, fields.len)
+                    else
+                        codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
+                            error.UnsupportedVersion => break :blk false,
+                            else => return err,
+                        };
                     if (header.event.message_template or header.argument_count != 0) break :blk false;
-                    const group = try versions.select(header.event.route_generation, header.event.route_fingerprint);
+                    const group = versions.select(header.event.route_generation, header.event.route_fingerprint) catch |err| {
+                        // Reference decode historically precedes route lookup.
+                        // Preserve its error priority on rejected routing too.
+                        if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
+                        return err;
+                    };
                     const snapshot = group.snapshot();
-                    if (header.event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;
-                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
+                    if (header.event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) {
+                        if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
+                        return error.UnknownRoute;
+                    }
+                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
                     channels[index] = header.event.channel;
                     snapshots[index] = snapshot;
                     boundaries[index] = group.include(header.event.route_mask);
                     break :blk true;
                 };
                 if (fused) continue;
-                const event = try decodeRecord(journal, record, &fields);
+                const event = if (definition) |canonical| try schema_codec.resolve(record.payload, canonical, &fields) else try codec.decode(record.payload, &fields);
                 const group = try versions.select(event.route_generation, event.route_fingerprint);
                 const snapshot = group.snapshot();
                 if (event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;

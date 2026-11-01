@@ -1,0 +1,27 @@
+1/26 root.test_0...OK
+2/26 core.schema_codec.test.reference codec rejects malformed lengths counts tags and wrong versions...OK
+3/26 encoder.root.test_0...OK
+4/26 time.root.test_0...OK
+5/26 journal.journal.test_0...OK
+6/26 core.runtime.test_0...OK
+7/26 config.routes.test_0...OK
+8/26 sink.rolling_file.test_0...OK
+9/26 journal.spsc.test_0...OK
+10/26 core.diagnostics.test.record does not invoke hooks and dispatch supplies one coalesced snapshot outside locks...OK
+11/26 core.runtime_coalesced_tests.test.coalesced service window flushes all 255 queued records before reclaim without allocation...OK
+12/26 core.runtime_coalesced_tests.test.coalesced checked window rejects later corruption before any earlier record reaches a sink...OK
+13/26 core.runtime_coalesced_tests.test.coalesced old and new routes keep all record pins when final flush or durable barrier fails...OK
+14/26 core.runtime_coalesced_tests.test.coalesced flush failure retains every slot and pin of a retired configuration...OK
+15/26 core.runtime_coalesced_tests.test.coalesced late corruption acknowledges only its successful prefix and retains old configuration...OK
+16/26 core.delivery_batch.test.coalesced service budget charges short windows and bounds every allowed quantum...OK
+17/26 encoder.wire_json.test.fused wire JSON matches decoded encoder for flat scalar events...OK
+18/26 encoder.wire_json.test.fused wire JSON matches decoded encoder for nested attributes...OK
+19/26 encoder.wire_json.test.fused wire JSON declines deferred messages...OK
+20/26 encoder.wire_json.test.fused wire JSON matches readable timestamp formatting...OK
+21/26 encoder.wire_json.test.fused wire text and logfmt match decoded encoders...OK
+22/26 encoder.wire_json.test_0...OK
+23/26 encoder.wire_reference_tests.test.fused reference matches materialized all tags nested static dynamic and historical records...OK
+24/26 encoder.wire_reference_tests.test.fused reference has identical checked errors on truncation mutation type mismatch and scratch exhaustion...OK
+25/26 encoder.wire_reference_tests.test.fused reference declines deferred including unused arguments for the authoritative materialized renderer...OK
+26/26 encoder.wire_reference_tests.test.fused reference runtime rejects checked schema damage before output and retains exact pins...OK
+All 26 tests passed.

@@ -1,0 +1,527 @@
+{
+  "trials": 10,
+  "records_verified": 10010000,
+  "pairs": 5,
+  "affinity": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+  ],
+  "noise_limit": 0.1,
+  "source_sha256": {
+    "src/adapters/std_log.zig": "cf17a45bda6740140ace70fbdf9e06faa821ad884d2695ac8acf9a3891549192",
+    "src/archive/compression.zig": "31b74352644d917661312d53db7f8c14eb6da0fb26098b60751a5468bde0940a",
+    "src/archive/format.zig": "5a0f8857a696f24869213f03e6ccdd7f295c42fbd0e5af076337a138f68492ae",
+    "src/archive/reader.zig": "dab050cd90ae23564bb74ad2d258926d448ced49bbed9afad739fc4d448787e1",
+    "src/archive/writer.zig": "93df3b815942c3f1b1cf8831a278344707a4d34802200ea869cf25f7739efa03",
+    "src/backend/buffer_pool.zig": "3d3ed598a08c73b8d96efe4de7f526629bff6247e240af27c5fcf3c49eb04611",
+    "src/backend/directory_sync.zig": "88769ee2036a4da3a10f02fc2a58d52be775997776948064650dc38f492df05d",
+    "src/backend/interface.zig": "7faed7e010e0db8ff397e92924d169621279db208148be871b32ad15051917b4",
+    "src/backend/linux_uring.zig": "bcc06a1448e708e724449e05479c26fddf61202740f53846b2244957061eca20",
+    "src/backend/portable.zig": "9f704bb6374b81d99b66c3bda90fc37637578fe31bbf2b46b528b6f9ce50cd2a",
+    "src/config/cache.zig": "574e0cf826685949faf20902bf69ff74d5285fda164bf28f592a1db303a4d4f4",
+    "src/config/document.zig": "1df3180b1ce29af8b982a3d1a2d02377665761c4b91a78a8266f4fe7f9fdc5f5",
+    "src/config/env.zig": "bc8d7db7fbabb63df09d108865d154f5c31a7a9a55f77d49c410ada9dcaab59a",
+    "src/config/filter.zig": "2287da85c58e93037831bb1edb9382cbb06770ff10e754298c4db7c12f304b08",
+    "src/config/reload.zig": "25aa291eeb96bf6ec719205fc469d8ed5ae41eba1f90528cbff78fcf75f1d0fd",
+    "src/config/route_selection.zig": "de6febf54bc13b192170f4eb182dd4eaef3982ee581186cf52af8055577a168f",
+    "src/config/routes.zig": "adb8459974a3e9e45e26554933541953e4a1f9dc3ec21b76ee3889674e5e6626",
+    "src/config/routes_tests.zig": "b35153a4d786cc50838698778984ababdcb06ca61be457af89207c8f3dcbe051",
+    "src/config/sources.zig": "3a370ec9ee9397c1f268d3c9c47e2b33e06e33f450faa58fa6462e2e190546f8",
+    "src/core/adapter.zig": "0dbe593ce14df334f560060ea0735a891bbb6e267f34a056b7228e957de78cf8",
+    "src/core/admission.zig": "39b861e28f336c7b0ac15ed07c568526543943bb55a575e6e459b226c0f8a15e",
+    "src/core/codec.zig": "15f9c03bc46fa3294a3bbcb1ee91521613f3eda77c8d21e29f65ee13b04a8606",
+    "src/core/context.zig": "dad1aca3e9c49e06181955b594940e047a33589ccd6c8e0ce21e4d0d4083c941",
+    "src/core/control.zig": "9b87de4f575f65266eccb90d0e2ca289bddcf52b55b7f6d6a95a100ce085394a",
+    "src/core/delivery.zig": "8e6cbd8077a07e2323bf01b43c5be7e7434a655a236e4de195f151c59bb44282",
+    "src/core/delivery_batch.zig": "9e1b0c6f78d3343645ae905804fd9d9d92eef91b09e30ae4899ba5f39f3403e7",
+    "src/core/diagnostics.zig": "d54bb1da65f0c9bb9cac8d58e5809a1bb40699792a3bc8d5d3801c6f945072a8",
+    "src/core/event.zig": "6e71c23795d3e238c81586433aca5b9035683c99dffd486fc01da8732bacdd06",
+    "src/core/field.zig": "cfde94589e787e8663b8810068680ce85190b53e98c270f0091a69300fa6b643",
+    "src/core/level.zig": "e67faec846af9c19355533513ecddf05d9185cc8c69cdf3de2b4f71fdf6e00b4",
+    "src/core/logger.zig": "acfe2ca49b5da9731a2d0d993c6b7da7f2c1cbe69c0385ab07c227b15ecd5d2e",
+    "src/core/prepared.zig": "7882fd2e59b8e1c5af2a4b097277df3662f5c89ee5b2df95e674ee6c3e86d9b7",
+    "src/core/runtime.zig": "acd05acb9d8bb2cddd16dace21b7d77f6f8eb00607ff874bfbb312bf16af0906",
+    "src/core/runtime_coalesced_tests.zig": "ac585c01409f08fb883caf1b0e166508d06669530f8f72b17695fd1b2290f8c8",
+    "src/core/runtime_configuration.zig": "1b4cf239adf7477fbe0ec88189e732504960b11d16014545fd597466b5bd3bc6",
+    "src/core/runtime_delivery_tests.zig": "659454d6aa909dee59de732cb070a03587aca048ede30c49de152360bf0a990e",
+    "src/core/runtime_init.zig": "be4aef4137e7582de7df221c2fb0e2f191e6312b709faf443dcb973aae6026b4",
+    "src/core/runtime_redaction.zig": "ec369eba6c601f69c2f0a03c3cba86228135127c1cc42da0dcac69d280991131",
+    "src/core/runtime_tests.zig": "61aafe3bce21a228b420d9f18f4f775195b9d636246aa680ae419151e7592764",
+    "src/core/runtime_types.zig": "0f00a6997f846a01e448cb3788760b98e5cb1e7f93cd0e1c790c6019943fd6ea",
+    "src/core/schema_codec.zig": "9f469df423d788c14bd41ffe3204b9696723699a7c44f5aae5d0608ba750fe68",
+    "src/core/static_owner.zig": "1bc13b94eea4b4fbd253cf0fd3c1ad16dd35b4bb814ebe036fdbdeb82183d766",
+    "src/core/thread_registry.zig": "e6315a6c86a45418287fef17b87ce961a944184c27e532521579517b28d84d5c",
+    "src/core/wire_size.zig": "d639b3493a3377fd01ddb52fc9c0012a99a35b40ec6aef6bd81f85f1124777a8",
+    "src/core/wire_write.zig": "bf2efa9b7342d2ea541f25c6d5af30b6c8e101259d490accfc375ce5a519815c",
+    "src/encoder/common.zig": "c417c42fadd549ff4f20aa899cf679ab73cd2da62dc2c9705f5fc38c73a181dc",
+    "src/encoder/decimal.zig": "c4bb4563286373a03b509f4cd996eb7fa580698de074bd754e9ac2203cd33447",
+    "src/encoder/escaping.zig": "1c409f6e5843f64d19959cc93502d843e8ebae30c549843b79b806cf3927159c",
+    "src/encoder/json.zig": "16741a7f852140ccad1c0203ce1da8247292001c8a9d0a72189b03a2d35f1789",
+    "src/encoder/logfmt.zig": "8e95b18ee7bc93c2a618bd119ed764b751d3c655bf0f01be7d0dc245576c5d9d",
+    "src/encoder/root.zig": "be90f444b6a3d3a1eda6a59db3f1d89046cb4359e79b7dfe3ac60be048d099f7",
+    "src/encoder/text.zig": "97f378ac1a07ee426467919e1aa65d02f2721a19e3a31ccdf3e5c1c6a8ae7c6b",
+    "src/encoder/wire_json.zig": "7ce03bc96be38603d18111f704d9fa2fc4cc03f25267b3a9ff863ff45d6373e9",
+    "src/encoder/wire_reference_tests.zig": "7b530422ceb25d42827dceac2fa6990b4292aab5725f7e83648c0c1f77590d93",
+    "src/journal/format.zig": "42f51820eb57462968cd68ccce6dbf9f4c590ea96b278d5698c751c750992f1d",
+    "src/journal/journal.zig": "2e4a5bb3aa013b3ed1ceed71fc8076a964b6aa77ca257f0d5b51b7a506f4a874",
+    "src/journal/schema.zig": "e477a9fef5071da5686cc35563fe314d470b10ee2fb814e6d056aae0293a1672",
+    "src/journal/schema_journal_tests.zig": "bd177d3cdcd2a7c2b417656e3ef8bf80ae1c837475be5151f693f80b16ab6c7f",
+    "src/journal/spsc.zig": "696e24597fcfb640af51075e1352c89b48b63994aa24e4b78190912956b4da9d",
+    "src/journal/spsc_tests.zig": "5ef785f81c3e53f2951c875d782ffe48ef34870ce70550d1fc6f9a49afc60d04",
+    "src/journal/storage.zig": "9e5cda5a5b6661ea4fa9d01f36447ec14608262e1c6d223f605b51369e5e0b31",
+    "src/journal/tests.zig": "bdbc3d9554d2d6bfc8d78d3e9d1590ed169502c5003662519126cda945ab1bcb",
+    "src/local_checksum_check.zig": "4d0d94e20a3b8a215cd9bd6d7f6134e9b97d179d01893aa0b2b1ee30ce471264",
+    "src/local_fault_check.zig": "3963436f3b17f6a15191d395643044dd19072b4e0d679eddae99cdb2bd95427b",
+    "src/pipeline/flight_recorder.zig": "442e1a7aaa69a72157119debbab15a0cb03df80932546dcb20f3f12985b2210e",
+    "src/pipeline/predicate.zig": "59f3158ebf02a07c536aec1775605b3c2083c06e0d0d805087ce03d31c319578",
+    "src/pipeline/redact.zig": "e3ad1fb833f175c0ec2e392ccad4b2f66a60cd3a2928d8bf191e3ab237e8ad8c",
+    "src/pipeline/regex.zig": "501b64b9dd6ce3bb487dde64956816d523b3f54ffce3178f2024a83cffc6d03a",
+    "src/pipeline/sampler.zig": "97c8324b36d43f2ef02b2c99ec7518350112ec3675d9800ac8da7ae4a5b78928",
+    "src/platform/capabilities.zig": "1f9a139821abea21255c564bd98f0b28ab05ae6aa0291980a42e04b449db52d0",
+    "src/platform/clock.zig": "a3bb8ddc0dcc65692de58099fadd8236ce012f3b7b1f0ea491a3d7177232f186",
+    "src/platform/crc32.zig": "288d2fd195a86d18aa709df082063b73aefd0d14a8b97791cac846993bdde442",
+    "src/platform/crc32_pclmul.zig": "b4abef427bca84b205c1e3ca26e2ac103244529758a92cf9913a242653f9ddde",
+    "src/platform/mapping/darwin.zig": "4e964552e8e9910f565d2b230231bb4eec02a1fbb6b3bf00f5e8890e886ad97c",
+    "src/platform/mapping/linux.zig": "73cd84302e553a1ed757d2f932e7c7a15cd86d9715148a26120462b793f270a2",
+    "src/platform/mapping/unsupported.zig": "9f4c993c2680a6a9b01ffb6f43cf7d234d81344ee83c500e40dace845dc8428f",
+    "src/platform/mapping/windows.zig": "ab40703f13ff158e6f8ac236e34b98d0554d0dd25c72e46f096379cfb573beb2",
+    "src/platform/mapping.zig": "b6a42c1725a2cabf3e58e9ce21c9fac5e2d985a24dc7bc0ba6396ea8d7e881a4",
+    "src/platform/static_clock.zig": "04b8007d88d15ce21ba01feaf774a81c5b3d4c181fc6566c3001aef4801493cb",
+    "src/platform/tsc_clock.zig": "6db3acedd286e439f357f6e1943067e4c2b86218786f2933726e1ecb9c9f4d6f",
+    "src/platform_check.zig": "8f31058f5ebe3dad16f1a7a82c98c214bf91b3c63d9ef3904842f5089b7aaf13",
+    "src/root.zig": "dc227b79c54c419399229df551e31ba3560a1647e8e1f9f515142da70035c999",
+    "src/sink/compressed_archive.zig": "8c2a653f60623f5ed078abbfa8bd28428a9a01df204acdc3be67cdfe858fc053",
+    "src/sink/file.zig": "2208dc4bcbde416b4e45d9e48f4cfba9b9f328c81fced8a50f328416e28a2655",
+    "src/sink/interface.zig": "c0c63daaff9b4a02906ecd76d63c7446b330d32a1fedcd9fe4105e4ea0e99aae",
+    "src/sink/memory.zig": "f2af11aad5327bcec82079834403fc9e7e6c4dff4ab012d4e9803e57713e6bd4",
+    "src/sink/multi.zig": "8cd615fadec6515d7eddc6c815cb11c90c377ae210dbd09da213c47a83f6f22a",
+    "src/sink/rolling_file.zig": "31880b94aa583dc73f1cdaaf3b1e932a3fbd2160e8ee8b50eb275fe91cd9e60e",
+    "src/sink/rolling_file_reliability_tests.zig": "47294ad43a8874addb9978136ba3f41bd1a15e841e04213943974cfc8d0d905e",
+    "src/sink/rolling_file_time_tests.zig": "1bf0b42dde833dd95a83908b121b42f17a2338f13dd6fefa08b037e3779ef3c5",
+    "src/sink/writer.zig": "b05ac8ded91874ee93266e2a95bfda57404b91f68c8d052f8f7ee4020b2892c8",
+    "src/submit/callsite.zig": "531f450ca052f6277fe89da84b234f579d5eac07c6cb5378dcd75c254ae83189",
+    "src/submit/format.zig": "5bd69796e802596314ce6e3017f64ffc1f919a625a9082afceaf067d1f2f3ed2",
+    "src/submit/schema_site.zig": "a05035798bfe257afa2a06e3434a8de33347dba59165f2f8424e6b9932f37c9e",
+    "src/telemetry/span.zig": "e251876f39cd0c6e6cfa9663ec8e24a9264c229a7a5f52431d589c4cff26edd3",
+    "src/telemetry/trace_context.zig": "f1f03e333568f3c532af84d3aaed6c03e599c7ad8da2e736d513edfa1420ea03",
+    "src/time/civil.zig": "e04600a8475be3255ad0f234f22fb02dc8de173e4f47ab43383d8cd2dd17d3a1",
+    "src/time/rfc3339.zig": "d26317ffd2562cdd27bd4f29fb6541e82a29e954527251abceac1aefa0e52f7f",
+    "src/time/root.zig": "3a2debfaa0219dbc51630ab45ec27d810c41aafe797d31fbe4a613940998e65b",
+    "src/time/types.zig": "26d246ec8594890b3d1fb5b5a20adc399a5a903fbc3edd9fbf5f41b852debb11",
+    "build.zig": "70269c9067a0ad579a0d9966bacdb422ce603c7c9c4f6301d57011baab541011",
+    "build.zig.zon": "0dc4af412d66d73b654d05a19104ff35e107c95199bc9979c892f7ae8b244a1e",
+    "bench/cpp_reference/kron_reference.zig": "547236ca1ada844e2271c7b8b372a8faf533f26a8d423b1bcee2fba5495771c4",
+    "bench/cpp_reference/run.py": "27b5da9418aaf02c0bf4c2b9c9c6b2f9d8f28790e875d530e95ac7ad6581ff97",
+    "bench/regression.py": "9413e3710d801f5b03fcf0c58cf3aa72e13dc8bc49d3ea1cff3610e8591659b5"
+  },
+  "binary_sha256": {
+    "before": "d2e6fdbadd908bae0cdfd928e98d57d5058d16633cde25427271dda4052429be",
+    "after": "8603b71658b4cb8cc106293ff524dcbd048f15b90dd5647492cf48d4f1a72c16"
+  },
+  "assessments": [
+    {
+      "mode": "async",
+      "storage": "memory",
+      "producers": 1,
+      "schema": true,
+      "phase": "batch",
+      "metrics": {
+        "written_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 1827629.379409839,
+            "mean": 1827414.6006878733,
+            "q1": 1822673.3326569393,
+            "q3": 1834973.588087463,
+            "min": 1799730.2895392412,
+            "max": 1852066.4137458843,
+            "cv": 0.010432413682032751,
+            "relative_spread": 0.02863607074621605,
+            "relative_iqr": 0.006730169458369977,
+            "median_bootstrap_ci95": [
+              1799730.2895392412,
+              1852066.4137458843
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 1743137.243397255,
+            "mean": 1753322.7730088397,
+            "q1": 1731172.5087368123,
+            "q3": 1764283.023149207,
+            "min": 1724187.2219798754,
+            "max": 1803833.8677810484,
+            "cv": 0.01829280246160211,
+            "relative_spread": 0.045691551886039225,
+            "relative_iqr": 0.018994783421565017,
+            "median_bootstrap_ci95": [
+              1724187.2219798754,
+              1803833.8677810484
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9537695459678661,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "producer_wall_ns": {
+          "before": {
+            "trials": 5,
+            "median": 547045251,
+            "mean": 547142472,
+            "q1": 544871000.0,
+            "q3": 548427526.0,
+            "min": 539825509,
+            "max": 555543074,
+            "cv": 0.010456506449690813,
+            "relative_spread": 0.028731745630308014,
+            "relative_iqr": 0.006501337857332025,
+            "median_bootstrap_ci95": [
+              539825509,
+              555543074
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 573583969,
+            "mean": 570384168.2,
+            "q1": 566710016.0,
+            "q3": 577553754.0,
+            "min": 554284339,
+            "max": 579788763,
+            "cv": 0.018024611548423247,
+            "relative_spread": 0.044465022347931066,
+            "relative_iqr": 0.018905231990540516,
+            "median_bootstrap_ci95": [
+              554284339,
+              579788763
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0485128386572906,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "flush_ns": {
+          "before": {
+            "trials": 5,
+            "median": 3415,
+            "mean": 8036.2,
+            "q1": 2931.0,
+            "q3": 7918.0,
+            "min": 2232,
+            "max": 23685,
+            "cv": 1.1233942638236167,
+            "relative_spread": 6.28199121522694,
+            "relative_iqr": 1.4603221083455344,
+            "median_bootstrap_ci95": [
+              2232,
+              23685
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2213,
+            "mean": 2466.4,
+            "q1": 2198.0,
+            "q3": 2524.0,
+            "min": 2157,
+            "max": 3240,
+            "cv": 0.18510802600145404,
+            "relative_spread": 0.48938093086308176,
+            "relative_iqr": 0.1473113420695888,
+            "median_bootstrap_ci95": [
+              2157,
+              3240
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.6480234260614934,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "shutdown_ns": {
+          "before": {
+            "trials": 5,
+            "median": 25309,
+            "mean": 30746,
+            "q1": 24883.0,
+            "q3": 28407.0,
+            "min": 24208,
+            "max": 50923,
+            "cv": 0.37057426099346263,
+            "relative_spread": 1.0555533604646568,
+            "relative_iqr": 0.13923900588723379,
+            "median_bootstrap_ci95": [
+              24208,
+              50923
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 24653,
+            "mean": 23970.2,
+            "q1": 23310.0,
+            "q3": 24694.0,
+            "min": 22370,
+            "max": 24824,
+            "cv": 0.04529663518101291,
+            "relative_spread": 0.09954163793453129,
+            "relative_iqr": 0.05613921226625563,
+            "median_bootstrap_ci95": [
+              22370,
+              24824
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9740803666679837,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "cleanup_ns": {
+          "before": {
+            "trials": 5,
+            "median": 68431,
+            "mean": 87701,
+            "q1": 67440.0,
+            "q3": 75310.0,
+            "min": 64039,
+            "max": 163285,
+            "cv": 0.4840376572020251,
+            "relative_spread": 1.4503076091245195,
+            "relative_iqr": 0.1150063567681314,
+            "median_bootstrap_ci95": [
+              64039,
+              163285
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 65545,
+            "mean": 85827,
+            "q1": 65446.0,
+            "q3": 67459.0,
+            "min": 63963,
+            "max": 166722,
+            "cv": 0.5270918274751397,
+            "relative_spread": 1.5677626058433138,
+            "relative_iqr": 0.030711724769242506,
+            "median_bootstrap_ci95": [
+              63963,
+              166722
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9578261314316611,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "init_ns": {
+          "before": {
+            "trials": 5,
+            "median": 609062,
+            "mean": 595124.8,
+            "q1": 577461.0,
+            "q3": 615001.0,
+            "min": 542890,
+            "max": 631210,
+            "cv": 0.05900252727185873,
+            "relative_spread": 0.14500986763252346,
+            "relative_iqr": 0.06163576121971162,
+            "median_bootstrap_ci95": [
+              542890,
+              631210
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 557933,
+            "mean": 576458.4,
+            "q1": 556792.0,
+            "q3": 579282.0,
+            "min": 540594,
+            "max": 647691,
+            "cv": 0.07307658727968772,
+            "relative_spread": 0.19195315566564444,
+            "relative_iqr": 0.040309499527721074,
+            "median_bootstrap_ci95": [
+              540594,
+              647691
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9160528813158595,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "preparation_ns": {
+          "before": {
+            "trials": 5,
+            "median": 792315,
+            "mean": 806635.4,
+            "q1": 736345.0,
+            "q3": 811924.0,
+            "min": 714766,
+            "max": 977827,
+            "cv": 0.12841751849999103,
+            "relative_spread": 0.3320156755835747,
+            "relative_iqr": 0.0953900910622669,
+            "median_bootstrap_ci95": [
+              714766,
+              977827
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 804054,
+            "mean": 892403.6,
+            "q1": 791078.0,
+            "q3": 998982.0,
+            "min": 745561,
+            "max": 1122343,
+            "cv": 0.18057022921524588,
+            "relative_spread": 0.46860285503212473,
+            "relative_iqr": 0.25856969805510577,
+            "median_bootstrap_ci95": [
+              745561,
+              1122343
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0148160769390961,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "total_ns": {
+          "before": {
+            "trials": 5,
+            "median": 547156886,
+            "mean": 547268955.2,
+            "q1": 544966972.0,
+            "q3": 548644665.0,
+            "min": 539937441,
+            "max": 555638812,
+            "cv": 0.010457339178676708,
+            "relative_spread": 0.028696286936613642,
+            "relative_iqr": 0.0067214597752499085,
+            "median_bootstrap_ci95": [
+              539937441,
+              555638812
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 573678294,
+            "mean": 570496431.8,
+            "q1": 566802484.0,
+            "q3": 577643184.0,
+            "min": 554374778,
+            "max": 579983419,
+            "cv": 0.018062877696262285,
+            "relative_spread": 0.04463937587988992,
+            "relative_iqr": 0.018896827914496622,
+            "median_bootstrap_ci95": [
+              554374778,
+              579983419
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0484713044441152,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "lifecycle_ns": {
+          "before": {
+            "trials": 5,
+            "median": 548502862,
+            "mean": 548670715.4,
+            "q1": 546559800.0,
+            "q3": 549999479.0,
+            "min": 541251247,
+            "max": 557040189,
+            "cv": 0.010444008806663959,
+            "relative_spread": 0.02878552345639356,
+            "relative_iqr": 0.006271032000558641,
+            "median_bootstrap_ci95": [
+              541251247,
+              557040189
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 575061630,
+            "mean": 571965293.8,
+            "q1": 568150354.0,
+            "q3": 579182760.0,
+            "min": 555678272,
+            "max": 581753453,
+            "cv": 0.018280751667300667,
+            "relative_spread": 0.04534328085843599,
+            "relative_iqr": 0.019184736773343754,
+            "median_bootstrap_ci95": [
+              555678272,
+              581753453
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0484204729637308,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "lifecycle_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 1824967.6881357823,
+            "mean": 1824568.2365529847,
+            "q1": 1820001.7240379967,
+            "q3": 1831455.5882082803,
+            "min": 1796997.8105116577,
+            "max": 1849418.371871206,
+            "cv": 0.010421012876267578,
+            "relative_spread": 0.028724103829529293,
+            "relative_iqr": 0.006276201077282497,
+            "median_bootstrap_ci95": [
+              1796997.8105116577,
+              1849418.371871206
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 1740682.994273153,
+            "mean": 1750580.0254148932,
+            "q1": 1728297.2994569107,
+            "q3": 1761857.5663159755,
+            "min": 1720660.1780153078,
+            "max": 1801402.0890131188,
+            "cv": 0.018509679509197505,
+            "relative_spread": 0.04638518975795817,
+            "relative_iqr": 0.019279941821387404,
+            "median_bootstrap_ci95": [
+              1720660.1780153078,
+              1801402.0890131188
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9538157884051488,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        }
+      }
+    }
+  ],
+  "scope": "Complete JSON, system time, identical queue/file budgets and written flush/shutdown/cleanup; schema fusion candidate vs 366adc3. User PMU includes initialization and excludes kernel work. No durable flush."
+}

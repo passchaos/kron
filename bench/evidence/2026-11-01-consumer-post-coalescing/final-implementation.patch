@@ -1,0 +1,254 @@
+diff --git a/src/core/delivery.zig b/src/core/delivery.zig
+index 218619e..614f1d3 100644
+--- a/src/core/delivery.zig
++++ b/src/core/delivery.zig
+@@ -91,7 +91,7 @@ pub fn needsDurableReclaim(routes: []const types.Route, mask: u64) bool {
+ 
+ /// Fused consumer path for one JSON route. Returns false when the payload or
+ /// route shape is not eligible; the caller then uses the normal decode path.
+-pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
++pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, definition: ?@import("schema_codec.zig").Definition, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
+     var matched: ?*const types.Route = null;
+     var count: usize = 0;
+     for (routes, 0..) |*route, index| {
+@@ -107,9 +107,18 @@ pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8
+         .logfmt => .logfmt,
+         .binary => return false,
+     };
+-    const bytes = wire_json.render(format, payload, header, output, keys, route.timestamp) catch |err| switch (err) {
++    const rendered = if (definition) |canonical|
++        wire_json.renderReference(format, payload, header, canonical, output, keys, route.timestamp)
++    else
++        wire_json.render(format, payload, header, output, keys, route.timestamp);
++    const bytes = rendered catch |err| switch (err) {
+         error.Fallback => return false,
+-        error.WriteFailed => return error.EncodedRecordTooLarge,
++        error.WriteFailed => {
++            // A short output scratch must not hide a later schema/value error.
++            // The materialized decoder historically validates before encoding.
++            if (definition) |canonical| _ = try @import("schema_codec.zig").resolve(payload, canonical, keys);
++            return error.EncodedRecordTooLarge;
++        },
+         else => return err,
+     };
+     route.sink.writeRecord(bytes) catch |err| {
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index ffec186..293144d 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -844,24 +844,42 @@ pub const Runtime = struct {
+             defer written_counts.flush();
+             for (batch, 0..) |record, index| {
+                 var fields: [codec.decode_scratch_fields]Field = undefined;
++                const definition: ?schema_module.Definition = if (record.schema_ref) |reference|
++                    (if (@hasDecl(Journal, "resolveReadySchema")) try journal.resolveReadySchema(reference) else try journal.resolveSchema(reference))
++                else
++                    null;
+                 const fused = blk: {
+-                    if (record.schema_ref != null) break :blk false;
+-                    const header = codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
+-                        error.UnsupportedVersion => break :blk false,
+-                        else => return err,
+-                    };
++                    // Reference setup is useful on backlog, but a producer-led
++                    // short window can lose locality to the larger renderer.
++                    // The original materialized path remains efficient there.
++                    if (definition != null and batch.len < delivery_batch.records_per_quantum) break :blk false;
++                    const header = if (definition) |canonical|
++                        try schema_codec.readReferenceHeader(record.payload, canonical, fields.len)
++                    else
++                        codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
++                            error.UnsupportedVersion => break :blk false,
++                            else => return err,
++                        };
+                     if (header.event.message_template or header.argument_count != 0) break :blk false;
+-                    const group = try versions.select(header.event.route_generation, header.event.route_fingerprint);
++                    const group = versions.select(header.event.route_generation, header.event.route_fingerprint) catch |err| {
++                        // Reference decode historically precedes route lookup.
++                        // Preserve its error priority on rejected routing too.
++                        if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
++                        return err;
++                    };
+                     const snapshot = group.snapshot();
+-                    if (header.event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;
+-                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
++                    if (header.event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) {
++                        if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
++                        return error.UnknownRoute;
++                    }
++                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
+                     channels[index] = header.event.channel;
+                     snapshots[index] = snapshot;
+                     boundaries[index] = group.include(header.event.route_mask);
+                     break :blk true;
+                 };
+                 if (fused) continue;
+-                const event = try decodeRecord(journal, record, &fields);
++                const event = if (definition) |canonical| try schema_codec.resolve(record.payload, canonical, &fields) else try codec.decode(record.payload, &fields);
+                 const group = try versions.select(event.route_generation, event.route_fingerprint);
+                 const snapshot = group.snapshot();
+                 if (event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;
+diff --git a/src/core/schema_codec.zig b/src/core/schema_codec.zig
+index 5815b54..3b578d6 100644
+--- a/src/core/schema_codec.zig
++++ b/src/core/schema_codec.zig
+@@ -108,17 +108,24 @@ pub fn encodeReference(event: Event, definition: Definition, destination: []u8)
+     return destination[0..size];
+ }
+ 
+-/// Event values borrow payload; metadata borrows the separately validated
+-/// definition; nested descriptors use caller scratch as in codec.decode.
+-/// A reader must independently own/copy both byte ranges and retain scratch.
+-pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) DecodeError!Event {
++/// Shared checked prefix for materialized and fused reference consumers.
++/// The definition must come from the owning registry's checked/ready lookup.
++pub fn readReferenceHeader(payload: []const u8, definition: Definition, scratch_capacity: usize) DecodeError!codec.EventHeader {
+     var prefix: codec.WireInput = .{ .bytes = payload };
+     _ = try prefix.take(4);
+     const wire_version = try prefix.int(u16);
+     if (wire_version != version and wire_version != codec.legacy_reference_version) return error.UnsupportedVersion;
+     const header = try codec.readHeader(payload, wire_version);
+     if (header.field_count != definition.field_count or header.argument_count != definition.argument_count or header.event.message_template != definition.message_template or (header.flags & 1 != 0) != (definition.source != null)) return error.SchemaMismatch;
+-    if (header.field_count > scratch.len or header.argument_count > scratch.len - header.field_count) return error.TooManyFields;
++    if (header.field_count > scratch_capacity or header.argument_count > scratch_capacity - header.field_count) return error.TooManyFields;
++    return header;
++}
++
++/// Event values borrow payload; metadata borrows the separately validated
++/// definition; nested descriptors use caller scratch as in codec.decode.
++/// A reader must independently own/copy both byte ranges and retain scratch.
++pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) DecodeError!Event {
++    const header = try readReferenceHeader(payload, definition, scratch.len);
+     var event = header.event;
+     event.scope = definition.scope;
+     event.source = definition.source;
+diff --git a/src/encoder/wire_json.zig b/src/encoder/wire_json.zig
+index 2ed70f6..d7ea684 100644
+--- a/src/encoder/wire_json.zig
++++ b/src/encoder/wire_json.zig
+@@ -7,26 +7,33 @@
+ //! authoritative.
+ const std = @import("std");
+ const codec = @import("../core/codec.zig");
++const schema_codec = @import("../core/schema_codec.zig");
+ const field = @import("../core/field.zig");
+ const common = @import("common.zig");
+ const time = @import("../time/root.zig");
+ 
+-pub const Error = codec.DecodeError || std.Io.Writer.Error || error{Fallback};
++pub const Error = schema_codec.DecodeError || std.Io.Writer.Error || error{Fallback};
+ pub const Format = enum { json, text, logfmt };
+ 
+-const Context = struct {
+-    input: *codec.WireInput,
+-    count: usize,
+-    keys: []field.Field,
+-    failure: ?Error = null,
+-};
++fn Context(comptime referenced: bool) type {
++    return struct {
++        input: *codec.WireInput,
++        count: usize,
++        keys: if (referenced) schema_codec.schema.FieldIterator else []field.Field,
++        failure: ?Error = null,
++    };
++}
+ 
+-fn writeAttributesFallible(comptime format: Format, ctx: *Context, writer: *std.Io.Writer) Error!void {
++fn writeAttributesFallible(comptime format: Format, comptime referenced: bool, ctx: *Context(referenced), writer: *std.Io.Writer) Error!void {
+     for (0..ctx.count) |index| {
+-        const key = try ctx.input.blob();
+-        try field.checkUnique(ctx.keys[0..index], key);
+-        ctx.keys[index] = .{ .key = key, .value = .null_value };
++        const metadata = if (referenced) (try ctx.keys.next()) orelse return error.SchemaMismatch else {};
++        const key = if (referenced) metadata.key else try ctx.input.blob();
++        if (!referenced) {
++            try field.checkUnique(ctx.keys[0..index], key);
++            ctx.keys[index] = .{ .key = key, .value = .null_value };
++        }
+         const value = try ctx.input.value();
++        if (referenced and metadata.kind_mask & schema_codec.schema.kindMask(codec.valueTag(value)) == 0) return error.SchemaMismatch;
+         switch (format) {
+             .json => {
+                 if (index != 0) try writer.writeByte(',');
+@@ -55,10 +62,10 @@ fn writeAttributesFallible(comptime format: Format, ctx: *Context, writer: *std.
+     if (ctx.input.position != ctx.input.bytes.len) return error.InvalidLength;
+ }
+ 
+-fn Attributes(comptime format: Format) type {
++fn Attributes(comptime format: Format, comptime referenced: bool) type {
+     return struct {
+-        fn write(ctx: *Context, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+-            writeAttributesFallible(format, ctx, writer) catch |err| {
++        fn write(ctx: *Context(referenced), writer: *std.Io.Writer) std.Io.Writer.Error!void {
++            writeAttributesFallible(format, referenced, ctx, writer) catch |err| {
+                 ctx.failure = err;
+                 return error.WriteFailed;
+             };
+@@ -68,23 +75,34 @@ fn Attributes(comptime format: Format) type {
+ 
+ pub fn render(format: Format, payload: []const u8, header: codec.EventHeader, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
+     return switch (format) {
+-        .json => renderFormat(.json, payload, header, output, key_scratch, formatter),
+-        .text => renderFormat(.text, payload, header, output, key_scratch, formatter),
+-        .logfmt => renderFormat(.logfmt, payload, header, output, key_scratch, formatter),
++        .json => renderFormat(.json, false, payload, header, {}, output, key_scratch, formatter),
++        .text => renderFormat(.text, false, payload, header, {}, output, key_scratch, formatter),
++        .logfmt => renderFormat(.logfmt, false, payload, header, {}, output, key_scratch, formatter),
++    };
++}
++
++pub fn renderReference(format: Format, payload: []const u8, header: codec.EventHeader, definition: schema_codec.Definition, output: []u8, scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
++    return switch (format) {
++        .json => renderFormat(.json, true, payload, header, definition, output, scratch, formatter),
++        .text => renderFormat(.text, true, payload, header, definition, output, scratch, formatter),
++        .logfmt => renderFormat(.logfmt, true, payload, header, definition, output, scratch, formatter),
+     };
+ }
+ 
+-fn renderFormat(comptime format: Format, payload: []const u8, header: codec.EventHeader, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
++fn renderFormat(comptime format: Format, comptime referenced: bool, payload: []const u8, header: codec.EventHeader, definition: if (referenced) schema_codec.Definition else void, output: []u8, key_scratch: []field.Field, formatter: ?*time.Formatter) Error![]const u8 {
+     if (header.event.message_template or header.argument_count != 0) return error.Fallback;
+     if (header.field_count > key_scratch.len) return error.TooManyFields;
+     var arena = codec.DescriptorArena.init(key_scratch[header.field_count..]);
+-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = true };
++    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true };
+     var event = header.event;
+-    event.scope = try input.blob();
+-    event.message = try input.blob();
++    event.scope = if (referenced) definition.scope else try input.blob();
++    if (!referenced) event.message = try input.blob();
+     if (header.flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
+     if (header.flags & 4 != 0) event.span_id = (try input.take(8))[0..8].*;
+-    if (header.flags & 1 != 0) event.source = .{
++    if (referenced) {
++        event.source = definition.source;
++        event.message = if (definition.message) |message| message else try input.blob();
++    } else if (header.flags & 1 != 0) event.source = .{
+         .module = try input.terminated(),
+         .file = try input.terminated(),
+         .fn_name = try input.terminated(),
+@@ -96,11 +114,11 @@ fn renderFormat(comptime format: Format, payload: []const u8, header: codec.Even
+     var time_bytes: [time.rfc3339.max_length]u8 = undefined;
+     const readable = if (formatter) |cache| cache.format(.{ .nanoseconds = event.timestamp_ns }, &time_bytes) catch return error.WriteFailed else null;
+     var writer = std.Io.Writer.fixed(output);
+-    var context: Context = .{ .input = &input, .count = header.field_count, .keys = key_scratch };
++    var context: Context(referenced) = .{ .input = &input, .count = header.field_count, .keys = if (referenced) definition.fields() else key_scratch };
+     const result = switch (format) {
+-        .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format).write),
+-        .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format).write),
+-        .logfmt => common.encodeLogfmtWithAttributes(event, readable, &writer, &context, Attributes(format).write),
++        .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
++        .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
++        .logfmt => common.encodeLogfmtWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+     };
+     result catch |err| switch (err) {
+         error.WriteFailed => return context.failure orelse error.WriteFailed,
+@@ -236,3 +254,7 @@ test "fused wire text and logfmt match decoded encoders" {
+         try std.testing.expectEqualStrings(expected.buffered(), rendered);
+     }
+ }
++
++test {
++    _ = @import("wire_reference_tests.zig");
++}

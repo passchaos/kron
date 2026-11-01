@@ -108,17 +108,24 @@ pub fn encodeReference(event: Event, definition: Definition, destination: []u8) 
     return destination[0..size];
 }
 
-/// Event values borrow payload; metadata borrows the separately validated
-/// definition; nested descriptors use caller scratch as in codec.decode.
-/// A reader must independently own/copy both byte ranges and retain scratch.
-pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) DecodeError!Event {
+/// Shared checked prefix for materialized and fused reference consumers.
+/// The definition must come from the owning registry's checked/ready lookup.
+pub fn readReferenceHeader(payload: []const u8, definition: Definition, scratch_capacity: usize) DecodeError!codec.EventHeader {
     var prefix: codec.WireInput = .{ .bytes = payload };
     _ = try prefix.take(4);
     const wire_version = try prefix.int(u16);
     if (wire_version != version and wire_version != codec.legacy_reference_version) return error.UnsupportedVersion;
     const header = try codec.readHeader(payload, wire_version);
     if (header.field_count != definition.field_count or header.argument_count != definition.argument_count or header.event.message_template != definition.message_template or (header.flags & 1 != 0) != (definition.source != null)) return error.SchemaMismatch;
-    if (header.field_count > scratch.len or header.argument_count > scratch.len - header.field_count) return error.TooManyFields;
+    if (header.field_count > scratch_capacity or header.argument_count > scratch_capacity - header.field_count) return error.TooManyFields;
+    return header;
+}
+
+/// Event values borrow payload; metadata borrows the separately validated
+/// definition; nested descriptors use caller scratch as in codec.decode.
+/// A reader must independently own/copy both byte ranges and retain scratch.
+pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) DecodeError!Event {
+    const header = try readReferenceHeader(payload, definition, scratch.len);
     var event = header.event;
     event.scope = definition.scope;
     event.source = definition.source;

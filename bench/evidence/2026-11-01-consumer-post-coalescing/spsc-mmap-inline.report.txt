@@ -1,0 +1,51 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu_core/cycles/u'
+# Event count (approx.): 2324086509
+#
+# Children      Self       Samples  Symbol                                                            IPC   [IPC Coverage]
+# ........  ........  ............  ................................................................  ....................
+#
+    99.72%     0.00%             0  [.] os.linux.x86_64.clone                                         -      -            
+    55.70%     0.00%             0  [.] Thread.LinuxThreadImpl.spawn__anon_37888.Instance.entryFn     -      -            
+    55.29%     6.65%           100  [.] core.runtime.Runtime.drainJournal                             -      -            
+    43.98%     0.20%             7  [.] Thread.LinuxThreadImpl.spawn__anon_31915.Instance.entryFn     -      -            
+    43.55%     3.41%           142  [.] kron_reference.Worker.emit__anon_37073                        -      -            
+    36.28%     9.33%           140  [.] encoder.wire_json.render                                      -      -            
+    30.49%     1.81%            70  [.] core.runtime.Runtime.submitDestination                        -      -            
+    23.00%    10.69%           435  [.] core.runtime.Runtime.submitSafeDestination                    -      -            
+    12.74%     2.08%            31  [.] encoder.common.valueInner                                     -      -            
+    11.59%     2.67%            40  [.] encoder.decimal.writeMagnitude__anon_33990                    -      -            
+    10.27%    10.27%           153  [.] encoder.decimal.writeNative                                   -      -            
+     7.30%     7.30%           185  [.] platform.crc32.Crc32.update                                   -      -            
+     7.26%     2.52%           103  [.] core.codec.encodeSized                                        -      -            
+     5.84%     2.82%           125  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).begin  -      -            
+     5.74%     1.35%            21  [.] journal.journal.Journal.validateSlot                          -      -            
+     5.53%     5.53%           116  [.] compiler_rt.memcpy.memcpyFast                                 -      -            
+     5.17%     3.54%            53  [.] encoder.escaping.quotedAscii                                  -      -            
+     4.66%     3.75%           150  [.] core.codec.measure                                            -      -            
+     4.48%     1.61%            24  [.] journal.journal.Journal.peekChecked                           -      -            
+     4.39%     4.39%           178  [.] core.wire_write.writeValueTo__anon_33225                      -      -            
+     3.32%     0.18%             8  [.] platform.clock.realDefault                                    -      -            
+     3.11%     0.50%            20  [.] Io.Threaded.now                                               -      -            
+     3.05%     3.05%            46  [.] core.codec.WireInput.value                                    -      -            
+     2.56%     2.56%            39  [.] encoder.escaping.jsonKey                                      -      -            
+     2.02%     0.43%            17  [.] core.runtime.Runtime.beginThread                              -      -            
+     1.96%     1.96%            29  [.] encoder.escaping.quoted                                       -      -            
+     1.80%     1.32%            55  [.] core.runtime.Runtime.threadSnapshot                           -      -            
+     1.73%     1.73%            64  [.] 0x0000000000000b03                                            -      -            
+     1.73%     0.00%             0  [.] 0x00007ffe241edb03                                            -      -            
+     1.13%     1.13%            42  [.] core.runtime.Runtime.notify                                   -      -            
+     1.10%     1.10%            47  [.] core.field.ValueValidator.valueWith__anon_37006               -      -            
+     1.08%     1.08%            47  [.] journal.journal.Journal.reserveSingleProducer                 -      -            
+     1.02%     0.34%             5  [.] sink.file.FileSink.writeErased                                -      -            
+     0.88%     0.82%            13  [.] core.codec.readHeader                                         -      -            
+     0.58%     0.58%            24  [.] core.runtime.Runtime.threadFilterDecision                     -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

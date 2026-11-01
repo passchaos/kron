@@ -71,3 +71,13 @@ CRC与decoded-delivery之后，consumer剩余成本主要是`decodeRecord`的Eve
 单元测试用flat event（覆盖unsigned/signed/string/bool/float/duration/timestamp/null、trace/span/source）和nested group/array逐字节比较融合输出与`decode + encodeWithTime(.json)`；deferred message确认Fallback。完整`verify-local`通过81/81步骤、510/510测试（含nested与text/logfmt fused验证）；10,000条SPSC-memory完整文件workflow的11,000条物理记录通过独立oracle。五对固定CPU完整流程PMU中，SPSC-memory P4用户态指令中位1,154,112,566→1,085,502,232（−5.94%），async-memory P1 1,040,240,533→975,795,731（−6.20%），两侧spread 0.8%–1.2%，为稳定局部测量；cycles/吞吐仍inconclusive。100个完整文件试验结果保存在`bench/evidence/2026-11-01-wire-json/`，用于输出与吞吐核对，但不改变跨库排名。
 
 该路径刻意收窄：legacy payload、schema reference、template/args、多route和binary继续走原路径；nested attributes已支持；公开encoder仍独立校验，融合路径只在完整记录验证成功后写入scratch。
+
+## 2026-11-01批次合并后的schema融合
+
+基线`366adc3`的六组百万条完整JSON profile核对600.6万条物理记录，SPSC Memory inline的consumer约占52%用户态core周期采样；prepared SPSC Memory仍有约11%含子调用的decodeRecord和约15%自占的memcpy采样，后者也含producer复制。shared Memory的begin另有显著采样。profile包含setup/preparation/cleanup、排除kernel，不能从这些比例直接计算吞吐或归因某个锁。
+
+当前schema消费者在至少64条已就绪记录的窗口、单JSON/text/logfmt目标、无deferred/args时直接从canonical定义和值渲染，省去top-level Field数组物化与属性二次遍历。短窗口、模板参数、多route和binary继续materialized resolve，同一记录复用canonical查找；类型mask、nested节点/深度/arena、长度、schema身份及原错误优先级保持。输出scratch不足的冷错误路径先完成原reference.resolve，避免后段损坏被记录过大错误掩盖；全部渲染成功后才调用sink。每条CRC、旧配置pin、输出barrier和checked reclaim保持。
+
+三格式all-tags/source/trace/static/dynamic/nested/readable-time与历史v2对照、4096变异/all truncation/scratch guards通过。真实runtime的Memory/Mmap×shared/SPSC×1/64条窗口×16/512字节output×三种schema损坏共48场景确认零sink输出、原错误与所有pending/pin；相关Debug/Safe/Fast各26/26测试通过。完整最终240项文件核对2424万条JSON，prepared Memory P4共享/SPSC吞吐中位提升6.35%/8.03%，CV/spread通过且中位区间不重叠；Mmap多数组与多数尾分位未资格。最终40项完整PMU核对1204万条记录，schema SPSC Memory/Mmap指令减少1.804%/1.802%、shared Memory减少1.906%，两侧spread均小于0.14%；inline control指令增加0.171%。另20项百万条P1核对2002万条，最终Memory/Mmap负向中位0.65%/1.39%、区间重叠，不能声称P1整体改善。
+
+native drainJournal显式栈帧预留37800→40712字节，增加2912字节；不含push/callee/递归总栈。不增加heap/journal/file预算。初始全窗口schema融合的P1负向、被否决header指针版和187项中断捕获均独立保存；完整源码、脚本、机器与资格限制见`bench/evidence/2026-11-01-consumer-post-coalescing/`。当前数据不提供新的Foundation或io_uring排名。

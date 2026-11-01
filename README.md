@@ -74,6 +74,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [批次配置复用](docs/batch-configuration.md)：后台同版本日志共用受保护View，失败保留记录与资源引用。
 - [批内确认与统计](docs/batch-accounting.md)：预计算durable路由需求，聚合已确认记录的written计数，错误保留准确前缀。
 - [就绪批次合并](docs/coalesced-delivery.md)：在原64条服务量子的预算内合并最多256条就绪记录，共享输出屏障，逐条校验和回收。
+- [schema消费者融合](docs/schema.md)：至少64条就绪记录、单JSON/text/logfmt目标、无模板参数时直接读取已验证定义和值；短窗口与其他形状保留原路径。
 - [路由过滤性能](docs/route-filter-performance.md)：配置期派生level掩码，保留scope覆盖和旧版本决策。
 - [异步存储选择](docs/async-storage.md)：普通内存异步与mmap异步，共同接口、明确恢复区别。
 - [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四个64条服务量子，可按负载选择一到四个。
@@ -111,6 +112,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 此前源码`4447fe6`另完成Foundation（真实spdlog前端＋Rust后台）、独立spdlog和kron的140项完整文件流程同轮对照，1414万条JSON逐条核对。kron本轮中位高于独立spdlog，仍未全面超过Foundation：P4 Memory约落后9%，P4 Mmap稳态接近，SPSC Mmap完整生命周期初始化成本较高；波动与未资格范围见[该轮完整报告](bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
 
 当前就绪批次合并与基线 `45f5ec1` 完成240项完整文件试验、2424万条物理JSON逐条核对，保持系统时钟、完整字段、原队列/文件预算和最终written flush/关闭/清理。Portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组仍inconclusive。独立io_uring P4 Memory中位提升14.2%/23.6%，共享Memory的p99也出现负向，不能声称所有尾延迟改善。完整ReleaseSafe门禁93/93步骤、540/540测试和九目标对象编译通过；原始慢值、未完成测量、额外消费者栈与恢复证据见[批次合并报告](bench/evidence/2026-11-01-coalesced-delivery/README.md)。两种后端的独立捕获窗口不提供新的后端或Foundation排名；后续候选优先级见[业界实现与优化方向](docs/industry-performance-lessons.md)。
+
+后续schema融合以 `366adc3` 为基线完成最终240项完整文件与40项完整PMU对照，另20项百万条P1复查，共5630万条物理JSON核对。Prepared Memory P4共享/SPSC吞吐中位提升6.35%/8.03%，通过本轮重复性门限且中位区间不重叠；schema用户态指令减少约1.8%–1.9%。Mmap多数组与调用尾部仍inconclusive，P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠，原慢值保留。最终完整ReleaseSafe门禁93/93步骤、545/545测试与九目标编译通过。原始候选、否决的指针版本、中断捕获、额外消费者栈和最终资格边界见[schema完整对照](bench/evidence/2026-11-01-consumer-post-coalescing/README.md)；不据此宣布新的跨库排名。
 
 ## 实施顺序
 

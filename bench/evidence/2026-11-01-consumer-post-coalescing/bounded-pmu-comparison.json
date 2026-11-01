@@ -1,0 +1,2036 @@
+{
+  "trials": 40,
+  "records_verified": 12040000,
+  "pairs": 5,
+  "affinity": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+  ],
+  "noise_limit": 0.1,
+  "source_sha256": {
+    "src/adapters/std_log.zig": "cf17a45bda6740140ace70fbdf9e06faa821ad884d2695ac8acf9a3891549192",
+    "src/archive/compression.zig": "31b74352644d917661312d53db7f8c14eb6da0fb26098b60751a5468bde0940a",
+    "src/archive/format.zig": "5a0f8857a696f24869213f03e6ccdd7f295c42fbd0e5af076337a138f68492ae",
+    "src/archive/reader.zig": "dab050cd90ae23564bb74ad2d258926d448ced49bbed9afad739fc4d448787e1",
+    "src/archive/writer.zig": "93df3b815942c3f1b1cf8831a278344707a4d34802200ea869cf25f7739efa03",
+    "src/backend/buffer_pool.zig": "3d3ed598a08c73b8d96efe4de7f526629bff6247e240af27c5fcf3c49eb04611",
+    "src/backend/directory_sync.zig": "88769ee2036a4da3a10f02fc2a58d52be775997776948064650dc38f492df05d",
+    "src/backend/interface.zig": "7faed7e010e0db8ff397e92924d169621279db208148be871b32ad15051917b4",
+    "src/backend/linux_uring.zig": "bcc06a1448e708e724449e05479c26fddf61202740f53846b2244957061eca20",
+    "src/backend/portable.zig": "9f704bb6374b81d99b66c3bda90fc37637578fe31bbf2b46b528b6f9ce50cd2a",
+    "src/config/cache.zig": "574e0cf826685949faf20902bf69ff74d5285fda164bf28f592a1db303a4d4f4",
+    "src/config/document.zig": "1df3180b1ce29af8b982a3d1a2d02377665761c4b91a78a8266f4fe7f9fdc5f5",
+    "src/config/env.zig": "bc8d7db7fbabb63df09d108865d154f5c31a7a9a55f77d49c410ada9dcaab59a",
+    "src/config/filter.zig": "2287da85c58e93037831bb1edb9382cbb06770ff10e754298c4db7c12f304b08",
+    "src/config/reload.zig": "25aa291eeb96bf6ec719205fc469d8ed5ae41eba1f90528cbff78fcf75f1d0fd",
+    "src/config/route_selection.zig": "de6febf54bc13b192170f4eb182dd4eaef3982ee581186cf52af8055577a168f",
+    "src/config/routes.zig": "adb8459974a3e9e45e26554933541953e4a1f9dc3ec21b76ee3889674e5e6626",
+    "src/config/routes_tests.zig": "b35153a4d786cc50838698778984ababdcb06ca61be457af89207c8f3dcbe051",
+    "src/config/sources.zig": "3a370ec9ee9397c1f268d3c9c47e2b33e06e33f450faa58fa6462e2e190546f8",
+    "src/core/adapter.zig": "0dbe593ce14df334f560060ea0735a891bbb6e267f34a056b7228e957de78cf8",
+    "src/core/admission.zig": "39b861e28f336c7b0ac15ed07c568526543943bb55a575e6e459b226c0f8a15e",
+    "src/core/codec.zig": "15f9c03bc46fa3294a3bbcb1ee91521613f3eda77c8d21e29f65ee13b04a8606",
+    "src/core/context.zig": "dad1aca3e9c49e06181955b594940e047a33589ccd6c8e0ce21e4d0d4083c941",
+    "src/core/control.zig": "9b87de4f575f65266eccb90d0e2ca289bddcf52b55b7f6d6a95a100ce085394a",
+    "src/core/delivery.zig": "443f765955b0ee0902fa26d1a474d59aa254761a790f6a509f9a527a98d960a4",
+    "src/core/delivery_batch.zig": "9e1b0c6f78d3343645ae905804fd9d9d92eef91b09e30ae4899ba5f39f3403e7",
+    "src/core/diagnostics.zig": "d54bb1da65f0c9bb9cac8d58e5809a1bb40699792a3bc8d5d3801c6f945072a8",
+    "src/core/event.zig": "6e71c23795d3e238c81586433aca5b9035683c99dffd486fc01da8732bacdd06",
+    "src/core/field.zig": "cfde94589e787e8663b8810068680ce85190b53e98c270f0091a69300fa6b643",
+    "src/core/level.zig": "e67faec846af9c19355533513ecddf05d9185cc8c69cdf3de2b4f71fdf6e00b4",
+    "src/core/logger.zig": "acfe2ca49b5da9731a2d0d993c6b7da7f2c1cbe69c0385ab07c227b15ecd5d2e",
+    "src/core/prepared.zig": "7882fd2e59b8e1c5af2a4b097277df3662f5c89ee5b2df95e674ee6c3e86d9b7",
+    "src/core/runtime.zig": "e5171f47b3ec22a9fe02a27fd68536ba06787caaa81bdefa3f51f1fb02fc46a3",
+    "src/core/runtime_coalesced_tests.zig": "ac585c01409f08fb883caf1b0e166508d06669530f8f72b17695fd1b2290f8c8",
+    "src/core/runtime_configuration.zig": "1b4cf239adf7477fbe0ec88189e732504960b11d16014545fd597466b5bd3bc6",
+    "src/core/runtime_delivery_tests.zig": "659454d6aa909dee59de732cb070a03587aca048ede30c49de152360bf0a990e",
+    "src/core/runtime_init.zig": "be4aef4137e7582de7df221c2fb0e2f191e6312b709faf443dcb973aae6026b4",
+    "src/core/runtime_redaction.zig": "ec369eba6c601f69c2f0a03c3cba86228135127c1cc42da0dcac69d280991131",
+    "src/core/runtime_tests.zig": "61aafe3bce21a228b420d9f18f4f775195b9d636246aa680ae419151e7592764",
+    "src/core/runtime_types.zig": "0f00a6997f846a01e448cb3788760b98e5cb1e7f93cd0e1c790c6019943fd6ea",
+    "src/core/schema_codec.zig": "9f469df423d788c14bd41ffe3204b9696723699a7c44f5aae5d0608ba750fe68",
+    "src/core/static_owner.zig": "1bc13b94eea4b4fbd253cf0fd3c1ad16dd35b4bb814ebe036fdbdeb82183d766",
+    "src/core/thread_registry.zig": "e6315a6c86a45418287fef17b87ce961a944184c27e532521579517b28d84d5c",
+    "src/core/wire_size.zig": "d639b3493a3377fd01ddb52fc9c0012a99a35b40ec6aef6bd81f85f1124777a8",
+    "src/core/wire_write.zig": "bf2efa9b7342d2ea541f25c6d5af30b6c8e101259d490accfc375ce5a519815c",
+    "src/encoder/common.zig": "c417c42fadd549ff4f20aa899cf679ab73cd2da62dc2c9705f5fc38c73a181dc",
+    "src/encoder/decimal.zig": "c4bb4563286373a03b509f4cd996eb7fa580698de074bd754e9ac2203cd33447",
+    "src/encoder/escaping.zig": "1c409f6e5843f64d19959cc93502d843e8ebae30c549843b79b806cf3927159c",
+    "src/encoder/json.zig": "16741a7f852140ccad1c0203ce1da8247292001c8a9d0a72189b03a2d35f1789",
+    "src/encoder/logfmt.zig": "8e95b18ee7bc93c2a618bd119ed764b751d3c655bf0f01be7d0dc245576c5d9d",
+    "src/encoder/root.zig": "be90f444b6a3d3a1eda6a59db3f1d89046cb4359e79b7dfe3ac60be048d099f7",
+    "src/encoder/text.zig": "97f378ac1a07ee426467919e1aa65d02f2721a19e3a31ccdf3e5c1c6a8ae7c6b",
+    "src/encoder/wire_json.zig": "53e7ba4d61bb3299e37158310aacd6a5c4847746b8b4009cc7357f118c790d45",
+    "src/encoder/wire_reference_tests.zig": "008f2c097316905199e2a80a32de7a312558df1669a80b261772af4a5bc870dd",
+    "src/journal/format.zig": "42f51820eb57462968cd68ccce6dbf9f4c590ea96b278d5698c751c750992f1d",
+    "src/journal/journal.zig": "2e4a5bb3aa013b3ed1ceed71fc8076a964b6aa77ca257f0d5b51b7a506f4a874",
+    "src/journal/schema.zig": "e477a9fef5071da5686cc35563fe314d470b10ee2fb814e6d056aae0293a1672",
+    "src/journal/schema_journal_tests.zig": "bd177d3cdcd2a7c2b417656e3ef8bf80ae1c837475be5151f693f80b16ab6c7f",
+    "src/journal/spsc.zig": "696e24597fcfb640af51075e1352c89b48b63994aa24e4b78190912956b4da9d",
+    "src/journal/spsc_tests.zig": "5ef785f81c3e53f2951c875d782ffe48ef34870ce70550d1fc6f9a49afc60d04",
+    "src/journal/storage.zig": "9e5cda5a5b6661ea4fa9d01f36447ec14608262e1c6d223f605b51369e5e0b31",
+    "src/journal/tests.zig": "bdbc3d9554d2d6bfc8d78d3e9d1590ed169502c5003662519126cda945ab1bcb",
+    "src/local_checksum_check.zig": "4d0d94e20a3b8a215cd9bd6d7f6134e9b97d179d01893aa0b2b1ee30ce471264",
+    "src/local_fault_check.zig": "3963436f3b17f6a15191d395643044dd19072b4e0d679eddae99cdb2bd95427b",
+    "src/pipeline/flight_recorder.zig": "442e1a7aaa69a72157119debbab15a0cb03df80932546dcb20f3f12985b2210e",
+    "src/pipeline/predicate.zig": "59f3158ebf02a07c536aec1775605b3c2083c06e0d0d805087ce03d31c319578",
+    "src/pipeline/redact.zig": "e3ad1fb833f175c0ec2e392ccad4b2f66a60cd3a2928d8bf191e3ab237e8ad8c",
+    "src/pipeline/regex.zig": "501b64b9dd6ce3bb487dde64956816d523b3f54ffce3178f2024a83cffc6d03a",
+    "src/pipeline/sampler.zig": "97c8324b36d43f2ef02b2c99ec7518350112ec3675d9800ac8da7ae4a5b78928",
+    "src/platform/capabilities.zig": "1f9a139821abea21255c564bd98f0b28ab05ae6aa0291980a42e04b449db52d0",
+    "src/platform/clock.zig": "a3bb8ddc0dcc65692de58099fadd8236ce012f3b7b1f0ea491a3d7177232f186",
+    "src/platform/crc32.zig": "288d2fd195a86d18aa709df082063b73aefd0d14a8b97791cac846993bdde442",
+    "src/platform/crc32_pclmul.zig": "b4abef427bca84b205c1e3ca26e2ac103244529758a92cf9913a242653f9ddde",
+    "src/platform/mapping/darwin.zig": "4e964552e8e9910f565d2b230231bb4eec02a1fbb6b3bf00f5e8890e886ad97c",
+    "src/platform/mapping/linux.zig": "73cd84302e553a1ed757d2f932e7c7a15cd86d9715148a26120462b793f270a2",
+    "src/platform/mapping/unsupported.zig": "9f4c993c2680a6a9b01ffb6f43cf7d234d81344ee83c500e40dace845dc8428f",
+    "src/platform/mapping/windows.zig": "ab40703f13ff158e6f8ac236e34b98d0554d0dd25c72e46f096379cfb573beb2",
+    "src/platform/mapping.zig": "b6a42c1725a2cabf3e58e9ce21c9fac5e2d985a24dc7bc0ba6396ea8d7e881a4",
+    "src/platform/static_clock.zig": "04b8007d88d15ce21ba01feaf774a81c5b3d4c181fc6566c3001aef4801493cb",
+    "src/platform/tsc_clock.zig": "6db3acedd286e439f357f6e1943067e4c2b86218786f2933726e1ecb9c9f4d6f",
+    "src/platform_check.zig": "8f31058f5ebe3dad16f1a7a82c98c214bf91b3c63d9ef3904842f5089b7aaf13",
+    "src/root.zig": "dc227b79c54c419399229df551e31ba3560a1647e8e1f9f515142da70035c999",
+    "src/sink/compressed_archive.zig": "8c2a653f60623f5ed078abbfa8bd28428a9a01df204acdc3be67cdfe858fc053",
+    "src/sink/file.zig": "2208dc4bcbde416b4e45d9e48f4cfba9b9f328c81fced8a50f328416e28a2655",
+    "src/sink/interface.zig": "c0c63daaff9b4a02906ecd76d63c7446b330d32a1fedcd9fe4105e4ea0e99aae",
+    "src/sink/memory.zig": "f2af11aad5327bcec82079834403fc9e7e6c4dff4ab012d4e9803e57713e6bd4",
+    "src/sink/multi.zig": "8cd615fadec6515d7eddc6c815cb11c90c377ae210dbd09da213c47a83f6f22a",
+    "src/sink/rolling_file.zig": "31880b94aa583dc73f1cdaaf3b1e932a3fbd2160e8ee8b50eb275fe91cd9e60e",
+    "src/sink/rolling_file_reliability_tests.zig": "47294ad43a8874addb9978136ba3f41bd1a15e841e04213943974cfc8d0d905e",
+    "src/sink/rolling_file_time_tests.zig": "1bf0b42dde833dd95a83908b121b42f17a2338f13dd6fefa08b037e3779ef3c5",
+    "src/sink/writer.zig": "b05ac8ded91874ee93266e2a95bfda57404b91f68c8d052f8f7ee4020b2892c8",
+    "src/submit/callsite.zig": "531f450ca052f6277fe89da84b234f579d5eac07c6cb5378dcd75c254ae83189",
+    "src/submit/format.zig": "5bd69796e802596314ce6e3017f64ffc1f919a625a9082afceaf067d1f2f3ed2",
+    "src/submit/schema_site.zig": "a05035798bfe257afa2a06e3434a8de33347dba59165f2f8424e6b9932f37c9e",
+    "src/telemetry/span.zig": "e251876f39cd0c6e6cfa9663ec8e24a9264c229a7a5f52431d589c4cff26edd3",
+    "src/telemetry/trace_context.zig": "f1f03e333568f3c532af84d3aaed6c03e599c7ad8da2e736d513edfa1420ea03",
+    "src/time/civil.zig": "e04600a8475be3255ad0f234f22fb02dc8de173e4f47ab43383d8cd2dd17d3a1",
+    "src/time/rfc3339.zig": "d26317ffd2562cdd27bd4f29fb6541e82a29e954527251abceac1aefa0e52f7f",
+    "src/time/root.zig": "3a2debfaa0219dbc51630ab45ec27d810c41aafe797d31fbe4a613940998e65b",
+    "src/time/types.zig": "26d246ec8594890b3d1fb5b5a20adc399a5a903fbc3edd9fbf5f41b852debb11",
+    "build.zig": "70269c9067a0ad579a0d9966bacdb422ce603c7c9c4f6301d57011baab541011",
+    "build.zig.zon": "0dc4af412d66d73b654d05a19104ff35e107c95199bc9979c892f7ae8b244a1e",
+    "bench/cpp_reference/kron_reference.zig": "547236ca1ada844e2271c7b8b372a8faf533f26a8d423b1bcee2fba5495771c4",
+    "bench/cpp_reference/run.py": "27b5da9418aaf02c0bf4c2b9c9c6b2f9d8f28790e875d530e95ac7ad6581ff97",
+    "bench/regression.py": "9413e3710d801f5b03fcf0c58cf3aa72e13dc8bc49d3ea1cff3610e8591659b5"
+  },
+  "binary_sha256": {
+    "before": "d2e6fdbadd908bae0cdfd928e98d57d5058d16633cde25427271dda4052429be",
+    "after": "202b4334b1caace7bc420efc3048f7f9d83c722ce37dc3ffecfe9c77a2fba1e9"
+  },
+  "assessments": [
+    {
+      "mode": "spsc",
+      "storage": "memory",
+      "producers": 4,
+      "schema": true,
+      "phase": "batch",
+      "metrics": {
+        "written_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 2074191.5501377212,
+            "mean": 2080672.6206525532,
+            "q1": 2066111.9886003511,
+            "q3": 2092722.8868113298,
+            "min": 2048595.9322956253,
+            "max": 2121740.7454177383,
+            "cv": 0.013411472242900513,
+            "relative_spread": 0.03526425180801473,
+            "relative_iqr": 0.012829527826979964,
+            "median_bootstrap_ci95": [
+              2048595.9322956253,
+              2121740.7454177383
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2267715.2783688535,
+            "mean": 2262098.545487952,
+            "q1": 2258498.152631323,
+            "q3": 2274903.752424166,
+            "min": 2226386.025859533,
+            "max": 2282989.518155885,
+            "cv": 0.009685969497151836,
+            "relative_spread": 0.02496058161987003,
+            "relative_iqr": 0.00723441780779623,
+            "median_bootstrap_ci95": [
+              2226386.025859533,
+              2282989.518155885
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.093300798674203,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "producer_wall_ns": {
+          "before": {
+            "trials": 5,
+            "median": 144250727,
+            "mean": 143831262.8,
+            "q1": 142932555.0,
+            "q3": 144784390.0,
+            "min": 141109803,
+            "max": 146078839,
+            "cv": 0.013168701638726181,
+            "relative_spread": 0.034447216338812627,
+            "relative_iqr": 0.012837612943191613,
+            "median_bootstrap_ci95": [
+              141109803,
+              146078839
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 131980934,
+            "mean": 132294834.6,
+            "q1": 131454093.0,
+            "q3": 132520124.0,
+            "min": 131164629,
+            "max": 134354393,
+            "cv": 0.009542820988276463,
+            "relative_spread": 0.024168369652543903,
+            "relative_iqr": 0.0080771590842053,
+            "median_bootstrap_ci95": [
+              131164629,
+              134354393
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9149412051143423,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "flush_ns": {
+          "before": {
+            "trials": 5,
+            "median": 244146,
+            "mean": 221730.6,
+            "q1": 219117.0,
+            "q3": 250801.0,
+            "min": 130526,
+            "max": 264063,
+            "cv": 0.24144896482969827,
+            "relative_spread": 0.5469555102274868,
+            "relative_iqr": 0.12977480687785178,
+            "median_bootstrap_ci95": [
+              130526,
+              264063
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 191131,
+            "mean": 193937.6,
+            "q1": 186922.0,
+            "q3": 228546.0,
+            "min": 118147,
+            "max": 244942,
+            "cv": 0.2526125559071842,
+            "relative_spread": 0.6633931701293877,
+            "relative_iqr": 0.21777733596329218,
+            "median_bootstrap_ci95": [
+              118147,
+              244942
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.78285534065682,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "shutdown_ns": {
+          "before": {
+            "trials": 5,
+            "median": 34321,
+            "mean": 34060.4,
+            "q1": 31305.0,
+            "q3": 34978.0,
+            "min": 25553,
+            "max": 44145,
+            "cv": 0.19835514237023483,
+            "relative_spread": 0.5417091576585764,
+            "relative_iqr": 0.10701902625214883,
+            "median_bootstrap_ci95": [
+              25553,
+              44145
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 27804,
+            "mean": 31010.6,
+            "q1": 26941.0,
+            "q3": 28533.0,
+            "min": 26876,
+            "max": 44899,
+            "cv": 0.2513226870918749,
+            "relative_spread": 0.6482160840166883,
+            "relative_iqr": 0.05725794849661919,
+            "median_bootstrap_ci95": [
+              26876,
+              44899
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.810116255353865,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "cleanup_ns": {
+          "before": {
+            "trials": 5,
+            "median": 116830,
+            "mean": 117732.2,
+            "q1": 101832.0,
+            "q3": 118685.0,
+            "min": 93225,
+            "max": 158089,
+            "cv": 0.21165772921469608,
+            "relative_spread": 0.5551998630488745,
+            "relative_iqr": 0.14425233244885732,
+            "median_bootstrap_ci95": [
+              93225,
+              158089
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 97008,
+            "mean": 110468.2,
+            "q1": 95339.0,
+            "q3": 120383.0,
+            "min": 93438,
+            "max": 146173,
+            "cv": 0.20608995489892856,
+            "relative_spread": 0.5436149595909616,
+            "relative_iqr": 0.258164275111331,
+            "median_bootstrap_ci95": [
+              93438,
+              146173
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.8303346743131045,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "init_ns": {
+          "before": {
+            "trials": 5,
+            "median": 939554,
+            "mean": 1087455,
+            "q1": 923996.0,
+            "q3": 1260587.0,
+            "min": 914442,
+            "max": 1398696,
+            "cv": 0.2083675399315573,
+            "relative_spread": 0.5154083746117839,
+            "relative_iqr": 0.3582455079750605,
+            "median_bootstrap_ci95": [
+              914442,
+              1398696
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 973084,
+            "mean": 1150771,
+            "q1": 903194.0,
+            "q3": 1012371.0,
+            "min": 901893,
+            "max": 1963313,
+            "cv": 0.3968374387538581,
+            "relative_spread": 1.0907794188374282,
+            "relative_iqr": 0.11219689153248846,
+            "median_bootstrap_ci95": [
+              901893,
+              1963313
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0356871451773926,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "preparation_ns": {
+          "before": {
+            "trials": 5,
+            "median": 854258,
+            "mean": 824434,
+            "q1": 745696.0,
+            "q3": 879980.0,
+            "min": 711889,
+            "max": 930347,
+            "cv": 0.11192484487656179,
+            "relative_spread": 0.25572836309405356,
+            "relative_iqr": 0.15719372835841164,
+            "median_bootstrap_ci95": [
+              711889,
+              930347
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 767046,
+            "mean": 814594.8,
+            "q1": 718382.0,
+            "q3": 774933.0,
+            "min": 690228,
+            "max": 1122385,
+            "cv": 0.21552475217889236,
+            "relative_spread": 0.5634042808384373,
+            "relative_iqr": 0.07372569572098675,
+            "median_bootstrap_ci95": [
+              690228,
+              1122385
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.8979090626016965,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "total_ns": {
+          "before": {
+            "trials": 5,
+            "median": 144634665,
+            "mean": 144204786,
+            "q1": 143353906.0,
+            "q3": 145200261.0,
+            "min": 141393335,
+            "max": 146441763,
+            "cv": 0.013342579352229926,
+            "relative_spread": 0.03490468899692892,
+            "relative_iqr": 0.012765646465181774,
+            "median_bootstrap_ci95": [
+              141393335,
+              146441763
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 132291740,
+            "mean": 132630251,
+            "q1": 131873711.0,
+            "q3": 132831634.0,
+            "min": 131406648,
+            "max": 134747522,
+            "cv": 0.009763577899884196,
+            "relative_spread": 0.025253836709684216,
+            "relative_iqr": 0.007240988742003091,
+            "median_bootstrap_ci95": [
+              131406648,
+              134747522
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.914661364203388,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_ns": {
+          "before": {
+            "trials": 5,
+            "median": 146319915,
+            "mean": 146116675,
+            "q1": 145494473.0,
+            "q3": 147529304.0,
+            "min": 143171589,
+            "max": 148068094,
+            "cv": 0.013211250808586796,
+            "relative_spread": 0.03346437837938875,
+            "relative_iqr": 0.01390672623067065,
+            "median_bootstrap_ci95": [
+              143171589,
+              148068094
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 134425056,
+            "mean": 134595616.8,
+            "q1": 133968566.0,
+            "q3": 134959409.0,
+            "min": 133186065,
+            "max": 136438988,
+            "cv": 0.009053434768560884,
+            "relative_spread": 0.024198784786074404,
+            "relative_iqr": 0.007370969590669168,
+            "median_bootstrap_ci95": [
+              133186065,
+              136438988
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9187064932343625,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 2057136.2415020538,
+            "mean": 2060287.3747378362,
+            "q1": 2040272.622719077,
+            "q3": 2068807.1085696842,
+            "min": 2032848.4811859604,
+            "max": 2102372.419712405,
+            "cv": 0.013308212498780714,
+            "relative_spread": 0.03379646769320476,
+            "relative_iqr": 0.013870975229998538,
+            "median_bootstrap_ci95": [
+              2032848.4811859604,
+              2102372.419712405
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2239165.888835486,
+            "mean": 2236474.4604721847,
+            "q1": 2230300.2230841126,
+            "q3": 2246795.714749981,
+            "min": 2206114.2816450675,
+            "max": 2259996.1940462766,
+            "cv": 0.009017522832392464,
+            "relative_spread": 0.024063385687440635,
+            "relative_iqr": 0.00736680196322895,
+            "median_bootstrap_ci95": [
+              2206114.2816450675,
+              2259996.1940462766
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0884869186887303,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "instructions": {
+          "before": {
+            "trials": 5,
+            "median": 3641491251,
+            "mean": 3641287936.4,
+            "q1": 3641198711.0,
+            "q3": 3641492557.0,
+            "min": 3640571992,
+            "max": 3641685171,
+            "cv": 0.00011982878124246433,
+            "relative_spread": 0.0003056931688890662,
+            "relative_iqr": 8.069386406442859e-05,
+            "median_bootstrap_ci95": [
+              3640571992,
+              3641685171
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 3575783712,
+            "mean": 3574869930.8,
+            "q1": 3575302769.0,
+            "q3": 3575958942.0,
+            "min": 3571312905,
+            "max": 3575991326,
+            "cv": 0.0005615244935238766,
+            "relative_spread": 0.0013083624113784207,
+            "relative_iqr": 0.00018350466718608958,
+            "median_bootstrap_ci95": [
+              3571312905,
+              3575991326
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9819558706939209,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "cycles": {
+          "before": {
+            "trials": 5,
+            "median": 1009721098,
+            "mean": 1029737097.6,
+            "q1": 986220701.0,
+            "q3": 1056874452.0,
+            "min": 985318124,
+            "max": 1110551113,
+            "cv": 0.05214910503152767,
+            "relative_spread": 0.1240273073901839,
+            "relative_iqr": 0.06997353144343231,
+            "median_bootstrap_ci95": [
+              985318124,
+              1110551113
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 961195715,
+            "mean": 996255302,
+            "q1": 956305290.0,
+            "q3": 1054053459.0,
+            "min": 951626635,
+            "max": 1058095411,
+            "cv": 0.05493624598480818,
+            "relative_spread": 0.110767010649855,
+            "relative_iqr": 0.10169434536024748,
+            "median_bootstrap_ci95": [
+              951626635,
+              1058095411
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9519417955154978,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        }
+      }
+    },
+    {
+      "mode": "spsc",
+      "storage": "mmap",
+      "producers": 4,
+      "schema": true,
+      "phase": "batch",
+      "metrics": {
+        "written_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 2095675.71357531,
+            "mean": 2095896.374053894,
+            "q1": 2090283.482364623,
+            "q3": 2103460.8978363415,
+            "min": 2081792.3299317749,
+            "max": 2108269.4465614203,
+            "cv": 0.00500860949120031,
+            "relative_spread": 0.012634166850401867,
+            "relative_iqr": 0.006287907707455937,
+            "median_bootstrap_ci95": [
+              2081792.3299317749,
+              2108269.4465614203
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2231802.341229098,
+            "mean": 2235327.5165854446,
+            "q1": 2230831.247877922,
+            "q3": 2257740.375013837,
+            "min": 2194479.8838722208,
+            "max": 2261783.7349341456,
+            "cv": 0.012052725779462224,
+            "relative_spread": 0.030156725718308575,
+            "relative_iqr": 0.012057128285426847,
+            "median_bootstrap_ci95": [
+              2194479.8838722208,
+              2261783.7349341456
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.064955959918794,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "producer_wall_ns": {
+          "before": {
+            "trials": 5,
+            "median": 142784149,
+            "mean": 142819973.2,
+            "q1": 142274095.0,
+            "q3": 143395350.0,
+            "min": 141888960,
+            "max": 143757312,
+            "cv": 0.00539607747665592,
+            "relative_spread": 0.013085149948962472,
+            "relative_iqr": 0.007852797441822481,
+            "median_bootstrap_ci95": [
+              141888960,
+              143757312
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 134029341,
+            "mean": 133950596,
+            "q1": 132607301.0,
+            "q3": 134151228.0,
+            "min": 132450558,
+            "max": 136514552,
+            "cv": 0.012195703318551063,
+            "relative_spread": 0.030321674117609814,
+            "relative_iqr": 0.011519320982112417,
+            "median_bootstrap_ci95": [
+              132450558,
+              136514552
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9386850146790454,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "flush_ns": {
+          "before": {
+            "trials": 5,
+            "median": 219499,
+            "mean": 180820.2,
+            "q1": 162308.0,
+            "q3": 235069.0,
+            "min": 3761,
+            "max": 283464,
+            "cv": 0.5973513247073023,
+            "relative_spread": 1.2742791538913616,
+            "relative_iqr": 0.33148670381186246,
+            "median_bootstrap_ci95": [
+              3761,
+              283464
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 126603,
+            "mean": 117983.6,
+            "q1": 3399.0,
+            "q3": 128455.0,
+            "min": 3141,
+            "max": 328320,
+            "cv": 1.1271781178511067,
+            "relative_spread": 2.5684936375915264,
+            "relative_iqr": 0.987780700299361,
+            "median_bootstrap_ci95": [
+              3141,
+              328320
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.5767816709871115,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "shutdown_ns": {
+          "before": {
+            "trials": 5,
+            "median": 27507,
+            "mean": 30507.8,
+            "q1": 27263.0,
+            "q3": 28683.0,
+            "min": 24786,
+            "max": 44300,
+            "cv": 0.2569650625835748,
+            "relative_spread": 0.7094194205111426,
+            "relative_iqr": 0.0516232231795543,
+            "median_bootstrap_ci95": [
+              24786,
+              44300
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 38347,
+            "mean": 56741.6,
+            "q1": 31492.0,
+            "q3": 89216.0,
+            "min": 31313,
+            "max": 93340,
+            "cv": 0.5584635654839158,
+            "relative_spread": 1.6175189714971183,
+            "relative_iqr": 1.5053068036613033,
+            "median_bootstrap_ci95": [
+              31313,
+              93340
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.3940815065256116,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "cleanup_ns": {
+          "before": {
+            "trials": 5,
+            "median": 101238,
+            "mean": 108421.2,
+            "q1": 97306.0,
+            "q3": 104018.0,
+            "min": 96871,
+            "max": 142673,
+            "cv": 0.17867530461764594,
+            "relative_spread": 0.45241905213457395,
+            "relative_iqr": 0.06629921570951619,
+            "median_bootstrap_ci95": [
+              96871,
+              142673
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 95620,
+            "mean": 98893.2,
+            "q1": 95503.0,
+            "q3": 102114.0,
+            "min": 89867,
+            "max": 111362,
+            "cv": 0.08300464222859616,
+            "relative_spread": 0.2247960677682493,
+            "relative_iqr": 0.0691382555950638,
+            "median_bootstrap_ci95": [
+              89867,
+              111362
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9445070032991565,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "init_ns": {
+          "before": {
+            "trials": 5,
+            "median": 32015188,
+            "mean": 148425254.2,
+            "q1": 31852291.0,
+            "q3": 36264692.0,
+            "min": 15776964,
+            "max": 626217136,
+            "cv": 1.8002889611944788,
+            "relative_spread": 19.067205602540895,
+            "relative_iqr": 0.13782211742751596,
+            "median_bootstrap_ci95": [
+              15776964,
+              626217136
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 1236656236,
+            "mean": 1292392211.4,
+            "q1": 810159956.0,
+            "q3": 1687314210.0,
+            "min": 756496439,
+            "max": 1971334216,
+            "cv": 0.4130315317342551,
+            "relative_spread": 0.9823568924290776,
+            "relative_iqr": 0.7092951367286843,
+            "median_bootstrap_ci95": [
+              756496439,
+              1971334216
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 38.627173952562764,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": false
+        },
+        "preparation_ns": {
+          "before": {
+            "trials": 5,
+            "median": 14643848,
+            "mean": 39920214.4,
+            "q1": 11480065.0,
+            "q3": 17989296.0,
+            "min": 7447395,
+            "max": 148040468,
+            "cv": 1.5171872733480276,
+            "relative_spread": 9.600828484425678,
+            "relative_iqr": 0.44450277003694655,
+            "median_bootstrap_ci95": [
+              7447395,
+              148040468
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 11997944,
+            "mean": 11371443.2,
+            "q1": 6645346.0,
+            "q3": 14096017.0,
+            "min": 5801085,
+            "max": 18316824,
+            "cv": 0.4599395957436608,
+            "relative_spread": 1.0431569775621556,
+            "relative_iqr": 0.6209956472542295,
+            "median_bootstrap_ci95": [
+              5801085,
+              18316824
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.8193163436277131,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "total_ns": {
+          "before": {
+            "trials": 5,
+            "median": 143151919,
+            "mean": 143139722.4,
+            "q1": 142622095.0,
+            "q3": 143521203.0,
+            "min": 142296802,
+            "max": 144106593,
+            "cv": 0.005012271880928647,
+            "relative_spread": 0.012642450151157248,
+            "relative_iqr": 0.0062807959982709,
+            "median_bootstrap_ci95": [
+              142296802,
+              144106593
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 134420506,
+            "mean": 134224214.4,
+            "q1": 132876217.0,
+            "q3": 134479020.0,
+            "min": 132638676,
+            "max": 136706653,
+            "cv": 0.012126356397616387,
+            "relative_spread": 0.030263068642220406,
+            "relative_iqr": 0.011923798293096739,
+            "median_bootstrap_ci95": [
+              132638676,
+              136706653
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9390059661023475,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_ns": {
+          "before": {
+            "trials": 5,
+            "median": 193525687,
+            "mean": 331485191,
+            "q1": 193205342.0,
+            "q3": 306969351.0,
+            "min": 187438949,
+            "max": 776286626,
+            "cv": 0.7651918320492501,
+            "relative_spread": 3.042736528303863,
+            "relative_iqr": 0.5878496584280308,
+            "median_bootstrap_ci95": [
+              187438949,
+              776286626
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 1375333538,
+            "mean": 1437987869,
+            "q1": 965183433.0,
+            "q3": 1835830733.0,
+            "min": 897620805,
+            "max": 2115970836,
+            "cv": 0.3708280195141868,
+            "relative_spread": 0.8858578645378747,
+            "relative_iqr": 0.6330444768082141,
+            "median_bootstrap_ci95": [
+              897620805,
+              2115970836
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 7.106723450102002,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 1555349.083969406,
+            "mean": 1217486.1057108603,
+            "q1": 980553.9185571657,
+            "q3": 1557927.937624002,
+            "min": 387743.3797242824,
+            "max": 1605856.2086794458,
+            "cv": 0.43568984017417495,
+            "relative_spread": 0.7831764852726294,
+            "relative_iqr": 0.37121828470385587,
+            "median_bootstrap_ci95": [
+              387743.3797242824,
+              1605856.2086794458
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 218856.0023321412,
+            "mean": 234450.93768897737,
+            "q1": 163958.47100136764,
+            "q3": 311857.81863705075,
+            "min": 142251.4880068035,
+            "max": 335330.90846752375,
+            "cv": 0.3686556053180338,
+            "relative_spread": 0.8822212706220331,
+            "relative_iqr": 0.6757838307364651,
+            "median_bootstrap_ci95": [
+              142251.4880068035,
+              335330.90846752375
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.14071182128040274,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": false
+        },
+        "instructions": {
+          "before": {
+            "trials": 5,
+            "median": 3640067324,
+            "mean": 3640061177,
+            "q1": 3640012421.0,
+            "q3": 3640078156.0,
+            "min": 3639859662,
+            "max": 3640288322,
+            "cv": 4.231642725915316e-05,
+            "relative_spread": 0.00011776155819254293,
+            "relative_iqr": 1.8058731926904328e-05,
+            "median_bootstrap_ci95": [
+              3639859662,
+              3640288322
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 3574472594,
+            "mean": 3574435340.6,
+            "q1": 3574311316.0,
+            "q3": 3574473578.0,
+            "min": 3574271928,
+            "max": 3574647287,
+            "cv": 4.1931311353507465e-05,
+            "relative_spread": 0.0001050110163468776,
+            "relative_iqr": 4.539466892888423e-05,
+            "median_bootstrap_ci95": [
+              3574271928,
+              3574647287
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9819798030746533,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "cycles": {
+          "before": {
+            "trials": 5,
+            "median": 980438926,
+            "mean": 980310065.4,
+            "q1": 977461931.0,
+            "q3": 983145991.0,
+            "min": 974566288,
+            "max": 985937191,
+            "cv": 0.004585464635514923,
+            "relative_spread": 0.011597767794054314,
+            "relative_iqr": 0.005797464634732383,
+            "median_bootstrap_ci95": [
+              974566288,
+              985937191
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 966945062,
+            "mean": 987066897.4,
+            "q1": 958363528.0,
+            "q3": 1017486319.0,
+            "min": 953521532,
+            "max": 1039018046,
+            "cv": 0.03916636106654032,
+            "relative_spread": 0.0884192053508827,
+            "relative_iqr": 0.061143898783362315,
+            "median_bootstrap_ci95": [
+              953521532,
+              1039018046
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9862369152813503,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        }
+      }
+    },
+    {
+      "mode": "async",
+      "storage": "memory",
+      "producers": 4,
+      "schema": true,
+      "phase": "batch",
+      "metrics": {
+        "written_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 1962875.6743663845,
+            "mean": 1952478.8903984255,
+            "q1": 1961701.3000998814,
+            "q3": 1963875.852226381,
+            "min": 1896484.1787830302,
+            "max": 1977457.44651645,
+            "cv": 0.016362135402745042,
+            "relative_spread": 0.04125236701991221,
+            "relative_iqr": 0.0011078399691317872,
+            "median_bootstrap_ci95": [
+              1896484.1787830302,
+              1977457.44651645
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2071656.5848578229,
+            "mean": 2085912.9819422723,
+            "q1": 2062327.4257299695,
+            "q3": 2116833.5323027493,
+            "min": 2058938.3172415178,
+            "max": 2119809.0495793023,
+            "cv": 0.0143665617522835,
+            "relative_spread": 0.029382636476866664,
+            "relative_iqr": 0.026310396699518884,
+            "median_bootstrap_ci95": [
+              2058938.3172415178,
+              2119809.0495793023
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0554191546168876,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "producer_wall_ns": {
+          "before": {
+            "trials": 5,
+            "median": 152717135,
+            "mean": 153582400.8,
+            "q1": 152665238.0,
+            "q3": 152841445.0,
+            "min": 151590095,
+            "max": 158098091,
+            "cv": 0.016759013237541906,
+            "relative_spread": 0.04261470724945174,
+            "relative_iqr": 0.001153812897288834,
+            "median_bootstrap_ci95": [
+              151590095,
+              158098091
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 144723389,
+            "mean": 143742240.6,
+            "q1": 141624133.0,
+            "q3": 145341644.0,
+            "min": 141433667,
+            "max": 145588370,
+            "cv": 0.014233966954526946,
+            "relative_spread": 0.028707889089026238,
+            "relative_iqr": 0.025687009029342175,
+            "median_bootstrap_ci95": [
+              141433667,
+              145588370
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9476565219744333,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "flush_ns": {
+          "before": {
+            "trials": 5,
+            "median": 8748,
+            "mean": 11654.8,
+            "q1": 2670.0,
+            "q3": 10796.0,
+            "min": 2357,
+            "max": 33703,
+            "cv": 1.104214603671987,
+            "relative_spread": 3.5832190214906263,
+            "relative_iqr": 0.9288980338363054,
+            "median_bootstrap_ci95": [
+              2357,
+              33703
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2328,
+            "mean": 6753.6,
+            "q1": 2301.0,
+            "q3": 11412.0,
+            "min": 2278,
+            "max": 15449,
+            "cv": 0.926921477835927,
+            "relative_spread": 5.6576460481099655,
+            "relative_iqr": 3.913659793814433,
+            "median_bootstrap_ci95": [
+              2278,
+              15449
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.2661179698216735,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "shutdown_ns": {
+          "before": {
+            "trials": 5,
+            "median": 25207,
+            "mean": 26116.2,
+            "q1": 25098.0,
+            "q3": 27479.0,
+            "min": 25029,
+            "max": 27768,
+            "cv": 0.05288738293492855,
+            "relative_spread": 0.10866029277581624,
+            "relative_iqr": 0.0944578886817154,
+            "median_bootstrap_ci95": [
+              25029,
+              27768
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 26436,
+            "mean": 29564.4,
+            "q1": 24733.0,
+            "q3": 28036.0,
+            "min": 24454,
+            "max": 44163,
+            "cv": 0.2803049465678558,
+            "relative_spread": 0.7455363897715237,
+            "relative_iqr": 0.1249432591920109,
+            "median_bootstrap_ci95": [
+              24454,
+              44163
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0487562978537708,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "cleanup_ns": {
+          "before": {
+            "trials": 5,
+            "median": 59525,
+            "mean": 64234.2,
+            "q1": 59268.0,
+            "q3": 60132.0,
+            "min": 58399,
+            "max": 83847,
+            "cv": 0.1709613690044977,
+            "relative_spread": 0.42751784964300715,
+            "relative_iqr": 0.014514909701805963,
+            "median_bootstrap_ci95": [
+              58399,
+              83847
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 61475,
+            "mean": 67004.8,
+            "q1": 59130.0,
+            "q3": 65461.0,
+            "min": 58200,
+            "max": 90758,
+            "cv": 0.20254121070971504,
+            "relative_spread": 0.5296136640910939,
+            "relative_iqr": 0.10298495323302155,
+            "median_bootstrap_ci95": [
+              58200,
+              90758
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0327593448131038,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "init_ns": {
+          "before": {
+            "trials": 5,
+            "median": 583850,
+            "mean": 572513,
+            "q1": 559641.0,
+            "q3": 586627.0,
+            "min": 539718,
+            "max": 592729,
+            "cv": 0.038837926352744155,
+            "relative_spread": 0.09079558105677828,
+            "relative_iqr": 0.04622077588421684,
+            "median_bootstrap_ci95": [
+              539718,
+              592729
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 536184,
+            "mean": 545294.8,
+            "q1": 533580.0,
+            "q3": 548788.0,
+            "min": 533224,
+            "max": 574698,
+            "cv": 0.03232372889751307,
+            "relative_spread": 0.07735031257926384,
+            "relative_iqr": 0.02836339763961625,
+            "median_bootstrap_ci95": [
+              533224,
+              574698
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9183591675944164,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "preparation_ns": {
+          "before": {
+            "trials": 5,
+            "median": 832479,
+            "mean": 858461.4,
+            "q1": 798801.0,
+            "q3": 834526.0,
+            "min": 772002,
+            "max": 1054499,
+            "cv": 0.13116267181406996,
+            "relative_spread": 0.33934429577202546,
+            "relative_iqr": 0.0429139954281129,
+            "median_bootstrap_ci95": [
+              772002,
+              1054499
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 825169,
+            "mean": 942791,
+            "q1": 782292.0,
+            "q3": 1170293.0,
+            "min": 740564,
+            "max": 1195637,
+            "cv": 0.2348987496990445,
+            "relative_spread": 0.551490664336639,
+            "relative_iqr": 0.4702079210440528,
+            "median_bootstrap_ci95": [
+              740564,
+              1195637
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9912189977164589,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "total_ns": {
+          "before": {
+            "trials": 5,
+            "median": 152836985,
+            "mean": 153684406,
+            "q1": 152759147.0,
+            "q3": 152928481.0,
+            "min": 151709965,
+            "max": 158187452,
+            "cv": 0.01669150258841577,
+            "relative_spread": 0.042381672211081634,
+            "relative_iqr": 0.0011079386314771912,
+            "median_bootstrap_ci95": [
+              151709965,
+              158187452
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 144811646,
+            "mean": 143845563.4,
+            "q1": 141721111.0,
+            "q3": 145466717.0,
+            "min": 141522181,
+            "max": 145706162,
+            "cv": 0.014304151483122583,
+            "relative_spread": 0.028892572631900062,
+            "relative_iqr": 0.02586536444727657,
+            "median_bootstrap_ci95": [
+              141522181,
+              145706162
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9474908576611871,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_ns": {
+          "before": {
+            "trials": 5,
+            "median": 154229105,
+            "mean": 155115380.4,
+            "q1": 154177523.0,
+            "q3": 154287110.0,
+            "min": 153048484,
+            "max": 159834680,
+            "cv": 0.01732710689910207,
+            "relative_spread": 0.0440007481078231,
+            "relative_iqr": 0.0007105468192919877,
+            "median_bootstrap_ci95": [
+              153048484,
+              159834680
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 146211513,
+            "mean": 145333649.2,
+            "q1": 143052191.0,
+            "q3": 147198538.0,
+            "min": 142796325,
+            "max": 147409679,
+            "cv": 0.015463036446991667,
+            "relative_spread": 0.03155260420566197,
+            "relative_iqr": 0.028358553406119258,
+            "median_bootstrap_ci95": [
+              142796325,
+              147409679
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9480150520227684,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 1951642.0068702337,
+            "mean": 1940947.6172501754,
+            "q1": 1950908.2774316014,
+            "q3": 1952294.9528771455,
+            "min": 1883195.8120728242,
+            "max": 1966697.0369990729,
+            "cv": 0.016972022242995738,
+            "relative_spread": 0.04278511357733894,
+            "relative_iqr": 0.0007105173185772021,
+            "median_bootstrap_ci95": [
+              1883195.8120728242,
+              1966697.0369990729
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2058661.4133457467,
+            "mean": 2071494.3107480751,
+            "q1": 2044857.266177467,
+            "q3": 2104127.1573393797,
+            "min": 2041928.332263718,
+            "max": 2107897.384614065,
+            "cv": 0.015527625942562224,
+            "relative_spread": 0.03204463440305791,
+            "relative_iqr": 0.028790499874181284,
+            "median_bootstrap_ci95": [
+              2041928.332263718,
+              2107897.384614065
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.054835572353321,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "instructions": {
+          "before": {
+            "trials": 5,
+            "median": 3446467053,
+            "mean": 3446532831.6,
+            "q1": 3446414225.0,
+            "q3": 3446612728.0,
+            "min": 3446379961,
+            "max": 3446790191,
+            "cv": 4.906419226929507e-05,
+            "relative_spread": 0.00011902913728506778,
+            "relative_iqr": 5.759608229163594e-05,
+            "median_bootstrap_ci95": [
+              3446379961,
+              3446790191
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 3380770287,
+            "mean": 3380401298,
+            "q1": 3379549233.0,
+            "q3": 3380997501.0,
+            "min": 3379426876,
+            "max": 3381262593,
+            "cv": 0.00025227260677031704,
+            "relative_spread": 0.0005429877939530058,
+            "relative_iqr": 0.0004283840299854126,
+            "median_bootstrap_ci95": [
+              3379426876,
+              3381262593
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9809379387675231,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "cycles": {
+          "before": {
+            "trials": 5,
+            "median": 1920339494,
+            "mean": 1908031090.2,
+            "q1": 1885986051.0,
+            "q3": 1942975909.0,
+            "min": 1836512895,
+            "max": 1954341102,
+            "cv": 0.025022834476923803,
+            "relative_spread": 0.061358008502219556,
+            "relative_iqr": 0.029676970232639502,
+            "median_bootstrap_ci95": [
+              1836512895,
+              1954341102
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 1920702757,
+            "mean": 1910796106.8,
+            "q1": 1881138769.0,
+            "q3": 1923859295.0,
+            "min": 1879144809,
+            "max": 1949134904,
+            "cv": 0.01574384481791671,
+            "relative_spread": 0.036439836796673064,
+            "relative_iqr": 0.02224213290906418,
+            "median_bootstrap_ci95": [
+              1879144809,
+              1949134904
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0001891660308686,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        }
+      }
+    },
+    {
+      "mode": "spsc",
+      "storage": "memory",
+      "producers": 4,
+      "schema": false,
+      "phase": "batch",
+      "metrics": {
+        "written_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 2390766.2487113173,
+            "mean": 2386744.2675439445,
+            "q1": 2383140.747228062,
+            "q3": 2411461.11522167,
+            "min": 2332170.971547211,
+            "max": 2416182.255011462,
+            "cv": 0.01402948276348868,
+            "relative_spread": 0.035139898561616076,
+            "relative_iqr": 0.011845728543672348,
+            "median_bootstrap_ci95": [
+              2332170.971547211,
+              2416182.255011462
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2460212.480187191,
+            "mean": 2456943.2044364307,
+            "q1": 2452731.309670303,
+            "q3": 2460566.449462897,
+            "min": 2439739.1941572344,
+            "max": 2471466.588704528,
+            "cv": 0.004765938894685638,
+            "relative_spread": 0.01289620095939005,
+            "relative_iqr": 0.003184741096833218,
+            "median_bootstrap_ci95": [
+              2439739.1941572344,
+              2471466.588704528
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0290476877500288,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "producer_wall_ns": {
+          "before": {
+            "trials": 5,
+            "median": 125145967,
+            "mean": 125462584.6,
+            "q1": 124084862.0,
+            "q3": 125757771.0,
+            "min": 123817553,
+            "max": 128506770,
+            "cv": 0.014942672523833982,
+            "relative_spread": 0.037469980954320324,
+            "relative_iqr": 0.01336766209973031,
+            "median_bootstrap_ci95": [
+              123817553,
+              128506770
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 121802854,
+            "mean": 121862082.6,
+            "q1": 121657302.0,
+            "q3": 122159774.0,
+            "min": 121109025,
+            "max": 122581458,
+            "cv": 0.004529420984244788,
+            "relative_spread": 0.012088657627020792,
+            "relative_iqr": 0.004125289215308535,
+            "median_bootstrap_ci95": [
+              121109025,
+              122581458
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9732862905602064,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "flush_ns": {
+          "before": {
+            "trials": 5,
+            "median": 182858,
+            "mean": 128292.2,
+            "q1": 8338.0,
+            "q3": 219177.0,
+            "min": 3215,
+            "max": 227873,
+            "cv": 0.8817594468110798,
+            "relative_spread": 1.2285926784718197,
+            "relative_iqr": 1.1530203764669853,
+            "median_bootstrap_ci95": [
+              3215,
+              227873
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 139241,
+            "mean": 111734,
+            "q1": 28399.0,
+            "q3": 165172.0,
+            "min": 3358,
+            "max": 222500,
+            "cv": 0.832038458009923,
+            "relative_spread": 1.5738324200486926,
+            "relative_iqr": 0.9822753355692648,
+            "median_bootstrap_ci95": [
+              3358,
+              222500
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.7614706493563311,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "shutdown_ns": {
+          "before": {
+            "trials": 5,
+            "median": 27899,
+            "mean": 31536.2,
+            "q1": 26478.0,
+            "q3": 29446.0,
+            "min": 26386,
+            "max": 47472,
+            "cv": 0.2852355821827538,
+            "relative_spread": 0.7557976988422525,
+            "relative_iqr": 0.10638374135273666,
+            "median_bootstrap_ci95": [
+              26386,
+              47472
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 26997,
+            "mean": 28655,
+            "q1": 25371.0,
+            "q3": 27302.0,
+            "min": 25035,
+            "max": 38570,
+            "cv": 0.19646620846452922,
+            "relative_spread": 0.5013520020743045,
+            "relative_iqr": 0.07152646590361893,
+            "median_bootstrap_ci95": [
+              25035,
+              38570
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9676690920821535,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "cleanup_ns": {
+          "before": {
+            "trials": 5,
+            "median": 90915,
+            "mean": 91849.4,
+            "q1": 90712.0,
+            "q3": 91803.0,
+            "min": 89739,
+            "max": 96078,
+            "cv": 0.026946988289796883,
+            "relative_spread": 0.06972446790958588,
+            "relative_iqr": 0.01200021998570093,
+            "median_bootstrap_ci95": [
+              89739,
+              96078
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 99300,
+            "mean": 102695.2,
+            "q1": 97453.0,
+            "q3": 109440.0,
+            "min": 85848,
+            "max": 121435,
+            "cv": 0.13059840135533374,
+            "relative_spread": 0.35837865055387713,
+            "relative_iqr": 0.12071500503524672,
+            "median_bootstrap_ci95": [
+              85848,
+              121435
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0922290051146675,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "init_ns": {
+          "before": {
+            "trials": 5,
+            "median": 918987,
+            "mean": 912331,
+            "q1": 911334.0,
+            "q3": 931846.0,
+            "min": 862681,
+            "max": 936807,
+            "cv": 0.03237805326554385,
+            "relative_spread": 0.08066055341370444,
+            "relative_iqr": 0.022320228686586428,
+            "median_bootstrap_ci95": [
+              862681,
+              936807
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 891841,
+            "mean": 894356,
+            "q1": 888064.0,
+            "q3": 894774.0,
+            "min": 868128,
+            "max": 928973,
+            "cv": 0.02457540390647114,
+            "relative_spread": 0.06822404442047406,
+            "relative_iqr": 0.007523762643789644,
+            "median_bootstrap_ci95": [
+              868128,
+              928973
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9704609532017319,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        },
+        "preparation_ns": {
+          "before": {
+            "trials": 5,
+            "median": 697663,
+            "mean": 742965,
+            "q1": 679923.0,
+            "q3": 754493.0,
+            "min": 633495,
+            "max": 949251,
+            "cv": 0.1658003553392118,
+            "relative_spread": 0.45259100740615454,
+            "relative_iqr": 0.10688541602464227,
+            "median_bootstrap_ci95": [
+              633495,
+              949251
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 733695,
+            "mean": 721110.6,
+            "q1": 692926.0,
+            "q3": 764985.0,
+            "min": 648279,
+            "max": 765668,
+            "cv": 0.0699158006756588,
+            "relative_spread": 0.15999700147881613,
+            "relative_iqr": 0.09821383544933522,
+            "median_bootstrap_ci95": [
+              648279,
+              765668
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0516467119511856,
+          "status": "inconclusive",
+          "bootstrap_intervals_overlap": true
+        },
+        "total_ns": {
+          "before": {
+            "trials": 5,
+            "median": 125482782,
+            "mean": 125714262.4,
+            "q1": 124405904.0,
+            "q3": 125884298.0,
+            "min": 124162819,
+            "max": 128635509,
+            "cv": 0.014193325584772447,
+            "relative_spread": 0.035643854309828735,
+            "relative_iqr": 0.011781648258324397,
+            "median_bootstrap_ci95": [
+              124162819,
+              128635509
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 121940687,
+            "mean": 122105166.8,
+            "q1": 121923145.0,
+            "q3": 122312623.0,
+            "min": 121385416,
+            "max": 122963963,
+            "cv": 0.004773237586901883,
+            "relative_spread": 0.012945203433206834,
+            "relative_iqr": 0.003193995454527823,
+            "median_bootstrap_ci95": [
+              121385416,
+              122963963
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9717722627475697,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_ns": {
+          "before": {
+            "trials": 5,
+            "median": 127099432,
+            "mean": 127369558.4,
+            "q1": 125902080.0,
+            "q3": 127550125.0,
+            "min": 125779549,
+            "max": 130516606,
+            "cv": 0.015046364434024262,
+            "relative_spread": 0.0372704812717023,
+            "relative_iqr": 0.012966580369926437,
+            "median_bootstrap_ci95": [
+              125779549,
+              130516606
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 123617103,
+            "mean": 123720633.4,
+            "q1": 123521677.0,
+            "q3": 123829030.0,
+            "min": 123010952,
+            "max": 124624405,
+            "cv": 0.004751829845723541,
+            "relative_spread": 0.013052020803302597,
+            "relative_iqr": 0.0024863307142863555,
+            "median_bootstrap_ci95": [
+              123010952,
+              124624405
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9726015376685554,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "lifecycle_records_per_sec": {
+          "before": {
+            "trials": 5,
+            "median": 2368224.5881319125,
+            "mean": 2363624.7563394,
+            "q1": 2359856.5661930945,
+            "q3": 2390746.8407193907,
+            "min": 2306219.9456826206,
+            "max": 2393075.8409699816,
+            "cv": 0.014858513789789213,
+            "relative_spread": 0.036675531418189564,
+            "relative_iqr": 0.013043642347562504,
+            "median_bootstrap_ci95": [
+              2306219.9456826206,
+              2393075.8409699816
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2434938.1492947624,
+            "mean": 2432944.4276338215,
+            "q1": 2430770.8782019853,
+            "q3": 2436819.247523655,
+            "min": 2415257.2684298875,
+            "max": 2446936.594718818,
+            "cv": 0.004741635982098729,
+            "relative_spread": 0.0130103207336523,
+            "relative_iqr": 0.0024839930013917286,
+            "median_bootstrap_ci95": [
+              2415257.2684298875,
+              2446936.594718818
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.0281702848189218,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "instructions": {
+          "before": {
+            "trials": 5,
+            "median": 2799757014,
+            "mean": 2799432064.2,
+            "q1": 2799537276.0,
+            "q3": 2799793481.0,
+            "min": 2797539365,
+            "max": 2800533185,
+            "cv": 0.00040105518126895914,
+            "relative_spread": 0.00106931422442362,
+            "relative_iqr": 9.150972699375832e-05,
+            "median_bootstrap_ci95": [
+              2797539365,
+              2800533185
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 2804548628,
+            "mean": 2804510598,
+            "q1": 2804374054.0,
+            "q3": 2804651224.0,
+            "min": 2804309558,
+            "max": 2804669526,
+            "cv": 5.791944072608548e-05,
+            "relative_spread": 0.0001283514917181889,
+            "relative_iqr": 9.882873744202377e-05,
+            "median_bootstrap_ci95": [
+              2804309558,
+              2804669526
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 1.001711439234205,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": false
+        },
+        "cycles": {
+          "before": {
+            "trials": 5,
+            "median": 717066411,
+            "mean": 720957118,
+            "q1": 716494677.0,
+            "q3": 722856649.0,
+            "min": 698590753,
+            "max": 749777100,
+            "cv": 0.02566506430794575,
+            "relative_spread": 0.07138299356208444,
+            "relative_iqr": 0.00887222146011243,
+            "median_bootstrap_ci95": [
+              698590753,
+              749777100
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after": {
+            "trials": 5,
+            "median": 695347105,
+            "mean": 704058598.6,
+            "q1": 690849973.0,
+            "q3": 700509799.0,
+            "min": 685524608,
+            "max": 748061508,
+            "cv": 0.03581048376783208,
+            "relative_spread": 0.0899362340769363,
+            "relative_iqr": 0.01389209206530025,
+            "median_bootstrap_ci95": [
+              685524608,
+              748061508
+            ],
+            "ci_note": "Bootstrap across trial summaries; not a per-call tail-confidence interval."
+          },
+          "after_over_before": 0.9697108863742329,
+          "status": "stable_local_measurement",
+          "bootstrap_intervals_overlap": true
+        }
+      }
+    }
+  ],
+  "scope": "Complete JSON, system time, identical queue/file budgets and written flush/shutdown/cleanup; schema fusion candidate vs 366adc3. User PMU includes initialization and excludes kernel work. No durable flush."
+}

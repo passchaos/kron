@@ -1,0 +1,534 @@
+ Percent |	Source code & Disassembly of kron-ref-after-final for cpu_core/cycles/u (1054 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000010fa950 <core.runtime.Runtime.begin>:
+         : 6       }
+         : 7       self.configurationManager().releaseChannelCache(&self.channelCaches().*[channel - 1]);
+         : 8       self.channelCaches().*[channel - 1].filter_decision = .{ .decision = .{ .level = .off, .generation = 0 }, .configuration_generation = 0 };
+         : 9       }
+         :
+         : 11      pub fn begin(self: *Runtime, level: Level, scope: []const u8) BeginResult {
+    0.00 :   10fa950:        push   %rbp
+    0.00 :   10fa951:        mov    %rsp,%rbp
+    0.00 :   10fa954:        push   %r15
+    0.00 :   10fa956:        push   %r14
+    0.10 :   10fa958:        push   %r13
+    0.00 :   10fa95a:        push   %r12
+    0.00 :   10fa95c:        push   %rbx
+    0.00 :   10fa95d:        sub    $0x68,%rsp
+    0.10 :   10fa961:        mov    %rcx,%r8
+    0.00 :   10fa964:        mov    %rsi,%rbx
+    0.00 :   10fa967:        mov    %fs:0xfffffffffffbffe0,%rax
+         :
+         : 24      /// Runtime admission checks this before attempting its locks. The stack
+         : 25      /// also detects returning to A through a nested A-hook -> B-hook call.
+         : 26      pub fn inHook(self: *const Reporter) bool {
+         : 27      var current = active_hook;
+         : 28      while (current) |frame| : (current = frame.previous) {
+    0.00 :   10fa970:        test   %rax,%rax
+    0.00 :   10fa973:        je     10fa992 <core.runtime.Runtime.begin+0x42>
+         : 31      }
+         : 32      self.dispatchDiagnostics();
+         : 33      }
+         :
+         : 35      fn acquireAdmission(self: *Runtime) bool {
+         : 36      if (self.diagnostics.inHook()) return false;
+    0.00 :   10fa975:        lea    0x30c0(%rbx),%rcx
+    0.00 :   10fa97c:        nopl   0x0(%rax)
+         : 39      if (frame.reporter == self) return true;
+    0.00 :   10fa980:        cmp    %rcx,(%rax)
+    0.00 :   10fa983:        je     10faa74 <core.runtime.Runtime.begin+0x124>
+    0.00 :   10fa989:        mov    0x8(%rax),%rax
+         : 43      while (current) |frame| : (current = frame.previous) {
+    0.00 :   10fa98d:        test   %rax,%rax
+    0.00 :   10fa990:        jne    10fa980 <core.runtime.Runtime.begin+0x30>
+         : 46      };
+         : 47      threadlocal var owners: [max_depth]Frame = @splat(.{});
+         : 48      threadlocal var depth: usize = 0;
+         :
+         : 50      pub fn contains(owner: *anyopaque) bool {
+         : 51      for (owners[0..depth]) |value| if (value.owner == owner) return true;
+    0.00 :   10fa992:        mov    %fs:0xfffffffffffbffe8,%rax
+    0.00 :   10fa99b:        test   %rax,%rax
+    0.00 :   10fa99e:        je     10fa9c2 <core.runtime.Runtime.begin+0x72>
+    0.00 :   10fa9a0:        mov    %fs:0x0,%rcx
+    0.00 :   10fa9a9:        lea    -0x41448(%rcx),%rcx
+    0.00 :   10fa9b0:        cmp    %rbx,(%rcx)
+    0.00 :   10fa9b3:        je     10faa3e <core.runtime.Runtime.begin+0xee>
+    0.00 :   10fa9b9:        add    $0x50,%rcx
+    0.00 :   10fa9bd:        dec    %rax
+    0.00 :   10fa9c0:        jne    10fa9b0 <core.runtime.Runtime.begin+0x60>
+    0.00 :   10fa9c2:        mov    %fs:0xfffffffffffbffc0,%rax
+         : 63      return delivery.flush(snapshot.routes, mask, boundary, only_required, self.deliveryDiagnostics());
+         : 64      }
+         :
+         : 66      fn inSinkCall(self: *Runtime) bool {
+         : 67      var frame = sink_frame;
+         : 68      while (frame) |current| : (frame = current.previous) if (current.owner == self) return true;
+    0.00 :   10fa9cb:        test   %rax,%rax
+    0.00 :   10fa9ce:        je     10fa9de <core.runtime.Runtime.begin+0x8e>
+    0.00 :   10fa9d0:        cmp    %rbx,(%rax)
+    0.00 :   10fa9d3:        je     10faa3e <core.runtime.Runtime.begin+0xee>
+    0.00 :   10fa9d5:        mov    0x8(%rax),%rax
+    0.00 :   10fa9d9:        test   %rax,%rax
+    0.00 :   10fa9dc:        jne    10fa9d0 <core.runtime.Runtime.begin+0x80>
+         : 76      pub fn init(value: T) Self {
+         : 77      return .{ .raw = value };
+         : 78      }
+         :
+         : 80      pub inline fn load(self: *const Self, comptime order: AtomicOrder) T {
+         : 81      return @atomicLoad(T, &self.raw, order);
+    0.09 :   10fa9de:        mov    0x31d0(%rbx),%esi
+         : 83      pub const ThreadHandle = i32;
+         :
+         : 85      threadlocal var tls_thread_id: ?Id = null;
+         :
+         : 87      fn getCurrentId() Id {
+         : 88      return tls_thread_id orelse {
+   11.39 :   10fa9e4:        cmpb   $0x1,%fs:0xfffffffffffbfff4
+    0.00 :   10fa9ed:        jne    10faa22 <core.runtime.Runtime.begin+0xd2>
+    0.00 :   10fa9ef:        mov    %fs:0xfffffffffffbfff0,%eax
+         : 92      if (self.ownsAdmission() or self.inSinkCall() or self.worker_id.load(.acquire) == std.Thread.getCurrentId()) {
+    0.00 :   10fa9f7:        cmp    %eax,%esi
+    0.00 :   10fa9f9:        je     10faa3e <core.runtime.Runtime.begin+0xee>
+         : 95      return false;
+         : 96      }
+         :
+         : 98      pub fn full() bool {
+         : 99      return depth == max_depth;
+    0.00 :   10fa9fb:        cmpq   $0x40,%fs:0xfffffffffffbffe8
+    0.00 :   10faa05:        mov    %rdi,-0x58(%rbp)
+         : 102     if (admission_protocol.full()) {
+    0.00 :   10faa09:        jne    10faaa5 <core.runtime.Runtime.begin+0x155>
+         : 104     self.reportError(error.TooManyNestedSubmissions);
+    0.00 :   10faa0f:        mov    %rbx,%rdi
+    0.00 :   10faa12:        mov    $0x12d,%esi
+    0.00 :   10faa17:        call   10fb3e0 <core.runtime.Runtime.reportError>
+    0.00 :   10faa1c:        mov    -0x58(%rbp),%rdi
+         : 109     return false;
+    0.00 :   10faa20:        jmp    10faa74 <core.runtime.Runtime.begin+0x124>
+         : 111     const builtin = @import("builtin");
+         : 112     const std = @import("../../std.zig");
+         : 113     const SYS = std.os.linux.SYS;
+         :
+         : 115     pub fn syscall0(number: SYS) u64 {
+         : 116     return asm volatile ("syscall"
+    0.00 :   10faa22:        mov    $0xba,%eax
+    0.00 :   10faa27:        syscall
+         : 119     const tid: u32 = @bitCast(linux.gettid());
+         : 120     tls_thread_id = tid;
+    0.00 :   10faa29:        mov    %eax,%fs:0xfffffffffffbfff0
+    0.00 :   10faa31:        movb   $0x1,%fs:0xfffffffffffbfff4
+         : 123     if (self.ownsAdmission() or self.inSinkCall() or self.worker_id.load(.acquire) == std.Thread.getCurrentId()) {
+    0.00 :   10faa3a:        cmp    %eax,%esi
+    0.00 :   10faa3c:        jne    10fa9fb <core.runtime.Runtime.begin+0xab>
+         : 126     }
+         :
+         : 128     pub inline fn store(self: *Self, value: T, comptime order: AtomicOrder) void {
+         : 129     @atomicStore(T, &self.raw, value, order);
+    0.00 :   10faa3e:        movw   $0x12c,0x31e4(%rbx)
+    0.00 :   10faa47:        movl   $0x12c,0x3108(%rbx)
+         : 132     ) ?T {
+         : 133     return @cmpxchgStrong(T, &self.raw, expected_value, new_value, success_order, fail_order);
+         : 134     }
+         :
+         : 136     pub inline fn fetchAdd(self: *Self, operand: T, comptime order: AtomicOrder) T {
+         : 137     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10faa51:        lock incq 0x30e0(%rbx)
+    0.00 :   10faa59:        mov    $0x1,%eax
+    0.00 :   10faa5e:        lock xadd %rax,0x30d0(%rbx)
+         : 141     if (self.pending.fetchAdd(1, .release) != 0) _ = self.coalesced.fetchAdd(1, .monotonic);
+    0.00 :   10faa67:        test   %rax,%rax
+    0.00 :   10faa6a:        je     10faa74 <core.runtime.Runtime.begin+0x124>
+    0.00 :   10faa6c:        lock incq 0x30d8(%rbx)
+    0.00 :   10faa74:        lock incq 0x3068(%rbx)
+         : 146     return .closed;
+    0.00 :   10faa7c:        mov    -0x93ebb(%rip),%rax        # 1066bc8 <__anon_33014+0x20>
+    0.00 :   10faa83:        mov    %rax,0x20(%rdi)
+    0.00 :   10faa87:        vmovups -0x93ee7(%rip),%ymm0        # 1066ba8 <__anon_33014>
+    0.00 :   10faa8f:        vmovups %ymm0,(%rdi)
+    0.20 :   10faa93:        add    $0x68,%rsp
+    0.00 :   10faa97:        pop    %rbx
+    0.00 :   10faa98:        pop    %r12
+    0.00 :   10faa9a:        pop    %r13
+    0.19 :   10faa9c:        pop    %r14
+    0.00 :   10faa9e:        pop    %r15
+    0.00 :   10faaa0:        pop    %rbp
+    0.00 :   10faaa1:        vzeroupper
+    0.00 :   10faaa4:        ret
+    0.00 :   10faaa5:        mov    %r8,-0x68(%rbp)
+         : 161     if (!admission_protocol.acquire(&self.admission_gate, &self.admission_epoch, self.io)) return false;
+    0.00 :   10faaa9:        mov    0x3110(%rbx),%r15
+    0.18 :   10faab0:        mov    0x3118(%rbx),%r14
+         : 164     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10faab7:        mov    0x3188(%rbx),%rax
+         : 166     }
+         :
+         : 168     pub fn acquire(gate: *Atomic(u64), epoch: *Atomic(u32), io: std.Io) bool {
+         : 169     var observed = gate.load(.acquire);
+         : 170     while (true) {
+         : 171     if (observed & closing_bit != 0) return false;
+   12.86 :   10faabe:        test   %rax,%rax
+    0.00 :   10faac1:        js     10faa74 <core.runtime.Runtime.begin+0x124>
+    0.20 :   10faac3:        lea    0x31dc(%rbx),%rcx
+    0.00 :   10faaca:        mov    %rcx,-0x48(%rbp)
+    0.00 :   10faace:        lea    0x3110(%rbx),%rcx
+    0.00 :   10faad5:        mov    %rcx,-0x78(%rbp)
+    0.00 :   10faad9:        movabs $0x3fffffffffffffff,%r13
+    0.00 :   10faae3:        lea    0x1(%r13),%r12
+    0.00 :   10faae7:        mov    %rdx,-0x40(%rbp)
+    0.00 :   10faaeb:        jmp    10fab00 <core.runtime.Runtime.begin+0x1b0>
+    0.00 :   10faaed:        nopl   (%rax)
+    0.00 :   10faaf0:        mov    0x3188(%rbx),%rax
+    0.09 :   10faaf7:        test   %rax,%rax
+    0.00 :   10faafa:        js     10faa74 <core.runtime.Runtime.begin+0x124>
+         : 186     if (observed & cut_bit != 0) {
+    0.18 :   10fab00:        cmp    %r12,%rax
+    0.00 :   10fab03:        jae    10fab30 <core.runtime.Runtime.begin+0x1e0>
+         : 189     observed = gate.load(.acquire);
+         : 190     if (observed & cut_bit != 0 and observed & closing_bit == 0) io.futexWaitUncancelable(u32, &epoch.raw, version);
+         : 191     observed = gate.load(.acquire);
+         : 192     continue;
+         : 193     }
+         : 194     if (observed & count_mask == count_mask) return false;
+    0.10 :   10fab05:        cmp    %r13,%rax
+    0.00 :   10fab08:        je     10faa74 <core.runtime.Runtime.begin+0x124>
+         : 197     if (gate.cmpxchgWeak(observed, observed + 1, .acq_rel, .acquire)) |actual| {
+    0.00 :   10fab0e:        lea    0x1(%rax),%rcx
+         : 199     return @cmpxchgWeak(T, &self.raw, expected_value, new_value, success_order, fail_order);
+    0.00 :   10fab12:        lock cmpxchg %rcx,0x3188(%rbx)
+   10.71 :   10fab1b:        setne  -0x90(%rbp)
+    0.25 :   10fab22:        setne  %cl
+    0.00 :   10fab25:        test   %cl,%cl
+    0.00 :   10fab27:        jne    10faaf7 <core.runtime.Runtime.begin+0x1a7>
+    0.29 :   10fab29:        jmp    10fab57 <core.runtime.Runtime.begin+0x207>
+    0.00 :   10fab2b:        nopl   0x0(%rax,%rax,1)
+         : 207     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10fab30:        mov    0x31dc(%rbx),%edx
+    0.00 :   10fab36:        mov    0x3188(%rbx),%rax
+         : 210     if (observed & cut_bit != 0 and observed & closing_bit == 0) io.futexWaitUncancelable(u32, &epoch.raw, version);
+    0.00 :   10fab3d:        shr    $0x3e,%rax
+    0.00 :   10fab41:        cmp    $0x1,%eax
+    0.00 :   10fab44:        jne    10faaf0 <core.runtime.Runtime.begin+0x1a0>
+         : 214     pub fn futexWaitUncancelable(io: Io, comptime T: type, ptr: *align(@alignOf(u32)) const T, expected: T) void {
+         : 215     const expected_int: u32 = switch (@typeInfo(T)) {
+         : 216     .@"enum" => @bitCast(@intFromEnum(expected)),
+         : 217     else => @bitCast(expected),
+         : 218     };
+         : 219     io.vtable.futexWaitUncancelable(io.userdata, @ptrCast(ptr), expected_int);
+    0.00 :   10fab46:        mov    %r15,%rdi
+    0.00 :   10fab49:        mov    -0x48(%rbp),%rsi
+    0.00 :   10fab4d:        call   *0x68(%r14)
+    0.00 :   10fab51:        mov    -0x58(%rbp),%rdi
+    0.00 :   10fab55:        jmp    10faaf0 <core.runtime.Runtime.begin+0x1a0>
+         : 225     const entered = admission_protocol.enter(self);
+    0.07 :   10fab57:        mov    %rbx,%rdi
+    0.00 :   10fab5a:        call   10fb340 <core.admission.enter>
+         : 228     const bound = self.dynamicFilter().boundDecision(scope);
+    0.10 :   10fab5f:        mov    0x3130(%rbx),%rax
+    0.09 :   10fab66:        mov    0x20(%rax),%rdi
+         :
+         : 232     pub fn boundDecision(self: *DynamicFilter, scope: []const u8) BoundDecision {
+         : 233     if (@import("builtin").is_test) _ = TestingAudit.reader_rmw.fetchAdd(2, .monotonic);
+         : 234     while (true) {
+         : 235     const version = self.published.load(.seq_cst);
+         : 236     const slot = &self.slots[@intCast(version & 1)];
+    0.00 :   10fab6a:        mov    %edi,%ecx
+    0.11 :   10fab6c:        and    $0x1,%ecx
+    0.00 :   10fab6f:        imul   $0x11a8,%rcx,%rcx
+    0.00 :   10fab76:        lea    (%rax,%rcx,1),%r12
+    0.00 :   10fab7a:        add    $0x28,%r12
+         : 242     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10fab7e:        lock incq 0x28(%rax,%rcx,1)
+         : 244     return @atomicLoad(T, &self.raw, order);
+   14.25 :   10fab84:        mov    0x20(%rax),%rcx
+         : 246     _ = slot.readers.fetchAdd(1, .seq_cst);
+         : 247     if (self.published.load(.seq_cst) == version) {
+    0.00 :   10fab88:        cmp    %rdi,%rcx
+    0.00 :   10fab8b:        jne    10fab93 <core.runtime.Runtime.begin+0x243>
+    0.17 :   10fab8d:        mov    -0x40(%rbp),%rsi
+    0.00 :   10fab91:        jmp    10fabc4 <core.runtime.Runtime.begin+0x274>
+    0.00 :   10fab93:        lea    0x28(%rax),%rcx
+    0.00 :   10fab97:        mov    -0x40(%rbp),%rsi
+         : 254     }
+         :
+         : 256     pub inline fn fetchSub(self: *Self, operand: T, comptime order: AtomicOrder) T {
+         : 257     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10fab9b:        lock decq (%r12)
+         : 259     }
+         : 260     }
+         :
+         : 262     /// Signals to the processor that the caller is inside a busy-wait spin-loop.
+         : 263     pub inline fn spinLoopHint() void {
+         : 264     switch (builtin.target.cpu.arch) {
+    0.00 :   10faba0:        pause
+         : 266     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10faba2:        mov    0x20(%rax),%rdi
+         : 268     const slot = &self.slots[@intCast(version & 1)];
+    0.00 :   10faba6:        mov    %edi,%edx
+    0.00 :   10faba8:        and    $0x1,%edx
+    0.00 :   10fabab:        imul   $0x11a8,%rdx,%rdx
+    0.00 :   10fabb2:        lea    (%rcx,%rdx,1),%r12
+         : 273     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10fabb6:        lock incq (%rcx,%rdx,1)
+         : 275     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10fabbb:        mov    0x20(%rax),%rdx
+         : 277     if (self.published.load(.seq_cst) == version) {
+    0.00 :   10fabbf:        cmp    %rdi,%rdx
+    0.00 :   10fabc2:        jne    10fab9b <core.runtime.Runtime.begin+0x24b>
+    0.10 :   10fabc4:        mov    %rdi,-0x70(%rbp)
+         : 281     }
+         : 282     return filter;
+         : 283     }
+         :
+         : 285     pub fn threshold(self: *const Filter, scope: []const u8) Level {
+         : 286     var level = self.default_level;
+    0.00 :   10fabc8:        movzbl 0x198(%r12),%eax
+    0.00 :   10fabd1:        mov    %eax,-0x34(%rbp)
+         : 289     var longest: usize = 0;
+         : 290     for (self.rules[0..self.rule_count]) |rule| {
+    0.00 :   10fabd4:        mov    0x8(%r12),%r14
+    1.73 :   10fabd9:        test   %r14,%r14
+    0.00 :   10fabdc:        je     10fac7b <core.runtime.Runtime.begin+0x32b>
+    0.00 :   10fabe2:        lea    0x199(%r12),%rax
+    0.00 :   10fabea:        mov    %rax,-0x80(%rbp)
+    0.00 :   10fabee:        lea    0x1c(%r12),%r13
+    0.00 :   10fabf3:        xor    %edx,%edx
+    0.00 :   10fabf5:        jmp    10fac08 <core.runtime.Runtime.begin+0x2b8>
+    0.00 :   10fabf7:        mov    -0x40(%rbp),%rsi
+    0.00 :   10fabfb:        mov    -0x48(%rbp),%rdx
+    0.00 :   10fabff:        add    $0x6,%r13
+    0.00 :   10fac03:        dec    %r14
+    0.00 :   10fac06:        je     10fac7b <core.runtime.Runtime.begin+0x32b>
+    0.00 :   10fac08:        movzwl -0x2(%r13),%r15d
+         : 305     const prefix = self.scope_bytes[rule.offset..][0..rule.len];
+         : 306     if (prefix.len > longest and scopeMatches(prefix, scope)) {
+    0.00 :   10fac0d:        cmp    %r15,%rdx
+    0.00 :   10fac10:        jae    10fabff <core.runtime.Runtime.begin+0x2af>
+    0.00 :   10fac12:        cmp    %r15,-0x68(%rbp)
+    0.00 :   10fac16:        jb     10fabff <core.runtime.Runtime.begin+0x2af>
+    0.00 :   10fac18:        mov    %rdx,-0x48(%rbp)
+    0.00 :   10fac1c:        movzbl 0x0(%r13),%eax
+    0.00 :   10fac21:        mov    %al,-0x60(%rbp)
+         : 314     for (self.rules[0..self.rule_count]) |rule| {
+    0.00 :   10fac24:        movzwl -0x4(%r13),%edx
+         : 316     const prefix = self.scope_bytes[rule.offset..][0..rule.len];
+    0.00 :   10fac29:        add    -0x80(%rbp),%rdx
+         : 318     }
+         :
+         : 320     /// Returns true if haystack starts with needle.
+         : 321     /// Time complexity: O(needle.len)
+         : 322     pub fn startsWith(comptime T: type, haystack: []const T, needle: []const T) bool {
+         : 323     return if (needle.len > haystack.len) false else eql(T, haystack[0..needle.len], needle);
+    0.00 :   10fac2d:        mov    %rsi,%rdi
+    0.00 :   10fac30:        mov    %r15,%rsi
+    0.00 :   10fac33:        mov    %r15,%rcx
+    0.00 :   10fac36:        call   112d380 <mem.eql__anon_2583>
+         : 328     pub fn levelEnabled(level: Level, threshold: Level) bool {
+         : 329     return level != .off and threshold != .off and @intFromEnum(level) >= @intFromEnum(threshold);
+         : 330     }
+         :
+         : 332     pub fn scopeMatches(prefix: []const u8, scope: []const u8) bool {
+         : 333     return std.mem.startsWith(u8, scope, prefix) and
+    0.00 :   10fac3b:        test   $0x1,%al
+    0.00 :   10fac3d:        je     10fabf7 <core.runtime.Runtime.begin+0x2a7>
+    0.00 :   10fac3f:        mov    -0x68(%rbp),%rax
+         : 337     (scope.len == prefix.len or scope[prefix.len] == '.');
+    0.00 :   10fac43:        cmp    %r15,%rax
+    0.00 :   10fac46:        mov    -0x48(%rbp),%rdx
+    0.00 :   10fac4a:        jne    10fac5c <core.runtime.Runtime.begin+0x30c>
+    0.00 :   10fac4c:        mov    %rax,%rdx
+    0.00 :   10fac4f:        movzbl -0x60(%rbp),%eax
+    0.00 :   10fac53:        mov    %eax,-0x34(%rbp)
+    0.00 :   10fac56:        mov    -0x40(%rbp),%rsi
+    0.00 :   10fac5a:        jmp    10fabff <core.runtime.Runtime.begin+0x2af>
+    0.00 :   10fac5c:        mov    -0x40(%rbp),%rsi
+    0.00 :   10fac60:        cmpb   $0x2e,(%rsi,%r15,1)
+         : 348     if (prefix.len > longest and scopeMatches(prefix, scope)) {
+    0.00 :   10fac65:        cmove  %r15,%rdx
+    0.00 :   10fac69:        movzbl -0x60(%rbp),%eax
+    0.00 :   10fac6d:        mov    -0x34(%rbp),%ecx
+    0.00 :   10fac70:        movzbl %cl,%ecx
+    0.00 :   10fac73:        cmove  %eax,%ecx
+    0.00 :   10fac76:        mov    %ecx,-0x34(%rbp)
+    0.00 :   10fac79:        jmp    10fabff <core.runtime.Runtime.begin+0x2af>
+         : 356     const level = slot.filter.threshold(scope);
+         : 357     const binding = slot.configuration_generation;
+    0.00 :   10fac7b:        mov    0x11a0(%r12),%r8
+         : 359     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10fac83:        lock decq (%r12)
+         : 361     const view = self.configurationManager().acquire();
+    1.86 :   10fac88:        mov    0x3120(%rbx),%rax
+         : 363     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10fac8f:        movzbl 0x6c(%rax),%ecx
+         : 365     std.debug.assert(before & 1 == 0);
+         : 366     }
+         :
+         : 368     fn sealRecovery(self: *Manager) void {
+         : 369     // After initialization readers only load this shared cache line.
+         : 370     if (!self.recovery_sealed.load(.acquire)) self.recovery_sealed.store(true, .seq_cst);
+    0.38 :   10fac93:        test   $0x1,%cl
+    0.00 :   10fac96:        jne    10fac9d <core.runtime.Runtime.begin+0x34d>
+    0.00 :   10fac98:        mov    $0x1,%cl
+         : 374     @atomicStore(T, &self.raw, value, order);
+    0.00 :   10fac9a:        xchg   %cl,0x6c(%rax)
+         : 376     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10fac9d:        mov    0x40(%rax),%rdx
+         : 378     const slot = &self.slots[@intCast(token & 63)];
+    0.00 :   10faca1:        mov    %edx,%ecx
+    0.00 :   10faca3:        and    $0x3f,%ecx
+    0.00 :   10faca6:        mov    0x20(%rax),%r12
+    0.04 :   10facaa:        imul   $0x9c40,%rcx,%rcx
+         : 383     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10facb1:        lock incq 0x97f8(%r12,%rcx,1)
+         : 385     return @atomicLoad(T, &self.raw, order);
+   12.62 :   10facba:        mov    0x40(%rax),%rdi
+         : 387     if (self.published.load(.seq_cst) == token) return .{ .snapshot = slot, .publication = token };
+    0.00 :   10facbe:        cmp    %rdx,%rdi
+    0.10 :   10facc1:        mov    -0x68(%rbp),%r14
+    0.00 :   10facc5:        mov    -0x34(%rbp),%r13d
+    0.00 :   10facc9:        jne    10facd0 <core.runtime.Runtime.begin+0x380>
+    0.00 :   10faccb:        add    %rcx,%r12
+    0.00 :   10facce:        jmp    10fad14 <core.runtime.Runtime.begin+0x3c4>
+    0.00 :   10facd0:        add    %r12,%rcx
+    0.00 :   10facd3:        add    $0x97f8,%rcx
+         : 396     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10facda:        lock decq (%rcx)
+         : 398     switch (builtin.target.cpu.arch) {
+    0.00 :   10facde:        pause
+         : 400     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10face0:        mov    0x40(%rax),%rdi
+         : 402     const slot = &self.slots[@intCast(token & 63)];
+    0.00 :   10face4:        mov    %edi,%ecx
+    0.00 :   10face6:        and    $0x3f,%ecx
+    0.00 :   10face9:        mov    0x20(%rax),%r12
+    0.00 :   10faced:        imul   $0x9c40,%rcx,%rdx
+         : 407     _ = slot.readers.fetchAdd(1, .seq_cst);
+    0.00 :   10facf4:        lea    (%r12,%rdx,1),%rcx
+    0.00 :   10facf8:        add    $0x97f8,%rcx
+         : 410     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10facff:        lock incq 0x97f8(%r12,%rdx,1)
+         : 412     return @atomicLoad(T, &self.raw, order);
+    0.00 :   10fad08:        mov    0x40(%rax),%r9
+         : 414     if (self.published.load(.seq_cst) == token) return .{ .snapshot = slot, .publication = token };
+    0.00 :   10fad0c:        cmp    %rdi,%r9
+    0.00 :   10fad0f:        jne    10facda <core.runtime.Runtime.begin+0x38a>
+    0.00 :   10fad11:        add    %rdx,%r12
+         : 418     const mask = routeMaskIn(snapshot, level, scope, bound);
+    0.12 :   10fad14:        movzbl %r13b,%ecx
+    0.00 :   10fad18:        mov    %r12,%rdi
+    0.00 :   10fad1b:        mov    %r14,%rdx
+    0.00 :   10fad1e:        mov    %r8,-0x48(%rbp)
+    0.00 :   10fad22:        call   10fb000 <core.runtime.Runtime.routeMaskIn>
+    0.09 :   10fad27:        mov    %rax,%r15
+         : 425     if (mask == 0) {
+    0.00 :   10fad2a:        test   %rax,%rax
+    0.00 :   10fad2d:        je     10fad85 <core.runtime.Runtime.begin+0x435>
+    0.00 :   10fad2f:        cmpb   $0x2,0x9c18(%r12)
+         : 429     if (!snapshot.sample_bypass.allows(level)) {
+    0.27 :   10fad38:        jbe    10fadb9 <core.runtime.Runtime.begin+0x469>
+         : 431     const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
+    0.00 :   10fad3a:        lea    0x8620(%r12),%rdi
+    0.00 :   10fad42:        movzbl 0x8638(%r12),%eax
+    0.00 :   10fad4b:        not    %al
+    0.00 :   10fad4d:        test   $0x3,%al
+    0.00 :   10fad4f:        jne    10fadaa <core.runtime.Runtime.begin+0x45a>
+    0.00 :   10fad51:        mov    %rdi,-0x60(%rbp)
+         : 438     return self.clock.monotonicNow(self.io);
+    0.00 :   10fad55:        mov    0x3190(%rbx),%rdi
+    0.00 :   10fad5c:        mov    0x31a0(%rbx),%rax
+    0.00 :   10fad63:        mov    -0x78(%rbp),%rcx
+    0.00 :   10fad67:        vmovups (%rcx),%xmm0
+    0.00 :   10fad6b:        vmovaps %xmm0,-0x90(%rbp)
+    0.00 :   10fad73:        lea    -0x90(%rbp),%rsi
+         : 445     pub fn now(self: Clock, io: std.Io) i64 {
+         : 446     return self.realNow(io);
+         : 447     }
+         :
+         : 449     pub fn monotonicNow(self: Clock, io: std.Io) u64 {
+         : 450     return self.monotonic_now(self.context, io);
+    0.00 :   10fad7a:        call   *%rax
+    0.00 :   10fad7c:        mov    -0x60(%rbp),%rdi
+    0.00 :   10fad80:        mov    %rax,%rsi
+         : 454     const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
+    0.00 :   10fad83:        jmp    10fadac <core.runtime.Runtime.begin+0x45c>
+         : 456     self.end();
+    0.00 :   10fad85:        mov    %rbx,%rdi
+    0.00 :   10fad88:        call   10f7380 <core.runtime.Runtime.end>
+         : 459     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10fad8d:        lock incq 0x3048(%rbx)
+         : 461     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10fad95:        lock decq 0x97f8(%r12)
+         : 463     return .filtered;
+    0.00 :   10fad9e:        movzbl -0x943bd(%rip),%eax        # 10669e8 <__anon_32746+0x20>
+    0.00 :   10fada5:        jmp    10fae73 <core.runtime.Runtime.begin+0x523>
+    0.00 :   10fadaa:        xor    %esi,%esi
+         : 467     if (!snapshot.sampler.allow(now)) {
+    0.00 :   10fadac:        call   10faeb0 <pipeline.sampler.Sampler.allow>
+    0.00 :   10fadb1:        test   $0x1,%al
+    0.00 :   10fadb3:        je     10fae53 <core.runtime.Runtime.begin+0x503>
+         : 471     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10fadb9:        lock incq 0x9800(%r12)
+         : 473     std.debug.assert(depth != 0 and owners[depth - 1].owner == owner);
+   16.29 :   10fadc2:        mov    %fs:0xfffffffffffbffe8,%rax
+    0.12 :   10fadcb:        lea    (%rax,%rax,4),%rcx
+    0.42 :   10fadcf:        shl    $0x4,%rcx
+         : 477     owners[depth - 1].resource = resource;
+    0.00 :   10fadd3:        mov    %r12,%fs:-0x41490(%rcx)
+         : 479     owners[depth - 1].release = release_callback;
+    0.00 :   10faddb:        movq   $0x10faff0,%fs:-0x41488(%rcx)
+    0.00 :   10fade7:        mov    -0x40(%rbp),%rax
+         : 482     owners[depth - 1].filter_scope = scope;
+    0.00 :   10fadeb:        mov    %rax,%fs:-0x41480(%rcx)
+    0.00 :   10fadf3:        mov    %r14,%fs:-0x41478(%rcx)
+    0.00 :   10fadfb:        mov    -0x70(%rbp),%rdi
+         : 486     owners[depth - 1].filter_decision = decision;
+    0.00 :   10fadff:        mov    %rdi,%fs:-0x41470(%rcx)
+    0.18 :   10fae07:        mov    %r13b,%fs:-0x41468(%rcx)
+    0.00 :   10fae0f:        mov    -0x48(%rbp),%rax
+    0.00 :   10fae13:        mov    %rax,%fs:-0x41460(%rcx)
+    0.00 :   10fae1b:        movb   $0x1,%fs:-0x41458(%rcx)
+         : 492     return .{ .ready = .{ .route_mask = mask, .config_generation = filterGeneration(snapshot, bound), .route_generation = snapshot.generation, .route_fingerprint = snapshot.fingerprint } };
+    0.09 :   10fae23:        movb   $0x0,-0x30(%rbp)
+         : 494     return if (bound.configuration_generation == snapshot.generation) bound.decision.generation else snapshot.filter_generation;
+    0.00 :   10fae27:        mov    0x7430(%r12),%rcx
+    0.00 :   10fae2f:        cmp    %rcx,%rax
+    0.00 :   10fae32:        je     10fae3c <core.runtime.Runtime.begin+0x4ec>
+    0.00 :   10fae34:        mov    0x97f0(%r12),%rdi
+         : 499     return .{ .ready = .{ .route_mask = mask, .config_generation = filterGeneration(snapshot, bound), .route_generation = snapshot.generation, .route_fingerprint = snapshot.fingerprint } };
+    0.00 :   10fae3c:        mov    0x7438(%r12),%rdx
+         : 501     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10fae44:        lock decq 0x97f8(%r12)
+         : 503     return self.beginDecision(level, scope);
+   13.44 :   10fae4d:        movzbl -0x30(%rbp),%eax
+    0.00 :   10fae51:        jmp    10fae87 <core.runtime.Runtime.begin+0x537>
+         : 506     self.end();
+    0.00 :   10fae53:        mov    %rbx,%rdi
+    0.00 :   10fae56:        call   10f7380 <core.runtime.Runtime.end>
+         : 509     return @atomicRmw(T, &self.raw, .Add, operand, order);
+    0.00 :   10fae5b:        lock incq 0x3050(%rbx)
+         : 511     return @atomicRmw(T, &self.raw, .Sub, operand, order);
+    0.00 :   10fae63:        lock decq 0x97f8(%r12)
+         : 513     return .sampled;
+    0.00 :   10fae6c:        movzbl -0x94283(%rip),%eax        # 1066bf0 <__anon_33041+0x20>
+    0.00 :   10fae73:        movl   $0x0,-0x4d(%rbp)
+    0.00 :   10fae7a:        movl   $0x0,-0x50(%rbp)
+    0.00 :   10fae81:        xor    %edx,%edx
+    0.00 :   10fae83:        xor    %ecx,%ecx
+    0.00 :   10fae85:        xor    %edi,%edi
+    0.10 :   10fae87:        mov    -0x58(%rbp),%rsi
+         : 521     return self.beginDecision(level, scope);
+    0.00 :   10fae8b:        mov    %r15,(%rsi)
+    0.00 :   10fae8e:        mov    %rdi,0x8(%rsi)
+    0.00 :   10fae92:        mov    %rcx,0x10(%rsi)
+    0.00 :   10fae96:        mov    %rdx,0x18(%rsi)
+    0.00 :   10fae9a:        mov    %al,0x20(%rsi)
+    0.00 :   10fae9d:        mov    -0x50(%rbp),%eax
+    0.00 :   10faea0:        mov    -0x4d(%rbp),%ecx
+    0.31 :   10faea3:        mov    %eax,0x21(%rsi)
+    0.00 :   10faea6:        mov    %ecx,0x24(%rsi)
+    0.00 :   10faea9:        jmp    10faa93 <core.runtime.Runtime.begin+0x143>

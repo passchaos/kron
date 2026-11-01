@@ -57,3 +57,11 @@ schema定义本身也有独立版本：scalar定义v1、支持array/group的定�
 `zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1` 覆盖历史/当前inline载荷、scalar schema与nested schema、动态message与deferred template的8组输入。每组2048次变异、所有截断和短scratch容量均检查边界；合法解码必须精确再编码且所有借用字符串/描述符位于输入、schema或调用者scratch。schema定义变异后重新计算完整性字段，直接检查结构拒绝；8个真实文件由公开Reader各只读导出两次。该矩阵也包含于 `test-fuzz`，属于有界回归，不替代长期fuzz。
 
 QEMU harness 的 `--schema` 选项运行真实 v2 writer。在当前 Linux/ext4 试验中，ACK 3 后强杀整个 QEMU，重启确认全部已 ACK 文件记录及 durable checkpoint；这仍是特定子 VM 的停机试验，不是物理断电的普遍保证。
+
+## Schema consumer融合输出
+
+已就绪的普通schema事件在当前窗口至少64条、只有一个JSON/text/logfmt目标、无deferred message和format args时，可在消费者输出scratch中直接读取定义和动态值，省去top-level字段数组物化与随后的属性遍历。定义仍由拥有journal的registry解析，类型mask、节点/深度、nested descriptor、完整payload长度和schema身份均继续校验；任何损坏记录都在完整渲染成功前被拒绝，不进入sink。
+
+静态key唯一性由原schema定义校验保证，scope/source和可选静态message借用已验证定义；这些借用只在当前受保护记录的交付期间使用。动态message、历史v2 scalar定义、nested v5和三种文本输出均有逐字节对照。少于64条的窗口、template/args、多route和binary继续使用materialized resolve；同一记录的canonical definition查找可在fallback内复用。路由拒绝的冷路径保留先decode、再报告路由错误的优先级。
+
+原服务预算、输出written/durable barrier、第二次CRC回收、配置pin和至少一次恢复契约继续适用。性能与故障证据见[schema消费者对照](../bench/evidence/2026-11-01-consumer-post-coalescing/README.md)，不能从该路径的局部CPU变化推导跨库排名。

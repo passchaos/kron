@@ -1,0 +1,16 @@
+src/encoder/wire_reference_tests.zig:63:51: error: expected type 'encoder.common.RecordFormat', found 'encoder.root.Format'
+                        try common.encodeWithTime(output_format, decoded, if (readable) &formatter else null, &expected);
+                                                  ^~~~~~~~~~~~~
+src/encoder/root.zig:3:20: note: enum declared here
+pub const Format = enum { text, json, logfmt, binary };
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:37:26: note: enum declared here
+pub const RecordFormat = enum { text, json, logfmt };
+                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/common.zig:46:40: note: parameter type declared here
+pub fn encodeWithTime(comptime format: RecordFormat, event: Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+                                       ^~~~~~~~~~~~
+referenced by:
+    test_0: src/encoder/wire_json.zig:259:17
+    test_0: src/encoder/root.zig:119:17
+    3 reference(s) hidden; use '-freference-trace=5' to see all references

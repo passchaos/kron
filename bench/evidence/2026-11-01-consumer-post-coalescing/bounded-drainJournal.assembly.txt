@@ -1,0 +1,2254 @@
+
+bench/evidence/2026-11-01-consumer-post-coalescing/kron-ref-bounded-final:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000110fb50 <core.runtime.Runtime.drainJournal>:
+ 110fb50:	push   %rbp
+ 110fb51:	mov    %rsp,%rbp
+ 110fb54:	push   %r15
+ 110fb56:	push   %r14
+ 110fb58:	push   %r13
+ 110fb5a:	push   %r12
+ 110fb5c:	push   %rbx
+ 110fb5d:	sub    $0x9f08,%rsp
+ 110fb64:	mov    0x3160(%rsi),%rcx
+ 110fb6b:	test   %rcx,%rcx
+ 110fb6e:	je     1111271 <core.runtime.Runtime.drainJournal+0x1721>
+ 110fb74:	mov    %rdx,%r14
+ 110fb77:	lea    0x31c4(%rsi),%rax
+ 110fb7e:	mov    %rax,-0xa0(%rbp)
+ 110fb85:	lea    0x31d4(%rsi),%rax
+ 110fb8c:	mov    %rax,-0x30(%rbp)
+ 110fb90:	lea    0x1c8(%rdx),%rax
+ 110fb97:	mov    %rax,-0x100(%rbp)
+ 110fb9e:	lea    0x2b4(%rdx),%rax
+ 110fba5:	mov    %rax,-0x78(%rbp)
+ 110fba9:	lea    0x3000(%rsi),%rax
+ 110fbb0:	mov    %rax,-0xe8(%rbp)
+ 110fbb7:	lea    -0xc0(%rsi),%rax
+ 110fbbe:	mov    %rax,-0xe0(%rbp)
+ 110fbc5:	xor    %eax,%eax
+ 110fbc7:	mov    %rcx,-0x90(%rbp)
+ 110fbce:	mov    %rsi,-0x40(%rbp)
+ 110fbd2:	mov    %rdi,-0x38(%rbp)
+ 110fbd6:	mov    %rcx,-0xd8(%rbp)
+ 110fbdd:	testb  $0x1,0x2bc(%r14)
+ 110fbe5:	mov    %rax,-0x48(%rbp)
+ 110fbe9:	je     110fc00 <core.runtime.Runtime.drainJournal+0xb0>
+ 110fbeb:	mov    0x40(%r14),%rax
+ 110fbef:	mov    (%r14),%r15
+ 110fbf2:	sub    %rax,%r15
+ 110fbf5:	jmp    110fc07 <core.runtime.Runtime.drainJournal+0xb7>
+ 110fbf7:	nopw   0x0(%rax,%rax,1)
+ 110fc00:	mov    0x290(%r14),%r15
+ 110fc07:	lea    -0x3a8(%rbp),%rdi
+ 110fc0e:	mov    %r14,%rsi
+ 110fc11:	call   110f610 <journal.journal.Journal.peekChecked>
+ 110fc16:	movzwl -0x358(%rbp),%eax
+ 110fc1d:	test   %ax,%ax
+ 110fc20:	jne    1111b20 <core.runtime.Runtime.drainJournal+0x1fd0>
+ 110fc26:	cmpb   $0x0,-0x360(%rbp)
+ 110fc2d:	je     110fd30 <core.runtime.Runtime.drainJournal+0x1e0>
+ 110fc33:	mov    -0x90(%rbp),%r12
+ 110fc3a:	shl    $0x6,%r12
+ 110fc3e:	mov    -0x368(%rbp),%rax
+ 110fc45:	mov    %rax,-0x6ef0(%rbp)
+ 110fc4c:	vmovups -0x388(%rbp),%ymm0
+ 110fc54:	vmovups %ymm0,-0x6f10(%rbp)
+ 110fc5c:	vmovdqu -0x3a8(%rbp),%ymm0
+ 110fc64:	vmovdqu %ymm0,-0x6f30(%rbp)
+ 110fc6c:	mov    0x278(%r14),%rax
+ 110fc73:	cmp    0x270(%r14),%rax
+ 110fc7a:	jae    110fd3d <core.runtime.Runtime.drainJournal+0x1ed>
+ 110fc80:	mov    $0x1,%ecx
+ 110fc85:	lea    -0x6ee8(%rbp),%rbx
+ 110fc8c:	nopl   0x0(%rax)
+ 110fc90:	mov    0x278(%r14),%rax
+ 110fc97:	mov    %rcx,-0x60(%rbp)
+ 110fc9b:	add    %rcx,%rax
+ 110fc9e:	cmp    0x270(%r14),%rax
+ 110fca5:	jae    110fe2f <core.runtime.Runtime.drainJournal+0x2df>
+ 110fcab:	mov    0x160(%r14),%rcx
+ 110fcb2:	mov    0x260(%r14),%rdx
+ 110fcb9:	mov    (%rdx,%rax,8),%rdx
+ 110fcbd:	mov    0x1c0(%r14),%rax
+ 110fcc4:	imul   %rdx,%rax
+ 110fcc8:	mov    0x1000(%rcx,%rax,1),%rcx
+ 110fcd0:	lea    -0x4a0(%rbp),%rdi
+ 110fcd7:	mov    %r14,%rsi
+ 110fcda:	vzeroupper
+ 110fcdd:	call   107efb0 <journal.journal.Journal.validateSlot>
+ 110fce2:	movzwl -0x458(%rbp),%eax
+ 110fce9:	test   %ax,%ax
+ 110fcec:	jne    1111b20 <core.runtime.Runtime.drainJournal+0x1fd0>
+ 110fcf2:	mov    -0x460(%rbp),%rax
+ 110fcf9:	mov    %rax,0x40(%rbx)
+ 110fcfd:	vmovdqu -0x4a0(%rbp),%ymm0
+ 110fd05:	vmovups -0x480(%rbp),%ymm1
+ 110fd0d:	vmovups %ymm1,0x20(%rbx)
+ 110fd12:	vmovdqu %ymm0,(%rbx)
+ 110fd16:	mov    -0x60(%rbp),%rcx
+ 110fd1a:	inc    %rcx
+ 110fd1d:	add    $0x48,%rbx
+ 110fd21:	cmp    %rcx,%r12
+ 110fd24:	jne    110fc90 <core.runtime.Runtime.drainJournal+0x140>
+ 110fd2a:	jmp    110fe2b <core.runtime.Runtime.drainJournal+0x2db>
+ 110fd2f:	nop
+ 110fd30:	movq   $0x0,-0x60(%rbp)
+ 110fd38:	jmp    110fe2f <core.runtime.Runtime.drainJournal+0x2df>
+ 110fd3d:	mov    0x160(%r14),%rax
+ 110fd44:	mov    0x40(%rax),%r13
+ 110fd48:	mov    $0x1,%eax
+ 110fd4d:	lea    -0x6ee8(%rbp),%rbx
+ 110fd54:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 110fd60:	mov    0x288(%r14),%rsi
+ 110fd67:	mov    %rax,-0x60(%rbp)
+ 110fd6b:	add    %rax,%rsi
+ 110fd6e:	cmp    %r13,%rsi
+ 110fd71:	jae    110fe2f <core.runtime.Runtime.drainJournal+0x2df>
+ 110fd77:	mov    0x1b0(%r14),%rcx
+ 110fd7e:	mov    %rsi,%rax
+ 110fd81:	or     %rcx,%rax
+ 110fd84:	shr    $0x20,%rax
+ 110fd88:	je     110fda0 <core.runtime.Runtime.drainJournal+0x250>
+ 110fd8a:	mov    %rsi,%rax
+ 110fd8d:	xor    %edx,%edx
+ 110fd8f:	div    %rcx
+ 110fd92:	jmp    110fda6 <core.runtime.Runtime.drainJournal+0x256>
+ 110fd94:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 110fda0:	mov    %esi,%eax
+ 110fda2:	xor    %edx,%edx
+ 110fda4:	div    %ecx
+ 110fda6:	mov    0x160(%r14),%rax
+ 110fdad:	mov    0x1c0(%r14),%rcx
+ 110fdb4:	imul   %rdx,%rcx
+ 110fdb8:	mov    0x1000(%rax,%rcx,1),%rcx
+ 110fdc0:	lea    0x6(,%rsi,4),%rax
+ 110fdc8:	cmp    %rax,%rcx
+ 110fdcb:	jne    1111094 <core.runtime.Runtime.drainJournal+0x1544>
+ 110fdd1:	lea    -0x2a0(%rbp),%rdi
+ 110fdd8:	mov    %r14,%rsi
+ 110fddb:	vzeroupper
+ 110fdde:	call   107efb0 <journal.journal.Journal.validateSlot>
+ 110fde3:	movzwl -0x258(%rbp),%eax
+ 110fdea:	test   %ax,%ax
+ 110fded:	jne    1111b20 <core.runtime.Runtime.drainJournal+0x1fd0>
+ 110fdf3:	mov    -0x260(%rbp),%rax
+ 110fdfa:	mov    %rax,0x40(%rbx)
+ 110fdfe:	vmovdqu -0x2a0(%rbp),%ymm0
+ 110fe06:	vmovups -0x280(%rbp),%ymm1
+ 110fe0e:	vmovups %ymm1,0x20(%rbx)
+ 110fe13:	vmovdqu %ymm0,(%rbx)
+ 110fe17:	mov    -0x60(%rbp),%rax
+ 110fe1b:	inc    %rax
+ 110fe1e:	add    $0x48,%rbx
+ 110fe22:	cmp    %rax,%r12
+ 110fe25:	jne    110fd60 <core.runtime.Runtime.drainJournal+0x210>
+ 110fe2b:	mov    %r12,-0x60(%rbp)
+ 110fe2f:	mov    -0x40(%rbp),%r13
+ 110fe33:	testb  $0x1,0x2bc(%r14)
+ 110fe3b:	je     110fe50 <core.runtime.Runtime.drainJournal+0x300>
+ 110fe3d:	mov    0x40(%r14),%rcx
+ 110fe41:	mov    (%r14),%rax
+ 110fe44:	sub    %rcx,%rax
+ 110fe47:	cmp    %r15,%rax
+ 110fe4a:	jne    110fe5c <core.runtime.Runtime.drainJournal+0x30c>
+ 110fe4c:	jmp    110fe84 <core.runtime.Runtime.drainJournal+0x334>
+ 110fe4e:	xchg   %ax,%ax
+ 110fe50:	mov    0x290(%r14),%rax
+ 110fe57:	cmp    %r15,%rax
+ 110fe5a:	je     110fe84 <core.runtime.Runtime.drainJournal+0x334>
+ 110fe5c:	lock incl 0x31c4(%r13)
+ 110fe64:	mov    0x3110(%r13),%rdi
+ 110fe6b:	mov    0x3118(%r13),%rax
+ 110fe72:	mov    -0xa0(%rbp),%rsi
+ 110fe79:	mov    $0xffffffff,%edx
+ 110fe7e:	vzeroupper
+ 110fe81:	call   *0x70(%rax)
+ 110fe84:	cmpq   $0x0,-0x60(%rbp)
+ 110fe89:	je     11119d2 <core.runtime.Runtime.drainJournal+0x1e82>
+ 110fe8f:	mov    %r14,-0x80(%rbp)
+ 110fe93:	mov    0x3110(%r13),%rbx
+ 110fe9a:	mov    0x3118(%r13),%r14
+ 110fea1:	xor    %eax,%eax
+ 110fea3:	mov    $0x1,%ecx
+ 110fea8:	lock cmpxchg %ecx,0x31d4(%r13)
+ 110feb1:	setne  -0x3a8(%rbp)
+ 110feb8:	setne  %cl
+ 110febb:	test   %cl,%cl
+ 110febd:	jne    1111211 <core.runtime.Runtime.drainJournal+0x16c1>
+ 110fec3:	mov    -0x60(%rbp),%rax
+ 110fec7:	dec    %rax
+ 110feca:	shr    $0x6,%rax
+ 110fece:	not    %rax
+ 110fed1:	add    %rax,-0x90(%rbp)
+ 110fed8:	mov    0x3120(%r13),%rax
+ 110fedf:	mov    %rax,-0x1860(%rbp)
+ 110fee6:	movq   $0x0,-0xe58(%rbp)
+ 110fef1:	xor    %ecx,%ecx
+ 110fef3:	mov    -0x80(%rbp),%r14
+ 110fef7:	jmp    110ff20 <core.runtime.Runtime.drainJournal+0x3d0>
+ 110fef9:	nopl   0x0(%rax)
+ 110ff00:	test   %r12,%rax
+ 110ff03:	setne  -0x1960(%rbp,%rcx,1)
+ 110ff0b:	mov    -0x40(%rbp),%r13
+ 110ff0f:	mov    -0x80(%rbp),%r14
+ 110ff13:	inc    %rcx
+ 110ff16:	cmp    -0x60(%rbp),%rcx
+ 110ff1a:	je     11109d1 <core.runtime.Runtime.drainJournal+0xe81>
+ 110ff20:	lea    (%rcx,%rcx,8),%rax
+ 110ff24:	mov    -0x6f20(%rbp,%rax,8),%rsi
+ 110ff2c:	mov    -0x6f18(%rbp,%rax,8),%r15
+ 110ff34:	cmpb   $0x0,-0x6ef0(%rbp,%rax,8)
+ 110ff3c:	mov    %rcx,-0x88(%rbp)
+ 110ff43:	mov    %rsi,-0x48(%rbp)
+ 110ff47:	je     1110240 <core.runtime.Runtime.drainJournal+0x6f0>
+ 110ff4d:	cmpb   $0x0,0x248(%r14)
+ 110ff55:	je     11112ac <core.runtime.Runtime.drainJournal+0x175c>
+ 110ff5b:	lea    -0x6f08(,%rax,8),%rsi
+ 110ff63:	add    %rbp,%rsi
+ 110ff66:	mov    (%rsi),%ebx
+ 110ff68:	mov    -0x100(%rbp),%rdi
+ 110ff6f:	vzeroupper
+ 110ff72:	call   111fca0 <journal.schema.Registry.validateReady>
+ 110ff77:	test   %ax,%ax
+ 110ff7a:	jne    11112b0 <core.runtime.Runtime.drainJournal+0x1760>
+ 110ff80:	dec    %ebx
+ 110ff82:	imul   $0xd8,%rbx,%rax
+ 110ff89:	mov    0x230(%r14),%rcx
+ 110ff90:	vmovups 0xa8(%rcx,%rax,1),%ymm0
+ 110ff99:	vmovups %ymm0,-0x4d0(%rbp)
+ 110ffa1:	vmovups 0x88(%rcx,%rax,1),%ymm0
+ 110ffaa:	vmovups %ymm0,-0x4f0(%rbp)
+ 110ffb2:	vmovdqu 0x8(%rcx,%rax,1),%ymm0
+ 110ffb8:	vmovups 0x28(%rcx,%rax,1),%ymm1
+ 110ffbe:	vmovups 0x48(%rcx,%rax,1),%ymm2
+ 110ffc4:	vmovups 0x68(%rcx,%rax,1),%ymm3
+ 110ffca:	vmovups %ymm3,-0x510(%rbp)
+ 110ffd2:	vmovups %ymm2,-0x530(%rbp)
+ 110ffda:	vmovups %ymm1,-0x550(%rbp)
+ 110ffe2:	vmovdqu %ymm0,-0x570(%rbp)
+ 110ffea:	movb   $0x1,-0x4b0(%rbp)
+ 110fff1:	lea    -0x570(%rbp),%rbx
+ 110fff8:	cmpq   $0x40,-0x60(%rbp)
+ 110fffd:	jb     111077d <core.runtime.Runtime.drainJournal+0xc2d>
+ 1110003:	cmp    $0x6,%r15
+ 1110007:	jb     1111517 <core.runtime.Runtime.drainJournal+0x19c7>
+ 111000d:	mov    %r15,-0x58(%rbp)
+ 1110011:	movzbl -0x518(%rbp),%r13d
+ 1110019:	mov    -0x510(%rbp),%r12
+ 1110020:	mov    -0x508(%rbp),%r15
+ 1110027:	movzbl -0x4b8(%rbp),%r14d
+ 111002f:	mov    -0x48(%rbp),%rsi
+ 1110033:	movzwl 0x4(%rsi),%ecx
+ 1110037:	cmp    $0x2,%ecx
+ 111003a:	je     1110045 <core.runtime.Runtime.drainJournal+0x4f5>
+ 111003c:	cmp    $0x5,%ecx
+ 111003f:	jne    111192f <core.runtime.Runtime.drainJournal+0x1ddf>
+ 1110045:	lea    -0x3a8(%rbp),%rdi
+ 111004c:	mov    -0x58(%rbp),%rdx
+ 1110050:	vzeroupper
+ 1110053:	call   111db40 <core.codec.readHeader>
+ 1110058:	movzwl -0x2a8(%rbp),%ebx
+ 111005f:	test   %bx,%bx
+ 1110062:	jne    11115be <core.runtime.Runtime.drainJournal+0x1a6e>
+ 1110068:	cmp    %r12,-0x2c8(%rbp)
+ 111006f:	jne    11112d6 <core.runtime.Runtime.drainJournal+0x1786>
+ 1110075:	cmp    %r15,-0x2c0(%rbp)
+ 111007c:	jne    11112d6 <core.runtime.Runtime.drainJournal+0x1786>
+ 1110082:	movzbl -0x2eb(%rbp),%eax
+ 1110089:	xor    %al,%r14b
+ 111008c:	test   $0x1,%r14b
+ 1110090:	jne    11112d6 <core.runtime.Runtime.drainJournal+0x1786>
+ 1110096:	movzwl -0x2b0(%rbp),%ecx
+ 111009d:	mov    %ecx,%edx
+ 111009f:	and    $0x1,%dl
+ 11100a2:	test   %r13b,%r13b
+ 11100a5:	setne  %sil
+ 11100a9:	cmp    %dl,%sil
+ 11100ac:	jne    11112d6 <core.runtime.Runtime.drainJournal+0x1786>
+ 11100b2:	mov    $0x100,%edx
+ 11100b7:	sub    %r12,%rdx
+ 11100ba:	jb     1111534 <core.runtime.Runtime.drainJournal+0x19e4>
+ 11100c0:	cmp    %rdx,%r15
+ 11100c3:	ja     1111534 <core.runtime.Runtime.drainJournal+0x19e4>
+ 11100c9:	vmovups -0x30b(%rbp),%ymm0
+ 11100d1:	vmovups %ymm0,-0x143(%rbp)
+ 11100d9:	vmovups -0x328(%rbp),%ymm0
+ 11100e1:	vmovups %ymm0,-0x160(%rbp)
+ 11100e9:	vmovups -0x3a8(%rbp),%ymm0
+ 11100f1:	vmovups -0x368(%rbp),%ymm1
+ 11100f9:	vmovups -0x348(%rbp),%ymm2
+ 1110101:	vmovups %ymm2,-0x180(%rbp)
+ 1110109:	vmovups %ymm1,-0x1a0(%rbp)
+ 1110111:	vmovups -0x388(%rbp),%ymm1
+ 1110119:	vmovups %ymm1,-0x1c0(%rbp)
+ 1110121:	vmovups %ymm0,-0x1e0(%rbp)
+ 1110129:	lea    -0x2ea(%rbp),%rsi
+ 1110130:	vmovups (%rsi),%ymm0
+ 1110134:	vmovups %ymm0,-0xd0(%rbp)
+ 111013c:	movzwl 0x20(%rsi),%edx
+ 1110140:	mov    %dx,-0xb0(%rbp)
+ 1110147:	mov    0x3c(%rsi),%edx
+ 111014a:	mov    %edx,-0x50(%rbp)
+ 111014d:	movzwl 0x40(%rsi),%edx
+ 1110151:	mov    %dx,-0x4c(%rbp)
+ 1110155:	vmovups -0x143(%rbp),%ymm0
+ 111015d:	vmovups %ymm0,-0x5d3(%rbp)
+ 1110165:	vmovups -0x160(%rbp),%ymm0
+ 111016d:	vmovups %ymm0,-0x5f0(%rbp)
+ 1110175:	vmovups -0x1e0(%rbp),%ymm0
+ 111017d:	vmovups -0x1c0(%rbp),%ymm1
+ 1110185:	vmovups -0x1a0(%rbp),%ymm2
+ 111018d:	vmovups -0x180(%rbp),%ymm3
+ 1110195:	vmovups %ymm3,-0x610(%rbp)
+ 111019d:	vmovups %ymm2,-0x630(%rbp)
+ 11101a5:	vmovups %ymm1,-0x650(%rbp)
+ 11101ad:	vmovups %ymm0,-0x670(%rbp)
+ 11101b5:	mov    %al,-0x5b3(%rbp)
+ 11101bb:	mov    -0x2b8(%rbp),%rdx
+ 11101c2:	movzwl -0xb0(%rbp),%esi
+ 11101c9:	lea    -0x5b2(%rbp),%rdi
+ 11101d0:	mov    %si,0x20(%rdi)
+ 11101d4:	vmovdqu -0xd0(%rbp),%ymm0
+ 11101dc:	vmovdqu %ymm0,(%rdi)
+ 11101e0:	mov    %r12,-0x590(%rbp)
+ 11101e7:	mov    %r15,-0x588(%rbp)
+ 11101ee:	mov    %rdx,-0x580(%rbp)
+ 11101f5:	mov    %cx,-0x578(%rbp)
+ 11101fc:	movzwl -0x4c(%rbp),%ecx
+ 1110200:	mov    %cx,0x40(%rdi)
+ 1110204:	mov    -0x50(%rbp),%ecx
+ 1110207:	mov    %ecx,0x3c(%rdi)
+ 111020a:	lea    -0x4b0(%rbp),%rdx
+ 1110211:	lea    -0x570(%rbp),%rbx
+ 1110218:	lea    -0x670(%rbp),%rsi
+ 111021f:	mov    -0x80(%rbp),%r14
+ 1110223:	mov    -0x40(%rbp),%r13
+ 1110227:	test   $0x1,%al
+ 1110229:	je     1110311 <core.runtime.Runtime.drainJournal+0x7c1>
+ 111022f:	jmp    1110770 <core.runtime.Runtime.drainJournal+0xc20>
+ 1110234:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 1110240:	lea    -0xa48(%rbp),%rdi
+ 1110247:	mov    %r15,%rdx
+ 111024a:	mov    $0x4,%ecx
+ 111024f:	vzeroupper
+ 1110252:	call   111db40 <core.codec.readHeader>
+ 1110257:	movzwl -0x948(%rbp),%ebx
+ 111025e:	test   %ebx,%ebx
+ 1110260:	mov    %r15,-0x58(%rbp)
+ 1110264:	jne    111075d <core.runtime.Runtime.drainJournal+0xc0d>
+ 111026a:	vmovups -0x9a8(%rbp),%ymm0
+ 1110272:	vmovups %ymm0,-0x6d0(%rbp)
+ 111027a:	vmovups -0x968(%rbp),%ymm0
+ 1110282:	vmovups %ymm0,-0x690(%rbp)
+ 111028a:	vmovups -0x988(%rbp),%ymm0
+ 1110292:	vmovups %ymm0,-0x6b0(%rbp)
+ 111029a:	vmovups -0x9c8(%rbp),%ymm0
+ 11102a2:	vmovups %ymm0,-0x6f0(%rbp)
+ 11102aa:	vmovdqu -0xa48(%rbp),%ymm0
+ 11102b2:	vmovups -0xa28(%rbp),%ymm1
+ 11102ba:	vmovups -0xa08(%rbp),%ymm2
+ 11102c2:	vmovups -0x9e8(%rbp),%ymm3
+ 11102ca:	vmovups %ymm3,-0x710(%rbp)
+ 11102d2:	vmovups %ymm2,-0x730(%rbp)
+ 11102da:	vmovups %ymm1,-0x750(%rbp)
+ 11102e2:	vmovdqu %ymm0,-0x770(%rbp)
+ 11102ea:	movzbl -0x6b3(%rbp),%eax
+ 11102f1:	mov    $0x1066b88,%ebx
+ 11102f6:	mov    $0x1066c48,%edx
+ 11102fb:	mov    -0x688(%rbp),%r15
+ 1110302:	lea    -0x770(%rbp),%rsi
+ 1110309:	test   $0x1,%al
+ 111030b:	jne    1110770 <core.runtime.Runtime.drainJournal+0xc20>
+ 1110311:	test   %r15,%r15
+ 1110314:	jne    1110770 <core.runtime.Runtime.drainJournal+0xc20>
+ 111031a:	mov    %rdx,-0x70(%rbp)
+ 111031e:	mov    0x58(%rsi),%r12
+ 1110322:	mov    0xb8(%rsi),%eax
+ 1110328:	mov    %eax,-0x68(%rbp)
+ 111032b:	mov    0x60(%rsi),%rcx
+ 111032f:	mov    %rsi,-0xf0(%rbp)
+ 1110336:	mov    0x68(%rsi),%rdx
+ 111033a:	lea    -0x110(%rbp),%rdi
+ 1110341:	lea    -0x1860(%rbp),%rsi
+ 1110348:	vzeroupper
+ 111034b:	call   110f900 <core.delivery_batch.Configurations.select>
+ 1110350:	movzwl -0x108(%rbp),%r15d
+ 1110358:	test   %r15w,%r15w
+ 111035c:	jne    11113a1 <core.runtime.Runtime.drainJournal+0x1851>
+ 1110362:	mov    -0x110(%rbp),%rdx
+ 1110369:	mov    (%rdx),%rsi
+ 111036c:	mov    0x7448(%rsi),%rax
+ 1110373:	cmp    $0x40,%rax
+ 1110377:	je     1110387 <core.runtime.Runtime.drainJournal+0x837>
+ 1110379:	shrx   %rax,%r12,%rcx
+ 111037e:	test   %rcx,%rcx
+ 1110381:	jne    111145c <core.runtime.Runtime.drainJournal+0x190c>
+ 1110387:	mov    %rdx,-0xf8(%rbp)
+ 111038e:	movzbl -0x9eb6f(%rip),%ecx        # 1071826 <__anon_22763+0x2>
+ 1110395:	test   %rax,%rax
+ 1110398:	je     1110690 <core.runtime.Runtime.drainJournal+0xb40>
+ 111039e:	mov    %rsi,-0x98(%rbp)
+ 11103a5:	mov    0x7440(%rsi),%rcx
+ 11103ac:	mov    $0x0,%r15d
+ 11103b2:	mov    $0x0,%edx
+ 11103b7:	mov    $0x0,%esi
+ 11103bc:	cmp    $0x8,%rax
+ 11103c0:	jb     11104c8 <core.runtime.Runtime.drainJournal+0x978>
+ 11103c6:	mov    %rax,%rdi
+ 11103c9:	and    $0xfffffffffffffff8,%rdi
+ 11103cd:	lea    0x33bc0(%rcx),%r8
+ 11103d4:	xor    %r15d,%r15d
+ 11103d7:	xor    %edx,%edx
+ 11103d9:	xor    %esi,%esi
+ 11103db:	nopl   0x0(%rax,%rax,1)
+ 11103e0:	lea    -0x33bc0(%r8),%r10
+ 11103e7:	shrx   %rsi,%r12,%r9
+ 11103ec:	mov    %r9d,%r11d
+ 11103ef:	and    $0x2,%r11d
+ 11103f3:	shr    $1,%r11d
+ 11103f6:	bt     %rsi,%r12
+ 11103fa:	adc    %r11,%rdx
+ 11103fd:	bt     %rsi,%r12
+ 1110401:	cmovae %r15,%r10
+ 1110405:	lea    -0x2c580(%r8),%r14
+ 111040c:	test   %r11d,%r11d
+ 111040f:	cmove  %r10,%r14
+ 1110413:	mov    %r9d,%r10d
+ 1110416:	and    $0x4,%r10d
+ 111041a:	shr    $0x2,%r10d
+ 111041e:	lea    -0x24f40(%r8),%r11
+ 1110425:	test   %r10d,%r10d
+ 1110428:	cmove  %r14,%r11
+ 111042c:	mov    %r9d,%r14d
+ 111042f:	and    $0x8,%r14d
+ 1110433:	shr    $0x3,%r14d
+ 1110437:	lea    -0x1d900(%r8),%r15
+ 111043e:	add    %r14,%r10
+ 1110441:	add    %r10,%rdx
+ 1110444:	test   %r14d,%r14d
+ 1110447:	cmove  %r11,%r15
+ 111044b:	mov    %r9d,%r10d
+ 111044e:	and    $0x10,%r10d
+ 1110452:	shr    $0x4,%r10d
+ 1110456:	lea    -0x162c0(%r8),%r11
+ 111045d:	test   %r10d,%r10d
+ 1110460:	cmove  %r15,%r11
+ 1110464:	mov    %r9d,%r14d
+ 1110467:	and    $0x20,%r14d
+ 111046b:	shr    $0x5,%r14d
+ 111046f:	lea    -0xec80(%r8),%r13
+ 1110476:	add    %r14,%r10
+ 1110479:	test   %r14d,%r14d
+ 111047c:	cmove  %r11,%r13
+ 1110480:	mov    %r9d,%r11d
+ 1110483:	and    $0x40,%r11d
+ 1110487:	shr    $0x6,%r11d
+ 111048b:	lea    -0x7640(%r8),%r15
+ 1110492:	add    %r11,%r10
+ 1110495:	add    %r10,%rdx
+ 1110498:	test   %r11d,%r11d
+ 111049b:	cmove  %r13,%r15
+ 111049f:	mov    %r9d,%r10d
+ 11104a2:	shr    $0x7,%r10b
+ 11104a6:	movzbl %r10b,%r10d
+ 11104aa:	add    %r10,%rdx
+ 11104ad:	test   %r9b,%r9b
+ 11104b0:	cmovs  %r8,%r15
+ 11104b4:	add    $0x8,%rsi
+ 11104b8:	add    $0x3b200,%r8
+ 11104bf:	cmp    %rsi,%rdi
+ 11104c2:	jne    11103e0 <core.runtime.Runtime.drainJournal+0x890>
+ 11104c8:	and    $0x7,%eax
+ 11104cb:	je     11104ff <core.runtime.Runtime.drainJournal+0x9af>
+ 11104cd:	imul   $0x7640,%rsi,%rdi
+ 11104d4:	add    %rdi,%rcx
+ 11104d7:	nopw   0x0(%rax,%rax,1)
+ 11104e0:	bt     %rsi,%r12
+ 11104e4:	adc    $0x0,%rdx
+ 11104e8:	bt     %rsi,%r12
+ 11104ec:	cmovb  %rcx,%r15
+ 11104f0:	inc    %rsi
+ 11104f3:	add    $0x7640,%rcx
+ 11104fa:	dec    %rax
+ 11104fd:	jne    11104e0 <core.runtime.Runtime.drainJournal+0x990>
+ 11104ff:	movzbl -0x9ece0(%rip),%ecx        # 1071826 <__anon_22763+0x2>
+ 1110506:	cmp    $0x1,%rdx
+ 111050a:	mov    -0x40(%rbp),%r13
+ 111050e:	mov    -0x80(%rbp),%r14
+ 1110512:	mov    -0x98(%rbp),%rsi
+ 1110519:	jne    1110690 <core.runtime.Runtime.drainJournal+0xb40>
+ 111051f:	mov    0x3168(%r13),%rax
+ 1110526:	mov    0x3170(%r13),%r10
+ 111052d:	movzbl 0x7638(%r15),%edx
+ 1110535:	and    $0x3,%edx
+ 1110538:	movzbl -0x9ed19(%rip),%ecx        # 1071826 <__anon_22763+0x2>
+ 111053f:	jmp    *0x100f308(,%rdx,8)
+ 1110546:	mov    $0x1,%cl
+ 1110548:	jmp    1110550 <core.runtime.Runtime.drainJournal+0xa00>
+ 111054a:	xor    %ecx,%ecx
+ 111054c:	jmp    1110550 <core.runtime.Runtime.drainJournal+0xa00>
+ 111054e:	mov    $0x2,%cl
+ 1110550:	mov    -0x70(%rbp),%rdx
+ 1110554:	cmpb   $0x0,(%rdx)
+ 1110557:	movzbl %cl,%esi
+ 111055a:	mov    -0xf0(%rbp),%r8
+ 1110561:	je     11106eb <core.runtime.Runtime.drainJournal+0xb9b>
+ 1110567:	vmovups 0xa0(%rbx),%ymm0
+ 111056f:	vmovups %ymm0,-0x400(%rbp)
+ 1110577:	vmovups 0x80(%rbx),%ymm0
+ 111057f:	vmovups %ymm0,-0x420(%rbp)
+ 1110587:	vmovdqu (%rbx),%ymm0
+ 111058b:	vmovups 0x20(%rbx),%ymm1
+ 1110590:	vmovups 0x40(%rbx),%ymm2
+ 1110595:	vmovups 0x60(%rbx),%ymm3
+ 111059a:	vmovups %ymm3,-0x440(%rbp)
+ 11105a2:	vmovups %ymm2,-0x460(%rbp)
+ 11105aa:	vmovups %ymm1,-0x480(%rbp)
+ 11105b2:	vmovdqu %ymm0,-0x4a0(%rbp)
+ 11105ba:	lea    -0x3c0(%rbp),%rdi
+ 11105c1:	mov    -0x48(%rbp),%rdx
+ 11105c5:	mov    -0x58(%rbp),%rcx
+ 11105c9:	lea    -0x4a0(%rbp),%r9
+ 11105d0:	push   0x6468(%r15)
+ 11105d7:	lea    -0x9f30(%rbp),%r11
+ 11105de:	push   %r11
+ 11105e0:	push   %r10
+ 11105e2:	push   %rax
+ 11105e3:	vzeroupper
+ 11105e6:	call   11184c0 <encoder.wire_json.renderReference>
+ 11105eb:	add    $0x20,%rsp
+ 11105ef:	lea    -0x3c0(%rbp),%rax
+ 11105f6:	movzwl 0x10(%rax),%r8d
+ 11105fb:	test   %r8d,%r8d
+ 11105fe:	jne    1110730 <core.runtime.Runtime.drainJournal+0xbe0>
+ 1110604:	mov    (%rax),%rsi
+ 1110607:	mov    0x8(%rax),%rdx
+ 111060b:	mov    0x6440(%r15),%rdi
+ 1110612:	mov    0x6448(%r15),%rax
+ 1110619:	call   *(%rax)
+ 111061b:	movzbl -0x9edd0(%rip),%ecx        # 1071852 <__anon_28815+0x2>
+ 1110622:	test   %ax,%ax
+ 1110625:	mov    -0x98(%rbp),%rsi
+ 111062c:	je     1110690 <core.runtime.Runtime.drainJournal+0xb40>
+ 111062e:	mov    %eax,%r8d
+ 1110631:	lock incq 0x3070(%r13)
+ 1110639:	mov    %ax,0x31e4(%r13)
+ 1110641:	movzwl %ax,%eax
+ 1110644:	or     $0x10000,%eax
+ 1110649:	mov    %eax,0x3108(%r13)
+ 1110650:	lock incq 0x30e0(%r13)
+ 1110658:	mov    $0x1,%eax
+ 111065d:	lock xadd %rax,0x30d0(%r13)
+ 1110666:	test   %rax,%rax
+ 1110669:	je     1110673 <core.runtime.Runtime.drainJournal+0xb23>
+ 111066b:	lock incq 0x30d8(%r13)
+ 1110673:	testb  $0x1,0x763b(%r15)
+ 111067b:	movzbl -0x9ee30(%rip),%ecx        # 1071852 <__anon_28815+0x2>
+ 1110682:	je     11125a4 <core.runtime.Runtime.drainJournal+0x2a54>
+ 1110688:	nopl   0x0(%rax,%rax,1)
+ 1110690:	test   $0x1,%cl
+ 1110693:	mov    -0x70(%rbp),%rdx
+ 1110697:	je     1110770 <core.runtime.Runtime.drainJournal+0xc20>
+ 111069d:	mov    -0x88(%rbp),%rcx
+ 11106a4:	mov    -0x68(%rbp),%eax
+ 11106a7:	mov    %eax,-0x1f30(%rbp,%rcx,4)
+ 11106ae:	mov    %rsi,-0x2730(%rbp,%rcx,8)
+ 11106b6:	mov    -0xf8(%rbp),%rdx
+ 11106bd:	or     %r12,0x10(%rdx)
+ 11106c1:	mov    0x20(%rdx),%rax
+ 11106c5:	test   %r12,%rax
+ 11106c8:	je     11106ce <core.runtime.Runtime.drainJournal+0xb7e>
+ 11106ca:	or     %r12,0x18(%rdx)
+ 11106ce:	test   %r12,%rax
+ 11106d1:	setne  -0x1960(%rbp,%rcx,1)
+ 11106d9:	inc    %rcx
+ 11106dc:	cmp    -0x60(%rbp),%rcx
+ 11106e0:	jne    110ff20 <core.runtime.Runtime.drainJournal+0x3d0>
+ 11106e6:	jmp    11109d1 <core.runtime.Runtime.drainJournal+0xe81>
+ 11106eb:	sub    $0x8,%rsp
+ 11106ef:	lea    -0x3d8(%rbp),%rdi
+ 11106f6:	mov    -0x48(%rbp),%rdx
+ 11106fa:	mov    -0x58(%rbp),%rcx
+ 11106fe:	mov    %rax,%r9
+ 1110701:	push   0x6468(%r15)
+ 1110708:	lea    -0x9f30(%rbp),%rax
+ 111070f:	push   %rax
+ 1110710:	push   %r10
+ 1110712:	call   1112b20 <encoder.wire_json.render>
+ 1110717:	add    $0x20,%rsp
+ 111071b:	lea    -0x3d8(%rbp),%rax
+ 1110722:	movzwl 0x10(%rax),%r8d
+ 1110727:	test   %r8d,%r8d
+ 111072a:	je     1110604 <core.runtime.Runtime.drainJournal+0xab4>
+ 1110730:	cmp    $0xa1,%r8d
+ 1110737:	je     111250c <core.runtime.Runtime.drainJournal+0x29bc>
+ 111073d:	movzbl -0x9ef1e(%rip),%ecx        # 1071826 <__anon_22763+0x2>
+ 1110744:	cmp    $0x13e,%r8d
+ 111074b:	mov    -0x98(%rbp),%rsi
+ 1110752:	je     1110690 <core.runtime.Runtime.drainJournal+0xb40>
+ 1110758:	jmp    11125a4 <core.runtime.Runtime.drainJournal+0x2a54>
+ 111075d:	cmp    $0x7a,%ebx
+ 1110760:	jne    1112056 <core.runtime.Runtime.drainJournal+0x2506>
+ 1110766:	mov    $0x1066c48,%edx
+ 111076b:	mov    $0x1066b88,%ebx
+ 1110770:	cmpb   $0x0,(%rdx)
+ 1110773:	mov    -0x58(%rbp),%r15
+ 1110777:	je     1110880 <core.runtime.Runtime.drainJournal+0xd30>
+ 111077d:	vmovups 0xa0(%rbx),%ymm0
+ 1110785:	vmovups %ymm0,-0xbf0(%rbp)
+ 111078d:	vmovups 0x80(%rbx),%ymm0
+ 1110795:	vmovups %ymm0,-0xc10(%rbp)
+ 111079d:	vmovdqu (%rbx),%ymm0
+ 11107a1:	vmovups 0x20(%rbx),%ymm1
+ 11107a6:	vmovups 0x40(%rbx),%ymm2
+ 11107ab:	vmovups 0x60(%rbx),%ymm3
+ 11107b0:	vmovups %ymm3,-0xc30(%rbp)
+ 11107b8:	vmovups %ymm2,-0xc50(%rbp)
+ 11107c0:	vmovups %ymm1,-0xc70(%rbp)
+ 11107c8:	vmovdqu %ymm0,-0xc90(%rbp)
+ 11107d0:	lea    -0x858(%rbp),%rdi
+ 11107d7:	mov    -0x48(%rbp),%rsi
+ 11107db:	mov    %r15,%rdx
+ 11107de:	lea    -0xc90(%rbp),%rcx
+ 11107e5:	lea    -0x9f30(%rbp),%r8
+ 11107ec:	vzeroupper
+ 11107ef:	call   111f0c0 <core.schema_codec.resolve>
+ 11107f4:	movzwl -0x778(%rbp),%ebx
+ 11107fb:	test   %bx,%bx
+ 11107fe:	jne    1111e10 <core.runtime.Runtime.drainJournal+0x22c0>
+ 1110804:	vmovups -0x798(%rbp),%ymm0
+ 111080c:	vmovups %ymm0,-0xcb0(%rbp)
+ 1110814:	vmovups -0x7b8(%rbp),%ymm0
+ 111081c:	vmovups %ymm0,-0xcd0(%rbp)
+ 1110824:	vmovups -0x7d8(%rbp),%ymm0
+ 111082c:	vmovups %ymm0,-0xcf0(%rbp)
+ 1110834:	vmovdqu -0x858(%rbp),%ymm0
+ 111083c:	vmovups -0x838(%rbp),%ymm1
+ 1110844:	vmovups -0x818(%rbp),%ymm2
+ 111084c:	vmovups -0x7f8(%rbp),%ymm3
+ 1110854:	vmovups %ymm3,-0xd10(%rbp)
+ 111085c:	vmovups %ymm2,-0xd30(%rbp)
+ 1110864:	vmovups %ymm1,-0xd50(%rbp)
+ 111086c:	vmovdqu %ymm0,-0xd70(%rbp)
+ 1110874:	lea    -0xd70(%rbp),%rbx
+ 111087b:	jmp    1110924 <core.runtime.Runtime.drainJournal+0xdd4>
+ 1110880:	lea    -0x940(%rbp),%rdi
+ 1110887:	mov    -0x48(%rbp),%rsi
+ 111088b:	mov    %r15,%rdx
+ 111088e:	lea    -0x9f30(%rbp),%rcx
+ 1110895:	vzeroupper
+ 1110898:	call   111e650 <core.codec.decode>
+ 111089d:	movzwl -0x860(%rbp),%ebx
+ 11108a4:	test   %bx,%bx
+ 11108a7:	jne    1112146 <core.runtime.Runtime.drainJournal+0x25f6>
+ 11108ad:	vmovups -0x880(%rbp),%ymm0
+ 11108b5:	vmovups %ymm0,-0xd90(%rbp)
+ 11108bd:	vmovups -0x8a0(%rbp),%ymm0
+ 11108c5:	vmovups %ymm0,-0xdb0(%rbp)
+ 11108cd:	vmovups -0x8c0(%rbp),%ymm0
+ 11108d5:	vmovups %ymm0,-0xdd0(%rbp)
+ 11108dd:	vmovdqu -0x940(%rbp),%ymm0
+ 11108e5:	vmovups -0x920(%rbp),%ymm1
+ 11108ed:	vmovups -0x900(%rbp),%ymm2
+ 11108f5:	vmovups -0x8e0(%rbp),%ymm3
+ 11108fd:	vmovups %ymm3,-0xdf0(%rbp)
+ 1110905:	vmovups %ymm2,-0xe10(%rbp)
+ 111090d:	vmovups %ymm1,-0xe30(%rbp)
+ 1110915:	vmovdqu %ymm0,-0xe50(%rbp)
+ 111091d:	lea    -0xe50(%rbp),%rbx
+ 1110924:	mov    0x58(%rbx),%r12
+ 1110928:	mov    0x60(%rbx),%rcx
+ 111092c:	mov    0x68(%rbx),%rdx
+ 1110930:	mov    0xb8(%rbx),%r14d
+ 1110937:	lea    -0x120(%rbp),%rdi
+ 111093e:	lea    -0x1860(%rbp),%rsi
+ 1110945:	vzeroupper
+ 1110948:	call   110f900 <core.delivery_batch.Configurations.select>
+ 111094d:	movzwl -0x118(%rbp),%r15d
+ 1110955:	test   %r15w,%r15w
+ 1110959:	jne    1111d8b <core.runtime.Runtime.drainJournal+0x223b>
+ 111095f:	mov    -0x120(%rbp),%r15
+ 1110966:	mov    (%r15),%r13
+ 1110969:	mov    0x7448(%r13),%rdx
+ 1110970:	cmp    $0x40,%rdx
+ 1110974:	je     1110984 <core.runtime.Runtime.drainJournal+0xe34>
+ 1110976:	shrx   %rdx,%r12,%rax
+ 111097b:	test   %rax,%rax
+ 111097e:	jne    1111282 <core.runtime.Runtime.drainJournal+0x1732>
+ 1110984:	mov    0x7440(%r13),%rsi
+ 111098b:	mov    -0x40(%rbp),%rdi
+ 111098f:	mov    %rbx,%rcx
+ 1110992:	call   10fc530 <core.runtime.Runtime.deliverWith>
+ 1110997:	test   %ax,%ax
+ 111099a:	jne    1111db5 <core.runtime.Runtime.drainJournal+0x2265>
+ 11109a0:	mov    -0x88(%rbp),%rcx
+ 11109a7:	mov    %r14d,-0x1f30(%rbp,%rcx,4)
+ 11109af:	mov    %r13,-0x2730(%rbp,%rcx,8)
+ 11109b7:	or     %r12,0x10(%r15)
+ 11109bb:	mov    0x20(%r15),%rax
+ 11109bf:	test   %r12,%rax
+ 11109c2:	je     110ff00 <core.runtime.Runtime.drainJournal+0x3b0>
+ 11109c8:	or     %r12,0x18(%r15)
+ 11109cc:	jmp    110ff00 <core.runtime.Runtime.drainJournal+0x3b0>
+ 11109d1:	mov    -0xe58(%rbp),%rbx
+ 11109d8:	lea    -0x1858(%rbp),%r15
+ 11109df:	test   %rbx,%rbx
+ 11109e2:	jne    111102d <core.runtime.Runtime.drainJournal+0x14dd>
+ 11109e8:	xor    %ecx,%ecx
+ 11109ea:	xor    %r12d,%r12d
+ 11109ed:	xor    %r9d,%r9d
+ 11109f0:	mov    %r9,-0x48(%rbp)
+ 11109f4:	lea    (%rcx,%rcx,8),%rax
+ 11109f8:	mov    -0x6f10(%rbp,%rax,8),%r13
+ 1110a00:	cmp    0x1b0(%r14),%r13
+ 1110a07:	jae    11119ea <core.runtime.Runtime.drainJournal+0x1e9a>
+ 1110a0d:	mov    -0x6f30(%rbp,%rax,8),%rbx
+ 1110a15:	mov    -0x6f28(%rbp,%rax,8),%r15
+ 1110a1d:	mov    -0x1f30(%rbp,%rcx,4),%eax
+ 1110a24:	mov    %rax,-0x58(%rbp)
+ 1110a28:	mov    -0x2730(%rbp,%rcx,8),%rax
+ 1110a30:	mov    %rax,-0x70(%rbp)
+ 1110a34:	mov    %r14,%rsi
+ 1110a37:	mov    %rcx,-0x88(%rbp)
+ 1110a3e:	movzbl -0x1960(%rbp,%rcx,1),%r14d
+ 1110a47:	lea    -0x3a8(%rbp),%rdi
+ 1110a4e:	call   110f610 <journal.journal.Journal.peekChecked>
+ 1110a53:	movzwl -0x358(%rbp),%eax
+ 1110a5a:	test   %ax,%ax
+ 1110a5d:	jne    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 1110a63:	cmpb   $0x0,-0x360(%rbp)
+ 1110a6a:	je     11119ea <core.runtime.Runtime.drainJournal+0x1e9a>
+ 1110a70:	cmp    %rbx,-0x3a8(%rbp)
+ 1110a77:	jne    11119ea <core.runtime.Runtime.drainJournal+0x1e9a>
+ 1110a7d:	cmp    %r13,-0x388(%rbp)
+ 1110a84:	jne    11119ea <core.runtime.Runtime.drainJournal+0x1e9a>
+ 1110a8a:	mov    $0x13f,%ax
+ 1110a8e:	cmp    %r15,-0x3a0(%rbp)
+ 1110a95:	jne    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 1110a9b:	test   $0x1,%r14b
+ 1110a9f:	mov    -0x80(%rbp),%r14
+ 1110aa3:	je     1110da0 <core.runtime.Runtime.drainJournal+0x1250>
+ 1110aa9:	mov    %r12,-0x68(%rbp)
+ 1110aad:	mov    0x150(%r14),%r12
+ 1110ab4:	mov    0x158(%r14),%r15
+ 1110abb:	xor    %eax,%eax
+ 1110abd:	mov    $0x1,%ecx
+ 1110ac2:	lock cmpxchg %ecx,0x2b4(%r14)
+ 1110acb:	setne  -0x2a0(%rbp)
+ 1110ad2:	setne  %cl
+ 1110ad5:	test   %cl,%cl
+ 1110ad7:	jne    1110fbd <core.runtime.Runtime.drainJournal+0x146d>
+ 1110add:	testb  $0x1,0x1a0(%r14)
+ 1110ae5:	jne    1111d79 <core.runtime.Runtime.drainJournal+0x2229>
+ 1110aeb:	mov    0x180(%r14),%rdi
+ 1110af2:	mov    0x188(%r14),%rsi
+ 1110af9:	xor    %r15d,%r15d
+ 1110afc:	nopl   0x0(%rax)
+ 1110b00:	mov    $0x1a,%eax
+ 1110b05:	mov    $0x4,%edx
+ 1110b0a:	syscall
+ 1110b0c:	mov    %rax,%rcx
+ 1110b0f:	neg    %rcx
+ 1110b12:	cmp    $0xfffffffffffff001,%rax
+ 1110b18:	cmovb  %r15,%rcx
+ 1110b1c:	cmp    $0x4,%cx
+ 1110b20:	je     1110b00 <core.runtime.Runtime.drainJournal+0xfb0>
+ 1110b22:	test   %ecx,%ecx
+ 1110b24:	jne    1111379 <core.runtime.Runtime.drainJournal+0x1829>
+ 1110b2a:	mov    0x170(%r14),%rdi
+ 1110b31:	mov    0x178(%r14),%rax
+ 1110b38:	mov    0x190(%r14),%rcx
+ 1110b3f:	mov    0x1b0(%rax),%rax
+ 1110b46:	mov    %rcx,-0x2a0(%rbp)
+ 1110b4d:	lea    -0x2a0(%rbp),%r12
+ 1110b54:	mov    %r12,%rsi
+ 1110b57:	call   *%rax
+ 1110b59:	test   %ax,%ax
+ 1110b5c:	jne    111137d <core.runtime.Runtime.drainJournal+0x182d>
+ 1110b62:	mov    0x170(%r14),%rdi
+ 1110b69:	mov    0x178(%r14),%rax
+ 1110b70:	mov    0x198(%r14),%ecx
+ 1110b77:	mov    0x1b0(%rax),%rax
+ 1110b7e:	movb   $0x0,-0x4a0(%rbp)
+ 1110b85:	mov    %ecx,-0x2a0(%rbp)
+ 1110b8b:	movb   $0x0,-0x29c(%rbp)
+ 1110b92:	mov    %r12,%rsi
+ 1110b95:	call   *%rax
+ 1110b97:	test   %ax,%ax
+ 1110b9a:	jne    111137d <core.runtime.Runtime.drainJournal+0x182d>
+ 1110ba0:	mov    0x2a0(%r14),%r12
+ 1110ba7:	inc    %r12
+ 1110baa:	sete   -0x2a0(%rbp)
+ 1110bb1:	je     1111ddf <core.runtime.Runtime.drainJournal+0x228f>
+ 1110bb7:	mov    %r12d,%esi
+ 1110bba:	not    %esi
+ 1110bbc:	mov    0x160(%r14),%rdi
+ 1110bc3:	and    $0x1,%esi
+ 1110bc6:	mov    %r12,%rdx
+ 1110bc9:	mov    %rbx,%rcx
+ 1110bcc:	call   10f17b0 <journal.format.writeCheckpoint>
+ 1110bd1:	testb  $0x1,0x1a0(%r14)
+ 1110bd9:	jne    1111e07 <core.runtime.Runtime.drainJournal+0x22b7>
+ 1110bdf:	mov    0x180(%r14),%rdi
+ 1110be6:	mov    0x188(%r14),%rsi
+ 1110bed:	nopl   (%rax)
+ 1110bf0:	mov    $0x1a,%eax
+ 1110bf5:	mov    $0x4,%edx
+ 1110bfa:	syscall
+ 1110bfc:	mov    %rax,%rcx
+ 1110bff:	neg    %rcx
+ 1110c02:	cmp    $0xfffffffffffff001,%rax
+ 1110c08:	cmovb  %r15,%rcx
+ 1110c0c:	cmp    $0x4,%cx
+ 1110c10:	je     1110bf0 <core.runtime.Runtime.drainJournal+0x10a0>
+ 1110c12:	test   %ecx,%ecx
+ 1110c14:	jne    11118ec <core.runtime.Runtime.drainJournal+0x1d9c>
+ 1110c1a:	mov    0x170(%r14),%rdi
+ 1110c21:	mov    0x178(%r14),%rax
+ 1110c28:	mov    0x190(%r14),%rcx
+ 1110c2f:	mov    0x1b0(%rax),%rax
+ 1110c36:	mov    %rcx,-0x2a0(%rbp)
+ 1110c3d:	lea    -0x2a0(%rbp),%rsi
+ 1110c44:	call   *%rax
+ 1110c46:	test   %ax,%ax
+ 1110c49:	jne    11118f0 <core.runtime.Runtime.drainJournal+0x1da0>
+ 1110c4f:	mov    0x170(%r14),%rdi
+ 1110c56:	mov    0x178(%r14),%rax
+ 1110c5d:	mov    0x198(%r14),%ecx
+ 1110c64:	mov    0x1b0(%rax),%rax
+ 1110c6b:	movb   $0x0,-0x4a0(%rbp)
+ 1110c72:	mov    %ecx,-0x2a0(%rbp)
+ 1110c78:	movb   $0x0,-0x29c(%rbp)
+ 1110c7f:	lea    -0x2a0(%rbp),%rsi
+ 1110c86:	call   *%rax
+ 1110c88:	test   %ax,%ax
+ 1110c8b:	jne    11118f0 <core.runtime.Runtime.drainJournal+0x1da0>
+ 1110c91:	mov    %r12,0x2a0(%r14)
+ 1110c98:	mov    %rbx,0x2a8(%r14)
+ 1110c9f:	mov    0x160(%r14),%rax
+ 1110ca6:	mov    0x1c0(%r14),%rcx
+ 1110cad:	imul   %r13,%rcx
+ 1110cb1:	movq   $0x0,0x1000(%rax,%rcx,1)
+ 1110cbd:	testb  $0x1,0x1a0(%r14)
+ 1110cc5:	jne    1111e5c <core.runtime.Runtime.drainJournal+0x230c>
+ 1110ccb:	mov    0x180(%r14),%rdi
+ 1110cd2:	mov    0x188(%r14),%rsi
+ 1110cd9:	mov    -0x68(%rbp),%r12
+ 1110cdd:	nopl   (%rax)
+ 1110ce0:	mov    $0x1a,%eax
+ 1110ce5:	mov    $0x4,%edx
+ 1110cea:	syscall
+ 1110cec:	mov    %rax,%rcx
+ 1110cef:	neg    %rcx
+ 1110cf2:	cmp    $0xfffffffffffff001,%rax
+ 1110cf8:	cmovb  %r15,%rcx
+ 1110cfc:	cmp    $0x4,%cx
+ 1110d00:	je     1110ce0 <core.runtime.Runtime.drainJournal+0x1190>
+ 1110d02:	test   %ecx,%ecx
+ 1110d04:	jne    1111d51 <core.runtime.Runtime.drainJournal+0x2201>
+ 1110d0a:	mov    0x170(%r14),%rdi
+ 1110d11:	mov    0x178(%r14),%rax
+ 1110d18:	mov    0x190(%r14),%rcx
+ 1110d1f:	mov    0x1b0(%rax),%rax
+ 1110d26:	mov    %rcx,-0x2a0(%rbp)
+ 1110d2d:	lea    -0x2a0(%rbp),%r15
+ 1110d34:	mov    %r15,%rsi
+ 1110d37:	call   *%rax
+ 1110d39:	test   %ax,%ax
+ 1110d3c:	jne    1111d55 <core.runtime.Runtime.drainJournal+0x2205>
+ 1110d42:	mov    0x170(%r14),%rdi
+ 1110d49:	mov    0x178(%r14),%rax
+ 1110d50:	mov    0x198(%r14),%ecx
+ 1110d57:	mov    0x1b0(%rax),%rax
+ 1110d5e:	movb   $0x0,-0x4a0(%rbp)
+ 1110d65:	mov    %ecx,-0x2a0(%rbp)
+ 1110d6b:	movb   $0x0,-0x29c(%rbp)
+ 1110d72:	mov    %r15,%rsi
+ 1110d75:	call   *%rax
+ 1110d77:	test   %ax,%ax
+ 1110d7a:	jne    1111d55 <core.runtime.Runtime.drainJournal+0x2205>
+ 1110d80:	mov    0x150(%r14),%rdi
+ 1110d87:	mov    0x158(%r14),%rax
+ 1110d8e:	xor    %ecx,%ecx
+ 1110d90:	xchg   %ecx,0x2b4(%r14)
+ 1110d97:	cmp    $0x2,%ecx
+ 1110d9a:	je     111100d <core.runtime.Runtime.drainJournal+0x14bd>
+ 1110da0:	mov    0x160(%r14),%rax
+ 1110da7:	mov    0x1c0(%r14),%rcx
+ 1110dae:	imul   %r13,%rcx
+ 1110db2:	movq   $0x0,0x1000(%rax,%rcx,1)
+ 1110dbe:	testb  $0x1,0x2bc(%r14)
+ 1110dc6:	je     1110def <core.runtime.Runtime.drainJournal+0x129f>
+ 1110dc8:	incq   0x40(%r14)
+ 1110dcc:	mov    0x80(%r14),%rax
+ 1110dd3:	cmp    %rax,%rbx
+ 1110dd6:	mov    $0x0,%r8d
+ 1110ddc:	mov    -0x58(%rbp),%r10
+ 1110de0:	mov    -0x70(%rbp),%r11
+ 1110de4:	jbe    1110e22 <core.runtime.Runtime.drainJournal+0x12d2>
+ 1110de6:	mov    %rbx,0x80(%r14)
+ 1110ded:	jmp    1110e22 <core.runtime.Runtime.drainJournal+0x12d2>
+ 1110def:	lock decq 0x290(%r14)
+ 1110df7:	mov    0x160(%r14),%rcx
+ 1110dfe:	mov    0x48(%rcx),%rax
+ 1110e02:	xor    %r8d,%r8d
+ 1110e05:	mov    -0x58(%rbp),%r10
+ 1110e09:	mov    -0x70(%rbp),%r11
+ 1110e0d:	nopl   (%rax)
+ 1110e10:	cmp    %rbx,%rax
+ 1110e13:	mov    %rbx,%rdx
+ 1110e16:	cmova  %rax,%rdx
+ 1110e1a:	lock cmpxchg %rdx,0x48(%rcx)
+ 1110e20:	jne    1110e10 <core.runtime.Runtime.drainJournal+0x12c0>
+ 1110e22:	mov    0x160(%r14),%rax
+ 1110e29:	mov    0x250(%r14),%rsi
+ 1110e30:	mov    0x40(%rax),%rcx
+ 1110e34:	mov    0x1b0(%r14),%rdi
+ 1110e3b:	mov    %rcx,%rax
+ 1110e3e:	or     %rdi,%rax
+ 1110e41:	shr    $0x20,%rax
+ 1110e45:	mov    -0x48(%rbp),%r9
+ 1110e49:	je     1110e55 <core.runtime.Runtime.drainJournal+0x1305>
+ 1110e4b:	mov    %rcx,%rax
+ 1110e4e:	xor    %edx,%edx
+ 1110e50:	div    %rdi
+ 1110e53:	jmp    1110e5b <core.runtime.Runtime.drainJournal+0x130b>
+ 1110e55:	mov    %ecx,%eax
+ 1110e57:	xor    %edx,%edx
+ 1110e59:	div    %edi
+ 1110e5b:	mov    %rcx,%rax
+ 1110e5e:	sub    %rdx,%rax
+ 1110e61:	add    %r13,%rax
+ 1110e64:	cmp    %rcx,%rax
+ 1110e67:	cmovae %r8,%rdi
+ 1110e6b:	add    %rax,%rdi
+ 1110e6e:	mov    %rdi,(%rsi,%r13,8)
+ 1110e72:	movzbl 0x2bc(%r14),%eax
+ 1110e7a:	test   $0x1,%al
+ 1110e7c:	je     1110e85 <core.runtime.Runtime.drainJournal+0x1335>
+ 1110e7e:	mov    %rbx,0xc0(%r14)
+ 1110e85:	mov    0x270(%r14),%rdx
+ 1110e8c:	mov    0x278(%r14),%rcx
+ 1110e93:	cmp    %rdx,%rcx
+ 1110e96:	mov    -0x40(%rbp),%rbx
+ 1110e9a:	mov    -0x60(%rbp),%r8
+ 1110e9e:	jae    1110f04 <core.runtime.Runtime.drainJournal+0x13b4>
+ 1110ea0:	lea    0x1(%rcx),%rsi
+ 1110ea4:	mov    %rsi,0x278(%r14)
+ 1110eab:	cmp    %rdx,%rsi
+ 1110eae:	jae    1110f92 <core.runtime.Runtime.drainJournal+0x1442>
+ 1110eb4:	mov    0x260(%r14),%rdx
+ 1110ebb:	mov    0x160(%r14),%rsi
+ 1110ec2:	mov    0x1c0(%r14),%rdi
+ 1110ec9:	imul   0x8(%rdx,%rcx,8),%rdi
+ 1110ecf:	mov    0x1008(%rsi,%rdi,1),%rcx
+ 1110ed7:	dec    %rcx
+ 1110eda:	test   $0x1,%al
+ 1110edc:	jne    1110fa1 <core.runtime.Runtime.drainJournal+0x1451>
+ 1110ee2:	mov    0x160(%r14),%rdx
+ 1110ee9:	mov    0x48(%rdx),%rax
+ 1110eed:	nopl   (%rax)
+ 1110ef0:	cmp    %rcx,%rax
+ 1110ef3:	mov    %rcx,%rsi
+ 1110ef6:	cmova  %rax,%rsi
+ 1110efa:	lock cmpxchg %rsi,0x48(%rdx)
+ 1110f00:	jne    1110ef0 <core.runtime.Runtime.drainJournal+0x13a0>
+ 1110f02:	jmp    1110f0b <core.runtime.Runtime.drainJournal+0x13bb>
+ 1110f04:	incq   0x288(%r14)
+ 1110f0b:	test   %r10,%r10
+ 1110f0e:	je     1110f23 <core.runtime.Runtime.drainJournal+0x13d3>
+ 1110f10:	mov    %r10,%rax
+ 1110f13:	shl    $0x6,%rax
+ 1110f17:	add    %rax,%r11
+ 1110f1a:	add    $0xffffffffffffffc0,%r11
+ 1110f1e:	mov    %r10,%rax
+ 1110f21:	jmp    1110f2c <core.runtime.Runtime.drainJournal+0x13dc>
+ 1110f23:	add    $0x9800,%r11
+ 1110f2a:	xor    %eax,%eax
+ 1110f2c:	mov    -0x88(%rbp),%rcx
+ 1110f33:	lock decq (%r11)
+ 1110f37:	lea    (%rax,%rax,2),%rax
+ 1110f3b:	shl    $0x6,%rax
+ 1110f3f:	add    -0xe0(%rbp),%rax
+ 1110f46:	test   %r10,%r10
+ 1110f49:	cmove  -0xe8(%rbp),%rax
+ 1110f51:	add    $0x40,%rax
+ 1110f55:	cmp    %rax,%r12
+ 1110f58:	je     1110f7e <core.runtime.Runtime.drainJournal+0x142e>
+ 1110f5a:	test   %r9,%r9
+ 1110f5d:	je     1110f64 <core.runtime.Runtime.drainJournal+0x1414>
+ 1110f5f:	lock add %r9,(%r12)
+ 1110f64:	mov    %rax,%r12
+ 1110f67:	mov    $0x1,%r9d
+ 1110f6d:	inc    %rcx
+ 1110f70:	cmp    %r8,%rcx
+ 1110f73:	jne    11109f0 <core.runtime.Runtime.drainJournal+0xea0>
+ 1110f79:	jmp    11110cb <core.runtime.Runtime.drainJournal+0x157b>
+ 1110f7e:	inc    %r9
+ 1110f81:	inc    %rcx
+ 1110f84:	cmp    %r8,%rcx
+ 1110f87:	jne    11109f0 <core.runtime.Runtime.drainJournal+0xea0>
+ 1110f8d:	jmp    11110cb <core.runtime.Runtime.drainJournal+0x157b>
+ 1110f92:	mov    0x280(%r14),%rcx
+ 1110f99:	test   $0x1,%al
+ 1110f9b:	je     1110ee2 <core.runtime.Runtime.drainJournal+0x1392>
+ 1110fa1:	mov    0x80(%r14),%rax
+ 1110fa8:	cmp    %rax,%rcx
+ 1110fab:	jbe    1110f0b <core.runtime.Runtime.drainJournal+0x13bb>
+ 1110fb1:	mov    %rcx,0x80(%r14)
+ 1110fb8:	jmp    1110f0b <core.runtime.Runtime.drainJournal+0x13bb>
+ 1110fbd:	cmp    $0x2,%eax
+ 1110fc0:	jne    1110fd2 <core.runtime.Runtime.drainJournal+0x1482>
+ 1110fc2:	mov    %r12,%rdi
+ 1110fc5:	mov    -0x78(%rbp),%rsi
+ 1110fc9:	mov    $0x2,%edx
+ 1110fce:	call   *0x68(%r15)
+ 1110fd2:	mov    $0x2,%eax
+ 1110fd7:	mov    -0x78(%rbp),%rcx
+ 1110fdb:	xchg   %eax,(%rcx)
+ 1110fdd:	test   %eax,%eax
+ 1110fdf:	mov    -0x80(%rbp),%r14
+ 1110fe3:	je     1110add <core.runtime.Runtime.drainJournal+0xf8d>
+ 1110fe9:	mov    %r12,%rdi
+ 1110fec:	mov    -0x78(%rbp),%rsi
+ 1110ff0:	mov    $0x2,%edx
+ 1110ff5:	call   *0x68(%r15)
+ 1110ff9:	mov    $0x2,%eax
+ 1110ffe:	mov    -0x78(%rbp),%rcx
+ 1111002:	xchg   %eax,(%rcx)
+ 1111004:	test   %eax,%eax
+ 1111006:	jne    1110fe9 <core.runtime.Runtime.drainJournal+0x1499>
+ 1111008:	jmp    1110add <core.runtime.Runtime.drainJournal+0xf8d>
+ 111100d:	mov    -0x78(%rbp),%rsi
+ 1111011:	mov    $0x1,%edx
+ 1111016:	call   *0x70(%rax)
+ 1111019:	jmp    1110da0 <core.runtime.Runtime.drainJournal+0x1250>
+ 111101e:	xchg   %ax,%ax
+ 1111020:	add    $0x28,%r15
+ 1111024:	dec    %rbx
+ 1111027:	je     11109e8 <core.runtime.Runtime.drainJournal+0xe98>
+ 111102d:	mov    (%r15),%rax
+ 1111030:	mov    0x10(%r15),%rcx
+ 1111034:	mov    0x7440(%rax),%rsi
+ 111103b:	mov    0x7448(%rax),%rdx
+ 1111042:	mov    %r13,%rdi
+ 1111045:	mov    $0x1,%r8d
+ 111104b:	xor    %r9d,%r9d
+ 111104e:	call   1084bc0 <core.runtime.Runtime.flushWith>
+ 1111053:	test   %ax,%ax
+ 1111056:	jne    1111e36 <core.runtime.Runtime.drainJournal+0x22e6>
+ 111105c:	mov    0x18(%r15),%rcx
+ 1111060:	test   %rcx,%rcx
+ 1111063:	je     1111020 <core.runtime.Runtime.drainJournal+0x14d0>
+ 1111065:	mov    (%r15),%rax
+ 1111068:	mov    0x7440(%rax),%rsi
+ 111106f:	mov    0x7448(%rax),%rdx
+ 1111076:	mov    %r13,%rdi
+ 1111079:	mov    $0x2,%r8d
+ 111107f:	mov    $0x1,%r9d
+ 1111085:	call   1084bc0 <core.runtime.Runtime.flushWith>
+ 111108a:	test   %ax,%ax
+ 111108d:	je     1111020 <core.runtime.Runtime.drainJournal+0x14d0>
+ 111108f:	jmp    1111e69 <core.runtime.Runtime.drainJournal+0x2319>
+ 1111094:	test   %rcx,%rcx
+ 1111097:	je     110fe2f <core.runtime.Runtime.drainJournal+0x2df>
+ 111109d:	lea    0x4(,%rsi,4),%rax
+ 11110a5:	mov    %rax,%rdx
+ 11110a8:	or     $0x1,%rdx
+ 11110ac:	cmp    %rdx,%rcx
+ 11110af:	mov    -0x40(%rbp),%r13
+ 11110b3:	je     110fe33 <core.runtime.Runtime.drainJournal+0x2e3>
+ 11110b9:	or     $0x3,%rax
+ 11110bd:	cmp    %rax,%rcx
+ 11110c0:	je     110fe33 <core.runtime.Runtime.drainJournal+0x2e3>
+ 11110c6:	jmp    1111d82 <core.runtime.Runtime.drainJournal+0x2232>
+ 11110cb:	lock add %r9,(%r12)
+ 11110d0:	lock incl 0x31c4(%rbx)
+ 11110d7:	mov    0x3110(%rbx),%rdi
+ 11110de:	mov    0x3118(%rbx),%rax
+ 11110e5:	mov    -0xa0(%rbp),%rsi
+ 11110ec:	mov    $0xffffffff,%edx
+ 11110f1:	call   *0x70(%rax)
+ 11110f4:	mov    -0xe58(%rbp),%rax
+ 11110fb:	test   %rax,%rax
+ 11110fe:	lea    -0x1858(%rbp),%r8
+ 1111105:	je     11111ce <core.runtime.Runtime.drainJournal+0x167e>
+ 111110b:	cmp    $0x8,%rax
+ 111110f:	jae    1111118 <core.runtime.Runtime.drainJournal+0x15c8>
+ 1111111:	xor    %ecx,%ecx
+ 1111113:	jmp    11111a3 <core.runtime.Runtime.drainJournal+0x1653>
+ 1111118:	mov    %rax,%rdx
+ 111111b:	and    $0xfffffffffffffff8,%rdx
+ 111111f:	lea    -0x1740(%rbp),%rsi
+ 1111126:	xor    %ecx,%ecx
+ 1111128:	mov    -0x118(%rsi),%rdi
+ 111112f:	lock decq 0x97f8(%rdi)
+ 1111137:	mov    -0xf0(%rsi),%rdi
+ 111113e:	lock decq 0x97f8(%rdi)
+ 1111146:	mov    -0xc8(%rsi),%rdi
+ 111114d:	lock decq 0x97f8(%rdi)
+ 1111155:	mov    -0xa0(%rsi),%rdi
+ 111115c:	lock decq 0x97f8(%rdi)
+ 1111164:	mov    -0x78(%rsi),%rdi
+ 1111168:	lock decq 0x97f8(%rdi)
+ 1111170:	mov    -0x50(%rsi),%rdi
+ 1111174:	lock decq 0x97f8(%rdi)
+ 111117c:	mov    -0x28(%rsi),%rdi
+ 1111180:	lock decq 0x97f8(%rdi)
+ 1111188:	mov    (%rsi),%rdi
+ 111118b:	lock decq 0x97f8(%rdi)
+ 1111193:	add    $0x8,%rcx
+ 1111197:	add    $0x140,%rsi
+ 111119e:	cmp    %rcx,%rdx
+ 11111a1:	jne    1111128 <core.runtime.Runtime.drainJournal+0x15d8>
+ 11111a3:	and    $0x7,%eax
+ 11111a6:	je     11111ce <core.runtime.Runtime.drainJournal+0x167e>
+ 11111a8:	lea    (%rcx,%rcx,4),%rcx
+ 11111ac:	lea    (%r8,%rcx,8),%rcx
+ 11111b0:	shl    $0x3,%eax
+ 11111b3:	lea    (%rax,%rax,4),%rax
+ 11111b7:	xor    %edx,%edx
+ 11111b9:	mov    (%rcx,%rdx,1),%rsi
+ 11111bd:	lock decq 0x97f8(%rsi)
+ 11111c5:	add    $0x28,%rdx
+ 11111c9:	cmp    %rdx,%rax
+ 11111cc:	jne    11111b9 <core.runtime.Runtime.drainJournal+0x1669>
+ 11111ce:	movq   $0x0,-0xe58(%rbp)
+ 11111d9:	mov    0x3110(%rbx),%rdi
+ 11111e0:	mov    0x3118(%rbx),%rax
+ 11111e7:	xor    %ecx,%ecx
+ 11111e9:	xchg   %ecx,0x31d4(%rbx)
+ 11111ef:	cmp    $0x2,%ecx
+ 11111f2:	je     1111263 <core.runtime.Runtime.drainJournal+0x1713>
+ 11111f4:	mov    $0x1,%al
+ 11111f6:	cmpq   $0x0,-0x90(%rbp)
+ 11111fe:	mov    -0x38(%rbp),%rdi
+ 1111202:	mov    -0xd8(%rbp),%rcx
+ 1111209:	jne    110fbdd <core.runtime.Runtime.drainJournal+0x8d>
+ 111120f:	jmp    1111271 <core.runtime.Runtime.drainJournal+0x1721>
+ 1111211:	cmp    $0x2,%eax
+ 1111214:	jne    1111229 <core.runtime.Runtime.drainJournal+0x16d9>
+ 1111216:	mov    %rbx,%rdi
+ 1111219:	mov    -0x30(%rbp),%rsi
+ 111121d:	mov    $0x2,%edx
+ 1111222:	vzeroupper
+ 1111225:	call   *0x68(%r14)
+ 1111229:	mov    $0x2,%eax
+ 111122e:	mov    -0x30(%rbp),%rcx
+ 1111232:	xchg   %eax,(%rcx)
+ 1111234:	test   %eax,%eax
+ 1111236:	je     110fec3 <core.runtime.Runtime.drainJournal+0x373>
+ 111123c:	mov    %rbx,%rdi
+ 111123f:	mov    -0x30(%rbp),%r15
+ 1111243:	mov    %r15,%rsi
+ 1111246:	mov    $0x2,%edx
+ 111124b:	vzeroupper
+ 111124e:	call   *0x68(%r14)
+ 1111252:	mov    $0x2,%eax
+ 1111257:	xchg   %eax,(%r15)
+ 111125a:	test   %eax,%eax
+ 111125c:	jne    111123c <core.runtime.Runtime.drainJournal+0x16ec>
+ 111125e:	jmp    110fec3 <core.runtime.Runtime.drainJournal+0x373>
+ 1111263:	mov    -0x30(%rbp),%rsi
+ 1111267:	mov    $0x1,%edx
+ 111126c:	call   *0x70(%rax)
+ 111126f:	jmp    11111f4 <core.runtime.Runtime.drainJournal+0x16a4>
+ 1111271:	test   %rcx,%rcx
+ 1111274:	movw   $0x0,(%rdi)
+ 1111279:	setne  0x2(%rdi)
+ 111127d:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 1111282:	mov    -0xe58(%rbp),%rcx
+ 1111289:	test   %rcx,%rcx
+ 111128c:	mov    -0x40(%rbp),%r8
+ 1111290:	je     11117b5 <core.runtime.Runtime.drainJournal+0x1c65>
+ 1111296:	mov    %ecx,%eax
+ 1111298:	and    $0x7,%eax
+ 111129b:	cmp    $0x8,%rcx
+ 111129f:	jae    11116ec <core.runtime.Runtime.drainJournal+0x1b9c>
+ 11112a5:	xor    %edx,%edx
+ 11112a7:	jmp    111177b <core.runtime.Runtime.drainJournal+0x1c2b>
+ 11112ac:	mov    $0x80,%ax
+ 11112b0:	mov    -0xe58(%rbp),%rdx
+ 11112b7:	test   %rdx,%rdx
+ 11112ba:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 11112c0:	mov    %edx,%ecx
+ 11112c2:	and    $0x7,%ecx
+ 11112c5:	cmp    $0x8,%rdx
+ 11112c9:	jae    11117ef <core.runtime.Runtime.drainJournal+0x1c9f>
+ 11112cf:	xor    %esi,%esi
+ 11112d1:	jmp    111188b <core.runtime.Runtime.drainJournal+0x1d3b>
+ 11112d6:	vmovups -0xa9251(%rip),%ymm0        # 106808d <__anon_38516+0x9d>
+ 11112de:	vmovups %ymm0,-0x143(%rbp)
+ 11112e6:	vmovups -0xa927e(%rip),%ymm0        # 1068070 <__anon_38516+0x80>
+ 11112ee:	vmovups %ymm0,-0x160(%rbp)
+ 11112f6:	vmovups -0xa92ae(%rip),%ymm0        # 1068050 <__anon_38516+0x60>
+ 11112fe:	vmovups %ymm0,-0x180(%rbp)
+ 1111306:	vmovups -0xa92de(%rip),%ymm0        # 1068030 <__anon_38516+0x40>
+ 111130e:	vmovups %ymm0,-0x1a0(%rbp)
+ 1111316:	vmovups -0xa930e(%rip),%ymm0        # 1068010 <__anon_38516+0x20>
+ 111131e:	vmovups %ymm0,-0x1c0(%rbp)
+ 1111326:	vmovups -0xa933e(%rip),%ymm0        # 1067ff0 <__anon_38516>
+ 111132e:	vmovups %ymm0,-0x1e0(%rbp)
+ 1111336:	vmovdqu -0xa9290(%rip),%ymm0        # 10680ae <__anon_38516+0xbe>
+ 111133e:	vmovdqu %ymm0,-0xd0(%rbp)
+ 1111346:	movw   $0x0,-0xb0(%rbp)
+ 111134f:	movl   $0x0,-0x50(%rbp)
+ 1111356:	movw   $0x0,-0x4c(%rbp)
+ 111135c:	mov    $0x90,%bx
+ 1111360:	mov    -0xe58(%rbp),%rcx
+ 1111367:	test   %rcx,%rcx
+ 111136a:	mov    -0x40(%rbp),%r8
+ 111136e:	jne    11115d2 <core.runtime.Runtime.drainJournal+0x1a82>
+ 1111374:	jmp    11116b5 <core.runtime.Runtime.drainJournal+0x1b65>
+ 1111379:	mov    $0x9c,%ax
+ 111137d:	mov    -0x68(%rbp),%r12
+ 1111381:	vmovdqa 0x150(%r14),%xmm0
+ 111138a:	xor    %ecx,%ecx
+ 111138c:	xchg   %ecx,0x2b4(%r14)
+ 1111393:	cmp    $0x2,%ecx
+ 1111396:	jne    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 111139c:	jmp    111190f <core.runtime.Runtime.drainJournal+0x1dbf>
+ 11113a1:	mov    -0x70(%rbp),%rax
+ 11113a5:	cmpb   $0x0,(%rax)
+ 11113a8:	je     1111436 <core.runtime.Runtime.drainJournal+0x18e6>
+ 11113ae:	vmovups 0xa0(%rbx),%ymm0
+ 11113b6:	vmovups %ymm0,-0xa70(%rbp)
+ 11113be:	vmovups 0x80(%rbx),%ymm0
+ 11113c6:	vmovups %ymm0,-0xa90(%rbp)
+ 11113ce:	vmovdqu (%rbx),%ymm0
+ 11113d2:	vmovups 0x20(%rbx),%ymm1
+ 11113d7:	vmovups 0x40(%rbx),%ymm2
+ 11113dc:	vmovups 0x60(%rbx),%ymm3
+ 11113e1:	vmovups %ymm3,-0xab0(%rbp)
+ 11113e9:	vmovups %ymm2,-0xad0(%rbp)
+ 11113f1:	vmovups %ymm1,-0xaf0(%rbp)
+ 11113f9:	vmovdqu %ymm0,-0xb10(%rbp)
+ 1111401:	lea    -0x1a48(%rbp),%rdi
+ 1111408:	lea    -0xb10(%rbp),%rcx
+ 111140f:	lea    -0x9f30(%rbp),%r8
+ 1111416:	mov    -0x48(%rbp),%rsi
+ 111141a:	mov    -0x58(%rbp),%rdx
+ 111141e:	vzeroupper
+ 1111421:	call   111f0c0 <core.schema_codec.resolve>
+ 1111426:	movzwl -0x1968(%rbp),%ebx
+ 111142d:	test   %bx,%bx
+ 1111430:	jne    11126bf <core.runtime.Runtime.drainJournal+0x2b6f>
+ 1111436:	mov    -0xe58(%rbp),%rcx
+ 111143d:	test   %rcx,%rcx
+ 1111440:	je     1111c05 <core.runtime.Runtime.drainJournal+0x20b5>
+ 1111446:	mov    %ecx,%eax
+ 1111448:	and    $0x7,%eax
+ 111144b:	cmp    $0x8,%rcx
+ 111144f:	jae    1111b3c <core.runtime.Runtime.drainJournal+0x1fec>
+ 1111455:	xor    %edx,%edx
+ 1111457:	jmp    1111bcb <core.runtime.Runtime.drainJournal+0x207b>
+ 111145c:	mov    -0x70(%rbp),%rax
+ 1111460:	cmpb   $0x0,(%rax)
+ 1111463:	je     11114f1 <core.runtime.Runtime.drainJournal+0x19a1>
+ 1111469:	vmovups 0xa0(%rbx),%ymm0
+ 1111471:	vmovups %ymm0,-0xb30(%rbp)
+ 1111479:	vmovups 0x80(%rbx),%ymm0
+ 1111481:	vmovups %ymm0,-0xb50(%rbp)
+ 1111489:	vmovdqu (%rbx),%ymm0
+ 111148d:	vmovups 0x20(%rbx),%ymm1
+ 1111492:	vmovups 0x40(%rbx),%ymm2
+ 1111497:	vmovups 0x60(%rbx),%ymm3
+ 111149c:	vmovups %ymm3,-0xb70(%rbp)
+ 11114a4:	vmovups %ymm2,-0xb90(%rbp)
+ 11114ac:	vmovups %ymm1,-0xbb0(%rbp)
+ 11114b4:	vmovdqu %ymm0,-0xbd0(%rbp)
+ 11114bc:	lea    -0x1b30(%rbp),%rdi
+ 11114c3:	lea    -0xbd0(%rbp),%rcx
+ 11114ca:	lea    -0x9f30(%rbp),%r8
+ 11114d1:	mov    -0x48(%rbp),%rsi
+ 11114d5:	mov    -0x58(%rbp),%rdx
+ 11114d9:	vzeroupper
+ 11114dc:	call   111f0c0 <core.schema_codec.resolve>
+ 11114e1:	movzwl -0x1a50(%rbp),%ebx
+ 11114e8:	test   %bx,%bx
+ 11114eb:	jne    11126e1 <core.runtime.Runtime.drainJournal+0x2b91>
+ 11114f1:	mov    -0xe58(%rbp),%rcx
+ 11114f8:	test   %rcx,%rcx
+ 11114fb:	je     1111d15 <core.runtime.Runtime.drainJournal+0x21c5>
+ 1111501:	mov    %ecx,%eax
+ 1111503:	and    $0x7,%eax
+ 1111506:	cmp    $0x8,%rcx
+ 111150a:	jae    1111c3d <core.runtime.Runtime.drainJournal+0x20ed>
+ 1111510:	xor    %edx,%edx
+ 1111512:	jmp    1111cdb <core.runtime.Runtime.drainJournal+0x218b>
+ 1111517:	mov    $0x88,%bx
+ 111151b:	mov    -0xe58(%rbp),%rcx
+ 1111522:	test   %rcx,%rcx
+ 1111525:	mov    -0x40(%rbp),%r8
+ 1111529:	jne    11115d2 <core.runtime.Runtime.drainJournal+0x1a82>
+ 111152f:	jmp    11116b5 <core.runtime.Runtime.drainJournal+0x1b65>
+ 1111534:	vmovups -0xa93a7(%rip),%ymm0        # 1068195 <__anon_38518+0x9d>
+ 111153c:	vmovups %ymm0,-0x143(%rbp)
+ 1111544:	vmovups -0xa93d4(%rip),%ymm0        # 1068178 <__anon_38518+0x80>
+ 111154c:	vmovups %ymm0,-0x160(%rbp)
+ 1111554:	vmovups -0xa9404(%rip),%ymm0        # 1068158 <__anon_38518+0x60>
+ 111155c:	vmovups %ymm0,-0x180(%rbp)
+ 1111564:	vmovups -0xa9434(%rip),%ymm0        # 1068138 <__anon_38518+0x40>
+ 111156c:	vmovups %ymm0,-0x1a0(%rbp)
+ 1111574:	vmovups -0xa9464(%rip),%ymm0        # 1068118 <__anon_38518+0x20>
+ 111157c:	vmovups %ymm0,-0x1c0(%rbp)
+ 1111584:	vmovups -0xa9494(%rip),%ymm0        # 10680f8 <__anon_38518>
+ 111158c:	vmovups %ymm0,-0x1e0(%rbp)
+ 1111594:	vmovdqu -0xa93e6(%rip),%ymm0        # 10681b6 <__anon_38518+0xbe>
+ 111159c:	vmovdqu %ymm0,-0xd0(%rbp)
+ 11115a4:	movw   $0x0,-0xb0(%rbp)
+ 11115ad:	movl   $0x0,-0x50(%rbp)
+ 11115b4:	movw   $0x0,-0x4c(%rbp)
+ 11115ba:	mov    $0x43,%bx
+ 11115be:	mov    -0xe58(%rbp),%rcx
+ 11115c5:	test   %rcx,%rcx
+ 11115c8:	mov    -0x40(%rbp),%r8
+ 11115cc:	je     11116b5 <core.runtime.Runtime.drainJournal+0x1b65>
+ 11115d2:	mov    %ecx,%eax
+ 11115d4:	and    $0x7,%eax
+ 11115d7:	cmp    $0x8,%rcx
+ 11115db:	jae    11115e4 <core.runtime.Runtime.drainJournal+0x1a94>
+ 11115dd:	xor    %edx,%edx
+ 11115df:	jmp    111167b <core.runtime.Runtime.drainJournal+0x1b2b>
+ 11115e4:	and    $0xfffffffffffffff8,%rcx
+ 11115e8:	lea    -0x1858(%rbp),%rdi
+ 11115ef:	add    $0x118,%rdi
+ 11115f6:	xor    %edx,%edx
+ 11115f8:	nopl   0x0(%rax,%rax,1)
+ 1111600:	mov    -0x118(%rdi),%rsi
+ 1111607:	lock decq 0x97f8(%rsi)
+ 111160f:	mov    -0xf0(%rdi),%rsi
+ 1111616:	lock decq 0x97f8(%rsi)
+ 111161e:	mov    -0xc8(%rdi),%rsi
+ 1111625:	lock decq 0x97f8(%rsi)
+ 111162d:	mov    -0xa0(%rdi),%rsi
+ 1111634:	lock decq 0x97f8(%rsi)
+ 111163c:	mov    -0x78(%rdi),%rsi
+ 1111640:	lock decq 0x97f8(%rsi)
+ 1111648:	mov    -0x50(%rdi),%rsi
+ 111164c:	lock decq 0x97f8(%rsi)
+ 1111654:	mov    -0x28(%rdi),%rsi
+ 1111658:	lock decq 0x97f8(%rsi)
+ 1111660:	mov    (%rdi),%rsi
+ 1111663:	lock decq 0x97f8(%rsi)
+ 111166b:	add    $0x8,%rdx
+ 111166f:	add    $0x140,%rdi
+ 1111676:	cmp    %rdx,%rcx
+ 1111679:	jne    1111600 <core.runtime.Runtime.drainJournal+0x1ab0>
+ 111167b:	test   %rax,%rax
+ 111167e:	je     11116b5 <core.runtime.Runtime.drainJournal+0x1b65>
+ 1111680:	lea    (%rdx,%rdx,4),%rcx
+ 1111684:	lea    -0x1858(,%rcx,8),%rcx
+ 111168c:	add    %rbp,%rcx
+ 111168f:	shl    $0x3,%eax
+ 1111692:	lea    (%rax,%rax,4),%rax
+ 1111696:	xor    %edx,%edx
+ 1111698:	nopl   0x0(%rax,%rax,1)
+ 11116a0:	mov    (%rcx,%rdx,1),%rsi
+ 11116a4:	lock decq 0x97f8(%rsi)
+ 11116ac:	add    $0x28,%rdx
+ 11116b0:	cmp    %rdx,%rax
+ 11116b3:	jne    11116a0 <core.runtime.Runtime.drainJournal+0x1b50>
+ 11116b5:	movq   $0x0,-0xe58(%rbp)
+ 11116c0:	mov    0x3110(%r8),%rdi
+ 11116c7:	mov    0x3118(%r8),%rax
+ 11116ce:	xor    %ecx,%ecx
+ 11116d0:	xchg   %ecx,0x31d4(%r8)
+ 11116d7:	cmp    $0x2,%ecx
+ 11116da:	je     11124f8 <core.runtime.Runtime.drainJournal+0x29a8>
+ 11116e0:	mov    -0x38(%rbp),%rax
+ 11116e4:	mov    %bx,(%rax)
+ 11116e7:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 11116ec:	and    $0xfffffffffffffff8,%rcx
+ 11116f0:	lea    -0x1858(%rbp),%rdi
+ 11116f7:	add    $0x118,%rdi
+ 11116fe:	xor    %edx,%edx
+ 1111700:	mov    -0x118(%rdi),%rsi
+ 1111707:	lock decq 0x97f8(%rsi)
+ 111170f:	mov    -0xf0(%rdi),%rsi
+ 1111716:	lock decq 0x97f8(%rsi)
+ 111171e:	mov    -0xc8(%rdi),%rsi
+ 1111725:	lock decq 0x97f8(%rsi)
+ 111172d:	mov    -0xa0(%rdi),%rsi
+ 1111734:	lock decq 0x97f8(%rsi)
+ 111173c:	mov    -0x78(%rdi),%rsi
+ 1111740:	lock decq 0x97f8(%rsi)
+ 1111748:	mov    -0x50(%rdi),%rsi
+ 111174c:	lock decq 0x97f8(%rsi)
+ 1111754:	mov    -0x28(%rdi),%rsi
+ 1111758:	lock decq 0x97f8(%rsi)
+ 1111760:	mov    (%rdi),%rsi
+ 1111763:	lock decq 0x97f8(%rsi)
+ 111176b:	add    $0x8,%rdx
+ 111176f:	add    $0x140,%rdi
+ 1111776:	cmp    %rdx,%rcx
+ 1111779:	jne    1111700 <core.runtime.Runtime.drainJournal+0x1bb0>
+ 111177b:	test   %rax,%rax
+ 111177e:	je     11117b5 <core.runtime.Runtime.drainJournal+0x1c65>
+ 1111780:	lea    (%rdx,%rdx,4),%rcx
+ 1111784:	lea    -0x1858(,%rcx,8),%rcx
+ 111178c:	add    %rbp,%rcx
+ 111178f:	shl    $0x3,%eax
+ 1111792:	lea    (%rax,%rax,4),%rax
+ 1111796:	xor    %edx,%edx
+ 1111798:	nopl   0x0(%rax,%rax,1)
+ 11117a0:	mov    (%rcx,%rdx,1),%rsi
+ 11117a4:	lock decq 0x97f8(%rsi)
+ 11117ac:	add    $0x28,%rdx
+ 11117b0:	cmp    %rdx,%rax
+ 11117b3:	jne    11117a0 <core.runtime.Runtime.drainJournal+0x1c50>
+ 11117b5:	movq   $0x0,-0xe58(%rbp)
+ 11117c0:	mov    0x3110(%r8),%rdi
+ 11117c7:	mov    0x3118(%r8),%rax
+ 11117ce:	xor    %ecx,%ecx
+ 11117d0:	xchg   %ecx,0x31d4(%r8)
+ 11117d7:	cmp    $0x2,%ecx
+ 11117da:	je     1111d40 <core.runtime.Runtime.drainJournal+0x21f0>
+ 11117e0:	mov    -0x38(%rbp),%rax
+ 11117e4:	movl   $0x13d,(%rax)
+ 11117ea:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 11117ef:	and    $0xfffffffffffffff8,%rdx
+ 11117f3:	lea    -0x1858(%rbp),%r8
+ 11117fa:	add    $0x118,%r8
+ 1111801:	xor    %esi,%esi
+ 1111803:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 1111810:	mov    -0x118(%r8),%rdi
+ 1111817:	lock decq 0x97f8(%rdi)
+ 111181f:	mov    -0xf0(%r8),%rdi
+ 1111826:	lock decq 0x97f8(%rdi)
+ 111182e:	mov    -0xc8(%r8),%rdi
+ 1111835:	lock decq 0x97f8(%rdi)
+ 111183d:	mov    -0xa0(%r8),%rdi
+ 1111844:	lock decq 0x97f8(%rdi)
+ 111184c:	mov    -0x78(%r8),%rdi
+ 1111850:	lock decq 0x97f8(%rdi)
+ 1111858:	mov    -0x50(%r8),%rdi
+ 111185c:	lock decq 0x97f8(%rdi)
+ 1111864:	mov    -0x28(%r8),%rdi
+ 1111868:	lock decq 0x97f8(%rdi)
+ 1111870:	mov    (%r8),%rdi
+ 1111873:	lock decq 0x97f8(%rdi)
+ 111187b:	add    $0x8,%rsi
+ 111187f:	add    $0x140,%r8
+ 1111886:	cmp    %rsi,%rdx
+ 1111889:	jne    1111810 <core.runtime.Runtime.drainJournal+0x1cc0>
+ 111188b:	test   %rcx,%rcx
+ 111188e:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1111890:	lea    (%rsi,%rsi,4),%rdx
+ 1111894:	lea    -0x1858(,%rdx,8),%rdx
+ 111189c:	add    %rbp,%rdx
+ 111189f:	shl    $0x3,%ecx
+ 11118a2:	lea    (%rcx,%rcx,4),%rcx
+ 11118a6:	xor    %esi,%esi
+ 11118a8:	nopl   0x0(%rax,%rax,1)
+ 11118b0:	mov    (%rdx,%rsi,1),%rdi
+ 11118b4:	lock decq 0x97f8(%rdi)
+ 11118bc:	add    $0x28,%rsi
+ 11118c0:	cmp    %rsi,%rcx
+ 11118c3:	jne    11118b0 <core.runtime.Runtime.drainJournal+0x1d60>
+ 11118c5:	movq   $0x0,-0xe58(%rbp)
+ 11118d0:	mov    0x3110(%r13),%rdi
+ 11118d7:	mov    0x3118(%r13),%rcx
+ 11118de:	xor    %edx,%edx
+ 11118e0:	xchg   %edx,0x31d4(%r13)
+ 11118e7:	jmp    1111b17 <core.runtime.Runtime.drainJournal+0x1fc7>
+ 11118ec:	mov    $0x9c,%ax
+ 11118f0:	vmovdqa 0x150(%r14),%xmm0
+ 11118f9:	xor    %ecx,%ecx
+ 11118fb:	xchg   %ecx,0x2b4(%r14)
+ 1111902:	cmp    $0x2,%ecx
+ 1111905:	mov    -0x68(%rbp),%r12
+ 1111909:	jne    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 111190f:	vpextrq $0x1,%xmm0,%rcx
+ 1111915:	vmovq  %xmm0,%rdi
+ 111191a:	mov    -0x78(%rbp),%rsi
+ 111191e:	mov    $0x1,%edx
+ 1111923:	mov    %eax,%ebx
+ 1111925:	call   *0x70(%rcx)
+ 1111928:	mov    %ebx,%eax
+ 111192a:	jmp    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 111192f:	vmovups -0xa99b2(%rip),%ymm0        # 1067f85 <__anon_38514+0x9d>
+ 1111937:	vmovups %ymm0,-0x143(%rbp)
+ 111193f:	vmovups -0xa99df(%rip),%ymm0        # 1067f68 <__anon_38514+0x80>
+ 1111947:	vmovups %ymm0,-0x160(%rbp)
+ 111194f:	vmovups -0xa9a0f(%rip),%ymm0        # 1067f48 <__anon_38514+0x60>
+ 1111957:	vmovups %ymm0,-0x180(%rbp)
+ 111195f:	vmovups -0xa9a3f(%rip),%ymm0        # 1067f28 <__anon_38514+0x40>
+ 1111967:	vmovups %ymm0,-0x1a0(%rbp)
+ 111196f:	vmovups -0xa9a6f(%rip),%ymm0        # 1067f08 <__anon_38514+0x20>
+ 1111977:	vmovups %ymm0,-0x1c0(%rbp)
+ 111197f:	vmovups -0xa9a9f(%rip),%ymm0        # 1067ee8 <__anon_38514>
+ 1111987:	vmovups %ymm0,-0x1e0(%rbp)
+ 111198f:	vmovdqu -0xa99f1(%rip),%ymm0        # 1067fa6 <__anon_38514+0xbe>
+ 1111997:	vmovdqu %ymm0,-0xd0(%rbp)
+ 111199f:	movw   $0x0,-0xb0(%rbp)
+ 11119a8:	movl   $0x0,-0x50(%rbp)
+ 11119af:	movw   $0x0,-0x4c(%rbp)
+ 11119b5:	mov    $0x7a,%bx
+ 11119b9:	mov    -0xe58(%rbp),%rcx
+ 11119c0:	test   %rcx,%rcx
+ 11119c3:	mov    -0x40(%rbp),%r8
+ 11119c7:	jne    11115d2 <core.runtime.Runtime.drainJournal+0x1a82>
+ 11119cd:	jmp    11116b5 <core.runtime.Runtime.drainJournal+0x1b65>
+ 11119d2:	mov    -0x38(%rbp),%rax
+ 11119d6:	movw   $0x0,(%rax)
+ 11119db:	mov    -0x48(%rbp),%rcx
+ 11119df:	and    $0x1,%cl
+ 11119e2:	mov    %cl,0x2(%rax)
+ 11119e5:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 11119ea:	mov    $0x13f,%ax
+ 11119ee:	mov    -0x48(%rbp),%rcx
+ 11119f2:	test   %rcx,%rcx
+ 11119f5:	je     11119fc <core.runtime.Runtime.drainJournal+0x1eac>
+ 11119f7:	lock add %rcx,(%r12)
+ 11119fc:	mov    -0xe58(%rbp),%rdx
+ 1111a03:	test   %rdx,%rdx
+ 1111a06:	mov    -0x40(%rbp),%r8
+ 1111a0a:	lea    -0x1858(%rbp),%r9
+ 1111a11:	je     1111af5 <core.runtime.Runtime.drainJournal+0x1fa5>
+ 1111a17:	mov    %edx,%ecx
+ 1111a19:	and    $0x7,%ecx
+ 1111a1c:	cmp    $0x8,%rdx
+ 1111a20:	jae    1111a29 <core.runtime.Runtime.drainJournal+0x1ed9>
+ 1111a22:	xor    %esi,%esi
+ 1111a24:	jmp    1111abb <core.runtime.Runtime.drainJournal+0x1f6b>
+ 1111a29:	and    $0xfffffffffffffff8,%rdx
+ 1111a2d:	add    $0x118,%r9
+ 1111a34:	xor    %esi,%esi
+ 1111a36:	cs nopw 0x0(%rax,%rax,1)
+ 1111a40:	mov    -0x118(%r9),%rdi
+ 1111a47:	lock decq 0x97f8(%rdi)
+ 1111a4f:	mov    -0xf0(%r9),%rdi
+ 1111a56:	lock decq 0x97f8(%rdi)
+ 1111a5e:	mov    -0xc8(%r9),%rdi
+ 1111a65:	lock decq 0x97f8(%rdi)
+ 1111a6d:	mov    -0xa0(%r9),%rdi
+ 1111a74:	lock decq 0x97f8(%rdi)
+ 1111a7c:	mov    -0x78(%r9),%rdi
+ 1111a80:	lock decq 0x97f8(%rdi)
+ 1111a88:	mov    -0x50(%r9),%rdi
+ 1111a8c:	lock decq 0x97f8(%rdi)
+ 1111a94:	mov    -0x28(%r9),%rdi
+ 1111a98:	lock decq 0x97f8(%rdi)
+ 1111aa0:	mov    (%r9),%rdi
+ 1111aa3:	lock decq 0x97f8(%rdi)
+ 1111aab:	add    $0x8,%rsi
+ 1111aaf:	add    $0x140,%r9
+ 1111ab6:	cmp    %rsi,%rdx
+ 1111ab9:	jne    1111a40 <core.runtime.Runtime.drainJournal+0x1ef0>
+ 1111abb:	test   %rcx,%rcx
+ 1111abe:	je     1111af5 <core.runtime.Runtime.drainJournal+0x1fa5>
+ 1111ac0:	lea    (%rsi,%rsi,4),%rdx
+ 1111ac4:	lea    -0x1858(,%rdx,8),%rdx
+ 1111acc:	add    %rbp,%rdx
+ 1111acf:	shl    $0x3,%ecx
+ 1111ad2:	lea    (%rcx,%rcx,4),%rcx
+ 1111ad6:	xor    %esi,%esi
+ 1111ad8:	nopl   0x0(%rax,%rax,1)
+ 1111ae0:	mov    (%rdx,%rsi,1),%rdi
+ 1111ae4:	lock decq 0x97f8(%rdi)
+ 1111aec:	add    $0x28,%rsi
+ 1111af0:	cmp    %rsi,%rcx
+ 1111af3:	jne    1111ae0 <core.runtime.Runtime.drainJournal+0x1f90>
+ 1111af5:	movq   $0x0,-0xe58(%rbp)
+ 1111b00:	mov    0x3110(%r8),%rdi
+ 1111b07:	mov    0x3118(%r8),%rcx
+ 1111b0e:	xor    %edx,%edx
+ 1111b10:	xchg   %edx,0x31d4(%r8)
+ 1111b17:	cmp    $0x2,%edx
+ 1111b1a:	je     11124e0 <core.runtime.Runtime.drainJournal+0x2990>
+ 1111b20:	mov    -0x38(%rbp),%rcx
+ 1111b24:	mov    %ax,(%rcx)
+ 1111b27:	add    $0x9f08,%rsp
+ 1111b2e:	pop    %rbx
+ 1111b2f:	pop    %r12
+ 1111b31:	pop    %r13
+ 1111b33:	pop    %r14
+ 1111b35:	pop    %r15
+ 1111b37:	pop    %rbp
+ 1111b38:	vzeroupper
+ 1111b3b:	ret
+ 1111b3c:	and    $0xfffffffffffffff8,%rcx
+ 1111b40:	lea    -0x1858(%rbp),%rdi
+ 1111b47:	add    $0x118,%rdi
+ 1111b4e:	xor    %edx,%edx
+ 1111b50:	mov    -0x118(%rdi),%rsi
+ 1111b57:	lock decq 0x97f8(%rsi)
+ 1111b5f:	mov    -0xf0(%rdi),%rsi
+ 1111b66:	lock decq 0x97f8(%rsi)
+ 1111b6e:	mov    -0xc8(%rdi),%rsi
+ 1111b75:	lock decq 0x97f8(%rsi)
+ 1111b7d:	mov    -0xa0(%rdi),%rsi
+ 1111b84:	lock decq 0x97f8(%rsi)
+ 1111b8c:	mov    -0x78(%rdi),%rsi
+ 1111b90:	lock decq 0x97f8(%rsi)
+ 1111b98:	mov    -0x50(%rdi),%rsi
+ 1111b9c:	lock decq 0x97f8(%rsi)
+ 1111ba4:	mov    -0x28(%rdi),%rsi
+ 1111ba8:	lock decq 0x97f8(%rsi)
+ 1111bb0:	mov    (%rdi),%rsi
+ 1111bb3:	lock decq 0x97f8(%rsi)
+ 1111bbb:	add    $0x8,%rdx
+ 1111bbf:	add    $0x140,%rdi
+ 1111bc6:	cmp    %rdx,%rcx
+ 1111bc9:	jne    1111b50 <core.runtime.Runtime.drainJournal+0x2000>
+ 1111bcb:	test   %rax,%rax
+ 1111bce:	je     1111c05 <core.runtime.Runtime.drainJournal+0x20b5>
+ 1111bd0:	lea    (%rdx,%rdx,4),%rcx
+ 1111bd4:	lea    -0x1858(,%rcx,8),%rcx
+ 1111bdc:	add    %rbp,%rcx
+ 1111bdf:	shl    $0x3,%eax
+ 1111be2:	lea    (%rax,%rax,4),%rax
+ 1111be6:	xor    %edx,%edx
+ 1111be8:	nopl   0x0(%rax,%rax,1)
+ 1111bf0:	mov    (%rcx,%rdx,1),%rsi
+ 1111bf4:	lock decq 0x97f8(%rsi)
+ 1111bfc:	add    $0x28,%rdx
+ 1111c00:	cmp    %rdx,%rax
+ 1111c03:	jne    1111bf0 <core.runtime.Runtime.drainJournal+0x20a0>
+ 1111c05:	movq   $0x0,-0xe58(%rbp)
+ 1111c10:	mov    0x3110(%r13),%rdi
+ 1111c17:	mov    0x3118(%r13),%rax
+ 1111c1e:	xor    %ecx,%ecx
+ 1111c20:	xchg   %ecx,0x31d4(%r13)
+ 1111c27:	cmp    $0x2,%ecx
+ 1111c2a:	je     1111f7b <core.runtime.Runtime.drainJournal+0x242b>
+ 1111c30:	mov    -0x38(%rbp),%rax
+ 1111c34:	mov    %r15w,(%rax)
+ 1111c38:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 1111c3d:	and    $0xfffffffffffffff8,%rcx
+ 1111c41:	lea    -0x1858(%rbp),%rdi
+ 1111c48:	add    $0x118,%rdi
+ 1111c4f:	xor    %edx,%edx
+ 1111c51:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 1111c60:	mov    -0x118(%rdi),%rsi
+ 1111c67:	lock decq 0x97f8(%rsi)
+ 1111c6f:	mov    -0xf0(%rdi),%rsi
+ 1111c76:	lock decq 0x97f8(%rsi)
+ 1111c7e:	mov    -0xc8(%rdi),%rsi
+ 1111c85:	lock decq 0x97f8(%rsi)
+ 1111c8d:	mov    -0xa0(%rdi),%rsi
+ 1111c94:	lock decq 0x97f8(%rsi)
+ 1111c9c:	mov    -0x78(%rdi),%rsi
+ 1111ca0:	lock decq 0x97f8(%rsi)
+ 1111ca8:	mov    -0x50(%rdi),%rsi
+ 1111cac:	lock decq 0x97f8(%rsi)
+ 1111cb4:	mov    -0x28(%rdi),%rsi
+ 1111cb8:	lock decq 0x97f8(%rsi)
+ 1111cc0:	mov    (%rdi),%rsi
+ 1111cc3:	lock decq 0x97f8(%rsi)
+ 1111ccb:	add    $0x8,%rdx
+ 1111ccf:	add    $0x140,%rdi
+ 1111cd6:	cmp    %rdx,%rcx
+ 1111cd9:	jne    1111c60 <core.runtime.Runtime.drainJournal+0x2110>
+ 1111cdb:	test   %rax,%rax
+ 1111cde:	je     1111d15 <core.runtime.Runtime.drainJournal+0x21c5>
+ 1111ce0:	lea    (%rdx,%rdx,4),%rcx
+ 1111ce4:	lea    -0x1858(,%rcx,8),%rcx
+ 1111cec:	add    %rbp,%rcx
+ 1111cef:	shl    $0x3,%eax
+ 1111cf2:	lea    (%rax,%rax,4),%rax
+ 1111cf6:	xor    %edx,%edx
+ 1111cf8:	nopl   0x0(%rax,%rax,1)
+ 1111d00:	mov    (%rcx,%rdx,1),%rsi
+ 1111d04:	lock decq 0x97f8(%rsi)
+ 1111d0c:	add    $0x28,%rdx
+ 1111d10:	cmp    %rdx,%rax
+ 1111d13:	jne    1111d00 <core.runtime.Runtime.drainJournal+0x21b0>
+ 1111d15:	movq   $0x0,-0xe58(%rbp)
+ 1111d20:	mov    0x3110(%r13),%rdi
+ 1111d27:	mov    0x3118(%r13),%rax
+ 1111d2e:	xor    %ecx,%ecx
+ 1111d30:	xchg   %ecx,0x31d4(%r13)
+ 1111d37:	cmp    $0x2,%ecx
+ 1111d3a:	jne    11117e0 <core.runtime.Runtime.drainJournal+0x1c90>
+ 1111d40:	mov    -0x30(%rbp),%rsi
+ 1111d44:	mov    $0x1,%edx
+ 1111d49:	call   *0x70(%rax)
+ 1111d4c:	jmp    11117e0 <core.runtime.Runtime.drainJournal+0x1c90>
+ 1111d51:	mov    $0x9c,%ax
+ 1111d55:	mov    0x160(%r14),%rcx
+ 1111d5c:	imul   0x1c0(%r14),%r13
+ 1111d64:	lea    0x2(,%rbx,4),%rdx
+ 1111d6c:	mov    %rdx,0x1000(%rcx,%r13,1)
+ 1111d74:	jmp    1111381 <core.runtime.Runtime.drainJournal+0x1831>
+ 1111d79:	mov    $0x5e,%ax
+ 1111d7d:	jmp    111137d <core.runtime.Runtime.drainJournal+0x182d>
+ 1111d82:	mov    $0x7e,%ax
+ 1111d86:	jmp    1111b20 <core.runtime.Runtime.drainJournal+0x1fd0>
+ 1111d8b:	mov    -0xe58(%rbp),%rcx
+ 1111d92:	test   %rcx,%rcx
+ 1111d95:	mov    -0x40(%rbp),%r8
+ 1111d99:	je     1111f50 <core.runtime.Runtime.drainJournal+0x2400>
+ 1111d9f:	mov    %ecx,%eax
+ 1111da1:	and    $0x7,%eax
+ 1111da4:	cmp    $0x8,%rcx
+ 1111da8:	jae    1111e8f <core.runtime.Runtime.drainJournal+0x233f>
+ 1111dae:	xor    %edx,%edx
+ 1111db0:	jmp    1111f1e <core.runtime.Runtime.drainJournal+0x23ce>
+ 1111db5:	mov    -0xe58(%rbp),%rdx
+ 1111dbc:	test   %rdx,%rdx
+ 1111dbf:	mov    -0x40(%rbp),%r8
+ 1111dc3:	je     1111af5 <core.runtime.Runtime.drainJournal+0x1fa5>
+ 1111dc9:	mov    %edx,%ecx
+ 1111dcb:	and    $0x7,%ecx
+ 1111dce:	cmp    $0x8,%rdx
+ 1111dd2:	jae    1111f8c <core.runtime.Runtime.drainJournal+0x243c>
+ 1111dd8:	xor    %esi,%esi
+ 1111dda:	jmp    111201b <core.runtime.Runtime.drainJournal+0x24cb>
+ 1111ddf:	vmovdqa 0x150(%r14),%xmm0
+ 1111de8:	xor    %ecx,%ecx
+ 1111dea:	xchg   %ecx,0x2b4(%r14)
+ 1111df1:	mov    $0x9d,%ax
+ 1111df5:	cmp    $0x2,%ecx
+ 1111df8:	mov    -0x68(%rbp),%r12
+ 1111dfc:	jne    11119ee <core.runtime.Runtime.drainJournal+0x1e9e>
+ 1111e02:	jmp    111190f <core.runtime.Runtime.drainJournal+0x1dbf>
+ 1111e07:	mov    $0x5e,%ax
+ 1111e0b:	jmp    11118f0 <core.runtime.Runtime.drainJournal+0x1da0>
+ 1111e10:	mov    -0xe58(%rbp),%rcx
+ 1111e17:	test   %rcx,%rcx
+ 1111e1a:	je     11124b9 <core.runtime.Runtime.drainJournal+0x2969>
+ 1111e20:	mov    %ecx,%eax
+ 1111e22:	and    $0x7,%eax
+ 1111e25:	cmp    $0x8,%rcx
+ 1111e29:	jae    111207c <core.runtime.Runtime.drainJournal+0x252c>
+ 1111e2f:	xor    %edx,%edx
+ 1111e31:	jmp    111210b <core.runtime.Runtime.drainJournal+0x25bb>
+ 1111e36:	mov    -0xe58(%rbp),%rdx
+ 1111e3d:	test   %rdx,%rdx
+ 1111e40:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1111e46:	mov    %edx,%ecx
+ 1111e48:	and    $0x7,%ecx
+ 1111e4b:	cmp    $0x8,%rdx
+ 1111e4f:	jae    111216c <core.runtime.Runtime.drainJournal+0x261c>
+ 1111e55:	xor    %esi,%esi
+ 1111e57:	jmp    11121fb <core.runtime.Runtime.drainJournal+0x26ab>
+ 1111e5c:	mov    $0x5e,%ax
+ 1111e60:	mov    -0x68(%rbp),%r12
+ 1111e64:	jmp    1111d55 <core.runtime.Runtime.drainJournal+0x2205>
+ 1111e69:	mov    -0xe58(%rbp),%rdx
+ 1111e70:	test   %rdx,%rdx
+ 1111e73:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1111e79:	mov    %edx,%ecx
+ 1111e7b:	and    $0x7,%ecx
+ 1111e7e:	cmp    $0x8,%rdx
+ 1111e82:	jae    1112236 <core.runtime.Runtime.drainJournal+0x26e6>
+ 1111e88:	xor    %esi,%esi
+ 1111e8a:	jmp    11122c5 <core.runtime.Runtime.drainJournal+0x2775>
+ 1111e8f:	and    $0xfffffffffffffff8,%rcx
+ 1111e93:	lea    -0x1858(%rbp),%rdi
+ 1111e9a:	add    $0x118,%rdi
+ 1111ea1:	xor    %edx,%edx
+ 1111ea3:	mov    -0x118(%rdi),%rsi
+ 1111eaa:	lock decq 0x97f8(%rsi)
+ 1111eb2:	mov    -0xf0(%rdi),%rsi
+ 1111eb9:	lock decq 0x97f8(%rsi)
+ 1111ec1:	mov    -0xc8(%rdi),%rsi
+ 1111ec8:	lock decq 0x97f8(%rsi)
+ 1111ed0:	mov    -0xa0(%rdi),%rsi
+ 1111ed7:	lock decq 0x97f8(%rsi)
+ 1111edf:	mov    -0x78(%rdi),%rsi
+ 1111ee3:	lock decq 0x97f8(%rsi)
+ 1111eeb:	mov    -0x50(%rdi),%rsi
+ 1111eef:	lock decq 0x97f8(%rsi)
+ 1111ef7:	mov    -0x28(%rdi),%rsi
+ 1111efb:	lock decq 0x97f8(%rsi)
+ 1111f03:	mov    (%rdi),%rsi
+ 1111f06:	lock decq 0x97f8(%rsi)
+ 1111f0e:	add    $0x8,%rdx
+ 1111f12:	add    $0x140,%rdi
+ 1111f19:	cmp    %rdx,%rcx
+ 1111f1c:	jne    1111ea3 <core.runtime.Runtime.drainJournal+0x2353>
+ 1111f1e:	test   %rax,%rax
+ 1111f21:	je     1111f50 <core.runtime.Runtime.drainJournal+0x2400>
+ 1111f23:	lea    (%rdx,%rdx,4),%rcx
+ 1111f27:	lea    -0x1858(,%rcx,8),%rcx
+ 1111f2f:	add    %rbp,%rcx
+ 1111f32:	shl    $0x3,%eax
+ 1111f35:	lea    (%rax,%rax,4),%rax
+ 1111f39:	xor    %edx,%edx
+ 1111f3b:	mov    (%rcx,%rdx,1),%rsi
+ 1111f3f:	lock decq 0x97f8(%rsi)
+ 1111f47:	add    $0x28,%rdx
+ 1111f4b:	cmp    %rdx,%rax
+ 1111f4e:	jne    1111f3b <core.runtime.Runtime.drainJournal+0x23eb>
+ 1111f50:	movq   $0x0,-0xe58(%rbp)
+ 1111f5b:	mov    0x3110(%r8),%rdi
+ 1111f62:	mov    0x3118(%r8),%rax
+ 1111f69:	xor    %ecx,%ecx
+ 1111f6b:	xchg   %ecx,0x31d4(%r8)
+ 1111f72:	cmp    $0x2,%ecx
+ 1111f75:	jne    1111c30 <core.runtime.Runtime.drainJournal+0x20e0>
+ 1111f7b:	mov    -0x30(%rbp),%rsi
+ 1111f7f:	mov    $0x1,%edx
+ 1111f84:	call   *0x70(%rax)
+ 1111f87:	jmp    1111c30 <core.runtime.Runtime.drainJournal+0x20e0>
+ 1111f8c:	and    $0xfffffffffffffff8,%rdx
+ 1111f90:	lea    -0x1858(%rbp),%r9
+ 1111f97:	add    $0x118,%r9
+ 1111f9e:	xor    %esi,%esi
+ 1111fa0:	mov    -0x118(%r9),%rdi
+ 1111fa7:	lock decq 0x97f8(%rdi)
+ 1111faf:	mov    -0xf0(%r9),%rdi
+ 1111fb6:	lock decq 0x97f8(%rdi)
+ 1111fbe:	mov    -0xc8(%r9),%rdi
+ 1111fc5:	lock decq 0x97f8(%rdi)
+ 1111fcd:	mov    -0xa0(%r9),%rdi
+ 1111fd4:	lock decq 0x97f8(%rdi)
+ 1111fdc:	mov    -0x78(%r9),%rdi
+ 1111fe0:	lock decq 0x97f8(%rdi)
+ 1111fe8:	mov    -0x50(%r9),%rdi
+ 1111fec:	lock decq 0x97f8(%rdi)
+ 1111ff4:	mov    -0x28(%r9),%rdi
+ 1111ff8:	lock decq 0x97f8(%rdi)
+ 1112000:	mov    (%r9),%rdi
+ 1112003:	lock decq 0x97f8(%rdi)
+ 111200b:	add    $0x8,%rsi
+ 111200f:	add    $0x140,%r9
+ 1112016:	cmp    %rsi,%rdx
+ 1112019:	jne    1111fa0 <core.runtime.Runtime.drainJournal+0x2450>
+ 111201b:	test   %rcx,%rcx
+ 111201e:	je     1111af5 <core.runtime.Runtime.drainJournal+0x1fa5>
+ 1112024:	lea    (%rsi,%rsi,4),%rdx
+ 1112028:	lea    -0x1858(,%rdx,8),%rdx
+ 1112030:	add    %rbp,%rdx
+ 1112033:	shl    $0x3,%ecx
+ 1112036:	lea    (%rcx,%rcx,4),%rcx
+ 111203a:	xor    %esi,%esi
+ 111203c:	mov    (%rdx,%rsi,1),%rdi
+ 1112040:	lock decq 0x97f8(%rdi)
+ 1112048:	add    $0x28,%rsi
+ 111204c:	cmp    %rsi,%rcx
+ 111204f:	jne    111203c <core.runtime.Runtime.drainJournal+0x24ec>
+ 1112051:	jmp    1111af5 <core.runtime.Runtime.drainJournal+0x1fa5>
+ 1112056:	mov    -0xe58(%rbp),%rcx
+ 111205d:	test   %rcx,%rcx
+ 1112060:	je     11123c1 <core.runtime.Runtime.drainJournal+0x2871>
+ 1112066:	mov    %ecx,%eax
+ 1112068:	and    $0x7,%eax
+ 111206b:	cmp    $0x8,%rcx
+ 111206f:	jae    1112300 <core.runtime.Runtime.drainJournal+0x27b0>
+ 1112075:	xor    %edx,%edx
+ 1112077:	jmp    111238f <core.runtime.Runtime.drainJournal+0x283f>
+ 111207c:	and    $0xfffffffffffffff8,%rcx
+ 1112080:	lea    -0x1858(%rbp),%rdi
+ 1112087:	add    $0x118,%rdi
+ 111208e:	xor    %edx,%edx
+ 1112090:	mov    -0x118(%rdi),%rsi
+ 1112097:	lock decq 0x97f8(%rsi)
+ 111209f:	mov    -0xf0(%rdi),%rsi
+ 11120a6:	lock decq 0x97f8(%rsi)
+ 11120ae:	mov    -0xc8(%rdi),%rsi
+ 11120b5:	lock decq 0x97f8(%rsi)
+ 11120bd:	mov    -0xa0(%rdi),%rsi
+ 11120c4:	lock decq 0x97f8(%rsi)
+ 11120cc:	mov    -0x78(%rdi),%rsi
+ 11120d0:	lock decq 0x97f8(%rsi)
+ 11120d8:	mov    -0x50(%rdi),%rsi
+ 11120dc:	lock decq 0x97f8(%rsi)
+ 11120e4:	mov    -0x28(%rdi),%rsi
+ 11120e8:	lock decq 0x97f8(%rsi)
+ 11120f0:	mov    (%rdi),%rsi
+ 11120f3:	lock decq 0x97f8(%rsi)
+ 11120fb:	add    $0x8,%rdx
+ 11120ff:	add    $0x140,%rdi
+ 1112106:	cmp    %rdx,%rcx
+ 1112109:	jne    1112090 <core.runtime.Runtime.drainJournal+0x2540>
+ 111210b:	test   %rax,%rax
+ 111210e:	je     11124b9 <core.runtime.Runtime.drainJournal+0x2969>
+ 1112114:	lea    (%rdx,%rdx,4),%rcx
+ 1112118:	lea    -0x1858(,%rcx,8),%rcx
+ 1112120:	add    %rbp,%rcx
+ 1112123:	shl    $0x3,%eax
+ 1112126:	lea    (%rax,%rax,4),%rax
+ 111212a:	xor    %edx,%edx
+ 111212c:	mov    (%rcx,%rdx,1),%rsi
+ 1112130:	lock decq 0x97f8(%rsi)
+ 1112138:	add    $0x28,%rdx
+ 111213c:	cmp    %rdx,%rax
+ 111213f:	jne    111212c <core.runtime.Runtime.drainJournal+0x25dc>
+ 1112141:	jmp    11124b9 <core.runtime.Runtime.drainJournal+0x2969>
+ 1112146:	mov    -0xe58(%rbp),%rcx
+ 111214d:	test   %rcx,%rcx
+ 1112150:	je     11124b9 <core.runtime.Runtime.drainJournal+0x2969>
+ 1112156:	mov    %ecx,%eax
+ 1112158:	and    $0x7,%eax
+ 111215b:	cmp    $0x8,%rcx
+ 111215f:	jae    11123f8 <core.runtime.Runtime.drainJournal+0x28a8>
+ 1112165:	xor    %edx,%edx
+ 1112167:	jmp    1112487 <core.runtime.Runtime.drainJournal+0x2937>
+ 111216c:	and    $0xfffffffffffffff8,%rdx
+ 1112170:	lea    -0x1858(%rbp),%r8
+ 1112177:	add    $0x118,%r8
+ 111217e:	xor    %esi,%esi
+ 1112180:	mov    -0x118(%r8),%rdi
+ 1112187:	lock decq 0x97f8(%rdi)
+ 111218f:	mov    -0xf0(%r8),%rdi
+ 1112196:	lock decq 0x97f8(%rdi)
+ 111219e:	mov    -0xc8(%r8),%rdi
+ 11121a5:	lock decq 0x97f8(%rdi)
+ 11121ad:	mov    -0xa0(%r8),%rdi
+ 11121b4:	lock decq 0x97f8(%rdi)
+ 11121bc:	mov    -0x78(%r8),%rdi
+ 11121c0:	lock decq 0x97f8(%rdi)
+ 11121c8:	mov    -0x50(%r8),%rdi
+ 11121cc:	lock decq 0x97f8(%rdi)
+ 11121d4:	mov    -0x28(%r8),%rdi
+ 11121d8:	lock decq 0x97f8(%rdi)
+ 11121e0:	mov    (%r8),%rdi
+ 11121e3:	lock decq 0x97f8(%rdi)
+ 11121eb:	add    $0x8,%rsi
+ 11121ef:	add    $0x140,%r8
+ 11121f6:	cmp    %rsi,%rdx
+ 11121f9:	jne    1112180 <core.runtime.Runtime.drainJournal+0x2630>
+ 11121fb:	test   %rcx,%rcx
+ 11121fe:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1112204:	lea    (%rsi,%rsi,4),%rdx
+ 1112208:	lea    -0x1858(,%rdx,8),%rdx
+ 1112210:	add    %rbp,%rdx
+ 1112213:	shl    $0x3,%ecx
+ 1112216:	lea    (%rcx,%rcx,4),%rcx
+ 111221a:	xor    %esi,%esi
+ 111221c:	mov    (%rdx,%rsi,1),%rdi
+ 1112220:	lock decq 0x97f8(%rdi)
+ 1112228:	add    $0x28,%rsi
+ 111222c:	cmp    %rsi,%rcx
+ 111222f:	jne    111221c <core.runtime.Runtime.drainJournal+0x26cc>
+ 1112231:	jmp    11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1112236:	and    $0xfffffffffffffff8,%rdx
+ 111223a:	lea    -0x1858(%rbp),%r8
+ 1112241:	add    $0x118,%r8
+ 1112248:	xor    %esi,%esi
+ 111224a:	mov    -0x118(%r8),%rdi
+ 1112251:	lock decq 0x97f8(%rdi)
+ 1112259:	mov    -0xf0(%r8),%rdi
+ 1112260:	lock decq 0x97f8(%rdi)
+ 1112268:	mov    -0xc8(%r8),%rdi
+ 111226f:	lock decq 0x97f8(%rdi)
+ 1112277:	mov    -0xa0(%r8),%rdi
+ 111227e:	lock decq 0x97f8(%rdi)
+ 1112286:	mov    -0x78(%r8),%rdi
+ 111228a:	lock decq 0x97f8(%rdi)
+ 1112292:	mov    -0x50(%r8),%rdi
+ 1112296:	lock decq 0x97f8(%rdi)
+ 111229e:	mov    -0x28(%r8),%rdi
+ 11122a2:	lock decq 0x97f8(%rdi)
+ 11122aa:	mov    (%r8),%rdi
+ 11122ad:	lock decq 0x97f8(%rdi)
+ 11122b5:	add    $0x8,%rsi
+ 11122b9:	add    $0x140,%r8
+ 11122c0:	cmp    %rsi,%rdx
+ 11122c3:	jne    111224a <core.runtime.Runtime.drainJournal+0x26fa>
+ 11122c5:	test   %rcx,%rcx
+ 11122c8:	je     11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 11122ce:	lea    (%rsi,%rsi,4),%rdx
+ 11122d2:	lea    -0x1858(,%rdx,8),%rdx
+ 11122da:	add    %rbp,%rdx
+ 11122dd:	shl    $0x3,%ecx
+ 11122e0:	lea    (%rcx,%rcx,4),%rcx
+ 11122e4:	xor    %esi,%esi
+ 11122e6:	mov    (%rdx,%rsi,1),%rdi
+ 11122ea:	lock decq 0x97f8(%rdi)
+ 11122f2:	add    $0x28,%rsi
+ 11122f6:	cmp    %rsi,%rcx
+ 11122f9:	jne    11122e6 <core.runtime.Runtime.drainJournal+0x2796>
+ 11122fb:	jmp    11118c5 <core.runtime.Runtime.drainJournal+0x1d75>
+ 1112300:	and    $0xfffffffffffffff8,%rcx
+ 1112304:	lea    -0x1858(%rbp),%rdi
+ 111230b:	add    $0x118,%rdi
+ 1112312:	xor    %edx,%edx
+ 1112314:	mov    -0x118(%rdi),%rsi
+ 111231b:	lock decq 0x97f8(%rsi)
+ 1112323:	mov    -0xf0(%rdi),%rsi
+ 111232a:	lock decq 0x97f8(%rsi)
+ 1112332:	mov    -0xc8(%rdi),%rsi
+ 1112339:	lock decq 0x97f8(%rsi)
+ 1112341:	mov    -0xa0(%rdi),%rsi
+ 1112348:	lock decq 0x97f8(%rsi)
+ 1112350:	mov    -0x78(%rdi),%rsi
+ 1112354:	lock decq 0x97f8(%rsi)
+ 111235c:	mov    -0x50(%rdi),%rsi
+ 1112360:	lock decq 0x97f8(%rsi)
+ 1112368:	mov    -0x28(%rdi),%rsi
+ 111236c:	lock decq 0x97f8(%rsi)
+ 1112374:	mov    (%rdi),%rsi
+ 1112377:	lock decq 0x97f8(%rsi)
+ 111237f:	add    $0x8,%rdx
+ 1112383:	add    $0x140,%rdi
+ 111238a:	cmp    %rdx,%rcx
+ 111238d:	jne    1112314 <core.runtime.Runtime.drainJournal+0x27c4>
+ 111238f:	test   %rax,%rax
+ 1112392:	je     11123c1 <core.runtime.Runtime.drainJournal+0x2871>
+ 1112394:	lea    (%rdx,%rdx,4),%rcx
+ 1112398:	lea    -0x1858(,%rcx,8),%rcx
+ 11123a0:	add    %rbp,%rcx
+ 11123a3:	shl    $0x3,%eax
+ 11123a6:	lea    (%rax,%rax,4),%rax
+ 11123aa:	xor    %edx,%edx
+ 11123ac:	mov    (%rcx,%rdx,1),%rsi
+ 11123b0:	lock decq 0x97f8(%rsi)
+ 11123b8:	add    $0x28,%rdx
+ 11123bc:	cmp    %rdx,%rax
+ 11123bf:	jne    11123ac <core.runtime.Runtime.drainJournal+0x285c>
+ 11123c1:	movq   $0x0,-0xe58(%rbp)
+ 11123cc:	mov    0x3110(%r13),%rdi
+ 11123d3:	mov    0x3118(%r13),%rax
+ 11123da:	xor    %ecx,%ecx
+ 11123dc:	xchg   %ecx,0x31d4(%r13)
+ 11123e3:	cmp    $0x2,%ecx
+ 11123e6:	je     11128d3 <core.runtime.Runtime.drainJournal+0x2d83>
+ 11123ec:	mov    -0x38(%rbp),%rax
+ 11123f0:	mov    %bx,(%rax)
+ 11123f3:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 11123f8:	and    $0xfffffffffffffff8,%rcx
+ 11123fc:	lea    -0x1858(%rbp),%rdi
+ 1112403:	add    $0x118,%rdi
+ 111240a:	xor    %edx,%edx
+ 111240c:	mov    -0x118(%rdi),%rsi
+ 1112413:	lock decq 0x97f8(%rsi)
+ 111241b:	mov    -0xf0(%rdi),%rsi
+ 1112422:	lock decq 0x97f8(%rsi)
+ 111242a:	mov    -0xc8(%rdi),%rsi
+ 1112431:	lock decq 0x97f8(%rsi)
+ 1112439:	mov    -0xa0(%rdi),%rsi
+ 1112440:	lock decq 0x97f8(%rsi)
+ 1112448:	mov    -0x78(%rdi),%rsi
+ 111244c:	lock decq 0x97f8(%rsi)
+ 1112454:	mov    -0x50(%rdi),%rsi
+ 1112458:	lock decq 0x97f8(%rsi)
+ 1112460:	mov    -0x28(%rdi),%rsi
+ 1112464:	lock decq 0x97f8(%rsi)
+ 111246c:	mov    (%rdi),%rsi
+ 111246f:	lock decq 0x97f8(%rsi)
+ 1112477:	add    $0x8,%rdx
+ 111247b:	add    $0x140,%rdi
+ 1112482:	cmp    %rdx,%rcx
+ 1112485:	jne    111240c <core.runtime.Runtime.drainJournal+0x28bc>
+ 1112487:	test   %rax,%rax
+ 111248a:	je     11124b9 <core.runtime.Runtime.drainJournal+0x2969>
+ 111248c:	lea    (%rdx,%rdx,4),%rcx
+ 1112490:	lea    -0x1858(,%rcx,8),%rcx
+ 1112498:	add    %rbp,%rcx
+ 111249b:	shl    $0x3,%eax
+ 111249e:	lea    (%rax,%rax,4),%rax
+ 11124a2:	xor    %edx,%edx
+ 11124a4:	mov    (%rcx,%rdx,1),%rsi
+ 11124a8:	lock decq 0x97f8(%rsi)
+ 11124b0:	add    $0x28,%rdx
+ 11124b4:	cmp    %rdx,%rax
+ 11124b7:	jne    11124a4 <core.runtime.Runtime.drainJournal+0x2954>
+ 11124b9:	movq   $0x0,-0xe58(%rbp)
+ 11124c4:	mov    0x3110(%r13),%rdi
+ 11124cb:	mov    0x3118(%r13),%rax
+ 11124d2:	xor    %ecx,%ecx
+ 11124d4:	xchg   %ecx,0x31d4(%r13)
+ 11124db:	jmp    11116d7 <core.runtime.Runtime.drainJournal+0x1b87>
+ 11124e0:	mov    -0x30(%rbp),%rsi
+ 11124e4:	mov    $0x1,%edx
+ 11124e9:	mov    %eax,%ebx
+ 11124eb:	vzeroupper
+ 11124ee:	call   *0x70(%rcx)
+ 11124f1:	mov    %ebx,%eax
+ 11124f3:	jmp    1111b20 <core.runtime.Runtime.drainJournal+0x1fd0>
+ 11124f8:	mov    -0x30(%rbp),%rsi
+ 11124fc:	mov    $0x1,%edx
+ 1112501:	vzeroupper
+ 1112504:	call   *0x70(%rax)
+ 1112507:	jmp    11116e0 <core.runtime.Runtime.drainJournal+0x1b90>
+ 111250c:	mov    -0x70(%rbp),%rax
+ 1112510:	cmpb   $0x0,(%rax)
+ 1112513:	je     111259f <core.runtime.Runtime.drainJournal+0x2a4f>
+ 1112519:	vmovups 0xa0(%rbx),%ymm0
+ 1112521:	vmovups %ymm0,-0x200(%rbp)
+ 1112529:	vmovups 0x80(%rbx),%ymm0
+ 1112531:	vmovups %ymm0,-0x220(%rbp)
+ 1112539:	vmovdqu (%rbx),%ymm0
+ 111253d:	vmovups 0x20(%rbx),%ymm1
+ 1112542:	vmovups 0x40(%rbx),%ymm2
+ 1112547:	vmovups 0x60(%rbx),%ymm3
+ 111254c:	vmovups %ymm3,-0x240(%rbp)
+ 1112554:	vmovups %ymm2,-0x260(%rbp)
+ 111255c:	vmovups %ymm1,-0x280(%rbp)
+ 1112564:	vmovdqu %ymm0,-0x2a0(%rbp)
+ 111256c:	lea    -0x3a8(%rbp),%rdi
+ 1112573:	lea    -0x2a0(%rbp),%rcx
+ 111257a:	lea    -0x9f30(%rbp),%r8
+ 1112581:	mov    -0x48(%rbp),%rsi
+ 1112585:	mov    -0x58(%rbp),%rdx
+ 1112589:	vzeroupper
+ 111258c:	call   111f0c0 <core.schema_codec.resolve>
+ 1112591:	movzwl -0x2c8(%rbp),%r8d
+ 1112599:	test   %r8w,%r8w
+ 111259d:	jne    11125a4 <core.runtime.Runtime.drainJournal+0x2a54>
+ 111259f:	mov    $0x12e,%r8w
+ 11125a4:	mov    -0xe58(%rbp),%rcx
+ 11125ab:	test   %rcx,%rcx
+ 11125ae:	je     1112687 <core.runtime.Runtime.drainJournal+0x2b37>
+ 11125b4:	mov    %ecx,%eax
+ 11125b6:	and    $0x7,%eax
+ 11125b9:	cmp    $0x8,%rcx
+ 11125bd:	jae    11125c6 <core.runtime.Runtime.drainJournal+0x2a76>
+ 11125bf:	xor    %edx,%edx
+ 11125c1:	jmp    1112655 <core.runtime.Runtime.drainJournal+0x2b05>
+ 11125c6:	and    $0xfffffffffffffff8,%rcx
+ 11125ca:	lea    -0x1858(%rbp),%rdi
+ 11125d1:	add    $0x118,%rdi
+ 11125d8:	xor    %edx,%edx
+ 11125da:	mov    -0x118(%rdi),%rsi
+ 11125e1:	lock decq 0x97f8(%rsi)
+ 11125e9:	mov    -0xf0(%rdi),%rsi
+ 11125f0:	lock decq 0x97f8(%rsi)
+ 11125f8:	mov    -0xc8(%rdi),%rsi
+ 11125ff:	lock decq 0x97f8(%rsi)
+ 1112607:	mov    -0xa0(%rdi),%rsi
+ 111260e:	lock decq 0x97f8(%rsi)
+ 1112616:	mov    -0x78(%rdi),%rsi
+ 111261a:	lock decq 0x97f8(%rsi)
+ 1112622:	mov    -0x50(%rdi),%rsi
+ 1112626:	lock decq 0x97f8(%rsi)
+ 111262e:	mov    -0x28(%rdi),%rsi
+ 1112632:	lock decq 0x97f8(%rsi)
+ 111263a:	mov    (%rdi),%rsi
+ 111263d:	lock decq 0x97f8(%rsi)
+ 1112645:	add    $0x8,%rdx
+ 1112649:	add    $0x140,%rdi
+ 1112650:	cmp    %rdx,%rcx
+ 1112653:	jne    11125da <core.runtime.Runtime.drainJournal+0x2a8a>
+ 1112655:	test   %rax,%rax
+ 1112658:	je     1112687 <core.runtime.Runtime.drainJournal+0x2b37>
+ 111265a:	lea    (%rdx,%rdx,4),%rcx
+ 111265e:	lea    -0x1858(,%rcx,8),%rcx
+ 1112666:	add    %rbp,%rcx
+ 1112669:	shl    $0x3,%eax
+ 111266c:	lea    (%rax,%rax,4),%rax
+ 1112670:	xor    %edx,%edx
+ 1112672:	mov    (%rcx,%rdx,1),%rsi
+ 1112676:	lock decq 0x97f8(%rsi)
+ 111267e:	add    $0x28,%rdx
+ 1112682:	cmp    %rdx,%rax
+ 1112685:	jne    1112672 <core.runtime.Runtime.drainJournal+0x2b22>
+ 1112687:	movq   $0x0,-0xe58(%rbp)
+ 1112692:	mov    0x3110(%r13),%rdi
+ 1112699:	mov    0x3118(%r13),%rax
+ 11126a0:	xor    %ecx,%ecx
+ 11126a2:	xchg   %ecx,0x31d4(%r13)
+ 11126a9:	cmp    $0x2,%ecx
+ 11126ac:	je     11128bc <core.runtime.Runtime.drainJournal+0x2d6c>
+ 11126b2:	mov    -0x38(%rbp),%rax
+ 11126b6:	mov    %r8w,(%rax)
+ 11126ba:	jmp    1111b27 <core.runtime.Runtime.drainJournal+0x1fd7>
+ 11126bf:	mov    -0xe58(%rbp),%rcx
+ 11126c6:	test   %rcx,%rcx
+ 11126c9:	je     1112892 <core.runtime.Runtime.drainJournal+0x2d42>
+ 11126cf:	mov    %ecx,%eax
+ 11126d1:	and    $0x7,%eax
+ 11126d4:	cmp    $0x8,%rcx
+ 11126d8:	jae    1112707 <core.runtime.Runtime.drainJournal+0x2bb7>
+ 11126da:	xor    %edx,%edx
+ 11126dc:	jmp    1112796 <core.runtime.Runtime.drainJournal+0x2c46>
+ 11126e1:	mov    -0xe58(%rbp),%rcx
+ 11126e8:	test   %rcx,%rcx
+ 11126eb:	je     1112892 <core.runtime.Runtime.drainJournal+0x2d42>
+ 11126f1:	mov    %ecx,%eax
+ 11126f3:	and    $0x7,%eax
+ 11126f6:	cmp    $0x8,%rcx
+ 11126fa:	jae    11127d1 <core.runtime.Runtime.drainJournal+0x2c81>
+ 1112700:	xor    %edx,%edx
+ 1112702:	jmp    1112860 <core.runtime.Runtime.drainJournal+0x2d10>
+ 1112707:	and    $0xfffffffffffffff8,%rcx
+ 111270b:	lea    -0x1858(%rbp),%rdi
+ 1112712:	add    $0x118,%rdi
+ 1112719:	xor    %edx,%edx
+ 111271b:	mov    -0x118(%rdi),%rsi
+ 1112722:	lock decq 0x97f8(%rsi)
+ 111272a:	mov    -0xf0(%rdi),%rsi
+ 1112731:	lock decq 0x97f8(%rsi)
+ 1112739:	mov    -0xc8(%rdi),%rsi
+ 1112740:	lock decq 0x97f8(%rsi)
+ 1112748:	mov    -0xa0(%rdi),%rsi
+ 111274f:	lock decq 0x97f8(%rsi)
+ 1112757:	mov    -0x78(%rdi),%rsi
+ 111275b:	lock decq 0x97f8(%rsi)
+ 1112763:	mov    -0x50(%rdi),%rsi
+ 1112767:	lock decq 0x97f8(%rsi)
+ 111276f:	mov    -0x28(%rdi),%rsi
+ 1112773:	lock decq 0x97f8(%rsi)
+ 111277b:	mov    (%rdi),%rsi
+ 111277e:	lock decq 0x97f8(%rsi)
+ 1112786:	add    $0x8,%rdx
+ 111278a:	add    $0x140,%rdi
+ 1112791:	cmp    %rdx,%rcx
+ 1112794:	jne    111271b <core.runtime.Runtime.drainJournal+0x2bcb>
+ 1112796:	test   %rax,%rax
+ 1112799:	je     1112892 <core.runtime.Runtime.drainJournal+0x2d42>
+ 111279f:	lea    (%rdx,%rdx,4),%rcx
+ 11127a3:	lea    -0x1858(,%rcx,8),%rcx
+ 11127ab:	add    %rbp,%rcx
+ 11127ae:	shl    $0x3,%eax
+ 11127b1:	lea    (%rax,%rax,4),%rax
+ 11127b5:	xor    %edx,%edx
+ 11127b7:	mov    (%rcx,%rdx,1),%rsi
+ 11127bb:	lock decq 0x97f8(%rsi)
+ 11127c3:	add    $0x28,%rdx
+ 11127c7:	cmp    %rdx,%rax
+ 11127ca:	jne    11127b7 <core.runtime.Runtime.drainJournal+0x2c67>
+ 11127cc:	jmp    1112892 <core.runtime.Runtime.drainJournal+0x2d42>
+ 11127d1:	and    $0xfffffffffffffff8,%rcx
+ 11127d5:	lea    -0x1858(%rbp),%rdi
+ 11127dc:	add    $0x118,%rdi
+ 11127e3:	xor    %edx,%edx
+ 11127e5:	mov    -0x118(%rdi),%rsi
+ 11127ec:	lock decq 0x97f8(%rsi)
+ 11127f4:	mov    -0xf0(%rdi),%rsi
+ 11127fb:	lock decq 0x97f8(%rsi)
+ 1112803:	mov    -0xc8(%rdi),%rsi
+ 111280a:	lock decq 0x97f8(%rsi)
+ 1112812:	mov    -0xa0(%rdi),%rsi
+ 1112819:	lock decq 0x97f8(%rsi)
+ 1112821:	mov    -0x78(%rdi),%rsi
+ 1112825:	lock decq 0x97f8(%rsi)
+ 111282d:	mov    -0x50(%rdi),%rsi
+ 1112831:	lock decq 0x97f8(%rsi)
+ 1112839:	mov    -0x28(%rdi),%rsi
+ 111283d:	lock decq 0x97f8(%rsi)
+ 1112845:	mov    (%rdi),%rsi
+ 1112848:	lock decq 0x97f8(%rsi)
+ 1112850:	add    $0x8,%rdx
+ 1112854:	add    $0x140,%rdi
+ 111285b:	cmp    %rdx,%rcx
+ 111285e:	jne    11127e5 <core.runtime.Runtime.drainJournal+0x2c95>
+ 1112860:	test   %rax,%rax
+ 1112863:	je     1112892 <core.runtime.Runtime.drainJournal+0x2d42>
+ 1112865:	lea    (%rdx,%rdx,4),%rcx
+ 1112869:	lea    -0x1858(,%rcx,8),%rcx
+ 1112871:	add    %rbp,%rcx
+ 1112874:	shl    $0x3,%eax
+ 1112877:	lea    (%rax,%rax,4),%rax
+ 111287b:	xor    %edx,%edx
+ 111287d:	mov    (%rcx,%rdx,1),%rsi
+ 1112881:	lock decq 0x97f8(%rsi)
+ 1112889:	add    $0x28,%rdx
+ 111288d:	cmp    %rdx,%rax
+ 1112890:	jne    111287d <core.runtime.Runtime.drainJournal+0x2d2d>
+ 1112892:	movq   $0x0,-0xe58(%rbp)
+ 111289d:	mov    -0x40(%rbp),%rdx
+ 11128a1:	mov    0x3110(%rdx),%rdi
+ 11128a8:	mov    0x3118(%rdx),%rax
+ 11128af:	xor    %ecx,%ecx
+ 11128b1:	xchg   %ecx,0x31d4(%rdx)
+ 11128b7:	jmp    11116d7 <core.runtime.Runtime.drainJournal+0x1b87>
+ 11128bc:	mov    -0x30(%rbp),%rsi
+ 11128c0:	mov    $0x1,%edx
+ 11128c5:	mov    %r8d,%ebx
+ 11128c8:	call   *0x70(%rax)
+ 11128cb:	mov    %ebx,%r8d
+ 11128ce:	jmp    11126b2 <core.runtime.Runtime.drainJournal+0x2b62>
+ 11128d3:	mov    -0x30(%rbp),%rsi
+ 11128d7:	mov    $0x1,%edx
+ 11128dc:	call   *0x70(%rax)
+ 11128df:	jmp    11123ec <core.runtime.Runtime.drainJournal+0x289c>
