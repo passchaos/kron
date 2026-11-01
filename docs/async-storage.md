@@ -21,6 +21,8 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 
 两种模式都支持共享producer和显式注册SPSC：`.submission = .low_latency` 配合 `max_thread_channels`，每个channel按照所选存储在初始化时预分配。内存模式不要求required custom sink具有跨重启身份；mmap模式仍要求。`max_journal_bytes`现为所有queue存储的总预算上限，包含共享队列与channel，名称保留兼容已有API。
 
+统一应用入口的完整Mmap例子见 [mmap.zig](../examples/mmap.zig)，运行 `zig build run-mmap -Doptimize=ReleaseSafe`。Logging使用 `.mode=.asynchronous` 与 `.queue=.{ .mmap=options }`，管理required JSON文件和best_effort stdout，消费者按系统本地时间格式化；程序显式durable确认并关闭。重开使用相同路径、layout和恢复目标身份。
+
 `runtime.queueStorage()`/`health().queue_storage`返回none、memory或mmap。`queue_reserved_bytes`报告总queue空间；`journal_reserved_bytes`只报告文件映射空间，普通异步为零。
 
 ## 确认与可靠性

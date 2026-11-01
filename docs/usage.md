@@ -364,6 +364,8 @@ const logging = try kron.Logging.create(allocator, io, .{
 
 Mmap 没有静默降级到 Memory。Logging 的 Mmap 要求每个 required 输出为 `.file` 或 `.rolling_file`，它们自动提供稳定的绝对路径恢复身份；控制台/borrowed writer 可作为 best_effort 多输出目标，作为 required 时返回 `MmapRequiresFileOutput`。高级自定义 sink 可通过 Runtime 提供显式 recovery identity。
 
+完整例子见 [mmap.zig](../examples/mmap.zig)，运行 `zig build run-mmap -Doptimize=ReleaseSafe`。它使用共享Mmap队列，同时向 `kron-mmap.jsonl` 追加JSON、向stdout输出text，两者使用系统本地时间。文件为required，stdout为best_effort；退出前显式flushDurable和shutdown。重新运行使用同一journal/layout/输出及时区来源，初始化自动恢复尚未交付的完整记录；正常关闭后的再次运行只追加本次三条新事件。
+
 重启使用同一 journal layout、路径和输出配置，恢复完整 committed 记录。改变容量、schema 表、输出路径/格式/可读时间等可能导致 layout 或恢复身份不匹配，初始化返回错误并保留 journal。单个 journal 有独占锁，不能让两个活动 owner 同时打开它。
 
 SPSC 采用 `.mode=.spsc` 和相同 `.queue=.mmap`，创建共享 journal 以及 `app.journal.thread-0.journal` 等预分配 channel 文件。它们都计入预算，channel 创建与首次准备会有额外启动和磁盘成本。
@@ -602,6 +604,7 @@ try logging.shutdownUntil(kron.Deadline.after(io, 5 * std.time.ns_per_s));
 | `zig build run-async-memory` | stdout 的共享 Memory 日志 |
 | `zig build run-local-time` | 系统本地时间、消费者格式化与同秒缓存 |
 | `zig build run-file-stdout-local-time` | 同时写JSON文件与stdout文本，两个输出都使用系统本地时间 |
+| `zig build run-mmap` | 共享Mmap、本地时间、JSON文件＋best_effort stdout、durable与自动恢复 |
 | `zig build run-structured` | owned/borrowed context、嵌套、bytes/secret、trace/source、lazy、可读日期 |
 | `zig build run-threaded` | 双线程 SPSC、attach/detach、join 后关闭 |
 | `zig build run-prepared` | Mmap/SPSC 预注册与 durable |

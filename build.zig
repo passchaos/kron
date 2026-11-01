@@ -487,6 +487,7 @@ pub fn build(b: *std.Build) void {
     inline for (.{
         .{ "local-time", "examples/local_time.zig" },
         .{ "file-stdout-local-time", "examples/file_stdout_local_time.zig" },
+        .{ "mmap", "examples/mmap.zig" },
     }) |example| {
         const local_example_module = b.createModule(.{ .root_source_file = b.path(example[1]), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
         local_example_module.addImport("kron", module);

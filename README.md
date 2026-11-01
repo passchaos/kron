@@ -63,6 +63,7 @@ zig build run-file-logging
 zig build run-structured
 zig build run-local-time
 zig build run-file-stdout-local-time
+zig build run-mmap
 zig build run-threaded
 zig build run-rolling
 zig build run-basic
