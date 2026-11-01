@@ -14,6 +14,7 @@ pub const supported = switch (builtin.os.tag) {
     else => false,
 };
 pub const durable_supported = supported and backend.directory_durable_supported;
+const publish_file_flushes_mapping = if (@hasDecl(backend, "publish_file_flushes_mapping")) backend.publish_file_flushes_mapping else false;
 
 pub const Mapping = struct {
     file: std.Io.File,
@@ -60,7 +61,9 @@ pub const Mapping = struct {
     /// Ready publication always flushes the file. Platforms with a directory
     /// protocol also include the entry; strict durable remains separately gated.
     pub fn publish(self: *Mapping) !void {
-        try backend.sync(self.bytes);
+        // Linux's whole-file fsync already covers modified shared pages.
+        // Other backends retain their explicit mapping flush before file sync.
+        if (comptime !publish_file_flushes_mapping) try backend.sync(self.bytes);
         try backend.publishFile(self.io, self.file);
         if (comptime durable_supported) try backend.publishDirectory(self.io, self.directory);
     }

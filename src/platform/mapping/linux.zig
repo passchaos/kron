@@ -2,6 +2,11 @@
 const std = @import("std");
 const linux = std.os.linux;
 pub const directory_durable_supported = true;
+// Linux msync(MS_SYNC) calls vfs_fsync_range(file, range, datasync=1).
+// fsync calls that same filesystem operation for [0, LLONG_MAX], datasync=0,
+// covering dirty MAP_SHARED pages as well as file length/metadata. Cold
+// publication needs only that whole-file barrier, followed by directory fsync.
+pub const publish_file_flushes_mapping = true;
 
 pub fn validateFile(file: std.Io.File) !void {
     var fs_info: [256]u8 align(8) = undefined;

@@ -126,6 +126,76 @@ const SyncFault = struct {
     }
 };
 
+const PublicationFault = struct {
+    threadlocal var calls: usize = 0;
+    threadlocal var fail_at: usize = 0;
+
+    fn sync(userdata: ?*anyopaque, file: std.Io.File) std.Io.File.SyncError!void {
+        calls += 1;
+        if (calls == fail_at) return error.InputOutput;
+        return testing.io.vtable.fileSync(userdata, file);
+    }
+};
+
+test "Linux file and directory publication failures reject creation and release the journal lock" {
+    if (@import("builtin").os.tag != .linux) return error.SkipZigTest;
+    var vtable = testing.io.vtable.*;
+    vtable.fileSync = PublicationFault.sync;
+    const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
+    defer PublicationFault.fail_at = 0;
+    for ([_]usize{ 1, 2 }) |fail_at| {
+        var tmp = testing.tmpDir(.{});
+        defer tmp.cleanup();
+        var path_buffer: [128]u8 = undefined;
+        const options = try optionsFor(&tmp, &path_buffer);
+        PublicationFault.calls = 0;
+        PublicationFault.fail_at = fail_at;
+        try testing.expectError(error.InputOutput, journal.Journal.create(testing.allocator, io, options));
+        try testing.expectEqual(fail_at, PublicationFault.calls);
+        // The failed owner must close/unmap everything. A fresh owner can
+        // acquire the same exclusive lock and finish publication on retry.
+        PublicationFault.fail_at = 0;
+        const retry = try journal.Journal.create(testing.allocator, io, options);
+        defer retry.deinit();
+        try testing.expectEqual(@as(usize, 0), retry.pending());
+        const reference = try retry.registerSchema(try metadata("retry.publish"));
+        try append(retry, reference, "complete after retry");
+        try testing.expectEqualStrings("complete after retry", (try retry.peekChecked()).?.payload);
+    }
+}
+
+test "Linux directory sync failure after file sync keeps a schema unready until full retry" {
+    if (@import("builtin").os.tag != .linux) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [128]u8 = undefined;
+    const options = try optionsFor(&tmp, &path_buffer);
+    var vtable = testing.io.vtable.*;
+    vtable.fileSync = PublicationFault.sync;
+    const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
+    PublicationFault.calls = 0;
+    PublicationFault.fail_at = 0;
+    defer PublicationFault.fail_at = 0;
+    const store = try journal.Journal.create(testing.allocator, io, options);
+    defer store.deinit();
+    const meta = try metadata("directory.failure");
+    PublicationFault.calls = 0;
+    PublicationFault.fail_at = 2;
+    try testing.expectError(error.InputOutput, store.registerSchema(meta));
+    try testing.expectEqual(@as(usize, 2), PublicationFault.calls);
+    const unready = try store.schema.?.register(meta);
+    try testing.expect(unready.requires_sync);
+    try testing.expectError(error.SchemaNotReady, store.reserveWithSchema(unready.ref));
+    try testing.expectEqual(@as(u64, 0), store.reservationTarget());
+    PublicationFault.calls = 0;
+    PublicationFault.fail_at = 0;
+    const ready = try store.registerSchema(meta);
+    try testing.expectEqual(unready.ref, ready);
+    try testing.expectEqual(@as(usize, 2), PublicationFault.calls);
+    try append(store, ready, "ready after both barriers");
+    try testing.expectEqualStrings("ready after both barriers", (try store.peekChecked()).?.payload);
+}
+
 test "failed cold schema sync retains definition and forbids event commit until retry" {
     if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = testing.tmpDir(.{});

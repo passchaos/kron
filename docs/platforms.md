@@ -16,7 +16,7 @@
 
 ## 同步与durable
 
-各平台都将页同步与文件同步分开。mmap journal初始化与schema-ready通过普通文件发布协议完成；其accepted表示事件已完整提交到共享文件映射。内存异步的accepted只进入进程内queue。两者都不能替代设备断电的durable确认，详见 [异步存储](async-storage.md)。
+各平台的显式durable协议区分页同步与文件同步。mmap journal初始化与schema-ready通过文件发布协议完成；Linux/Android全文件fsync已经覆盖共享映射脏页，冷发布省去前面的重复msync，其他平台保留映射flush，源码与验证见[Mmap发布](mmap-publication.md)。accepted表示事件已完整提交到共享文件映射，内存异步的accepted只进入进程内queue。两者都不能替代设备断电的durable确认，详见 [异步存储](async-storage.md)。
 
 Linux/Android strict durable执行msync、文件sync和父目录sync。Darwin strict durable进一步执行F_FULLFSYNC，若文件/目录不支持这一协议返回 `UnsupportedDurability`，不会降低为普通flush成功。Darwin预分配核对已分配块数，只申请差额，失败fallback重新核对，避免重开journal反复扩大实际磁盘保留。
 

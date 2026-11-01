@@ -76,6 +76,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [异步存储选择](docs/async-storage.md)：普通内存异步与mmap异步，共同接口、明确恢复区别。
 - [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四批，可按负载选择一到四批。
 - [文件可靠性](docs/file-reliability.md)：部分写入、轮转、显式durable和恢复边界。
+- [Mmap冷发布](docs/mmap-publication.md)：Linux全文件同步覆盖映射脏页，减少重复发布操作并保留schema就绪与故障边界。
 - [嵌套字段](docs/structured-values.md)：显式array/group，固定遍历预算和递归脱敏。
 - [编码与归档](docs/encoding.md)：全树验证、长度计算与二进制framing的共同路径。
 - [记录编码校验复用](docs/encoder-validation.md)：完整text/JSON/logfmt只校验一次字段树，保留独立value入口、原格式和错误边界。

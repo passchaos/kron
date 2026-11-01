@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+Linux/Android冷Mmap发布省去全文件fsync之前的重复msync，保留文件/父目录fsync；其他平台映射flush和显式strict durable原协议保持。Linux6.8内核与ext4同步源码确认覆盖范围，文件/目录发布失败回归验证初始化失败与锁释放、schema目录失败仍unready且不占reservation。真实子QEMU/ext4 schema ACK17/31与inline ACK3强杀恢复通过。160次Memory/Mmap完整文件对照核对1616万条，全部accepted=written、pending/drop=0；调用追踪msync为5→0、fsync仍10、fallocate仍5。初始化/吞吐全部inconclusive，共享Mmap负向启动中位与SPSC正向中位、全部慢值保留，不宣称稳定性能或跨库优势。最终Safe综合89/89步骤、532/532测试和九目标ReleaseSafe实际对象通过。证据见[Mmap发布](mmap-publication.md)及`bench/evidence/2026-11-01-mmap-publication/`。
+
 按用户最新要求，当前源码`182fc9e`默认budget4仅Memory/Mmap同轮比较Foundation真实spdlog前端＋Rust后台与kron：120/120试验、1212万条物理JSON完整核对，accepted=written且pending/drop=0。Memory P1/P4包含关闭中位M条/s：Foundation1.932/1.990、kron shared2.136/2.063、SPSC2.151/2.106；Mmap为Foundation1.789/2.097、shared2.107/1.741、SPSC2.157/1.911。Memory中位领先、Mmap P4仍落后，Foundation全部吞吐组波动超门限，不宣称两种模式稳定超越。Mmap SPSC P4初始化中位368ms、完整生命周期446ms，对Foundation13ms/62ms，原始慢值与尾分位均保留。完整源码、机器、库、格式/完成边界和逐项报告见[当前Memory/Mmap对照](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。
 
 Memory/Mmap消费者批次预算显式提供`consumer_batches_per_queue=1..4`，默认4保持原行为；非法预算分配前失败。确定性真实后台在两种存储、共享peer/SPSC peer组合验证1/2/3/4批的peer服务位置1/65/129/161，FIFO、written、零剩余积压与零初始化后分配保持；公开测试观察满SPSC队列真实futex等待，shutdown正确唤醒并abort未完成reservation。固定一批默认候选160项完整文件核对1616万条，p99.9改善而p99明显负向、吞吐未资格，因此未提升为默认。同二进制默认4/显式1的40项再核对404万条，Memory p99中位10.9→82.8µs、p99.9约377.7→114.7µs；Mmap为9.1→84.5µs与391.0→110.7µs，均inconclusive且完整慢值保留。当前Safe综合89/89步骤、530/530测试和九目标实际对象通过；调度取舍见[消费者服务预算](consumer-scheduling.md)及`bench/evidence/2026-11-01-channel-fairness/`。后续性能按用户要求仅分Memory/Mmap比较。
