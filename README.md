@@ -6,6 +6,8 @@
 
 公共接口仅提供 Zig API，包依赖和应用生命周期见 [Zig 包接入](docs/package.md)。
 
+固定Zig 0.16的Linux单机项目可将kron作为项目默认日志实现，优先选共享异步Memory与portable文件后端，按应用确定过载策略并显式关闭。选型、std.log桥和资格边界见[默认日志接入建议](docs/default-logging.md)。
+
 完整方案见 [整体设计](docs/design.md)。该文档汇总了多语言日志库调研，以及性能、mmap、io_uring、动态 filter 和可靠性的最终决策。
 
 ## 核心方向
@@ -93,6 +95,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [全局采样](docs/sampling.md)：精确预算、配置更新相位与专门路径的实测边界。
 - [资格化TSC时钟](docs/tsc-clock.md)：显式选择、硬件/校准检查，失败回退到原生时钟。
 - [性能回归](docs/performance-regression.md)：固定输入、多次重复和子进程 affinity，噪声过高时报告 inconclusive。
+- [应用影响基准](docs/application-benchmark.md)：相同计算工作量的无logger/Memory/Mmap对照，独立核验应用结果与完整JSON，报告CPU/cache与关闭成本。
 - [提交热点优化](docs/performance-hotspots.md)：native PCLMUL CRC、decoded delivery 校验复用和单 JSON/text/logfmt route 的 fused wire-to-record；其他形状回退，完整重复测量与尾延迟限制保留。
 
 本地组件的调研与复用边界见 [本地仓库复用评估](docs/local-reuse.md)。

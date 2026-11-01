@@ -1,5 +1,13 @@
 # Benchmark method and reproducibility
 
+The application-impact benchmark additionally compares identical deterministic
+request work with no logger and shared/SPSC Memory/Mmap logging. It verifies
+application digests and complete JSON against an independent integer model,
+and reports whole-process user PMU and actual completion boundaries. Input,
+affinity, sampling, sparse-source and synthetic-workload limits are described in
+[application-benchmark.md](application-benchmark.md). It complements log-only
+measurements and does not substitute for production-service or durable evidence.
+
 `bench/main.zig` measures the implemented kron Runtime, encoders, memory queues and mmap journals,
 and sinks on Zig 0.16. It runs synchronous delivery, shared MPSC journal delivery,
 and the real SPSC runtime with one attached channel per producer. File trials

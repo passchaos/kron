@@ -1,0 +1,22 @@
+application 0 compute P1 every1: 5/300 verified trials
+application 0 compute P1 every16: 10/300 verified trials
+application 0 compute P4 every1: 15/300 verified trials
+application 0 compute P4 every16: 20/300 verified trials
+application 0 compute P16 every1: 25/300 verified trials
+application 0 compute P16 every16: 30/300 verified trials
+application 0 cache P1 every1: 35/300 verified trials
+application 0 cache P1 every16: 40/300 verified trials
+application 0 cache P4 every1: 45/300 verified trials
+application 0 cache P4 every16: 50/300 verified trials
+Traceback (most recent call last):
+  File "/home/passchaos/project-z/kron/bench/application_compare.py", line 240, in <module>
+    main()
+  File "/home/passchaos/project-z/kron/bench/application_compare.py", line 235, in main
+    result = capture(args.binary.resolve(), args.output.resolve(), args.smoke, args.pmu)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/passchaos/project-z/kron/bench/application_compare.py", line 169, in capture
+    verify(row, artifact, dict(work=work, mode=mode, producers=producers, log_every=every, sampled=sampled))
+  File "/home/passchaos/project-z/kron/bench/application_compare.py", line 115, in verify
+    assert channel == (attrs["producer"] + 1 if row["mode"] == "spsc" else 0)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

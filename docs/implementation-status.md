@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+应用影响基准已补充：相同确定性compute/cache工作量分别使用无logger、共享Memory、SPSC Memory、共享Mmap和SPSC Mmap，P1/P4/P16、每request或稀疏日志五次重复，共300项核对360万应用请求和165.756万完整JSON。独立Python模型核对每worker状态计算与日志result；所有输出/身份/FIFO与runtime零初始化后分配通过。完整应用吞吐组均因波动保持inconclusive；PMU计数覆盖率至少91%，部分CPU工作量差异有局部资格。该合成负载不代替真实服务/cold-cache/durable和跨库验证，P16在六核mask超额订阅、every16日志源集中于producer0，均明确标记。接口测试、oracle负向测试、15项smoke和包含新入口的ReleaseSafe完整门禁97/97步骤、559/559 Zig测试通过。源实现保持`6e774b0`；证据见`bench/evidence/2026-11-01-application-impact/`。项目默认使用建议见[默认日志接入](default-logging.md)，四个非Linux平台仍需设备运行资格。
+
 Prepared测量复用的最终源码通过完整ReleaseSafe **93/93步骤、556/556 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，独立五模式/单线程/源码分发包、配置/过滤/生命周期/文件故障、随机SIGKILL和wire/schema损坏矩阵均通过。正式380项/6438万条数据、节点计数、4096项旧/新codec差分、额外提交函数栈帧与P1极端分位负向绑定于`bench/evidence/2026-11-01-prepared-measure/qualification.json`。当前目标仍有稳定完整性能、业务/durable基线、长期fuzz与其他平台设备运行等缺口，见下方剩余验收项。
 
 Prepared无脱敏提交已复用本次全树校验得到的动态value/nested key字节，canonical shape/level/reference、queue full/fallback和capacity边界保持；公开reference codec仍完整校验，内部实现移到`reference_encoding.zig`，无外部measured入口。真实Memory/Mmap共享/SPSC、predicate/tree、full/drop/fallback、超长/level、脱敏和伪造binding/hint相关Debug/Safe/Fast各64项通过，旧/新codec4096项独立差分一致，public Runtime节点计数由8→4。380项完整文件/PMU/百万条对照核对6438万条JSON，schema SPSC Memory/Mmap与shared Memory P1用户态指令减少3.99%/3.97%/4.33%，CV/spread通过且区间不重叠；shared Memory P1百万条batch吞吐中位+4.89%同样通过。P1长sampled p99.9中位1017→15974ns为明显负向、波动超门限，其他吞吐/尾部多数未资格；这些限制和所有慢值保留。来源与有限收益见`bench/evidence/2026-11-01-prepared-measure/`；不推导新的Foundation排名。
