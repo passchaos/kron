@@ -1,0 +1,34 @@
+1/33 root.test_0...OK
+2/33 encoder.root.test_0...OK
+3/33 time.root.test_0...OK
+4/33 journal.journal.test_0...OK
+5/33 core.runtime.test_0...OK
+6/33 config.routes.test_0...OK
+7/33 sink.file.test_0...OK
+8/33 sink.rolling_file.test_0...OK
+9/33 journal.spsc.test_0...OK
+10/33 core.diagnostics.test.record does not invoke hooks and dispatch supplies one coalesced snapshot outside locks...OK
+11/33 sink.file_record_tests.test.record rendering accepts only its complete prefix and rejects without flushing or allocation...OK
+12/33 sink.file_record_tests.test.record rendering overflow and capacity rejection leave offsets and callback ownership intact...OK
+13/33 sink.file_record_tests.test.record rendering keeps accepted ownership through real short writes zero progress and disk errors...OK
+14/33 core.delivery.test_0...OK
+15/33 core.runtime_coalesced_tests.test.coalesced service window flushes all 255 queued records before reclaim without allocation...OK
+16/33 core.runtime_coalesced_tests.test.coalesced checked window rejects later corruption before any earlier record reaches a sink...OK
+17/33 core.runtime_coalesced_tests.test.coalesced old and new routes keep all record pins when final flush or durable barrier fails...OK
+18/33 core.runtime_coalesced_tests.test.coalesced flush failure retains every slot and pin of a retired configuration...OK
+19/33 core.runtime_coalesced_tests.test.coalesced late corruption acknowledges only its successful prefix and retains old configuration...OK
+20/33 core.delivery_batch.test.coalesced service budget charges short windows and bounds every allowed quantum...OK
+21/33 encoder.wire_json.test.fused wire JSON matches decoded encoder for flat scalar events...OK
+22/33 encoder.wire_json.test.fused wire JSON matches decoded encoder for nested attributes...OK
+23/33 encoder.wire_json.test.fused wire JSON declines deferred messages...OK
+24/33 encoder.wire_json.test.fused wire JSON matches readable timestamp formatting...OK
+25/33 encoder.wire_json.test.fused wire text and logfmt match decoded encoders...OK
+26/33 encoder.wire_json.test_0...OK
+27/33 encoder.wire_reference_tests.test.fused reference matches materialized all tags nested static dynamic and historical records...OK
+28/33 encoder.wire_reference_tests.test.fused reference has identical checked errors on truncation mutation type mismatch and scratch exhaustion...OK
+29/33 encoder.wire_reference_tests.test.fused reference declines deferred including unused arguments for the authoritative materialized renderer...OK
+30/33 encoder.wire_reference_tests.test.fused reference runtime rejects checked schema damage before output and retains exact pins...OK
+31/33 core.delivery_record_tests.test.direct record materialized formats match ordinary scratch including deferred binary and fallback...OK
+32/33 core.delivery_record_tests.test.direct record wire and reference render exactly and preserve malformed rejection on best effort...OK
+33/33 core.delivery_record_tests.test.direct record encoding errors precede sink faults and do not count as write failures...OK
+All 33 tests passed.

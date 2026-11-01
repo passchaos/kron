@@ -59,4 +59,6 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 此前条件progress wake候选虽然并发门禁通过，完整吞吐仍未取得收益，饱和负载futex次数也未下降，已恢复原通知策略，见`bench/evidence/2026-11-01-progress-wakeup/`。这和批量pin的负向结果说明后续应测量新的成本或改变机制，避免重复推广同一未通过候选。PCLMUL CRC、默认脱敏scratch、重复树校验、批内配置View、written聚合和就绪批次合并均已落实，不作为新的待做项目。
 
+直接渲染到FileSink staging的同步callback候选也已否决：完整280项试验核对3628万条JSON，40项PMU四组用户态指令增加0.48%–0.64%，完整240项吞吐各组中位区间全部重叠，多个默认Memory路径中位负向。候选正确性门禁通过，但额外接口、回调与状态维护没有取得端到端收益；生产恢复`c2f8792`，完整候选/失败与正负原始报告见`bench/evidence/2026-11-01-direct-record-buffer/`。后续减少复制应采用不同机制并重新计量成本，不能把“少一次memcpy”直接作为速度结论。当前shared admission仍把已保护配置View转换为pending pin再释放View；复用同一个受保护View可能减少两次原子更新，是下一项待验证的producer候选，必须保持旧配置lease、采样/filtered结束与异步record pin独立。
+
 参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。

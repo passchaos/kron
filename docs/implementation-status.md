@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+直接渲染到文件缓冲候选已实验并否决：33项相关Safe与17项Debug/Fast定向测试通过，包括完整prefix事务、短写/零进展/磁盘错误、三格式/binary/模板、非法输入与零分配；280项完整文件/PMU共核对3628万条JSON。四组指令中位增加0.48%–0.64%，各组完整吞吐中位区间均重叠且多个Memory路径负向，额外callback接口不推广，生产src精确恢复`c2f8792`。保存candidate源码/二进制身份、完整慢值与否决依据于`bench/evidence/2026-11-01-direct-record-buffer/`；当前545项综合与九目标编译资格不因该否决改变。
+
 当前最终schema融合源码已通过ReleaseSafe完整门禁 **93/93步骤、545/545 Zig测试**，含独立五模式/单线程/源码分发包、Linux宿主资格、旧/新wire矩阵、实际随机SIGKILL与文件/生命周期负向门禁。九目标ReleaseSafe对象编译 **10/10步骤** 通过；其他平台设备运行资格仍未取得。门禁、源码/归档/二进制SHA256与最终完整测量绑定在`bench/evidence/2026-11-01-consumer-post-coalescing/qualification.json`。本轮TSC硬件校准不稳定时实际回退native并通过其安全门禁，不把fallback描述为新的TSC加速资格。
 
 schema融合消费者已扩展到至少64条就绪窗口、单JSON/text/logfmt目标、无模板参数的schema记录；短窗口保留原物化路径，canonical定义每记录复用，类型mask、nested节点/深度/descriptor、长度、schema身份与原decode-before-route错误顺序保持。输出scratch不足时冷路径完成原reference解码，避免后段损坏被record-too-large错误掩盖。48个真实Memory/Mmap×shared/SPSC×1/64条窗口×16/512字节scratch×三种schema损坏场景确认零sink输出、原错误、全部pending与pin，三格式all-tags/static/dynamic/source/trace/nested/readable-time/历史v2逐字节对照和4096变异通过；最终Debug/Safe/Fast相关各26/26测试通过。最终以`366adc3`为基线240项完整文件、40项完整PMU与20项百万条P1复查核对5630万条物理JSON，Memory prepared P4共享/SPSC吞吐中位提升6.35%/8.03%，CV/spread通过且中位区间不重叠；schema指令中位减少1.8%–1.9%，inline指令control增加0.171%。Mmap多数组和多数尾分位仍inconclusive；最终P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠保留。原生drainJournal显式栈预留增加2912字节，heap/journal/file预算不增。早期P1负向、否决pointer版本、187项中断捕获均独立保存，不算最终资格。完整脚本、source/binary来源和限制见[schema消费者对照](../bench/evidence/2026-11-01-consumer-post-coalescing/README.md)。
