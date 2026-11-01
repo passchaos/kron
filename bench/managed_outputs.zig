@@ -1,4 +1,4 @@
-//! Complete managed single-output logging benchmark, including producer
+//! Complete managed one/two-output logging benchmark, including producer
 //! capture, queue submission, consumer JSON formatting and written shutdown.
 //! The source also compiles against the pre-list API for controlled comparison.
 const std = @import("std");
@@ -7,18 +7,20 @@ const Mode = enum { sync, memory, mmap, spsc_memory, spsc_mmap };
 
 pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(init.arena.allocator());
-    if (args.len != 4) return error.ExpectedModeDirectoryIterations;
+    if (args.len != 4 and args.len != 5) return error.ExpectedModeDirectoryIterations;
+    const outputs = if (args.len == 5) try std.fmt.parseInt(usize, args[4], 10) else 1;
+    if (outputs < 1 or outputs > 2) return error.InvalidOutputs;
     const mode = std.meta.stringToEnum(Mode, args[1]) orelse return error.InvalidMode;
     const iterations = try std.fmt.parseInt(usize, args[3], 10);
     if (iterations < 1000 or iterations > 1_000_000) return error.InvalidIterations;
     inline for (@typeInfo(Mode).@"enum".fields) |entry| {
         const selected: Mode = @enumFromInt(entry.value);
-        if (mode == selected) return run(selected, init, args[2], iterations);
+        if (mode == selected) return run(selected, init, args[2], iterations, outputs);
     }
     unreachable;
 }
 
-fn run(comptime mode: Mode, init: std.process.Init, directory: []const u8, iterations: usize) !void {
+fn run(comptime mode: Mode, init: std.process.Init, directory: []const u8, iterations: usize, outputs: usize) !void {
     const attached = mode == .spsc_memory or mode == .spsc_mmap;
     const mapped = mode == .mmap or mode == .spsc_mmap;
     const asynchronous = mode != .sync;
@@ -26,8 +28,19 @@ fn run(comptime mode: Mode, init: std.process.Init, directory: []const u8, itera
     const journal_path = try std.fmt.allocPrint(init.arena.allocator(), "{s}/events.journal", .{directory});
     const queue: ?kron.Logging.Queue = if (!asynchronous) null else if (mapped) .{ .mmap = .{ .path = journal_path, .capacity = 256, .max_record_bytes = 8192 } } else .{ .memory = .{ .capacity = 256, .max_record_bytes = 8192 } };
     const policy_mode: kron.Logging.Mode = if (!asynchronous) .sync else if (attached) .spsc else .asynchronous;
+    const second_file_path = try std.fmt.allocPrint(init.arena.allocator(), "{s}/events2.jsonl", .{directory});
+    const second_journal_path = try std.fmt.allocPrint(init.arena.allocator(), "{s}/events2.journal", .{directory});
+    var second_queue = queue;
+    if (second_queue) |*storage| if (storage.* == .mmap) {
+        storage.mmap.path = second_journal_path;
+    };
+    const routes = if (@hasField(kron.Logging.Options, "outputs")) [_]kron.Logging.Route{
+        .{ .name = "file", .target = .{ .file = .{ .path = file_path, .append = false, .backend = .portable } }, .mode = policy_mode, .queue = queue, .format = .json, .max_threads = 1 },
+        .{ .name = "file2", .target = .{ .file = .{ .path = second_file_path, .append = false, .backend = .portable } }, .mode = policy_mode, .queue = second_queue, .format = .json, .max_threads = 1 },
+    } else {};
+    if (!@hasField(kron.Logging.Options, "outputs") and outputs != 1) return error.MultipleOutputsUnavailable;
     const options: kron.Logging.Options = if (@hasField(kron.Logging.Options, "outputs")) .{
-        .outputs = &.{.{ .name = "file", .target = .{ .file = .{ .path = file_path, .append = false, .backend = .portable } }, .mode = policy_mode, .queue = queue, .format = .json, .max_threads = 1 }},
+        .outputs = routes[0..outputs],
     } else .{
         .output = .{ .file = .{ .path = file_path, .append = false, .backend = .portable } },
         .mode = policy_mode,
@@ -64,11 +77,12 @@ fn run(comptime mode: Mode, init: std.process.Init, directory: []const u8, itera
     try logging.shutdown();
     const complete_ns = std.Io.Clock.awake.now(init.io).nanoseconds - start;
     const health = logging.health();
-    if (health.accepted != iterations + warmup or health.written != iterations + warmup or health.journal_pending != 0 or allocator.has_induced_failure) return error.IncompleteWorkflow;
+    if (health.accepted != (iterations + warmup) * outputs or health.written != (iterations + warmup) * outputs or health.journal_pending != 0 or allocator.has_induced_failure) return error.IncompleteWorkflow;
     var output_buffer: [4096]u8 = undefined;
     var output = std.Io.File.stdout().writerStreaming(init.io, &output_buffer);
     try std.json.Stringify.value(.{
-        .benchmark = "managed_single_output",
+        .benchmark = "managed_outputs",
+        .outputs = outputs,
         .mode = @tagName(mode),
         .iterations = iterations,
         .warmup = warmup,

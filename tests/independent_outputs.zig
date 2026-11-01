@@ -399,3 +399,64 @@ test "independent outputs void logging keeps error diagnostics local to failed o
     try std.testing.expectEqual(@as(u64, 1), (try logging.outputHealth("good")).written);
     try std.testing.expectError(error.WriteFailed, logging.shutdown());
 }
+
+test "independent outputs mixed singleton and fanout nesting rejects the ninth call and releases every frame" {
+    var buffers: [9][2][4096]u8 = undefined;
+    var writers: [9][2]std.Io.Writer = undefined;
+    var owners: [9]*kron.Logging = undefined;
+    var initialized: usize = 0;
+    defer {
+        while (initialized != 0) {
+            initialized -= 1;
+            owners[initialized].destroy();
+        }
+    }
+    for (&owners, &writers, &buffers, 0..) |*owner, *outputs, *storage, index| {
+        for (outputs, storage) |*writer, *buffer| writer.* = .fixed(buffer);
+        const routes = [_]kron.Logging.Route{
+            .{ .name = "a", .target = .{ .writer = &outputs[0] } },
+            .{ .name = "b", .target = .{ .writer = &outputs[1] } },
+        };
+        owner.* = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = routes[0..if (index % 2 == 0) 1 else 2] });
+        initialized += 1;
+    }
+    const Provider = struct {
+        owners: []*kron.Logging,
+        index: usize,
+        calls: *usize,
+        failure: *?anyerror,
+        pub fn fields(self: @This()) struct { id: u32 } {
+            self.calls.* += 1;
+            self.next() catch |err| {
+                self.failure.* = err;
+            };
+            return .{ .id = @intCast(self.index) };
+        }
+        fn next(self: @This()) !void {
+            const next_index = self.index + 1;
+            if (next_index == self.owners.len) return;
+            const result = try self.owners[next_index].scoped("nested").tryEmitLazy(.info, "event", @This(){
+                .owners = self.owners,
+                .index = next_index,
+                .calls = self.calls,
+                .failure = self.failure,
+            });
+            try std.testing.expectEqual(if (next_index == 8) kron.EmitResult.rejected_closing else .accepted, result);
+            for (self.owners[next_index].lastResults()) |outcome| try std.testing.expectEqual(result, outcome.result);
+        }
+    };
+    var calls: usize = 0;
+    var failure: ?anyerror = null;
+    const provider: Provider = .{ .owners = &owners, .index = 0, .calls = &calls, .failure = &failure };
+    try std.testing.expectEqual(kron.EmitResult.accepted, try owners[0].scoped("nested").tryEmitLazy(.info, "event", provider));
+    if (failure) |err| return err;
+    try std.testing.expectEqual(@as(usize, 8), calls);
+    try std.testing.expectEqual(kron.EmitResult.accepted, owners[0].lastResults()[0].result);
+    for (owners, 0..) |owner, index| {
+        const expected: u64 = if (index == 8) 0 else if (index % 2 == 0) 1 else 2;
+        try std.testing.expectEqual(expected, owner.health().written);
+        try std.testing.expectEqual(@as(u64, 0), (try owner.runtime("a")).activeAdmissions());
+        try std.testing.expectEqual(kron.EmitResult.accepted, try owner.scoped("after").tryEmit(.info, "frame reused", .{}));
+        try owner.shutdown();
+    }
+}

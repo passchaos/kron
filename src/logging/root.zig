@@ -109,7 +109,7 @@ pub const Logging = struct {
         return error.UnknownOutput;
     }
     pub fn scoped(self: *Logging, scope: []const u8) Logger {
-        return .init(.{ .logging = self, .scope = scope, .mask = self.allMask() }, scope);
+        return .init(.{ .logging = self, .scope = scope }, scope);
     }
     /// Direct output handle keeps the original Runtime frontend for hot loops.
     pub fn scopedOutput(self: *Logging, name: []const u8, scope: []const u8) !core.Logger(Runtime, .trace) {
@@ -155,7 +155,7 @@ pub const Logging = struct {
         slot.generation.store(generation, .release);
         slot.busy.store(true, .release);
         const owned_scope = slot.scope[0..scope.len];
-        return .init(.{ .logging = self, .scope = owned_scope, .mask = self.allMask(), .token = .{ .slot = slot_index, .generation = generation, .thread = std.Thread.getCurrentId() } }, owned_scope);
+        return .init(.{ .logging = self, .scope = owned_scope, .token = .{ .slot = slot_index, .generation = generation, .thread = std.Thread.getCurrentId() } }, owned_scope);
     }
     fn prepare(self: *Logging, shape: Event, base: Logger) !Logger {
         const site = try self.allocator.create(dispatch.Site);

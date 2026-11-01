@@ -25,7 +25,7 @@ def analyze(folder):
     expected = len(options["producers"].split(",")) * 2 * options["repeats"]
     count = 0
     for library in options["libraries"].split(","):
-        configurations = 2 if library == "quill" else len(options["kron_storages"].split(",")) if library == "foundation" else 1
+        configurations = 2 if library == "quill" else len(options["kron_storages"].split(",")) if library in {"foundation", "foundation_tracing"} else 1
         if library == "kron":
             configurations = len(options["kron_modes"].split(",")) * len(options["kron_storages"].split(",")) * (2 if options["kron_schema"] == "both" else 1)
         count += configurations * expected
@@ -34,7 +34,7 @@ def analyze(folder):
     for row in rows:
         assert row["file_records_verified"] == row["events"] + row["warmup_events"]
         assert row["accepted"] == row["written"] == row["events"]
-        assert row["drop"] == row["final_pending"] == 0 and row["metadata"] == "full"
+        assert row["drop"] == row["final_pending"] == 0 and row["metadata"] == options["metadata"]
         assert row["lifecycle_ns"] == row["init_ns"] + row["preparation_ns"] + row["total_ns"]
         assert row["total_ns"] == sum(row[key] for key in ("producer_wall_ns", "flush_ns", "shutdown_ns", "cleanup_ns"))
         grouped[(row["library"], row["case"], row["producers"], row["phase"])].append(row)
@@ -57,7 +57,7 @@ def analyze(folder):
               "measured_records_verified": sum(row["written"] for row in rows),
               "all_records_verified": sum(row["file_records_verified"] for row in rows),
               "configuration": options, "affinity": manifest["child_affinity"], "groups": groups,
-              "scope": "Full JSON fields and system-clock capture, with all file records independently verified. Written flush, final close and initialization are separate metrics; no durable media synchronization.",
+              "scope": ("Native build_tracing text, five numeric event fields, UTC time/file/line/thread metadata. This is a separate control, not the common JSON comparison." if options["metadata"] == "native_tracing" else "Full JSON fields and system-clock capture, with all file records independently verified.") + " Written flush, final close and initialization are separate metrics; no durable media synchronization.",
               "noise_limit": .10}
     return report
 
@@ -68,7 +68,7 @@ def markdown(report):
     batch = {(name(group), group["producers"]): group for group in report["groups"] if group["phase"] == "batch"}
     sampled = {(name(group), group["producers"]): group for group in report["groups"] if group["phase"] == "sampled"}
     lines = ["# 完整日志流程实测", "", f"共 {report['trials']} 个试验，逐条核对 {report['all_records_verified']:,} 条完整日志。固定 CPU affinity：{report['affinity']}。", "",
-             "下表均为五次试验的中位数。吞吐单位为百万条/秒，包含producer、后台格式化/文件写出和最终written flush；关闭列进一步包含shutdown和对象清理。它们都没有请求设备durable。", "",
+             f"下表均为{report['configuration']['repeats']}次试验的中位数。吞吐单位为百万条/秒，包含producer、后台格式化/文件写出和最终written flush；关闭列进一步包含shutdown和对象清理。它们都没有请求设备durable。", "",
              "| 配置 | 1线程 written+flush | 4线程 written+flush | 1线程包含关闭 | 4线程包含关闭 | 进程崩溃恢复 |",
              "| --- | ---: | ---: | ---: | ---: | --- |"]
     names = sorted({item[0] for item in batch})

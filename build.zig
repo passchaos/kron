@@ -481,7 +481,7 @@ pub fn build(b: *std.Build) void {
     const managed_bench = b.addExecutable(.{ .name = "kron-managed-outputs", .root_module = managed_bench_module });
     const run_managed_bench = b.addRunArtifact(managed_bench);
     if (b.args) |args| run_managed_bench.addArgs(args);
-    b.step("bench-managed-outputs", "Measure a managed single-output complete workflow; arguments: mode directory iterations").dependOn(&run_managed_bench.step);
+    b.step("bench-managed-outputs", "Measure a managed complete workflow; arguments: mode directory iterations [outputs=1|2]").dependOn(&run_managed_bench.step);
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);

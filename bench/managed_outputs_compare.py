@@ -15,11 +15,18 @@ MODES = ('sync', 'memory', 'mmap', 'spsc_memory', 'spsc_mmap')
 def validate_output(path, iterations):
     expected = list(range(1000)) + list(range(iterations))
     count = 0
+    session = None
     with path.open() as source:
         for count, line in enumerate(source, 1):
             event = json.loads(line)
             if count > len(expected):
                 raise ValueError('unexpected output record')
+            if event['sequence'] != count or event['route_mask'] != 1 or event['config_generation'] != 1:
+                raise ValueError('wrong sequence or admission metadata')
+            observed_session = event['session']
+            if int(observed_session) <= 0 or (session is not None and observed_session != session):
+                raise ValueError('invalid or changed session')
+            session = observed_session
             if event['attributes'] != {'id': expected[count - 1], 'payload': 'constant-value'} or event['message'] != 'managed output' or event['scope'] != 'managed.bench' or event['severity'] != 'info':
                 raise ValueError('wrong workload or incomplete JSON')
     if count != len(expected):
@@ -28,7 +35,7 @@ def validate_output(path, iterations):
 
 def trial(binary, mode, args, label, repetition, cpus):
     with tempfile.TemporaryDirectory(prefix='kron-managed-') as directory:
-        command = [str(binary.resolve()), mode, directory, str(args.iterations)]
+        command = [str(binary.resolve()), mode, directory, str(args.iterations), str(args.outputs)]
         if cpus:
             command = ['taskset', '-c', ','.join(map(str, cpus))] + command
         result = subprocess.run(command, check=True, capture_output=True, text=True, timeout=60)
@@ -36,12 +43,12 @@ def trial(binary, mode, args, label, repetition, cpus):
         if len(lines) != 1:
             raise ValueError('wrong report cardinality')
         report = json.loads(lines[0])
-        expected = args.iterations + 1000
-        if report['iterations'] != args.iterations or report['warmup'] != 1000 or report['accepted'] != expected or report['written'] != expected or report['pending'] != 0 or report['runtime_allocations'] != 0 or report['backend'] != 'portable' or report['mode'] != mode:
+        expected = (args.iterations + 1000) * args.outputs
+        if report.get('outputs', 1) != args.outputs or report['iterations'] != args.iterations or report['warmup'] != 1000 or report['accepted'] != expected or report['written'] != expected or report['pending'] != 0 or report['runtime_allocations'] != 0 or report['backend'] != 'portable' or report['mode'] != mode:
             raise ValueError('invalid completion or workload report')
         if report['producer_ns'] <= 0 or report['complete_ns'] < report['producer_ns']:
             raise ValueError('invalid timing')
-        report['verified_json_records'] = validate_output(Path(directory) / 'events.jsonl', args.iterations)
+        report['verified_json_records'] = sum(validate_output(Path(directory) / ('events.jsonl' if output == 0 else 'events2.jsonl'), args.iterations) for output in range(args.outputs))
         report.update(label=label, repetition=repetition, cpus=cpus)
         return report
 
@@ -66,6 +73,7 @@ def main():
     parser.add_argument('--before', type=Path, required=True)
     parser.add_argument('--after', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--outputs', type=int, choices=(1, 2), default=1)
     parser.add_argument('--iterations', type=int, default=20000)
     parser.add_argument('--repetitions', type=int, default=12)
     args = parser.parse_args()
@@ -73,7 +81,7 @@ def main():
         parser.error('bounded iterations and 5..30 repetitions required')
     args.out.mkdir(parents=True, exist_ok=True)
     cpus = sorted(os.sched_getaffinity(0))[:2] if hasattr(os, 'sched_getaffinity') else []
-    metadata = {'iterations': args.iterations, 'repetitions': args.repetitions, 'cpus': cpus, 'platform': dict(zip(('sysname', 'nodename', 'release', 'version', 'machine'), os.uname())), 'binaries': {label: hashlib.sha256(path.read_bytes()).hexdigest() for label, path in [('before', args.before), ('after', args.after)]}, 'loadavg_before': os.getloadavg(), 'semantics': 'producer capture through written shutdown; initialization separately reported; warmup drained before timing'}
+    metadata = {'outputs': args.outputs, 'iterations': args.iterations, 'repetitions': args.repetitions, 'cpus': cpus, 'platform': dict(zip(('sysname', 'nodename', 'release', 'version', 'machine'), os.uname())), 'binaries': {label: hashlib.sha256(path.read_bytes()).hexdigest() for label, path in [('before', args.before), ('after', args.after)]}, 'loadavg_before': os.getloadavg(), 'semantics': 'producer capture through written shutdown; initialization separately reported; warmup drained before timing'}
     rows = []
     raw = args.out / 'trials.jsonl'
     with raw.open('w') as destination:

@@ -3,7 +3,6 @@
 本页记录当前能力、最近门禁和未完成范围。设计目标见 [design.md](design.md)，使用入口见 [usage.md](usage.md)，历次实现和性能记录见 [历史验收快照](history/implementation-before-reorganization.md)。历史计数与测试结果绑定其当时源码，不能自动适用于后续 HEAD。
 
 
-独立输出与Route默认值的最终完整ReleaseSafe门禁151/151步骤，636项通过/1项系统能力skip，源码分发包和九目标编译通过；单输出完整流程重复对照核对504万JSON，统一分发带来约4%~7%的本机吞吐成本。精确源码、原始数据与语义边界见 [独立输出验证](../bench/evidence/2026-11-02-independent-outputs/README.md)。
 ## 当前范围
 
 Zig 0.16 的 Windows/Linux/macOS/Android/iOS 单机日志，覆盖同步、共享/SPSC 的 Memory/Mmap、text/JSON/logfmt/binary、结构化字段、配置、采样/脱敏、文件/轮转/归档、std.log 与显式 trace 关联。网络 sink/exporter 已移除。Linux 有实际运行资格，其他平台的运行资格独立跟踪。
@@ -14,11 +13,11 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
-源码路径修正提交 `7e98358` 的ReleaseSafe完整门禁：**130/130步骤成功，580项通过，1项系统local缓存测试在无libc构建中按能力跳过**。命令为 `zig build verify-local test-package-distribution -Doptimize=ReleaseSafe -j1 --summary all`。覆盖独立包五模式、单线程、源码分发、真实SIGKILL、12组随机ACK恢复、旧新版本/损坏矩阵、工具和18个示例编译。九目标ReleaseSafe对象编译10/10步骤通过；非Linux设备运行仍未取得。
+当前源码基于58a9a9b，增加owner内部借用、单输出小Frame和多输出循环拆分。ReleaseSafe完整门禁151/151步骤成功、638项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；ReleaseFast管理/独立输出/capture/route策略61/61，另验证lazy provider修改caller时仍保留本次scope/trace快照。非Linux对象编译不替代设备运行。精确源码和验证见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)。
 
-统一应用入口支持单/多文件、轮转、Memory/Mmap、SPSC、std.log与显式deadline，管理接口验证初始化后的Runtime零分配、输出/context生命周期、错误、非法配置前置拒绝和OOM回滚。系统local采用消费者按秒缓存，八组队列/事件组合和六时区独立oracle实际通过，见 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。源码位置text保留仓库相对路径且无外围引号，普通与inline/schema输出一致；映射在编译期完成。
+当前Logging与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。完整阶段和资格见 [当前前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
 
-本轮结构整理以 `7e98358` 为基线，最终ReleaseSafe完整门禁130/130步骤成功，582项通过、1项系统local缓存能力skip；根模块425通过/1skip，Logging定向27/27。迁移的87项具名test正文在import重定位与格式规范后逐项一致，codec与线程注册的生产逻辑逐字比较保持；公共导出名称全部保留。最终九目标ReleaseSafe对象编译10/10步骤成功；编译不代表非Linux设备运行。原始gate、源码hash和结构不变量见 [整理验证报告](../bench/evidence/2026-11-02-reorganization/README.md)。具体检查入口见 [development.md](development.md)。
+独立outputs接口的基线验证与当时4%~7%成本绑定58a9a9b，见 [独立输出报告](../bench/evidence/2026-11-02-independent-outputs/README.md)；源码路径和结构整理的早期门禁见 [整理报告](../bench/evidence/2026-11-02-reorganization/README.md)。系统local的八组队列/事件组合和六时区独立oracle继续通过，见 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。历史快照不替代当前源码资格。
 
 ## 能力与证据入口
 

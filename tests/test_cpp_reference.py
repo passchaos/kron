@@ -73,6 +73,33 @@ class VerificationTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 driver.verify(row, artifact, 1, 0)
 
+    def test_foundation_tracing_requires_real_backend_completion(self):
+        with tempfile.TemporaryDirectory() as folder:
+            _, artifact, row = self.fixture(folder)
+            row.update(library="foundation_tracing", storage="memory", has_process_crash_recovery=False,
+                       foundation_submitted_records=1, foundation_written_records=1, foundation_written_bytes=row["artifact_bytes"])
+            driver.verify(row, artifact, 1, 0)
+            for key in ("foundation_submitted_records", "foundation_written_records", "foundation_written_bytes"):
+                changed = dict(row, **{key: 0})
+                with self.subTest(key=key), self.assertRaises(AssertionError):
+                    driver.verify(changed, artifact, 1, 0)
+
+    def test_native_tracing_control_rejects_missing_duplicate_and_truncated_fields(self):
+        with tempfile.TemporaryDirectory() as folder:
+            _, artifact, base = self.fixture(folder)
+            good = b"2026-11-02T00:00:00.000000Z  INFO ThreadId(2) benchmark.rs:10: event field0=0 field1=1 field2=2 field3=3 field4=4\n"
+            for data, passing in [(good, True), (good.replace(b"field4=4", b""), False),
+                                  (good.replace(b"field4=4", b"field4=99"), False),
+                                  (good.replace(b"field4=4", b"field3=3"), False), (good[:-1], False)]:
+                artifact.write_bytes(data)
+                row = dict(base, library="foundation_tracing", storage="memory", metadata="native_tracing", has_process_crash_recovery=False,
+                           artifact_bytes=len(data), written_bytes=len(data), foundation_written_bytes=len(data), foundation_submitted_records=1, foundation_written_records=1)
+                if passing:
+                    driver.verify(row, artifact, 1, 0)
+                else:
+                    with self.subTest(data=data), self.assertRaises(AssertionError):
+                        driver.verify(row, artifact, 1, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -43,7 +43,7 @@ flowchart LR
 
 图是职责方向；实际源码的类型共享不是严格无环图。例如Runtime与配置/日志类型会共享声明，Zig懒分析支持这些依赖。移动代码不得为打破名义循环而公开私有方法、修改格式或改变owner保护协议。
 
-Logging管理独立pipeline资源；scoped返回组合logger，handle按各输出入场决策分发一次捕获的事件，反序释放Runtime入场。scopedOutput返回直接Runtime logger。producer接受前复制动态字节，消费者借用checked记录完成渲染。系统local在异步消费者按事件秒转换；源码目录映射在编译期完成。同步/fallback_sync保留调用线程交付。
+Logging管理独立pipeline资源；scoped返回组合logger，handle按各输出入场决策分发一次捕获的事件，单输出使用小Frame，多输出访问独立的预分配Fanout存储；内部方法借用调用快照，反序释放Runtime入场。scopedOutput返回直接Runtime logger。producer接受前复制动态字节，消费者借用checked记录完成渲染。系统local在异步消费者按事件秒转换；源码目录映射在编译期完成。同步/fallback_sync保留调用线程交付。
 
 Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关闭共享同一owner与私有gate。代码拆分优先稳定职责，例如初始化、配置、脱敏、交付和codec；不通过把每个私有方法公开来缩短文件。TSC也保留资格化与回退的一致状态机，后续拆分应保持单独验证能力。
 

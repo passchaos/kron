@@ -26,4 +26,6 @@
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 
-`managed_outputs.zig`测量管理入口的单输出完整流程，区分初始化、producer提交和written关闭时间，覆盖sync/Memory/Mmap/SPSC；`managed_outputs_compare.py`按before/after轮换配对运行，核对每条实际文件JSON，报告置信区间。用法：`zig build bench-managed-outputs -Doptimize=ReleaseFast -- memory /tmp/existing-directory 20000`。多输出独立管线会增加队列、后台线程和编码成本，此基准不代表多输出吞吐。
+`managed_outputs.zig`测量管理入口的单/双输出完整流程，区分初始化、producer提交和written关闭时间，覆盖sync/Memory/Mmap/SPSC；`managed_outputs_compare.py`按before/after轮换配对运行，核对每条实际文件JSON，报告置信区间。用法：`zig build bench-managed-outputs -Doptimize=ReleaseFast -- memory /tmp/existing-directory 20000 2`（末尾输出数默认1，可选2）。对照脚本的`--outputs=2`校验两份完整JSON与合计written，逐输出序列和配置元数据也参与oracle。多输出独立管线会增加队列、后台线程和编码成本，单输出数字不代表多输出吞吐。
+
+Foundation的两条前端现在分别可选`foundation`（spdlog）和`foundation_tracing`（Rust Subscriber/fmt + public MakeWriter），`--kron-frontend managed`测量当前Logging入口。公共JSON比较覆盖相同五个数值字段与完整元数据；Rust原生`build_tracing`文本通过`--metadata native_tracing`单列，保留其优化writer，避免用定制JSON入口代替标准路径。

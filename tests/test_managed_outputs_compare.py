@@ -11,7 +11,7 @@ spec.loader.exec_module(compare)
 
 class OutputOracleTests(unittest.TestCase):
     def records(self):
-        return [{'attributes': {'id': i, 'payload': 'constant-value'}, 'message': 'managed output', 'scope': 'managed.bench', 'severity': 'info'} for i in list(range(1000)) + list(range(1000))]
+        return [{'attributes': {'id': i, 'payload': 'constant-value'}, 'message': 'managed output', 'scope': 'managed.bench', 'severity': 'info', 'sequence': sequence, 'session': '1', 'route_mask': 1, 'config_generation': 1} for sequence, i in enumerate(list(range(1000)) + list(range(1000)), 1)]
 
     def check(self, records):
         with tempfile.TemporaryDirectory() as temporary:
@@ -45,6 +45,13 @@ class OutputOracleTests(unittest.TestCase):
         records[1700]['severity'] = 'debug'
         with self.assertRaises(ValueError):
             self.check(records)
+
+    def test_sequence_and_admission_metadata(self):
+        for key, value in [('sequence', 1700), ('route_mask', 0), ('config_generation', 0), ('session', '2')]:
+            records = self.records()
+            records[1700][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.check(records)
 
     def test_truncated_json(self):
         with tempfile.TemporaryDirectory() as temporary:

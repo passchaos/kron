@@ -312,16 +312,16 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
             };
         }
 
-        fn begin(self: Self, level: Level) SubmissionBegin {
+        fn begin(self: *const Self, level: Level) SubmissionBegin {
             if (!min_level.allows(level)) return .filtered;
             return self.owner.begin(level, self.scope);
         }
 
-        fn finish(self: Self, admission: SubmissionAdmission) void {
+        fn finish(self: *const Self, admission: SubmissionAdmission) void {
             if (@hasDecl(Owner, "endAdmission")) self.owner.endAdmission(admission) else self.owner.end();
         }
 
-        fn captureAndSubmit(self: Self, admission: SubmissionAdmission, source: ?std.builtin.SourceLocation, level: Level, message: []const u8, input: anytype, message_template: bool, format_args: []const Field) anyerror!EmitResult {
+        fn captureAndSubmit(self: *const Self, admission: SubmissionAdmission, source: ?std.builtin.SourceLocation, level: Level, message: []const u8, input: anytype, message_template: bool, format_args: []const Field) anyerror!EmitResult {
             const Input = @TypeOf(input);
             const capacity = comptime if (Context == contexts.EmptyContext) switch (@typeInfo(Input)) {
                 .@"struct" => |input_info| @min(input_info.fields.len, contexts.max_fields),
@@ -546,4 +546,29 @@ test "static level methods erase capture and owned emits allocate nothing" {
     try std.testing.expectEqual(EmitResult.accepted, try owned.tryLogf(.info, "answer {d}", .{@as(u16, 42)}, .{ .answer = 42 }));
     try std.testing.expectEqual(allocations, allocator.allocations);
     try std.testing.expect(!allocator.has_induced_failure);
+}
+
+test "internal frontend borrowing preserves the public call snapshot across a lazy provider" {
+    var owner: TestOwner = .{};
+    const Log = Logger(TestOwner, .trace);
+    var log = Log.init(&owner, "original").withTrace(.{
+        .trace_id = .{1} ** 16,
+        .span_id = .{2} ** 8,
+        .flags = 1,
+    });
+    const Provider = struct {
+        active: *Log,
+        pub fn fields(self: @This()) struct { id: u32 } {
+            self.active.scope = "changed";
+            self.active.trace_context = null;
+            return .{ .id = 42 };
+        }
+    };
+    try std.testing.expectEqual(EmitResult.accepted, try log.tryEmitLazy(.info, "snapshot", Provider{ .active = &log }));
+    try std.testing.expectEqualStrings("original", owner.last.scope);
+    try std.testing.expectEqualSlices(u8, &(.{1} ** 16), &owner.last.trace_id.?);
+    try std.testing.expectEqual(@as(u8, 1), owner.last.trace_flags);
+    try std.testing.expectEqualStrings("changed", log.scope);
+    try std.testing.expect(log.trace_context == null);
+    try std.testing.expectEqual(@as(usize, 1), owner.ends);
 }

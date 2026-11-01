@@ -7,6 +7,7 @@ import json
 import os
 import pathlib
 import platform
+import re
 import statistics
 import subprocess
 import shutil
@@ -74,13 +75,19 @@ def build(name, source, output, compiler, zig):
     return binary, record
 
 
-def build_foundation(root, output, dependencies_dir, compiler, cargo, spdlog):
+def foundation_snapshot(root, output):
     # Freeze the requested local owning sources; never write into that repo.
     original = pathlib.Path(root).expanduser().resolve(strict=True)
     source = output / "foundation-source"
     for name in ("cpp", "rust"):
         shutil.copytree(original / name, source / name,
                         ignore=shutil.ignore_patterns("target", "__pycache__"), dirs_exist_ok=True)
+    shutil.copyfile(HERE / "foundation_tracing_reference.rs", source / "rust/src/bin/kron_tracing_reference.rs")
+    return original, source
+
+
+def build_foundation(root, output, dependencies_dir, compiler, cargo, spdlog):
+    original, source = foundation_snapshot(root, output)
     target = dependencies_dir / "foundation-target"
     rust_command = [cargo, "build", "--release", "--locked", "--lib", "-j1",
                     "--manifest-path", str(source / "rust/Cargo.toml"), "--target-dir", str(target)]
@@ -102,10 +109,31 @@ def build_foundation(root, output, dependencies_dir, compiler, cargo, spdlog):
                     "cargo": command_metadata([cargo, "--version"]), "rustc": command_metadata(["rustc", "--version"])}
 
 
+def build_foundation_tracing(root, output, dependencies_dir, cargo):
+    original, source = foundation_snapshot(root, output)
+    target = dependencies_dir / "foundation-target"
+    command = [cargo, "build", "--release", "--locked", "--bin", "kron_tracing_reference", "-j1",
+               "--manifest-path", str(source / "rust/Cargo.toml"), "--target-dir", str(target)]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=180)
+    if result.returncode != 0:
+        raise RuntimeError(f"Foundation tracing build failed: {result.stderr}")
+    binary = output / "reference-foundation_tracing"
+    shutil.copyfile(target / "release/kron_tracing_reference", binary)
+    binary.chmod(0o755)
+    return binary, {"command": command, "stderr": result.stderr, "returncode": 0,
+                    "binary_sha256": sha256(binary), "source_origin": str(original),
+                    "snapshot": str(source), "snapshot_tree_sha256": tree_sha256(source),
+                    "benchmark_source_sha256": sha256(HERE / "foundation_tracing_reference.rs"),
+                    "cargo": command_metadata([cargo, "--version"]), "rustc": command_metadata(["rustc", "--version"])}
+
+
 def verify(row, artifact, events, warmup):
+    assert row.get("metadata") in {"minimal", "full", "default_text", "native_tracing"}
+    if row.get("metadata") == "native_tracing":
+        assert row["library"] == "foundation_tracing"
     assert row["status"] == "ok" and row["events"] == events, row
     assert row["warmup_events"] == warmup and row["queue_policy"] == "block" and row["file_buffer_bytes"] == 65536
-    if row["library"] == "foundation":
+    if row["library"] in {"foundation", "foundation_tracing"}:
         assert row["foundation_submitted_records"] == row["foundation_written_records"] == events + warmup
         assert row["has_process_crash_recovery"] is (row["storage"] == "mmap")
     if row["library"] == "kron":
@@ -126,17 +154,25 @@ def verify(row, artifact, events, warmup):
         assert row["p50_ns"] is None and row["p99_ns"] is None and row["p999_ns"] is None, row
     contents = artifact.read_bytes()
     assert len(contents) == row["artifact_bytes"], row
-    if row["library"] == "foundation":
+    if row["library"] in {"foundation", "foundation_tracing"}:
         assert row["foundation_written_bytes"] == len(contents)
     assert contents.endswith(b"\n") and contents.count(b"\n") == events + warmup, row
     seen = set()
     identities = set()
     warmup_bytes = 0
     for line in contents.splitlines(keepends=True):
-        decoded_line = line[line.index(b'{"message":"event"'):] if row.get("metadata") == "default_text" else line
-        if row.get("metadata") == "default_text":
-            assert b" [info] [reference] [thread " in line[:line.index(b'{"message":"event"')]
-        event = json.loads(decoded_line)
+        if row.get("metadata") == "native_tracing":
+            text = line.decode("utf-8")
+            assert "\x1b" not in text and " INFO " in text and "event" in text, text
+            fields = re.findall(r"\bfield([0-4])=(\d+)(?=\s|$)", text)
+            assert len(fields) == 5 and len({key for key, _ in fields}) == 5, text
+            attrs = {f"field{key}": int(value) for key, value in fields}
+            event = {"message": "event", "attributes": attrs}
+        else:
+            decoded_line = line[line.index(b'{"message":"event"'):] if row.get("metadata") == "default_text" else line
+            if row.get("metadata") == "default_text":
+                assert b" [info] [reference] [thread " in line[:line.index(b'{"message":"event"')]
+            event = json.loads(decoded_line)
         assert event["message"] == "event", event
         attrs = event["attributes"]
         assert set(attrs) == {f"field{i}" for i in range(5)}, event
@@ -195,10 +231,11 @@ def main():
     parser.add_argument("--timeout-seconds", type=int, default=45)
     parser.add_argument("--compiler", default="c++")
     parser.add_argument("--zig", default="zig")
+    parser.add_argument("--kron-frontend", choices=("runtime", "managed"), default="runtime")
     parser.add_argument("--kron-modes", default="async,spsc")
     parser.add_argument("--kron-storages", default="memory,mmap")
     parser.add_argument("--kron-schema", choices=("off", "on", "both"), default="off")
-    parser.add_argument("--metadata", choices=("minimal", "full", "default_text"), default="full")
+    parser.add_argument("--metadata", choices=("minimal", "full", "default_text", "native_tracing"), default="full")
     parser.add_argument("--affinity", default="auto")
     parser.add_argument("--discard-artifacts", action="store_true")
     parser.add_argument("--foundation-root", default="~/robotics/onboard-monorepo/foundation/logging")
@@ -208,7 +245,7 @@ def main():
     producers = [int(p) for p in options.producers.split(",")]
     modes = options.kron_modes.split(",")
     storages = options.kron_storages.split(",")
-    if (not set(libraries) <= {"spdlog", "quill", "kron", "foundation"} or not set(producers) <= {1, 4}
+    if (not set(libraries) <= {"spdlog", "quill", "kron", "foundation", "foundation_tracing"} or not set(producers) <= {1, 4}
             or not set(modes) <= {"async", "spsc"} or not set(storages) <= {"memory", "mmap"} or not 1 <= options.events <= 1000000
             or not 0 <= options.warmup <= 1000000 or not 1 <= options.repeats <= 10
             or not 1 <= options.timeout_seconds <= 120):
@@ -217,6 +254,8 @@ def main():
         parser.error("comparison lists must be nonempty and contain no duplicates")
     if options.metadata == "default_text" and libraries != ["foundation"]:
         parser.error("default_text is a separate Foundation-only control; other references use the common full JSON workload")
+    if options.metadata == "native_tracing" and libraries != ["foundation_tracing"]:
+        parser.error("native_tracing is a separate standard tracing-only control")
     chosen_cpus = affinity(options.affinity)
     output = pathlib.Path(options.output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -230,16 +269,20 @@ def main():
         "compiler": command_metadata([options.compiler, "--version"]), "zig": command_metadata([options.zig, "version"]),
         "filesystem": command_metadata(["findmnt", "-T", str(output), "-o", "SOURCE,FSTYPE,OPTIONS", "--json"]),
         "cpu_topology": command_metadata(["lscpu", "--json"]),
-        "dependencies": {}, "builds": {}, "source_sha256": {name: sha256(HERE / name) for name in ("reference.cpp", "kron_reference.zig", "versions.json", "run.py")},
+        "dependencies": {}, "builds": {}, "source_sha256": {name: sha256(HERE / name) for name in ("reference.cpp", "kron_reference.zig", "foundation_tracing_reference.rs", "versions.json", "run.py")},
         "notes": ["Identical logical event and five numeric attributes; kron adds structured event metadata.",
                   "C++ volatile queues lack mmap process-crash recovery; these results are not a universal ranking.",
                   "Queue bounds use different units and include separately reported backend transit storage."]}
-    if "foundation" in libraries:
+    if {"foundation", "foundation_tracing"}.intersection(libraries):
         foundation_directory = pathlib.Path(options.foundation_root).expanduser().resolve()
         manifest["foundation_repository"] = command_metadata(["git", "-C", str(foundation_directory), "rev-parse", "HEAD"])
     manifest["production_source_sha256"] = {str(file.relative_to(ROOT)): sha256(file) for file in sorted((ROOT / "src").rglob("*.zig"))}
     if options.metadata == "full":
         manifest["notes"][0] = "Same full JSON metadata/attributes layout and system wall-clock domain; timestamp values and channel/sequence allocation differ."
+    if options.metadata == "native_tracing":
+        manifest["notes"][0] = "Native Foundation build_tracing text control; not interchangeable with the common full JSON workload."
+    manifest["notes"].append("Managed kron SPSC uses its native spin idle policy; legacy Runtime benchmark explicitly sleeps. Row consumer_idle records the selected policy.")
+    manifest["notes"].append("Foundation tracing full JSON uses the public TracingMakeWriter with an event formatter; native_tracing uses unmodified build_tracing and its private optimized fmt writer.")
     binaries = {}
     incomplete = False
     for name in libraries:
@@ -249,6 +292,8 @@ def main():
                 spdlog, dependency = dependencies("spdlog", pins["spdlog"], pathlib.Path(options.deps_dir).resolve())
                 manifest["dependencies"]["foundation-spdlog"] = dependency
                 binary, record = build_foundation(options.foundation_root, output, pathlib.Path(options.deps_dir).resolve(), options.compiler, options.cargo, spdlog)
+            elif name == "foundation_tracing":
+                binary, record = build_foundation_tracing(options.foundation_root, output, pathlib.Path(options.deps_dir).resolve(), options.cargo)
             elif name != "kron":
                 source, dependency = dependencies(name, pins[name], pathlib.Path(options.deps_dir).resolve())
                 manifest["dependencies"][name] = dependency
@@ -269,7 +314,7 @@ def main():
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     cases = []
     for name in binaries:
-        strategies = (storages if name == "foundation" else ["producer_format", "deferred_format"] if name == "quill" else ([f"{mode}-{storage}-{'schema' if schema else 'inline'}" for mode in modes for storage in storages for schema in ((False, True) if options.kron_schema == "both" else (options.kron_schema == "on",))] if name == "kron" else ["producer_format"]))
+        strategies = (storages if name in {"foundation", "foundation_tracing"} else ["producer_format", "deferred_format"] if name == "quill" else ([f"{mode}-{storage}-{'schema' if schema else 'inline'}" for mode in modes for storage in storages for schema in ((False, True) if options.kron_schema == "both" else (options.kron_schema == "on",))] if name == "kron" else ["producer_format"]))
         for strategy in strategies:
             for producer in producers:
                 for phase in ("sampled", "batch"):
@@ -284,7 +329,7 @@ def main():
                 artifact = artifacts / f"{name}-{strategy}-p{producer}-{phase}-r{repetition}.jsonl"
                 command = [str(binaries[name]), f"--output={artifact}", f"--events={options.events}", f"--warmup={options.warmup}",
                            f"--producers={producer}", f"--phase={phase}", "--queue-slots=256",
-                           *([f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}"] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name == "foundation" else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
+                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}"] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
                 row = {"status": "failed", "library": name, "strategy": strategy, "phase": phase,
                        "producers": producer, "repetition": repetition, "command": command, "artifact": str(artifact)}
                 if name in timed_out_libraries:

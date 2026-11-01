@@ -2,7 +2,9 @@
 const std = @import("std");
 const kron = @import("kron");
 const BackendKind = @TypeOf(@as(kron.FileSink.Options, .{ .path = "" }).backend);
+const Frontend = enum { runtime, managed };
 const Options = struct {
+    frontend: Frontend = .runtime,
     output: []const u8 = "",
     events: usize = 10000,
     producers: usize = 1,
@@ -23,6 +25,7 @@ const Gate = struct {
 };
 const Worker = struct {
     runtime: *kron.Runtime,
+    logging: ?*kron.Logging = null,
     options: Options,
     gate: *Gate,
     id: usize,
@@ -31,6 +34,22 @@ const Worker = struct {
     failure: ?anyerror = null,
 
     fn run(self: *Worker) void {
+        if (self.logging) |owner| {
+            const attached = std.mem.eql(u8, self.options.mode, "spsc");
+            const log = (if (attached)
+                (if (self.options.schema) owner.attachPreparedThread(shape) else owner.attachThread("reference"))
+            else
+                (if (self.options.schema) owner.prepared(shape) else @as(anyerror!kron.Logging.Logger, owner.scoped("reference")))) catch |err| {
+                self.failure = err;
+                self.wait();
+                return;
+            };
+            defer if (attached) log.detach() catch |err| {
+                self.failure = err;
+            };
+            self.runLogger(log);
+            return;
+        }
         if (std.mem.eql(u8, self.options.mode, "spsc")) {
             const log = self.runtime.attachThread(.{ .scope = "reference" }) catch |err| {
                 self.failure = err;
@@ -114,14 +133,29 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const allocator = init.gpa;
     const lifecycle_start = std.Io.Clock.awake.now(io);
-    const file = try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = options.backend, .append = false });
-    var file_live = true;
-    defer if (file_live) file.deinit();
+    const file = if (options.frontend == .runtime) try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = options.backend, .append = false }) else null;
+    var file_live = file != null;
+    defer if (file_live) file.?.deinit();
     const journal_path = try std.fmt.allocPrint(allocator, "{s}.journal", .{options.output});
     defer allocator.free(journal_path);
     const is_spsc = std.mem.eql(u8, options.mode, "spsc");
     const memory = std.mem.eql(u8, options.storage, "memory");
-    const runtime = try kron.Runtime.create(allocator, io, .{
+    const managed = if (options.frontend == .managed) try kron.Logging.create(allocator, io, .{
+        .max_total_queue_bytes = 32 * 1024 * 1024,
+        .outputs = &.{.{
+            .name = "reference",
+            .target = .{ .file = .{ .path = options.output, .buffer_bytes = 65536, .backend = .portable, .append = false } },
+            .mode = if (is_spsc) .spsc else .asynchronous,
+            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
+            .max_threads = options.producers,
+            .max_journal_bytes = 32 * 1024 * 1024,
+            .max_encoded_record_bytes = 512,
+            .consumer_batches_per_queue = options.consumer_batches,
+            .format = .json,
+            .overflow = .block,
+        }},
+    }) else null;
+    const runtime = if (managed) |owner| try owner.runtime("reference") else try kron.Runtime.create(allocator, io, .{
         .submission = if (is_spsc) .low_latency else .asynchronous,
         .journal = if (!memory) .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
         .memory_queue = if (memory) .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
@@ -132,10 +166,12 @@ pub fn main(init: std.process.Init) !void {
         .overflow = .block,
         .idle = .sleep,
         .consumer_batches_per_queue = options.consumer_batches,
-        .routes = &.{.{ .name = "reference", .sink = file.sink(), .format = .json }},
+        .routes = &.{.{ .name = "reference", .sink = file.?.sink(), .format = .json }},
     });
     var runtime_live = true;
-    defer if (runtime_live) runtime.destroy();
+    defer if (runtime_live) {
+        if (managed) |owner| owner.destroy() else runtime.destroy();
+    };
     // Same fixed-width correlation field in the C++ full JSON workload.
     // Set only before starting producers; it is not a queue/recovery change.
     runtime.session = std.math.maxInt(u64);
@@ -149,7 +185,7 @@ pub fn main(init: std.process.Init) !void {
     var offset: usize = 0;
     for (0..options.producers) |id| {
         const count = if (samples.len != 0) share(options.events, options.producers, id) else 0;
-        workers[id] = .{ .runtime = runtime, .options = options, .gate = &gate, .id = id, .samples = samples[offset..][0..count] };
+        workers[id] = .{ .runtime = runtime, .logging = managed, .options = options, .gate = &gate, .id = id, .samples = samples[offset..][0..count] };
         offset += count;
         threads[id] = try std.Thread.spawn(.{}, Worker.run, .{&workers[id]});
     }
@@ -158,9 +194,9 @@ pub fn main(init: std.process.Init) !void {
         if (ready == options.producers) break;
         std.Io.futexWaitUncancelable(io, u32, &gate.ready.raw, ready);
     }
-    try runtime.flush(.written);
+    if (managed) |owner| try owner.flush() else try runtime.flush(.written);
     const before_health = runtime.health();
-    const before_bytes = file.writtenBytes();
+    const before_bytes = (try std.Io.Dir.cwd().statFile(io, options.output, .{})).size;
     const start = std.Io.Clock.awake.now(io);
     gate.start.store(1, .release);
     std.Io.futexWake(io, u32, &gate.start.raw, std.math.maxInt(u32));
@@ -169,14 +205,13 @@ pub fn main(init: std.process.Init) !void {
         thread.* = null;
     };
     const produced = std.Io.Clock.awake.now(io);
-    try runtime.flush(.written);
+    if (managed) |owner| try owner.flush() else try runtime.flush(.written);
     const flushed = std.Io.Clock.awake.now(io);
-    try runtime.shutdown(.drain);
+    if (managed) |owner| try owner.shutdown() else try runtime.shutdown(.drain);
     const end = std.Io.Clock.awake.now(io);
     const health = runtime.health();
-    const artifact_bytes = file.writtenBytes();
-    const written_bytes = artifact_bytes - before_bytes;
-    const backend_selected = file.selectedBackend();
+    const backend_selected = if (file) |sink| sink.selectedBackend() else BackendKind.portable;
+    const idle_selected = runtime.idle;
     var accepted: u64 = 0;
     for (workers[0..options.producers]) |worker| {
         if (worker.failure) |err| return err;
@@ -184,11 +219,13 @@ pub fn main(init: std.process.Init) !void {
     }
     if (accepted != options.events or health.written - before_health.written != options.events or health.journal_pending != 0) return error.CounterMismatch;
     if (health.accepted - before_health.accepted != accepted or health.dropped_full != 0 or health.dropped_oversize != 0 or health.last_error != null) return error.DeliveryError;
-    runtime.destroy();
+    if (managed) |owner| owner.destroy() else runtime.destroy();
     runtime_live = false;
-    file.deinit();
+    if (file) |sink| sink.deinit();
     file_live = false;
     const cleaned = std.Io.Clock.awake.now(io);
+    const artifact_bytes = (try std.Io.Dir.cwd().statFile(io, options.output, .{})).size;
+    const written_bytes = artifact_bytes - before_bytes;
     std.mem.sort(u64, samples, {}, std.sort.asc(u64));
     var noop: [10000]u64 = undefined;
     for (&noop, 0..) |*value, index| {
@@ -201,6 +238,8 @@ pub fn main(init: std.process.Init) !void {
         .schema_version = 2,
         .status = "ok",
         .library = "kron",
+        .frontend = @tagName(options.frontend),
+        .consumer_idle = @tagName(idle_selected),
         .version = "workspace",
         .strategy = "typed_capture_deferred_json",
         .phase = options.phase,
@@ -256,6 +295,10 @@ pub fn main(init: std.process.Init) !void {
 test "reference backend selection is explicit and retains portable default and bounded collector budget" {
     const testing = std.testing;
     const default = try parse(&.{"--output=fixture.jsonl"});
+    try testing.expectEqual(Frontend.runtime, default.frontend);
+    try testing.expectEqual(Frontend.managed, (try parse(&.{ "--output=fixture.jsonl", "--frontend=managed" })).frontend);
+    try testing.expectError(error.InvalidFrontend, parse(&.{ "--output=fixture.jsonl", "--frontend=unknown" }));
+    try testing.expectError(error.ManagedBenchmarkRequiresPortable, parse(&.{ "--output=fixture.jsonl", "--frontend=managed", "--backend=linux_uring" }));
     try testing.expectEqual(BackendKind.portable, default.backend);
     try testing.expectEqual(@as(usize, 512), default.max_record_bytes);
     try testing.expectEqual(@as(usize, 8192), (try parse(&.{ "--output=fixture.jsonl", "--max-record-bytes=8192" })).max_record_bytes);
@@ -276,7 +319,9 @@ fn parse(arguments: []const []const u8) !Options {
         const equal = std.mem.indexOfScalar(u8, argument, '=') orelse return error.InvalidArgument;
         const key = argument[0..equal];
         const value = argument[equal + 1 ..];
-        if (std.mem.eql(u8, key, "--output")) {
+        if (std.mem.eql(u8, key, "--frontend")) {
+            result.frontend = std.meta.stringToEnum(Frontend, value) orelse return error.InvalidFrontend;
+        } else if (std.mem.eql(u8, key, "--output")) {
             result.output = value;
         } else if (std.mem.eql(u8, key, "--phase")) {
             result.phase = value;
@@ -312,6 +357,7 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.mode, "async") and !std.mem.eql(u8, result.mode, "spsc")) or
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
+    if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {

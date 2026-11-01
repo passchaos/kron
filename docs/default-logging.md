@@ -2,7 +2,7 @@
 
 kron 已可作为固定 Zig 0.16、Linux 单机应用的默认日志实现。结构化输出、过滤与热配置、脱敏、同步/共享异步/SPSC、文件轮转、归档和进程恢复都有实际运行与错误边界门禁。应用需要明确选择队列预算、过载策略和关闭方式，并固定依赖版本；当前包版本0.1.0，不将未来API兼容性视为已经承诺。
 
-推荐先使用 `kron.Logging`，选择普通共享异步 Memory队列、portable文件后端和text/JSON输出。它统一管理全部配置输出与底层Runtime，覆盖通常的单机应用使用方式。最小程序见 [quick_start.zig](../examples/quick_start.zig)，后台文件日志见 [file_logging.zig](../examples/file_logging.zig)，全部参数与线程/context生命周期见 [详细使用指南](usage.md)。默认 `.{}` 使用stderr同步日志，服务显式设置 `.mode=.asynchronous`。
+推荐先使用 `kron.Logging`，选择普通共享异步 Memory队列、portable文件后端和text/JSON输出。它统一管理全部配置输出与底层Runtime，覆盖通常的单机应用使用方式。最小程序见 [quick_start.zig](../examples/quick_start.zig)，后台文件日志见 [file_logging.zig](../examples/file_logging.zig)，全部参数与线程/context生命周期见 [详细使用指南](usage.md)。默认 `.{}` 使用stderr同步日志，服务在各route显式设置 `.mode=.asynchronous`。
 
 参数按应用需求配置：
 

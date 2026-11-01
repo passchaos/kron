@@ -29,7 +29,7 @@
 
 ## 热路径与所有权
 
-scoped返回值owner的泛型Frontend，避免通用动态layer链和每事件分配。单输出分支直接调用其Runtime入场/提交；多输出在有界TLS帧中保留至多64个入场，按反序释放，避免破坏Runtime的入场栈与版本保护。最多8层独立Logging嵌套，同一Logging递归被拒绝；底层Runtime同时入场上限仍为64。
+scoped返回值owner的泛型Frontend，避免通用动态layer链和每事件分配。单输出使用小入场帧，调用其Runtime入场/提交；多输出另外访问预分配的批量入场存储，保留至多64个入场并按反序释放，避免破坏Runtime的入场栈与版本保护。内部方法借用本次调用的owner，公共日志方法仍按值固定自己的scope/context/trace状态。最多8层独立Logging嵌套，同一Logging递归被拒绝；底层Runtime同时入场上限仍为64。
 
 scopedOutput(name, scope)返回指定Runtime的原始logger，可用于单目标热点。attachThread在创建时预分配的attachment槽中取得各SPSC管线channel，scope复制，generation/thread校验防止跨线程使用与旧handle复活。prepared bindings在冷路径分配，由Logging拥有至destroy。
 

@@ -1,5 +1,9 @@
 # C++ 和 Foundation Logging 性能对照
 
+当前驱动还支持`--libraries foundation,foundation_tracing,kron --kron-frontend managed`，直接使用Logging的public scoped/attached/prepared入口。默认`runtime`保留历史高级Runtime对照；managed SPSC采用实际默认spin策略，Runtime对照显式sleep，报告逐行记录consumer_idle。
+
+Foundation tracing的公共JSON对照使用真实Subscriber/fmt层、五个typed数值字段和公开TracingMakeWriter。标准`build_tracing`使用不同的优化写入器与文本格式，通过`--libraries foundation_tracing --metadata native_tracing`单列验证；这些文本数字与公共JSON不能直接作同输出格式排名。所有Foundation源码仅复制到基准目录，库源码不修改，Rust依赖由其Cargo.lock锁定。
+
 本页主要保留历史对照的复现方式与当时结果。最新归档的完整Memory/Mmap同轮对照绑定源码 `e8bd353`，真实Foundation spdlog前端＋Rust后台与kron共200项试验、2020万条物理JSON核对，见 [详细报告](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。下面的182fc9e、4447fe6和更早快照保持自己的身份，不作为整理后当前源码的新排名。所有性能入口见 [bench导航](../bench/README.md)。
 
 

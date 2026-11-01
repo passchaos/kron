@@ -88,6 +88,6 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 当前能力可用于固定 Zig 0.16 的 Linux 单机项目，选择 bounded Memory/portable 起步，并按应用处理过载与关闭错误。Windows、macOS、Android、iOS 有实现和交叉编译/部分链接证据，仍需实际设备运行资格；包版本为 0.1.0。
 
-完整流程比较必须包括字段捕获、系统时钟、编码、实际输出、written flush 与关闭。最近归档的 Foundation 真实 spdlog 前端＋Rust 后台对照绑定源码 `e8bd353`，部分 Memory/Mmap 中位领先，完整关闭吞吐组仍因波动为 inconclusive，shared Memory P4 和尾延迟仍有差距。报告见 [性能与证据导航](bench/README.md) 和 [详细对照](bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。这轮接口与结构整理没有建立新的跨库性能排名。
+完整流程比较包括字段捕获、系统时钟、编码、实际输出、written flush、关闭和清理。当前Logging入口与Foundation真实spdlog/Rust tracing前端完成200项试验、2020万条输出核对：JSON中位吞吐对spdlog组合多数领先，与tracing公共JSON组合互有胜负；原生build_tracing文本单列。全部跨库速度比仍受波动限制，SPSC的p99.9和Mmap初始化仍有差距。精确源码、配置和详细数字见 [当前前端对照](bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
 
 原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](docs/history/readme-before-reorganization.md)。完整目标的剩余工作由 [当前验收状态](docs/implementation-status.md) 跟踪。
