@@ -64,6 +64,32 @@ pub fn measure(event: Event) EncodeError!usize {
     return visitor.result();
 }
 
+test "wire measurement rejects logical oversized slices only after full tree validation" {
+    // Only lengths are observed: these slices deliberately have no backing
+    // allocation and must never be read by a sizing or early-rejection path.
+    const huge: []const u8 = @as([*]const u8, @ptrFromInt(4096))[0..std.math.maxInt(usize)];
+    const oversized: Event = .{ .level = .info, .scope = huge, .message = huge, .timestamp_ns = 0, .fields = &.{field.kv("huge", huge)} };
+    try std.testing.expectError(error.TooLarge, measure(oversized));
+    try std.testing.expectError(error.TooLarge, encodedValueSize(.{ .string = huge }));
+    var bytes: [128]u8 = @splat(0xcc);
+    try std.testing.expectError(error.TooLarge, encode(oversized, &bytes));
+    for (bytes) |byte| try std.testing.expectEqual(@as(u8, 0xcc), byte);
+
+    var cyclic: [1]field.Value = undefined;
+    cyclic[0] = .{ .array = &cyclic };
+    var event = oversized;
+    event.fields = &.{ field.kv("huge", huge), field.kv("cycle", field.array(&cyclic)) };
+    try std.testing.expectError(error.CyclicValue, measure(event));
+    event.fields = &.{ field.kv("same", huge), field.kv("same", true) };
+    try std.testing.expectError(error.DuplicateKey, measure(event));
+    // Arguments share the same validation budget even after a known overflow.
+    event.fields = &.{};
+    event.format_args = &.{field.kv("", field.array(&cyclic))};
+    try std.testing.expectError(error.CyclicValue, measure(event));
+    event.level = .off;
+    try std.testing.expectError(error.InvalidLevel, encode(event, &bytes));
+}
+
 /// Wire size of the value tag and payload, excluding an attribute key.
 pub fn encodedValueSize(value: field.Value) (error{TooLarge} || field.ValidationError)!usize {
     var validator: field.ValueValidator = .{};

@@ -290,7 +290,17 @@ pub fn appendFields(destination: []Field, count: *usize, input: anytype) AppendE
                 if (next > max_value_nodes) return error.TooManyValueNodes;
                 var validator: ValueValidator = .{};
                 try validator.fields(destination[0..start]);
-                for (destination[start..next]) |entry| try validator.value(entry.value);
+                inline for (info.fields, 0..) |member, index| {
+                    if (comptime mayContainContainer(member.type)) {
+                        try validator.value(destination[start + index].value);
+                    } else {
+                        // fromAny already proves this type captures a scalar.
+                        // Account its one node without dispatching through a
+                        // dynamic Value or relaxing the combined-tree budget.
+                        if (validator.nodes == max_value_nodes) return error.TooManyValueNodes;
+                        validator.nodes += 1;
+                    }
+                }
             }
             count.* = next;
         },
@@ -309,6 +319,14 @@ pub fn appendFields(destination: []Field, count: *usize, input: anytype) AppendE
         },
         else => @compileError("kron fields must be a named struct or Field slice"),
     }
+}
+
+fn mayContainContainer(comptime T: type) bool {
+    if (T == Value or T == Array or T == Group) return true;
+    return switch (@typeInfo(T)) {
+        .optional => |info| mayContainContainer(info.child),
+        else => false,
+    };
 }
 
 fn appendSlice(destination: []Field, count: *usize, fields: []const Field) AppendError!void {
@@ -372,6 +390,51 @@ test "named append uses compile-time unique keys but retains invalid prefix and 
         .fourth = true,
     }));
     try std.testing.expectEqual(@as(usize, 1), mixed_count);
+}
+
+test "static scalar capture skips dynamic dispatch while retaining mixed tree budgets" {
+    const E = enum { ready };
+    var output: [16]Field = undefined;
+    var count: usize = 0;
+    const before = TestingAudit.visited_values;
+    try appendFields(&output, &count, .{
+        .number = @as(u128, std.math.maxInt(u128)),
+        .float = @as(f64, 1.25),
+        .optional = @as(?u8, null),
+        .string = "scalar",
+        .bytes = bytes("\x00\xff"),
+        .tag = E.ready,
+        .error_value = error.Example,
+        .secret = secret("never retained"),
+    });
+    try std.testing.expectEqual(@as(usize, 8), count);
+    try std.testing.expectEqual(before, TestingAudit.visited_values);
+    try std.testing.expectEqual(std.math.maxInt(u128), output[0].value.unsigned);
+    try std.testing.expect(output[2].value == .null_value);
+    try std.testing.expectEqualStrings(redacted, output[7].value.string);
+
+    const leaves = [_]Value{.null_value} ** (max_value_nodes - 2);
+    count = 0;
+    try appendFields(&output, &count, .{
+        .tree = array(&leaves),
+        .scalar = @as(u64, 1),
+    });
+    try std.testing.expectEqual(@as(usize, 2), count);
+    try std.testing.expectError(error.TooManyValueNodes, appendFields(&output, &count, .{ .extra = true }));
+    try std.testing.expectEqual(@as(usize, 2), count);
+
+    var cyclic: [1]Value = undefined;
+    cyclic[0] = .{ .array = &cyclic };
+    count = 0;
+    try std.testing.expectError(error.CyclicValue, appendFields(&output, &count, .{
+        .scalar = @as(u64, 1),
+        .dynamic = Value{ .array = &cyclic },
+    }));
+    try std.testing.expectEqual(@as(usize, 0), count);
+    try std.testing.expectError(error.CyclicValue, appendFields(&output, &count, .{
+        .maybe = @as(?Array, array(&cyclic)),
+    }));
+    try std.testing.expectEqual(@as(usize, 0), count);
 }
 
 test "capture built-in values and erase secrets before capture" {

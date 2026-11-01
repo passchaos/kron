@@ -1,0 +1,365 @@
+{
+  "cpu": 0,
+  "pairs": 5,
+  "scope": "size, encode and binary archive with public validation, fixture mutation and encoded-byte Wyhash; not async/file throughput",
+  "counters": {
+    "instructions": {
+      "before": {
+        "median": 11304184302,
+        "min": 11304184186,
+        "max": 11304184399,
+        "spread": 1.8842580261391777e-08
+      },
+      "after": {
+        "median": 10977273126,
+        "min": 10977273021,
+        "max": 10977273265,
+        "spread": 2.2227742463843655e-08
+      },
+      "change_percent": -2.8919483906694743,
+      "qualification": "within_noise_budget"
+    },
+    "cycles": {
+      "before": {
+        "median": 4684340233,
+        "min": 4656091731,
+        "max": 4936518714,
+        "spread": 0.059864776905926335
+      },
+      "after": {
+        "median": 4798985378,
+        "min": 4647452882,
+        "max": 5119121987,
+        "spread": 0.09828517235377998
+      },
+      "change_percent": 2.4474128542660845,
+      "qualification": "within_noise_budget"
+    }
+  },
+  "cases": [
+    {
+      "case": "flat5typednumbers",
+      "operation": "size_only",
+      "before": {
+        "median": 34.2977,
+        "min": 27.3998,
+        "max": 54.2132,
+        "spread": 0.7817842012729718
+      },
+      "after": {
+        "median": 30.2625,
+        "min": 28.4583,
+        "max": 50.4795,
+        "spread": 0.7276728624535316
+      },
+      "change_percent": -11.765220408365574,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "flat5typednumbers",
+      "operation": "value_size_only",
+      "before": {
+        "median": 34.4616,
+        "min": 26.7941,
+        "max": 48.9818,
+        "spread": 0.6438383592172158
+      },
+      "after": {
+        "median": 23.8055,
+        "min": 22.9041,
+        "max": 39.9578,
+        "spread": 0.7163764676230283
+      },
+      "change_percent": -30.921663532743693,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "flat5typednumbers",
+      "operation": "encode",
+      "before": {
+        "median": 71.9643,
+        "min": 63.0314,
+        "max": 134.2537,
+        "spread": 0.9896893320715969
+      },
+      "after": {
+        "median": 68.6812,
+        "min": 63.4343,
+        "max": 118.9215,
+        "spread": 0.8078950280426084
+      },
+      "change_percent": -4.562123163846509,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "flat5typednumbers",
+      "operation": "binary_archive",
+      "before": {
+        "median": 849.8231,
+        "min": 809.3072,
+        "max": 996.417,
+        "spread": 0.2201749987732742
+      },
+      "after": {
+        "median": 794.946,
+        "min": 764.4789,
+        "max": 981.8019,
+        "spread": 0.2733808334151
+      },
+      "change_percent": -6.4574733259192385,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "flat5typednumbers",
+      "operation": "reference_size_only",
+      "before": {
+        "median": 52.463,
+        "min": 49.4124,
+        "max": 96.7206,
+        "spread": 0.901744086308446
+      },
+      "after": {
+        "median": 49.5901,
+        "min": 47.6029,
+        "max": 93.8949,
+        "spread": 0.9334927737592787
+      },
+      "change_percent": -5.476049787469261,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "flat5typednumbers",
+      "operation": "reference_encode",
+      "before": {
+        "median": 148.2704,
+        "min": 140.5039,
+        "max": 319.4003,
+        "spread": 1.206555050772103
+      },
+      "after": {
+        "median": 142.624,
+        "min": 133.9805,
+        "max": 196.6047,
+        "spread": 0.4390859883329594
+      },
+      "change_percent": -3.808177491933651,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "size_only",
+      "before": {
+        "median": 39.7251,
+        "min": 35.9841,
+        "max": 66.5926,
+        "spread": 0.7705078149583011
+      },
+      "after": {
+        "median": 36.5866,
+        "min": 34.7238,
+        "max": 61.0404,
+        "spread": 0.7192961357436877
+      },
+      "change_percent": -7.900546505861539,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "value_size_only",
+      "before": {
+        "median": 36.9195,
+        "min": 32.7392,
+        "max": 59.0585,
+        "spread": 0.7128834355828223
+      },
+      "after": {
+        "median": 36.8753,
+        "min": 35.8661,
+        "max": 56.668,
+        "spread": 0.564114732625904
+      },
+      "change_percent": -0.11971993120165614,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "encode",
+      "before": {
+        "median": 115.9261,
+        "min": 112.4212,
+        "max": 156.6547,
+        "spread": 0.3815663599482773
+      },
+      "after": {
+        "median": 119.0164,
+        "min": 115.7127,
+        "max": 152.455,
+        "spread": 0.30871627775667904
+      },
+      "change_percent": 2.66574999072684,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "binary_archive",
+      "before": {
+        "median": 912.6498,
+        "min": 904.4636,
+        "max": 1167.4229,
+        "spread": 0.28812727510596065
+      },
+      "after": {
+        "median": 929.0616,
+        "min": 911.9337,
+        "max": 1095.7867,
+        "spread": 0.19789107632906155
+      },
+      "change_percent": 1.7982582147062276,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "reference_size_only",
+      "before": {
+        "median": 52.7279,
+        "min": 50.5092,
+        "max": 95.1774,
+        "spread": 0.8471454391318449
+      },
+      "after": {
+        "median": 51.2501,
+        "min": 49.674,
+        "max": 89.7258,
+        "spread": 0.781497011713148
+      },
+      "change_percent": -2.8026907955750135,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "nested_depth2_array_group",
+      "operation": "reference_encode",
+      "before": {
+        "median": 215.78,
+        "min": 208.8349,
+        "max": 379.3313,
+        "spread": 0.7901399573639818
+      },
+      "after": {
+        "median": 215.7098,
+        "min": 213.677,
+        "max": 343.8059,
+        "spread": 0.6032591008846145
+      },
+      "change_percent": -0.03253313560107607,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "size_only",
+      "before": {
+        "median": 610.2713,
+        "min": 600.4641,
+        "max": 1348.091,
+        "spread": 1.2250730126093097
+      },
+      "after": {
+        "median": 547.5718,
+        "min": 539.0601,
+        "max": 1070.2867,
+        "spread": 0.9701496680435333
+      },
+      "change_percent": -10.274037137253533,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "value_size_only",
+      "before": {
+        "median": 612.5052,
+        "min": 602.8828,
+        "max": 628.061,
+        "spread": 0.04110691631679219
+      },
+      "after": {
+        "median": 535.1955,
+        "min": 530.8764,
+        "max": 1051.1713,
+        "spread": 0.9721585850404197
+      },
+      "change_percent": -12.621884679509643,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "encode",
+      "before": {
+        "median": 1464.0747,
+        "min": 1443.7856,
+        "max": 1485.1801,
+        "spread": 0.028273489050797827
+      },
+      "after": {
+        "median": 1353.0198,
+        "min": 1318.8905,
+        "max": 2450.903,
+        "spread": 0.8366562706621143
+      },
+      "change_percent": -7.585330174751325,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "binary_archive",
+      "before": {
+        "median": 14218.336,
+        "min": 14150.0264,
+        "max": 14643.6752,
+        "spread": 0.03471916826272772
+      },
+      "after": {
+        "median": 14324.2371,
+        "min": 14224.2196,
+        "max": 16169.6141,
+        "spread": 0.13581138642280643
+      },
+      "change_percent": 0.744820631612586,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "reference_size_only",
+      "before": {
+        "median": 623.7126,
+        "min": 610.2338,
+        "max": 836.9088,
+        "spread": 0.3634286047772645
+      },
+      "after": {
+        "median": 591.5862,
+        "min": 559.4947,
+        "max": 1203.026,
+        "spread": 1.0878064768921252
+      },
+      "change_percent": -5.150833893687567,
+      "qualification": "inconclusive"
+    },
+    {
+      "case": "max256nodes",
+      "operation": "reference_encode",
+      "before": {
+        "median": 3319.782,
+        "min": 3291.3378,
+        "max": 4230.4597,
+        "spread": 0.28288661725378367
+      },
+      "after": {
+        "median": 3254.3266,
+        "min": 3162.0486,
+        "max": 4411.618,
+        "spread": 0.38397172551765407
+      },
+      "change_percent": -1.9716776583522777,
+      "qualification": "inconclusive"
+    }
+  ]
+}

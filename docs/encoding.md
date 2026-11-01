@@ -4,7 +4,7 @@
 
 长度计算使用同一遍历的observer统计每个节点自己的wire字节：key为4字节长度与key内容，scalar为tag与固定值，string/bytes为tag、长度和内容，array/group为tag和child count。child由validator遍历，不再单独递归统计一次。公开standalone value size同样先校验。
 
-长度累计使用u128，在完成全树验证后检查u32 wire上限。64-bit目标中，合法事件最多256个value长度、256个key长度和5个event/source字符串长度，总和低于2^74；comptime限制usize最多64位。这样长度溢出不会提前覆盖后续cycle或重复key错误。无效事件和容量不足仍在写入destination之前失败。
+长度累计使用u64，每个usize项先截到`u32_max+1`。最终wire只能容纳u32长度，任何超过上限的项仍在完成全树验证后返回`TooLarge`；合法项之和保持精确。最多256个value/key和5个event/source字符串的有界累计低于2^42，comptime限制usize最多64位。长度超限不会提前覆盖后续cycle、重复key或schema shape/level错误；不读取超长逻辑slice，无效事件和容量不足仍在写入destination之前失败。独立8192项随机/边界算术与宽u128结果一致，见`bench/evidence/2026-11-01-wire-size/`。
 
 `ValueValidator.valueWith/fieldsWith/argumentsWith`可接收typed visitor，回调分别观察当前value或Field，不能递归或修改正在借用的树。自定义visitor的错误会立即结束遍历，可能先于尚未访问节点的校验错误；codec自己的visitor不会返回错误，因此保留完整validation-first契约。
 

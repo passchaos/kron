@@ -208,6 +208,59 @@ test "capture: named root borrowed and owned emissions allocate nothing after in
     try testing.expectEqual(@as(usize, 200), memory.records);
 }
 
+test "capture: clock mutation of a borrowed tree is validated again before reservation" {
+    const MutatingClock = struct {
+        tree: *[1]kron.Value,
+        calls: usize = 0,
+        mutate: bool = true,
+
+        fn real(raw: ?*anyopaque, _: std.Io) i64 {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            self.calls += 1;
+            if (self.mutate) self.tree[0] = .{ .array = self.tree };
+            return 123;
+        }
+    };
+    inline for (.{ .asynchronous, .low_latency }) |submission| {
+        var values = [_]kron.Value{.{ .unsigned = 1 }};
+        var clock: MutatingClock = .{ .tree = &values };
+        var bytes: [8192]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+            .submission = submission,
+            .memory_queue = .{ .capacity = 4, .max_record_bytes = 1024 },
+            .max_thread_channels = if (submission == .low_latency) 1 else 0,
+            .thread_channel_capacity = 4,
+            .routes = &.{.{ .name = "output", .sink = memory.sink() }},
+            .clock = .{ .context = &clock, .real_now = MutatingClock.real },
+        });
+        defer runtime.destroy();
+        const log = if (submission == .low_latency) try runtime.attachThread(.{ .scope = "mutation" }) else runtime.scoped("mutation");
+        defer if (submission == .low_latency) log.detach() catch {};
+        const journal = if (submission == .low_latency) runtime.thread_registry.?.getJournal(0) else runtime.journal.?;
+        const target = journal.reservationTarget();
+        try testing.expectError(error.CyclicValue, log.tryEmit(.info, "mutated", .{
+            .scalar = @as(u64, 42),
+            .tree = kron.array(&values),
+        }));
+        try testing.expectEqual(@as(usize, 1), clock.calls);
+        try testing.expectEqual(target, journal.reservationTarget());
+        try testing.expectEqual(@as(u64, 0), runtime.health().accepted);
+        values[0] = .{ .unsigned = 7 };
+        clock.mutate = false;
+        try testing.expectEqual(kron.EmitResult.accepted, try log.tryEmit(.info, "valid", .{
+            .scalar = @as(u64, 42),
+            .tree = kron.array(&values),
+        }));
+        try runtime.flush(.written);
+        const decoded = try parse(memory.written());
+        defer decoded.deinit();
+        const attributes = decoded.value.object.get("attributes").?.object;
+        try testing.expectEqual(@as(i64, 42), attributes.get("scalar").?.integer);
+        try testing.expectEqual(@as(i64, 7), attributes.get("tree").?.array.items[0].integer);
+    }
+}
+
 const CountClock = struct {
     calls: usize = 0,
     fn real(context: ?*anyopaque, _: std.Io) i64 {

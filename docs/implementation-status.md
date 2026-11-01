@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+静态scalar捕获按comptime类型计入节点，动态Value/容器/prefix仍完整校验；时钟回调后runtime继续验证最终树，新增共享/SPSC clock制造cycle测试确认不占reservation。长度累计改为每项截u32_max+1的u64，在完整验证后判断TooLarge，8192算术差分及maxInt(usize)/cycle/duplicate优先级通过。组合方案完整PMU SPSC P4/shared P1用户态指令中位下降3.00%/3.32%，static-only为2.68%/2.97%，spread通过；两版共40项PMU核对1204万条JSON。正式100项文件核对1010万条，吞吐全部inconclusive、多个中位下降。额外20项长sampled核对602万条，SPSC p99中位1051→10143ns、p99.9为360195→420294ns，波动未通过门限，负向数据全部保留，不宣称吞吐或尾延迟收益。最终Safe完整89/89步骤、527/527测试及九目标ReleaseSafe实际对象通过。证据见`bench/evidence/2026-11-01-static-scalar/`与`2026-11-01-wire-size/`；后续需检查饱和队列和等待路径的tail，而非只降低producer中位工作量。
+
 批量配置record pin优化资格已完成并拒绝：两个候选分别100项完整文件与20项PMU，共240试验、3224万条物理JSON全部正确，但未取得完整吞吐改善资格，多个负向中位和高spread保留；生产配置/交付模块保持`8a351c0`。保留共享/SPSC旧版本晚期回收损坏回归：written=1、pending=2、检查View与SPSC cache释放后剩余record pins仍阻止旧lease回收，destroy只释放一次。最终三优化级别batch定向均18/18（含import fixtures），证据及候选源码见`bench/evidence/2026-11-01-batch-pins/`。后续优化仍需完整流程证据，不能以原子数量下降宣称收益。
 
 native数字输出进一步直接写入已有Writer buffer：剩余至少21字节时精确计算位数并写入，仅更新实际end；独立helper避免扩张递归value渲染，短buffer/streaming/宽值继续bounded stack fallback。公开encoder的12完整记录、16486 fixed与49494 generic前缀和新增内部buffer物理短写前缀保持；Safe公开时间/配置/predicate/文件30/30、最终完整ReleaseFast89/89步骤和522/522测试通过。100个完整文件试验逐条核对1010万条日志，五组吞吐中位提升3.0%–4.0%，均满足本轮CV/spread，SPSC Memory P4中位区间不重叠，其余仍重叠。另20个长流程核对602万条：SPSC P4 user cycles减少4.99%、instructions增加1.00%，候选极慢producer样本使长流程吞吐仍inconclusive，全部保留。早期inline/table方案nested负向与最终helper结果分别保存；不叠加为Foundation排名。百万条完整流程profile与mmap慢启动调用已确认：一个5.1s启动中msync约3.1s、file/dir fsync约2.0s，协议保持。证据见`bench/evidence/2026-11-01-decimal-direct/`、`2026-11-01-delivery-profile/`和`2026-11-01-init-profile/`。
