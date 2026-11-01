@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+按用户最新要求，当前源码`182fc9e`默认budget4仅Memory/Mmap同轮比较Foundation真实spdlog前端＋Rust后台与kron：120/120试验、1212万条物理JSON完整核对，accepted=written且pending/drop=0。Memory P1/P4包含关闭中位M条/s：Foundation1.932/1.990、kron shared2.136/2.063、SPSC2.151/2.106；Mmap为Foundation1.789/2.097、shared2.107/1.741、SPSC2.157/1.911。Memory中位领先、Mmap P4仍落后，Foundation全部吞吐组波动超门限，不宣称两种模式稳定超越。Mmap SPSC P4初始化中位368ms、完整生命周期446ms，对Foundation13ms/62ms，原始慢值与尾分位均保留。完整源码、机器、库、格式/完成边界和逐项报告见[当前Memory/Mmap对照](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。
+
 Memory/Mmap消费者批次预算显式提供`consumer_batches_per_queue=1..4`，默认4保持原行为；非法预算分配前失败。确定性真实后台在两种存储、共享peer/SPSC peer组合验证1/2/3/4批的peer服务位置1/65/129/161，FIFO、written、零剩余积压与零初始化后分配保持；公开测试观察满SPSC队列真实futex等待，shutdown正确唤醒并abort未完成reservation。固定一批默认候选160项完整文件核对1616万条，p99.9改善而p99明显负向、吞吐未资格，因此未提升为默认。同二进制默认4/显式1的40项再核对404万条，Memory p99中位10.9→82.8µs、p99.9约377.7→114.7µs；Mmap为9.1→84.5µs与391.0→110.7µs，均inconclusive且完整慢值保留。当前Safe综合89/89步骤、530/530测试和九目标实际对象通过；调度取舍见[消费者服务预算](consumer-scheduling.md)及`bench/evidence/2026-11-01-channel-fairness/`。后续性能按用户要求仅分Memory/Mmap比较。
 
 静态scalar捕获按comptime类型计入节点，动态Value/容器/prefix仍完整校验；时钟回调后runtime继续验证最终树，新增共享/SPSC clock制造cycle测试确认不占reservation。长度累计改为每项截u32_max+1的u64，在完整验证后判断TooLarge，8192算术差分及maxInt(usize)/cycle/duplicate优先级通过。组合方案完整PMU SPSC P4/shared P1用户态指令中位下降3.00%/3.32%，static-only为2.68%/2.97%，spread通过；两版共40项PMU核对1204万条JSON。正式100项文件核对1010万条，吞吐全部inconclusive、多个中位下降。额外20项长sampled核对602万条，SPSC p99中位1051→10143ns、p99.9为360195→420294ns，波动未通过门限，负向数据全部保留，不宣称吞吐或尾延迟收益。最终Safe完整89/89步骤、527/527测试及九目标ReleaseSafe实际对象通过。证据见`bench/evidence/2026-11-01-static-scalar/`与`2026-11-01-wire-size/`；后续需检查饱和队列和等待路径的tail，而非只降低producer中位工作量。

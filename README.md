@@ -103,6 +103,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 [业界实现与优化方向](docs/industry-performance-lessons.md)记录从Quill/Foundation实际源码、fmtlog/NanoLog/Reckless/BqLog设计中确认的机制，按完整流程profile推进批处理、配置复用与CRC工作量优化。
 
+最新仅Memory/Mmap对照已用源码`182fc9e`默认配置同轮比较Foundation真实spdlog前端＋Rust后台：120项试验、1212万条完整JSON核对。Memory中位kron领先，Mmap单producer中位领先、四producer仍落后；Foundation组波动均超门限，mmap初始化与SPSC调用尾部仍有差距。数据与证据见[当前Memory/Mmap完整报告](bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)，不以更早源码数据推导当前排名。
+
 当前源码`4447fe6`已另完成Foundation（真实spdlog前端＋Rust后台）、独立spdlog和kron的140项完整文件流程同轮对照，1414万条JSON逐条核对。kron本轮中位高于独立spdlog，仍未全面超过Foundation：P4 Memory约落后9%，P4 Mmap稳态接近，SPSC Mmap完整生命周期初始化成本较高；波动与未资格范围见[当前完整报告](bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
 
 ## 实施顺序
