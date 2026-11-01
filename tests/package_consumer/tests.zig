@@ -2,6 +2,27 @@ const std = @import("std");
 const kron = @import("kron");
 const consumer = @import("consumer");
 
+test "independent consumer uses output defaults and explicit route overrides" {
+    var bytes_a: [8192]u8 = undefined;
+    var bytes_b: [8192]u8 = undefined;
+    var a = std.Io.Writer.fixed(&bytes_a);
+    var b = std.Io.Writer.fixed(&bytes_b);
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{
+        .defaults = .{ .format = .json, .sampling = .{ .count = 0 }, .redaction = &.{.{ .key = "private", .action = .mask }} },
+        .output = .{ .multiple = &.{
+            .{ .name = "inherited", .target = .{ .writer = &a } },
+            .{ .name = "overridden", .target = .{ .writer = &b }, .sampling = .none, .redaction = &.{} },
+        } },
+    });
+    defer logging.destroy();
+    _ = try logging.scoped("consumer").tryEmit(.info, "route override", .{ .private = "retained" });
+    try logging.shutdown();
+    try std.testing.expectEqual(@as(usize, 0), a.buffered().len);
+    const parsed = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, b.buffered(), .{});
+    defer parsed.deinit();
+    try std.testing.expectEqualStrings("retained", parsed.value.object.get("attributes").?.object.get("private").?.string);
+}
+
 test "independent consumer maps its module source root for terminal paths" {
     // This fixture's module root is the consumer repository root. Applications
     // rooted in src/main.zig use "src" as documented in docs/package.md.

@@ -30,7 +30,7 @@ pub fn main(init: std.process.Init) !void {
 }
 ```
 
-这里的异步队列默认是有界 Memory。系统本地时间可选 `.timestamp=.{ .zone=.local }`，Linux显式启用libc支持；带 `At` 的源码位置使用仓库相对路径，text以无引号的 `路径:行:列` 输出。完整参数、context、线程、多个输出、std.log 和关闭错误处理见 [详细使用指南](docs/usage.md)。可运行源码见 [examples/](examples/README.md)。
+这里的异步队列默认是有界 Memory。系统本地时间可选 `.timestamp=.{ .zone=.local }`，Linux显式启用libc支持；带 `At` 的源码位置使用仓库相对路径，text以无引号的 `路径:行:列` 输出。输出defaults与route覆盖、完整参数、context、线程、多个输出、std.log 和关闭错误处理见 [详细使用指南](docs/usage.md)。可运行源码见 [examples/](examples/README.md)。
 
 ## 模式与完成边界
 
@@ -66,6 +66,7 @@ zig build run-local-time
 zig build run-file-stdout-local-time
 zig build run-mmap
 zig build run-source-location
+zig build run-route-policies
 zig build test-logging -Doptimize=ReleaseSafe -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1

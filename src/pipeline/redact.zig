@@ -39,6 +39,25 @@ pub const Redactor = struct {
         return result;
     }
 
+    pub fn eql(self: *const Redactor, other: *const Redactor) bool {
+        if (self.rule_count != other.rule_count or self.key_bytes_used != other.key_bytes_used or !std.mem.eql(u8, self.key_bytes[0..self.key_bytes_used], other.key_bytes[0..other.key_bytes_used])) return false;
+        for (self.rules[0..self.rule_count], other.rules[0..other.rule_count]) |left, right| if (!std.meta.eql(left, right)) return false;
+        return true;
+    }
+
+    pub fn hash(self: *const Redactor, digest: *std.hash.Wyhash) void {
+        var count: [2]u8 = undefined;
+        std.mem.writeInt(u16, &count, @intCast(self.rule_count), .little);
+        digest.update(&count);
+        for (self.rules[0..self.rule_count]) |rule| {
+            var length: [2]u8 = undefined;
+            std.mem.writeInt(u16, &length, rule.len, .little);
+            digest.update(&length);
+            digest.update(self.key_bytes[rule.offset..][0..rule.len]);
+            digest.update(&.{@intFromEnum(rule.action)});
+        }
+    }
+
     /// Returns null for a dropped field, otherwise a borrowed field view.
     /// Masking changes the value to the static constant before typed capture.
     pub fn apply(self: *const Redactor, field: Field) ?Field {

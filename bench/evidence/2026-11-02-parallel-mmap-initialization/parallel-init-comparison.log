@@ -1,0 +1,14 @@
+repetition 1/5: 128 verified complete trials
+repetition 2/5: 256 verified complete trials
+repetition 3/5: 384 verified complete trials
+repetition 4/5: 512 verified complete trials
+repetition 5/5: 640 verified complete trials
+Traceback (most recent call last):
+  File "/home/passchaos/project-z/kron/bench/initialization_compare.py", line 140, in <module>
+    main()
+  File "/home/passchaos/project-z/kron/bench/initialization_compare.py", line 135, in main
+    (args.output / "comparison.json").write_text(json.dumps(comparison(rows, cases, args.repeats), indent=2) + "\n")
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/passchaos/project-z/kron/bench/initialization_compare.py", line 53, in comparison
+    raise ValueError("incomplete comparison group")
+ValueError: incomplete comparison group

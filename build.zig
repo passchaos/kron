@@ -145,6 +145,13 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_transactions.step);
     b.step("test-transactions", "Verify configuration sources and generation-bound filter reload").dependOn(&run_transactions.step);
 
+    const route_policy_module = b.createModule(.{ .root_source_file = b.path("tests/route_policy_integration.zig"), .target = target, .optimize = optimize });
+    route_policy_module.addImport("kron", module);
+    const route_policy_tests = b.addTest(.{ .name = "kron-route-policies", .root_module = route_policy_module });
+    const run_route_policy = b.addRunArtifact(route_policy_tests);
+    b.step("test-route-policies", "Verify per-output sampling, redaction, defaults and recovery identity").dependOn(&run_route_policy.step);
+    test_step.dependOn(&run_route_policy.step);
+
     const route_filter_module = b.createModule(.{ .root_source_file = b.path("tests/route_filter_integration.zig"), .target = target, .optimize = optimize });
     route_filter_module.addImport("kron", module);
     const route_filter_tests = b.addTest(.{ .name = "kron-route-filters", .root_module = route_filter_module });
@@ -299,6 +306,8 @@ pub fn build(b: *std.Build) void {
     cpp_reference_report.dependOn(&cpp_reference_report_tests.step);
     const cpp_backend_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_backend_comparison.py" });
     cpp_reference_report.dependOn(&cpp_backend_report_tests.step);
+    const initialization_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_initialization_compare.py" });
+    cpp_reference_report.dependOn(&initialization_report_tests.step);
     const cpp_reference_module = b.createModule(.{ .root_source_file = b.path("bench/cpp_reference/kron_reference.zig"), .target = target, .optimize = optimize });
     cpp_reference_module.addImport("kron", module);
     const cpp_reference_tests = b.addTest(.{ .name = "kron-reference-options", .root_module = cpp_reference_module });

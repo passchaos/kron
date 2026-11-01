@@ -1,0 +1,24 @@
+{
+  "status": "rejected",
+  "baseline_git": "f5a0ff6ebc1acbf5d7a10319a21744fc8c13f669",
+  "production_restored_to": "c33a1ce",
+  "trial_count": 640,
+  "physical_json_records_verified": 64640000,
+  "smoke_trials": 16,
+  "smoke_records": 161600,
+  "gate": "Related Safe20/20, Debug/Fast19/19, actual publication overlap/failure lock release/OOM/owner checks; single-thread/integration6 steps 13 tests passed. No full gate claimed for rejected candidate.",
+  "reason": "Initialization improvements fail repeatability; SPSC inline mmap P4 512-byte sampled p99.9 +5.42% has repeatability passed and separate median intervals. Multiple complete throughput medians regress, most intervals overlap. Additional init threads/gate allocation not justified by stable overall benefit.",
+  "analysis_fix": "640 trials completed and were verified. Initial postprocessing used tuple/list unequal keys and failed. Final comparison.json was generated from the same 640 raw rows with normalized tuple keys; no trials retried.",
+  "additional_resources": {
+    "parallel_width": 4,
+    "worker_stack_bytes": 262144,
+    "registry_pointer_bytes": 8,
+    "allocator_gate_allocations": 1,
+    "memory_and_single_channel": "Remain serial; no gate allocation"
+  },
+  "archives": {
+    "baseline-source.tar": "3a6f09cca5aa5747c9531404a1bab56f04130b75efb4418c4f76f9ecea8b9edf",
+    "candidate-source.tar": "e6275407138539b0936d5cb10288a40f40d793ac4aae9bab8de5f21045e44b33"
+  },
+  "next_work": "Route-scoped defaults, sampling/redaction and encoded-record budgets; retain capture protection before queue."
+}

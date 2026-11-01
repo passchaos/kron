@@ -367,19 +367,17 @@ pub const Runtime = struct {
         defer if (!transferred) view.release();
         const snapshot = view.snapshot;
         if (@import("builtin").is_test) if (TestingHooks.after_snapshot) |hook| hook(TestingHooks.context.?);
-        const mask = routeMaskIn(snapshot, level, scope, bound);
+        var mask = routeMaskIn(snapshot, level, scope, bound);
         if (mask == 0) {
             self.end();
             _ = self.counters.filtered.fetchAdd(1, .monotonic);
             return .filtered;
         }
-        if (!snapshot.sample_bypass.allows(level)) {
-            const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
-            if (!snapshot.sampler.allow(now)) {
-                self.end();
-                _ = self.counters.sampled.fetchAdd(1, .monotonic);
-                return .sampled;
-            }
+        mask = self.sampleRouteMask(snapshot, mask, level);
+        if (mask == 0) {
+            self.end();
+            _ = self.counters.sampled.fetchAdd(1, .monotonic);
+            return .sampled;
         }
         // The checked View already protects this snapshot. Transfer its reader
         // to the admitted call instead of converting it to another pending pin.
@@ -415,17 +413,15 @@ pub const Runtime = struct {
         };
         const snapshot = selected.snapshot;
         const bound = selected.bound;
-        const mask = routeMaskIn(snapshot, level, scope, bound);
+        var mask = routeMaskIn(snapshot, level, scope, bound);
         if (mask == 0) {
             _ = counters.filtered.fetchAdd(1, .monotonic);
             return .filtered;
         }
-        if (!snapshot.sample_bypass.allows(level)) {
-            const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
-            if (!snapshot.sampler.allow(now)) {
-                _ = counters.sampled.fetchAdd(1, .monotonic);
-                return .sampled;
-            }
+        mask = self.sampleRouteMask(snapshot, mask, level);
+        if (mask == 0) {
+            _ = counters.sampled.fetchAdd(1, .monotonic);
+            return .sampled;
         }
         // The channel cache already pins this version. Its owner cannot refresh
         // or detach until this call ends; no shared pending RMW is necessary.
@@ -437,6 +433,29 @@ pub const Runtime = struct {
     fn releaseAdmissionView(raw: *anyopaque) void {
         const snapshot: *configurations.Snapshot = @ptrCast(@alignCast(raw));
         (@as(configurations.View, .{ .snapshot = snapshot })).release();
+    }
+
+    fn sampleRouteMask(self: *Runtime, snapshot: *configurations.Snapshot, selected: u64, level: Level) u64 {
+        if (snapshot.sampling_overrides == 0) {
+            if (snapshot.sample_bypass.allows(level)) return selected;
+            const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
+            return if (snapshot.sampler.allow(now)) selected else 0;
+        }
+        var mask = selected & ~snapshot.sampling_overrides;
+        if (mask != 0 and !snapshot.sample_bypass.allows(level)) {
+            const now = if (snapshot.sampler.config == .token_bucket) self.monotonicNs() else 0;
+            if (!snapshot.sampler.allow(now)) mask = 0;
+        }
+        var local = selected & snapshot.sampling_overrides;
+        while (local != 0) {
+            const index: u6 = @intCast(@ctz(local));
+            const bit = @as(u64, 1) << index;
+            local &= ~bit;
+            const policy = snapshot.routes[index].policy.?;
+            const now = if (policy.sampler.?.config == .token_bucket and !policy.sample_bypass.allows(level)) self.monotonicNs() else 0;
+            if (policy.sample_bypass.allows(level) or policy.sampler.?.allow(now)) mask |= bit;
+        }
+        return mask;
     }
 
     fn retainSnapshot(raw: *anyopaque) void {

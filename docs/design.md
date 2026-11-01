@@ -61,7 +61,7 @@ logging.scoped("app").info("started", .{});
 try logging.shutdown();
 ```
 
-默认stderr/sync/text/info。async/SPSC默认有界Memory，Mmap显式路径，SPSC显式线程预算。多目标使用 `output.multiple`；required Mmap目标需要稳定文件身份，stdout/writer可作为best_effort。底层Runtime保留为外部sink、复杂配置事务、跨代恢复和时钟扩展。
+输出策略集中在defaults并由各route覆盖，捕获前保护在capture。默认stderr/sync/text/info。async/SPSC默认有界Memory，Mmap显式路径，SPSC显式线程预算。多目标使用 `output.multiple`；required Mmap目标需要稳定文件身份，stdout/writer可作为best_effort。底层Runtime保留为外部sink、复杂配置事务、跨代恢复和时钟扩展。
 
 logger的 `tryEmit/tryLogf` 返回错误和精确接受结果，普通void方法通过diagnostics报告错误。带 `At` 的入口显式传source；编译期 `source.fromModule` 或根入口保证项目相对文件路径。text输出无外围引号的 `路径:行:列`，控制字符继续转义。
 
@@ -71,7 +71,7 @@ Event保存level/scope/message、typed fields/format args、Unix纳秒、session
 
 支持内建标量、optional、enum/error名称、bytes、duration/timestamp和显式array/group。任意对象指针/图不自动遍历；Adapter只捕获明确选择的成员。顶层字段64项，attributes/args共用8层/256节点预算，循环/重复key/超限明确拒绝。
 
-borrowed context依赖存储覆盖所有logger使用；owned context初始化时深拷贝父子合并内容，销毁一次。事件接受前复制消息、key、string/bytes和嵌套描述符，不借用producer栈给消费者。合并顺序parent < child < event；Secret原值不进入捕获，redaction规则在队列前执行。详见 [capture](capture.md) 和 [structured values](structured-values.md)。
+borrowed context依赖存储覆盖所有logger使用；owned context初始化时深拷贝父子合并内容，销毁一次。事件接受前复制消息、key、string/bytes和嵌套描述符，不借用producer栈给消费者。合并顺序parent < child < event；Secret原值不进入捕获，capture/global redaction在队列前执行，route输出redaction只改变自己的渲染结果。详见 [capture](capture.md) 和 [structured values](structured-values.md)。
 
 ## 6. Queue协议与恢复
 

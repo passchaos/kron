@@ -19,6 +19,8 @@ pub const Logging = struct {
     pub const Output = configuration.Output;
     pub const Queue = configuration.Queue;
     pub const Options = configuration.Options;
+    pub const Defaults = configuration.Defaults;
+    pub const Capture = configuration.Capture;
 
     allocator: std.mem.Allocator,
     owner: *Runtime,
@@ -38,7 +40,8 @@ pub const Logging = struct {
         var initialized: usize = 0;
         errdefer for (self.destinations[0..initialized]) |*destination| destination.deinit();
         var routes: [64]types.RouteOptions = undefined;
-        for (definitions, self.destinations, routes[0..definitions.len], 0..) |definition, *destination, *route, index| {
+        for (definitions, self.destinations, routes[0..definitions.len], 0..) |original, *destination, *route, index| {
+            const definition = configuration.resolve(options, original);
             try destination.init(allocator, io, definition.target);
             initialized += 1;
             const sink = destination.sink();
@@ -48,13 +51,17 @@ pub const Logging = struct {
             route.* = .{
                 .name = definition.name,
                 .sink = sink,
-                .format = definition.format orelse options.format,
-                .timestamp = definition.timestamp orelse options.timestamp,
+                .format = definition.format.?,
+                .timestamp = definition.timestamp,
                 .filter = definition.filter,
                 .min_level = definition.min_level,
-                .delivery = definition.delivery,
-                .reclaim_after = definition.reclaim_after orelse options.reclaim_after,
+                .delivery = definition.delivery.?,
+                .reclaim_after = definition.reclaim_after.?,
                 .predicate = definition.predicate,
+                .redaction = definition.redaction.?,
+                .sampling = definition.sampling,
+                .sample_bypass = definition.sample_bypass.?,
+                .max_encoded_record_bytes = definition.max_encoded_record_bytes,
             };
         }
         const queue = options.queue orelse Queue{ .memory = .{} };
@@ -71,12 +78,12 @@ pub const Logging = struct {
             .max_journal_bytes = options.max_journal_bytes,
             .max_encoded_record_bytes = options.max_encoded_record_bytes,
             .consumer_batches_per_queue = options.consumer_batches_per_queue,
-            .filter = options.filter,
+            .filter = options.defaults.filter orelse options.filter,
             .overflow = options.overflow,
-            .redaction = options.redaction,
-            .sampling = options.sampling,
-            .sample_bypass = options.sample_bypass,
-            .predicate = options.predicate,
+            .redaction = options.capture.redaction orelse options.redaction,
+            .sampling = options.defaults.sampling orelse options.sampling,
+            .sample_bypass = options.defaults.sample_bypass orelse options.sample_bypass,
+            .predicate = options.capture.predicate orelse options.predicate,
             .diagnostics = options.diagnostics,
             .routes = routes[0..definitions.len],
         });

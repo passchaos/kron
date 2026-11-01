@@ -10,6 +10,7 @@ const Predicate = @import("../pipeline/predicate.zig").Predicate;
 const Selection = @import("route_selection.zig").Selection;
 const Atomic = std.atomic.Value;
 const time = @import("../time/root.zig");
+const output_policy = @import("output_policy.zig");
 pub const TestingAudit = if (@import("builtin").is_test) struct {
     pub threadlocal var find_calls: usize = 0;
     pub var reader_acquisitions: Atomic(u64) = .init(0);
@@ -61,6 +62,7 @@ pub const Snapshot = struct {
     redactor: redact.Redactor = .{},
     sampler: sampling.Sampler = .{ .config = .none, .state = .init(0) },
     sample_bypass: Level = .warn,
+    sampling_overrides: u64 = 0,
     default_filter: ?Filter = null,
     filter_generation: u64 = 1,
     predicate: ?Predicate = null,
@@ -641,6 +643,7 @@ pub const Manager = struct {
         slot.redactor = payload.redactor;
         slot.sampler = payload.sampler;
         slot.sample_bypass = payload.sample_bypass;
+        slot.sampling_overrides = payload.sampling_overrides;
         slot.default_filter = payload.default_filter;
         slot.filter_generation = payload.filter_generation;
         slot.predicate = payload.predicate;
@@ -682,6 +685,7 @@ const Payload = struct {
     redactor: redact.Redactor,
     sampler: sampling.Sampler,
     sample_bypass: Level,
+    sampling_overrides: u64 = 0,
     default_filter: ?Filter,
     filter_generation: u64 = 1,
     predicate: ?Predicate,
@@ -713,6 +717,10 @@ const Payload = struct {
             if (bytes > budget) return error.ConfigBudgetExceeded;
             if (option.filter) |spec| _ = try Filter.parse(spec);
             if (option.predicate) |spec| _ = try Predicate.parse(spec);
+            const policy_options: output_policy.Options = .{ .redaction = option.redaction, .sampling = option.sampling, .sample_bypass = option.sample_bypass, .max_encoded_record_bytes = option.max_encoded_record_bytes };
+            try output_policy.Policy.validate(policy_options);
+            bytes = std.math.add(usize, bytes, output_policy.Policy.ownedBytes(policy_options)) catch return error.ConfigBudgetExceeded;
+            if (bytes > budget) return error.ConfigBudgetExceeded;
         }
         const routes = try allocator.alloc(Route, options.len);
         var initialized: usize = 0;
@@ -721,10 +729,12 @@ const Payload = struct {
                 allocator.free(route.name);
                 if (route.recovery_identity) |identity| allocator.free(identity);
                 if (route.timestamp) |timestamp| allocator.destroy(timestamp);
+                if (route.policy) |local| local.destroy(allocator);
             }
             allocator.free(routes);
         }
-        for (options, routes) |option, *route| {
+        var sampling_overrides: u64 = 0;
+        for (options, routes, 0..) |option, *route, index| {
             const filter = if (option.filter) |spec| try Filter.parse(spec) else null;
             const route_predicate = if (option.predicate) |spec| try Predicate.parse(spec) else null;
             const name = try allocator.dupe(u8, option.name);
@@ -740,6 +750,9 @@ const Payload = struct {
                 cache.* = try time.Formatter.initWithIo(io, format_options);
                 break :blk cache;
             } else null;
+            errdefer if (timestamp) |cache| allocator.destroy(cache);
+            const local_policy = try output_policy.Policy.create(allocator, .{ .redaction = option.redaction, .sampling = option.sampling, .sample_bypass = option.sample_bypass, .max_encoded_record_bytes = option.max_encoded_record_bytes });
+            if (option.sampling != null) sampling_overrides |= @as(u64, 1) << @intCast(index);
             var sink = option.sink;
             sink.recovery_identity = identity;
             route.* = .{
@@ -754,6 +767,7 @@ const Payload = struct {
                 .recovery_identity = identity,
                 .release = option.release,
                 .predicate = route_predicate,
+                .policy = local_policy,
             };
             initialized += 1;
         }
@@ -763,6 +777,7 @@ const Payload = struct {
             .redactor = redactor,
             .sampler = sampler,
             .sample_bypass = policy.sample_bypass,
+            .sampling_overrides = sampling_overrides,
             .default_filter = default_filter,
             .predicate = predicate,
         };
@@ -778,6 +793,7 @@ fn freeRoutes(allocator: std.mem.Allocator, routes: []Route) void {
         allocator.free(route.name);
         if (route.recovery_identity) |identity| allocator.free(identity);
         if (route.timestamp) |timestamp| allocator.destroy(timestamp);
+        if (route.policy) |local| local.destroy(allocator);
     }
     allocator.free(routes);
 }
@@ -809,6 +825,7 @@ pub fn fingerprint(routes: []const Route) u64 {
                 if (timestamp.local_identity) |local_identity| hash.update(&local_identity) else hash.update("unbound");
             }
         }
+        if (route.policy) |policy| policy.hashOutput(&hash);
     }
     return hash.final();
 }
@@ -827,6 +844,8 @@ fn routesEqual(a: []const Route, b: []const Route) bool {
             return false;
         if (!optionalBytesEqual(left.recovery_identity, right.recovery_identity)) return false;
         if (!sameTimestamp(left.timestamp, right.timestamp)) return false;
+        if ((left.policy == null) != (right.policy == null)) return false;
+        if (left.policy) |policy| if (!policy.eql(right.policy.?)) return false;
         if ((left.release == null) != (right.release == null)) return false;
         if (left.release) |owner| if (!sameOwner(owner, right.release.?)) return false;
         if ((left.filter == null) != (right.filter == null)) return false;

@@ -1,6 +1,6 @@
 # 全局采样语义与性能
 
-采样属于不可变配置版本的策略，状态由该版本的所有producer共享。它不会给每个线程单独发一份配额；共享异步与SPSC均按同一全局预算运行。
+采样属于不可变配置版本。默认Runtime采样状态由所有继承默认的route及全部producer共享；route显式设置sampling后拥有独立状态，其配额仍由全部producer共享，不给每个线程单独一份。共享异步与SPSC采用同样语义。
 
 | 配置 | 决策 |
 | --- | --- |
@@ -20,6 +20,8 @@ const runtime = try kron.Runtime.create(allocator, io, .{
     .routes = routes,
 });
 ```
+
+route_mask在捕获前根据各route采样确定，至少一个route通过才构造字段；输出与恢复不重做采样。显式route `.sampling=.none` 可以在默认采样预算耗尽时继续接受，sample_bypass按本route设置。
 
 filter-only `reloadFilter`和`setLevelChecked`保留采样状态；完整配置替换创建新sampler并从初始预算/相位开始。旧admission与accepted记录继续遵循旧配置。count/token bucket使用CAS防重复消费，不用会下溢的fetchSub近似预算。
 

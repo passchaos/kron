@@ -24,29 +24,40 @@ pub fn emit(routes: []const types.Route, scratch: []u8, event: Event, diagnostic
     for (std.enums.values(encoder.Format)) |format| {
         var encoded: ?[]const u8 = null;
         var timestamp: ?*@import("../time/root.zig").Formatter = null;
+        var redactor: ?*@import("../pipeline/redact.zig").Redactor = null;
         for (routes, 0..) |*route, index| {
             if (route.format != format or event.route_mask & (@as(u64, 1) << @intCast(index)) == 0) continue;
-            if (encoded == null or !sameTime(timestamp, route.timestamp)) {
-                var output = std.Io.Writer.fixed(scratch);
-                const result = switch (format) {
-                    .text => common.encodeDecoded(.text, event, route.timestamp, &output),
-                    .json => common.encodeDecoded(.json, event, route.timestamp, &output),
-                    .logfmt => common.encodeDecoded(.logfmt, event, route.timestamp, &output),
-                    .binary => if (route.timestamp) |cache|
-                        encoder.encodeWithTime(.binary, event, cache, &output)
-                    else
-                        encoder.encode(.binary, event, &output),
-                };
-                result catch return error.EncodedRecordTooLarge;
-                encoded = output.buffered();
+            const route_redactor = if (route.policy) |policy| policy.redactor else null;
+            if (encoded == null or !sameTime(timestamp, route.timestamp) or redactor != route_redactor) {
+                encoded = if (route_redactor != null)
+                    @import("delivery_redaction.zig").render(route, event, scratch, encodeRecord) catch return error.EncodedRecordTooLarge
+                else
+                    encodeRecord(route, scratch, event) catch return error.EncodedRecordTooLarge;
                 timestamp = route.timestamp;
+                redactor = route_redactor;
             }
+            if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (encoded.?.len > limit) {
+                diagnostics.note(error.EncodedRecordTooLarge, .write);
+                if (route.delivery == .required) return error.EncodedRecordTooLarge;
+                continue;
+            };
             route.sink.writeRecord(encoded.?) catch |err| {
                 diagnostics.note(err, .write);
                 if (route.delivery == .required) return err;
             };
         }
     }
+}
+
+fn encodeRecord(route: *const types.Route, scratch: []u8, event: Event) ![]const u8 {
+    var output = std.Io.Writer.fixed(scratch);
+    switch (route.format) {
+        .text => try common.encodeDecoded(.text, event, route.timestamp, &output),
+        .json => try common.encodeDecoded(.json, event, route.timestamp, &output),
+        .logfmt => try common.encodeDecoded(.logfmt, event, route.timestamp, &output),
+        .binary => if (route.timestamp) |cache| try encoder.encodeWithTime(.binary, event, cache, &output) else try encoder.encode(.binary, event, &output),
+    }
+    return output.buffered();
 }
 
 fn sameTime(left: ?*@import("../time/root.zig").Formatter, right: ?*@import("../time/root.zig").Formatter) bool {
@@ -101,6 +112,7 @@ pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8
     }
     if (count != 1) return false;
     const route = matched.?;
+    if (route.policy) |policy| if (policy.redactor != null) return false;
     const format: wire_json.Format = switch (route.format) {
         .json => .json,
         .text => .text,
@@ -120,6 +132,11 @@ pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8
             return error.EncodedRecordTooLarge;
         },
         else => return err,
+    };
+    if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (bytes.len > limit) {
+        diagnostics.note(error.EncodedRecordTooLarge, .write);
+        if (route.delivery == .required) return error.EncodedRecordTooLarge;
+        return true;
     };
     route.sink.writeRecord(bytes) catch |err| {
         diagnostics.note(err, .write);

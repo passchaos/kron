@@ -8,6 +8,7 @@ const Options = struct {
     producers: usize = 1,
     warmup: usize = 1000,
     queue_slots: usize = 256,
+    max_record_bytes: usize = 512,
     phase: []const u8 = "sampled",
     mode: []const u8 = "async",
     storage: []const u8 = "mmap",
@@ -122,8 +123,8 @@ pub fn main(init: std.process.Init) !void {
     const memory = std.mem.eql(u8, options.storage, "memory");
     const runtime = try kron.Runtime.create(allocator, io, .{
         .submission = if (is_spsc) .low_latency else .asynchronous,
-        .journal = if (!memory) .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = 512, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
-        .memory_queue = if (memory) .{ .capacity = options.queue_slots, .max_record_bytes = 512, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
+        .journal = if (!memory) .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
+        .memory_queue = if (memory) .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
         .max_thread_channels = if (is_spsc) options.producers else 0,
         .thread_channel_capacity = options.queue_slots,
         .max_journal_bytes = 32 * 1024 * 1024,
@@ -237,7 +238,7 @@ pub fn main(init: std.process.Init) !void {
         .noop_clock_pair_p99_ns = quantile(&noop, 990),
         .queue_policy = "block",
         .queue_slots = options.queue_slots,
-        .max_record_bytes = 512,
+        .max_record_bytes = options.max_record_bytes,
         .file_buffer_bytes = 65536,
         .has_process_crash_recovery = !memory,
         .queue_reserved_bytes = health.queue_reserved_bytes,
@@ -256,6 +257,9 @@ test "reference backend selection is explicit and retains portable default and b
     const testing = std.testing;
     const default = try parse(&.{"--output=fixture.jsonl"});
     try testing.expectEqual(BackendKind.portable, default.backend);
+    try testing.expectEqual(@as(usize, 512), default.max_record_bytes);
+    try testing.expectEqual(@as(usize, 8192), (try parse(&.{ "--output=fixture.jsonl", "--max-record-bytes=8192" })).max_record_bytes);
+    try testing.expectError(error.InvalidBudget, parse(&.{ "--output=fixture.jsonl", "--max-record-bytes=0" }));
     for (std.enums.values(BackendKind)) |kind| {
         const argument = try std.fmt.allocPrint(testing.allocator, "--backend={s}", .{@tagName(kind)});
         defer testing.allocator.free(argument);
@@ -297,6 +301,9 @@ fn parse(arguments: []const []const u8) !Options {
                 result.warmup = count;
             } else if (std.mem.eql(u8, key, "--queue-slots")) {
                 result.queue_slots = count;
+            } else if (std.mem.eql(u8, key, "--max-record-bytes")) {
+                if (count != 512 and count != 8192) return error.InvalidBudget;
+                result.max_record_bytes = count;
             } else return error.UnknownArgument;
         }
     }

@@ -12,6 +12,7 @@ pub const Collection = struct {
 };
 
 pub fn replace(owner: anytype, manager: *configurations.Manager, filter: *@import("../config/reload.zig").DynamicFilter, routes: []const types.RouteOptions, policy: types.RoutePolicy) !configurations.Version {
+    for (routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > owner.output.len) return error.EncodedRecordBudgetExceeded;
     owner.configuration_mutex.lockUncancelable(owner.io);
     defer owner.configuration_mutex.unlock(owner.io);
     if (owner.state.load(.acquire) != .running) return error.Closed;

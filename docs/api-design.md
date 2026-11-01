@@ -11,7 +11,7 @@
 | 事件/跨度采集与 subscriber 分离 | 轻量 logger 捕获 typed Event，内部 Runtime 消费并交付 |
 | 静态 metadata 与 callsite interest | Zig comptime 字段/格式验证、静态最低级别、已有 filter 掩码与 SPSC 配置缓存 |
 | 字段值与静态字段定义分离 | 普通 inline 捕获；显式 prepared/schema 注册静态 scope/模板/形状 |
-| layer 组合过滤与格式输出 | Logging 在初始化时把输出配置规范化为不可变 route；每个目标独立 format/filter/predicate/delivery |
+| layer 组合过滤与格式输出 | Logging 在初始化时把输出配置规范化为不可变 route；每个目标独立format/filter/predicate、sampling/redaction/编码限制/delivery，顶层defaults提供默认策略 |
 | 显式或作用域关联 span context | kron.withTrace 复制 TraceContext，withBorrowed/withOwned 组合 context；任务传播仍由应用负责 |
 | 应用配置一个 subscriber，调用端保持简单 | 一个 Logging owner，同一套 scoped、emit、flush 和 shutdown |
 
@@ -48,3 +48,5 @@ try logging.shutdown();
 `logging.runtime()` 是借用的高级扩展，用于外部 custom sink、跨代恢复、复杂策略事务或静态时钟选择。调用者不得单独销毁这个 Runtime。根模块原 Runtime API 保留兼容性，README 与使用指南不把它作为常规接入必须选择的第二个 owner。
 
 具体参数、完整程序、错误与恢复语义见 [使用指南](usage.md)。
+
+输出默认策略在 `Logging.Options.defaults`，各Route可显式覆盖；capture.redaction是入队前保护，route.redaction是输出脱敏。队列/线程/总预算仍属于实例，目标的文件后端与buffer位于target中。默认无route策略不分配Policy对象，采样在捕获前固定，输出脱敏的scratch仅在需要时使用。详见 [route策略](configuration.md#route策略与捕获保护)。

@@ -11,7 +11,7 @@
 | source路径/文本位置 | `zig test src/root.zig -O ReleaseSafe --test-filter 'source'`；实际运行 `run-mmap` 和 `run-source-location` |
 | 字段/context/对象适配 | `test-capture`、`test-adapter`、`test-redaction-paths`、`test-compile-fail` |
 | Memory/Mmap与背压 | `test-async-storage`、`test-integration`、相关Runtime queue regression |
-| 配置和旧版本lifetime | `test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
+| 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
 | 时间转换/恢复 | `test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
 | flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
 | 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |

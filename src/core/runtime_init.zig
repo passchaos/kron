@@ -21,6 +21,7 @@ const configurations = @import("../config/routes.zig");
 pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, comptime worker_callback: anytype, comptime control_callback: anytype, comptime decode_callback: anytype) !*Runtime {
     if (builtin.single_threaded and options.submission != .sync) return error.ThreadsUnavailable;
     if (options.routes.len == 0 or options.routes.len > 64 or options.max_encoded_record_bytes == 0) return error.InvalidOptions;
+    for (options.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
     if (options.consumer_batches_per_queue == 0 or options.consumer_batches_per_queue > 4) return error.InvalidOptions;
     if (options.journal != null and options.memory_queue != null) return error.ConflictingQueueStorage;
     const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false } else options.journal;
@@ -62,7 +63,10 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
         configuration.discardPinsAfterStop();
         configuration.abandon();
     }
-    for (options.recovery_versions) |version| try configuration.addRecovery(version.generation, version.routes, version.policy);
+    for (options.recovery_versions) |version| {
+        for (version.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
+        try configuration.addRecovery(version.generation, version.routes, version.policy);
+    }
     const caches = try allocator.create([64]configurations.Manager.ChannelCache);
     errdefer allocator.destroy(caches);
     caches.* = @splat(.{ .channel = 0 });

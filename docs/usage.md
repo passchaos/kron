@@ -121,27 +121,46 @@ pub fn main(init: std.process.Init) !void {
 | `destroy()` | 阻塞等待并按 Runtime → 全部拥有的输出 → owner 的顺序清理 |
 | `runtime()` | 借用的高级 Runtime；生命周期由 Logging 管理 |
 
-`Logging.Options` 的字段：
+`Logging.Options` 将实例资源、输出默认值和捕获保护分开：
 
-| 字段 | 默认值 | 用途 |
+| 位置 | 字段 | 用途 |
 | --- | --- | --- |
-| `output` | `.stderr` | `.stderr` / `.stdout` / `.file` / `.rolling_file` / `.writer` / `.multiple`（见多输出章节） |
-| `mode` | `.sync` | `.sync` / `.asynchronous`（共享）/ `.spsc`（附着线程） |
-| `queue` | `null` | async/SPSC 自动采用 Memory；sync 必须保持 null；可显式选 `.memory` 或 `.mmap` |
-| `format` | `.text` | `.text` / `.json` / `.logfmt` / `.binary` |
-| `timestamp` | `null` | 可读 RFC3339：UTC/固定偏移或 `.zone=.local`，binary 不支持 |
-| `filter` | `"info"` | 默认阈值与 scope 覆盖 |
-| `overflow` | `.block` | 满队列时 block / drop_newest / fallback_sync |
-| `max_threads` | `4` | SPSC 预分配 channel 数，支持 1..64；共享模式不创建这些 channel |
-| `max_journal_bytes` | `256 MiB` | 所有 Memory/Mmap 队列的总存储预算 |
-| `max_encoded_record_bytes` | `64 KiB` | 完整输出记录的编码 scratch 预算 |
-| `consumer_batches_per_queue` | `4` | 1..4；较小值缩短其他队列等待，较大值保留更多批处理局部性 |
-| `reclaim_after` | `.written` | required 输出的队列回收边界；异步 durable 回收要求 Mmap |
-| `redaction` | 空规则 | key 精确匹配的递归 drop / mask 规则 |
-| `sampling` | `.none` | 全局采样策略 |
-| `sample_bypass` | `.warn` | warn 及以上默认绕过采样 |
-| `predicate` | `null` | 接受前的字段条件 |
-| `diagnostics` | `.{}` | 错误 hook 及其借用 context |
+| 实例 | `output`（默认stderr）、`mode`（sync）、`queue`（null） | 同一事件提交一次；async/SPSC默认Memory，可显式Mmap |
+| 实例 | `overflow`（block）、`max_threads`（4） | 共享队列满时的处理与SPSC线程预算 |
+| 实例 | `max_journal_bytes`（256MiB） | 全部Memory/Mmap和schema/channel空间上限 |
+| 实例 | `max_encoded_record_bytes`（64KiB） | 整个消费者的最大编码scratch；route可以设置更小上限 |
+| 实例 | `consumer_batches_per_queue`（4） | 1..4的消费者服务预算 |
+| 实例 | `diagnostics` | logger/worker的错误hook及其借用context |
+| 输出默认 | `defaults` | `format`、`timestamp`、`filter`、`min_level`、`sampling`、`sample_bypass`、`redaction`、`predicate`、`delivery`、`reclaim_after`、`max_encoded_record_bytes` |
+| 捕获保护 | `capture.redaction`、`capture.predicate` | 所有route共同的接受前保护；脱敏在值复制进queue前执行 |
+
+每个route可以覆盖输出默认值。提交模式、queue存储、线程和总空间预算属于实例，因为所有输出共享一次捕获和一个队列管线；文件buffer/backend/轮转选项配置在各自target里。
+
+旧的顶层 `format/timestamp/filter/sampling/sample_bypass/reclaim_after` 继续作为默认值的兼容入口，优先级是route > defaults > 这些顶层值。其原默认为text、无可读timestamp、info、none、warn、written。顶层 `redaction/predicate` 保持原来的捕获前语义，`capture` 可显式替代它们；`defaults.redaction/predicate` 是输出/route策略，不混用这两层。
+
+完整示例：
+
+```zig
+const logging = try kron.Logging.create(allocator, io, .{
+    .mode = .asynchronous,
+    .defaults = .{
+        .format = .json,
+        .timestamp = .{ .zone = .local },
+        .filter = "info",
+        .sampling = .{ .every = 2 },
+        .redaction = &.{.{ .key = "password", .action = .mask }},
+    },
+    .capture = .{ .redaction = &.{.{ .key = "access_token", .action = .mask }} },
+    .output = .{ .multiple = &.{
+        .{ .name = "file", .target = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
+           .sampling = .none, .redaction = &.{.{ .key = "password", .action = .drop }} },
+        .{ .name = "stdout", .target = .stdout, .format = .text },
+    } },
+});
+defer logging.destroy();
+```
+
+文件保留全部日志并删除password，stdout继承每两条取一条并mask password。access_token在进入共享队列前mask，两个输出都无法恢复原值。可运行程序见 [route_policies.zig](../examples/route_policies.zig)：`zig build run-route-policies -Doptimize=ReleaseSafe`。
 
 自动 Memory 配置为 `capacity=256`、`max_record_bytes=8192`、`schema_capacity=0`、`max_schema_bytes=8192`。SPSC 还保留普通共享队列，所以总队列数为 `max_threads + 1`；`scoped()` 在 SPSC 模式中仍使用共享队列。所有 channel 在创建时预分配，不能靠 detach 降低已保留空间。
 
@@ -547,11 +566,16 @@ try logging.shutdown();
 | --- | --- |
 | `name` | 必填，1..64 个输出的名称必须唯一；用于显式 flush 和恢复身份 |
 | `target` | 必填，stderr/stdout/file/rolling_file/borrowed writer |
-| `format / timestamp / reclaim_after` | null 时继承 Logging.Options 的对应设置 |
+| `format / timestamp / reclaim_after` | null时继承defaults及兼容顶层设置；timestamp_enabled=false关闭继承日期 |
 | `filter` | null 时继承全局 filter；独立 filter 可接受全局默认级别拒绝的事件 |
-| `min_level` | 可选的本目标最低级别 |
-| `delivery` | 默认 required；best_effort 不提供相同交付确认 |
-| `predicate` | 可选的本目标字段条件 |
+| `min_level` | 可选本目标最低级别，null继承defaults.min_level |
+| `delivery` | null继承defaults.delivery（默认required），best_effort不提供相同确认 |
+| `predicate` | null继承defaults.predicate；predicate_enabled=false关闭本目标继承条件 |
+| `sampling / sample_bypass` | null继承默认采样；sampling=.none明确不采样，每route独立状态、所有producer共享其配额 |
+| `redaction` | null继承defaults.redaction，空规则明确关闭输出脱敏；无法撤销capture.redaction或Secret |
+| `max_encoded_record_bytes` | 本输出上限，不能超过实例scratch预算；required超限报错，best_effort超限跳过并记录错误 |
+
+route采样在字段捕获前固定route_mask，全部route拒绝时lazy provider不执行；filter-only reload不重置route采样状态。默认采样为一个共享预算，显式route采样有自己的全producer预算。route只改sample_bypass时会建立独立采样器，采用有效默认sampling配置。输出脱敏在消费者针对该route渲染，不修改其他route或共享queue原值；必要的敏感值保护使用capture.redaction。
 
 每个文件目标可独立选择 portable 或 io_uring 后端；混合后端也通过同一个 owner 管理。相同配置输出可复用渲染结果，不同格式/时间策略按需重新编码，所有目标的实际 I/O 成本仍存在。
 
@@ -626,6 +650,7 @@ try logging.shutdownUntil(kron.Deadline.after(io, 5 * std.time.ns_per_s));
 | `zig build run-local-time` | 系统本地时间、消费者格式化与同秒缓存 |
 | `zig build run-file-stdout-local-time` | 同时写JSON文件与stdout文本，两个输出都使用系统本地时间 |
 | `zig build run-mmap` | 共享Mmap、本地时间、JSON文件＋best_effort stdout、durable与自动恢复 |
+| `zig build run-route-policies` | defaults继承、独立采样/脱敏、文件＋stdout策略、capture保护 |
 | `zig build run-source-location` | 文件/stdout JSON完整源码位置：module、file、function、line、column |
 | `zig build run-structured` | owned/borrowed context、嵌套、bytes/secret、trace/source、lazy、可读日期 |
 | `zig build run-threaded` | 双线程 SPSC、attach/detach、join 后关闭 |
@@ -644,6 +669,7 @@ zig build test-single-threaded -Doptimize=ReleaseSafe -j1
 zig build test-package -Doptimize=ReleaseSafe -j1
 zig build test-package-single-threaded -Doptimize=ReleaseSafe -j1
 zig build test-package-distribution -Doptimize=ReleaseSafe -j1
+zig build test-route-policies -Doptimize=ReleaseSafe -j1
 zig build test-local-time -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1

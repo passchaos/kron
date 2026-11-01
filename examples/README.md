@@ -15,6 +15,7 @@
 | file-stdout-local-time | [file_stdout_local_time.zig](file_stdout_local_time.zig) | JSON文件＋stdout text，本地时间和源码位置 |
 | mmap | [mmap.zig](mmap.zig) | 共享Mmap、required文件＋best_effort stdout、local和durable |
 | source-location | [source_location.zig](source_location.zig) | JSON完整module/file/function/line/column |
+| route-policies | [route_policies.zig](route_policies.zig) | 输出defaults、route独立采样/脱敏与capture保护 |
 | std-log | [std_log.zig](std_log.zig) | 根 std_options、bind/unbind 与动态 filter |
 
 高级接口示例用于自定义配置、时钟或底层资源：

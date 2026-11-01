@@ -52,6 +52,7 @@ const examples = [_]Example{
     .{ .name = "file-stdout-local-time", .path = "examples/file_stdout_local_time.zig", .system_local_time = true },
     .{ .name = "mmap", .path = "examples/mmap.zig", .system_local_time = true },
     .{ .name = "source-location", .path = "examples/source_location.zig", .system_local_time = true },
+    .{ .name = "route-policies", .path = "examples/route_policies.zig", .system_local_time = true },
 };
 
 pub fn addExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, module: *std.Build.Module, verify: *std.Build.Step) void {

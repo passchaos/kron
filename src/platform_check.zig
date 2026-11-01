@@ -41,6 +41,15 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     defer local_logging.destroy();
     _ = try local_logging.scoped("local").tryEmit(.info, "system local", .{});
     try local_logging.shutdown();
+    var policy_bytes: [8192]u8 = undefined;
+    var policy_writer = std.Io.Writer.fixed(&policy_bytes);
+    const policy_logging = try kron.Logging.create(allocator, io, .{
+        .defaults = .{ .format = .json, .sampling = .{ .every = 2 }, .redaction = &.{.{ .key = "secret", .action = .mask }} },
+        .output = .{ .multiple = &.{.{ .name = "policy", .target = .{ .writer = &policy_writer }, .sampling = .none, .max_encoded_record_bytes = 4096 }} },
+    });
+    defer policy_logging.destroy();
+    _ = try policy_logging.scoped("policy").tryEmit(.info, "route", .{ .secret = "redacted" });
+    try policy_logging.shutdown();
     const file = try kron.FileSink.create(allocator, io, .{ .path = path, .backend = .portable });
     defer file.deinit();
     const sync = try kron.Runtime.create(allocator, io, .{ .routes = &.{.{ .name = "file", .sink = file.sink(), .timestamp = .{ .offset = try kron.time.UtcOffset.init(480) } }} });

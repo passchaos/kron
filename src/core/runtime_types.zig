@@ -65,6 +65,12 @@ pub const RouteOptions = struct {
     /// Explicit transfer of a resource lease. Omit for caller-owned sinks.
     release: ?SinkRelease = null,
     predicate: ?[]const u8 = null,
+    /// Additional output-only redaction. Capture-wide protection is separate.
+    redaction: []const redact_module.Rule = &.{},
+    /// null inherits the Runtime sampler; .none explicitly bypasses it here.
+    sampling: ?sampler_module.Config = null,
+    sample_bypass: Level = .warn,
+    max_encoded_record_bytes: ?usize = null,
 };
 
 pub const Options = struct {
@@ -147,4 +153,5 @@ pub const Route = struct {
     recovery_identity: ?[]u8,
     release: ?SinkRelease = null,
     predicate: ?@import("../pipeline/predicate.zig").Predicate = null,
+    policy: ?*@import("../config/output_policy.zig").Policy = null,
 };
