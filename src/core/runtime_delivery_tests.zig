@@ -128,6 +128,12 @@ test "batched written counts retain the exact acknowledged prefix after late rec
         memory: MemorySink,
         journal: ?*@import("../journal/journal.zig").Journal = null,
         corrupt: bool = true,
+        releases: usize = 0,
+
+        fn release(raw: *anyopaque) void {
+            const self: *@This() = @ptrCast(@alignCast(raw));
+            self.releases += 1;
+        }
 
         fn write(raw: *anyopaque, bytes: []const u8) anyerror!void {
             const self: *@This() = @ptrCast(@alignCast(raw));
@@ -149,31 +155,53 @@ test "batched written counts retain the exact acknowledged prefix after late rec
             return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush } };
         }
     };
-    var bytes: [16 * 1024]u8 = undefined;
-    var output: CorruptOnFlush = .{ .memory = MemorySink.initBuffer(&bytes) };
-    const runtime = try Runtime.create(std.testing.allocator, std.testing.io, .{
-        .submission = .asynchronous,
-        .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024 },
-        .routes = &.{.{ .name = "file", .sink = output.sink() }},
-        .idle = .sleep,
-    });
-    defer runtime.destroy();
-    output.journal = runtime.journal;
-    var gap = try runtime.journal.?.reserve();
-    defer gap.abort();
-    for (0..3) |index| _ = try runtime.scoped("prefix").tryEmit(.info, "written payload", .{ .index = index });
-    gap.abort();
-    try std.testing.expectError(error.CorruptRecord, runtime.flush(.written));
-    try std.testing.expectEqual(@as(usize, 3), output.memory.records);
-    try std.testing.expectEqual(@as(u64, 3), runtime.health().accepted);
-    try std.testing.expectEqual(@as(u64, 1), runtime.health().written);
-    try std.testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
-    try std.testing.expectEqual(@as(u64, 2), runtime.journal.?.writtenTarget());
-    try std.testing.expectError(error.CorruptRecord, runtime.journal.?.peekChecked());
-    const configuration = runtime.currentConfiguration();
-    const manager: *routes.Manager = @ptrCast(@alignCast(runtime.configuration_handle));
-    const view = try manager.find(configuration.generation, configuration.fingerprint);
-    defer view.release();
-    try std.testing.expectEqual(@as(usize, 2), view.snapshot.pendingCount());
-    try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
+    inline for (.{ .asynchronous, .low_latency }) |submission| {
+        var bytes: [16 * 1024]u8 = undefined;
+        var output: CorruptOnFlush = .{ .memory = MemorySink.initBuffer(&bytes) };
+        const runtime = try Runtime.create(std.testing.allocator, std.testing.io, .{
+            .submission = submission,
+            .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024 },
+            .routes = &.{.{ .name = "file", .sink = output.sink(), .release = .{ .context = &output, .release = CorruptOnFlush.release } }},
+            .configuration_slots = 2,
+            .max_thread_channels = if (submission == .low_latency) 1 else 0,
+            .thread_channel_capacity = 8,
+            .idle = .sleep,
+        });
+        var live = true;
+        defer if (live) runtime.destroy();
+        const log = if (submission == .low_latency) try runtime.attachThread(.{ .scope = "prefix" }) else runtime.scoped("prefix");
+        defer if (live and submission == .low_latency) log.detach() catch {};
+        const journal = if (submission == .low_latency) runtime.thread_registry.?.getJournal(0) else runtime.journal.?;
+        output.journal = journal;
+        var gap = if (submission == .low_latency) try journal.reserveSingleProducer(log.owner.producer_token) else try journal.reserve();
+        defer gap.abort();
+        const configuration = runtime.currentConfiguration();
+        for (0..3) |index| _ = try log.tryEmit(.info, "written payload", .{ .index = index });
+        // Retire the old version before delivery; a successful prefix must drop
+        // only its own pins while the two damaged/unreclaimed records keep it live.
+        _ = try runtime.replaceConfiguration(&.{.{ .name = "new", .sink = output.sink() }}, .{});
+        gap.abort();
+        try std.testing.expectError(error.CorruptRecord, runtime.flush(.written));
+        try std.testing.expectEqual(@as(usize, 3), output.memory.records);
+        try std.testing.expectEqual(@as(u64, 3), runtime.health().accepted);
+        try std.testing.expectEqual(@as(u64, 1), runtime.health().written);
+        try std.testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
+        try std.testing.expectEqual(@as(u64, 2), journal.writtenTarget());
+        try std.testing.expectError(error.CorruptRecord, journal.peekChecked());
+        if (submission == .low_latency) try log.detach();
+        const manager: *routes.Manager = @ptrCast(@alignCast(runtime.configuration_handle));
+        {
+            const view = try manager.find(configuration.generation, configuration.fingerprint);
+            defer view.release();
+            try std.testing.expectEqual(@as(usize, 2), view.snapshot.pendingCount());
+            try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
+        }
+        // Drop the inspecting View before collection: only the two record
+        // pins now protect the retired target and its ownership callback.
+        try std.testing.expectEqual(@as(usize, 0), try runtime.collectConfigurations());
+        try std.testing.expectEqual(@as(usize, 0), output.releases);
+        runtime.destroy();
+        live = false;
+        try std.testing.expectEqual(@as(usize, 1), output.releases);
+    }
 }

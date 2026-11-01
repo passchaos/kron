@@ -1,0 +1,129 @@
+PMU pair 1/5 spsc P4: all physical records verified
+PMU pair 1/5 async P1: all physical records verified
+PMU pair 2/5 spsc P4: all physical records verified
+PMU pair 2/5 async P1: all physical records verified
+PMU pair 3/5 spsc P4: all physical records verified
+PMU pair 3/5 async P1: all physical records verified
+PMU pair 4/5 spsc P4: all physical records verified
+PMU pair 4/5 async P1: all physical records verified
+PMU pair 5/5 spsc P4: all physical records verified
+PMU pair 5/5 async P1: all physical records verified
+{
+  "trials": 20,
+  "physical_records_verified": 6020000,
+  "affinity": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+  ],
+  "summary": {
+    "spsc": {
+      "instructions": {
+        "before": {
+          "median": 2888418277,
+          "min": 2886348017,
+          "max": 2888917849,
+          "spread": 0.0008897021669136877
+        },
+        "after": {
+          "median": 2890121447,
+          "min": 2886278001,
+          "max": 2890592403,
+          "spread": 0.0014928099317343324
+        },
+        "change_percent": 0.05896549033641563,
+        "qualification": "within_noise_budget"
+      },
+      "cycles": {
+        "before": {
+          "median": 800444087,
+          "min": 781502887,
+          "max": 890771593,
+          "spread": 0.1365101045465028
+        },
+        "after": {
+          "median": 836060967,
+          "min": 770915095,
+          "max": 864451960,
+          "spread": 0.11187804321930508
+        },
+        "change_percent": 4.44963996592056,
+        "qualification": "inconclusive"
+      },
+      "written_records_per_sec": {
+        "before": {
+          "median": 2166316.0869202847,
+          "min": 1985842.0187609247,
+          "max": 2194812.2043322753,
+          "spread": 0.09646338631424299
+        },
+        "after": {
+          "median": 2094820.0170442937,
+          "min": 1847136.9663328072,
+          "max": 2143412.945143911,
+          "spread": 0.14143266552757944
+        },
+        "change_percent": -3.3003526266396577,
+        "qualification": "inconclusive"
+      }
+    },
+    "async": {
+      "instructions": {
+        "before": {
+          "median": 2700545301,
+          "min": 2696011170,
+          "max": 2700700826,
+          "spread": 0.0017365589084039586
+        },
+        "after": {
+          "median": 2702871481,
+          "min": 2701437743,
+          "max": 2704765693,
+          "spread": 0.0012312646100245711
+        },
+        "change_percent": 0.08613741821470455,
+        "qualification": "within_noise_budget"
+      },
+      "cycles": {
+        "before": {
+          "median": 906048104,
+          "min": 840689229,
+          "max": 1120531405,
+          "spread": 0.3088601750443043
+        },
+        "after": {
+          "median": 985555612,
+          "min": 813717025,
+          "max": 1244179142,
+          "spread": 0.43677100689067966
+        },
+        "change_percent": 8.775197216239627,
+        "qualification": "inconclusive"
+      },
+      "written_records_per_sec": {
+        "before": {
+          "median": 2076582.9102791727,
+          "min": 1353443.9280790184,
+          "max": 2190714.6501135877,
+          "spread": 0.40319638473862235
+        },
+        "after": {
+          "median": 2068870.6345536567,
+          "min": 1316089.7268562813,
+          "max": 2156915.8743062452,
+          "spread": 0.40641794291375105
+        },
+        "change_percent": -0.37139262233836234,
+        "qualification": "inconclusive"
+      }
+    }
+  },
+  "binary_sha256": {
+    "before": "9c4ee25875024e76cc07dc4ff644a1db50b539f65b2c70635fa9cb7f99d10435",
+    "after": "6fa54f4c78bae90bc5e84bff6b3e1c49d39b7a4ab624a6ecd7f5385c3f691448"
+  },
+  "scope": "whole user process producer, JSON/file consumer, final written flush, shutdown and cleanup; user PMU excludes kernel work; no durable flush"
+}

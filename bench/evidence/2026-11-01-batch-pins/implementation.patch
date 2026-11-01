@@ -1,0 +1,247 @@
+diff --git a/src/config/routes.zig b/src/config/routes.zig
+index abec3e9..21b3cb0 100644
+--- a/src/config/routes.zig
++++ b/src/config/routes.zig
+@@ -14,6 +14,7 @@ pub const TestingAudit = if (@import("builtin").is_test) struct {
+     pub threadlocal var find_calls: usize = 0;
+     pub var reader_acquisitions: Atomic(u64) = .init(0);
+     pub var global_pending_rmw: Atomic(u64) = .init(0);
++    pub var record_pin_releases: Atomic(usize) = .init(0);
+     pub var channel_refreshes: Atomic(u64) = .init(0);
+ } else struct {};
+ 
+@@ -103,10 +104,20 @@ pub const Snapshot = struct {
+     }
+ 
+     pub fn releaseChannel(self: *Snapshot, channel: u32) void {
+-        if (channel == 0) return self.release();
++        self.releaseChannelCount(channel, 1);
++    }
++
++    /// Release only pins of records already acknowledged by their journals.
++    /// A batch View or other pin must protect the slot throughout this call.
++    /// One RMW composes with concurrent producer/cache retain and detach.
++    pub fn releaseChannelCount(self: *Snapshot, channel: u32, count: usize) void {
+         std.debug.assert(channel <= max_channels);
+-        const before = self.perchannel_pending[channel - 1].value.fetchSub(1, .seq_cst);
+-        std.debug.assert(before != 0);
++        if (count == 0) return;
++        if (@import("builtin").is_test) _ = TestingAudit.record_pin_releases.fetchAdd(1, .monotonic);
++        const counter = if (channel == 0) &self.pending else &self.perchannel_pending[channel - 1].value;
++        if (channel == 0 and @import("builtin").is_test) _ = TestingAudit.global_pending_rmw.fetchAdd(1, .monotonic);
++        const before = counter.fetchSub(count, .seq_cst);
++        std.debug.assert(before >= count);
+     }
+ 
+     /// Cold lifecycle checks use the sum of all counters. It is a concurrent
+diff --git a/src/core/delivery_batch.zig b/src/core/delivery_batch.zig
+index 7a27d73..6cbc09e 100644
+--- a/src/core/delivery_batch.zig
++++ b/src/core/delivery_batch.zig
+@@ -66,6 +66,35 @@ pub const WrittenCounts = struct {
+     }
+ };
+ 
++/// Successfully reclaimed records retain their config pins until this small
++/// consumer-local run is flushed. Batch Views must outlive this object.
++/// Changing snapshot/channel publishes the previous run; error unwinding
++/// publishes only the acknowledged prefix before dropping those Views.
++pub const Acknowledgements = struct {
++    snapshot: ?*configurations.Snapshot = null,
++    counter: ?*Atomic(u64) = null,
++    channel: u32 = 0,
++    count: usize = 0,
++
++    pub fn acknowledged(self: *Acknowledgements, snapshot: *configurations.Snapshot, channel: u32, counter: *Atomic(u64)) void {
++        if (self.snapshot != snapshot or self.channel != channel or self.counter != counter) {
++            self.flush();
++            self.snapshot = snapshot;
++            self.channel = channel;
++            self.counter = counter;
++        }
++        self.count += 1;
++    }
++
++    pub fn flush(self: *Acknowledgements) void {
++        if (self.count == 0) return;
++        self.snapshot.?.releaseChannelCount(self.channel, self.count);
++        if (@import("builtin").is_test) _ = TestingAudit.written_updates.fetchAdd(1, .monotonic);
++        _ = self.counter.?.fetchAdd(self.count, .monotonic);
++        self.count = 0;
++    }
++};
++
+ pub const Configurations = struct {
+     manager: *configurations.Manager,
+     storage: [max_records]Group = undefined,
+@@ -270,3 +299,89 @@ test "written batch counts compose with a concurrent sync or fallback counter ow
+     thread.join();
+     try std.testing.expectEqual(@as(u64, 41000), context.counter.load(.monotonic));
+ }
++
++test "batch acknowledgements retain old leases until confirmed pins and Views are released" {
++    const Lease = struct {
++        releases: usize = 0,
++        fn release(raw: *anyopaque) void {
++            const self: *@This() = @ptrCast(@alignCast(raw));
++            self.releases += 1;
++        }
++    };
++    var owner: Lease = .{};
++    var next_context: u8 = 0;
++    const manager = try configurations.Manager.create(std.testing.allocator, std.testing.io, .{
++        .capacity = 2,
++        .initial_routes = &.{.{ .name = "old", .sink = .{ .context = &owner, .vtable = &EmptySink.vtable }, .release = .{ .context = &owner, .release = Lease.release } }},
++    });
++    defer manager.destroy();
++    var batch = Configurations.init(manager);
++    defer batch.deinit();
++    const old_version = manager.currentVersion();
++    const old = (try batch.select(old_version.generation, old_version.fingerprint)).snapshot();
++    for (0..31) |_| old.retainChannel(64);
++    const replacement = try manager.install(&.{.{ .name = "new", .sink = .{ .context = &next_context, .vtable = &EmptySink.vtable } }}, .{});
++    const current = (try batch.select(replacement.generation, replacement.fingerprint)).snapshot();
++    current.retainChannel(0);
++    var old_written: Atomic(u64) = .init(0);
++    var new_written: Atomic(u64) = .init(0);
++    var acks: Acknowledgements = .{};
++    defer acks.flush();
++    const releases = configurations.TestingAudit.record_pin_releases.load(.monotonic);
++    for (0..31) |_| acks.acknowledged(old, 64, &old_written);
++    try std.testing.expectEqual(@as(usize, 31), old.pendingCount());
++    try std.testing.expectEqual(@as(u64, 0), old_written.load(.monotonic));
++    try std.testing.expectEqual(@as(usize, 0), try manager.collectRetired());
++    acks.acknowledged(current, 0, &new_written);
++    try std.testing.expectEqual(@as(usize, 0), old.pendingCount());
++    try std.testing.expectEqual(@as(u64, 31), old_written.load(.monotonic));
++    try std.testing.expectEqual(@as(usize, 0), owner.releases);
++    acks.flush();
++    acks.flush();
++    try std.testing.expectEqual(@as(usize, 0), current.pendingCount());
++    try std.testing.expectEqual(@as(u64, 1), new_written.load(.monotonic));
++    try std.testing.expectEqual(@as(usize, 2), configurations.TestingAudit.record_pin_releases.load(.monotonic) - releases);
++    try std.testing.expectEqual(@as(usize, 0), try manager.collectRetired());
++    batch.deinit();
++    try std.testing.expectEqual(@as(usize, 1), try manager.collectRetired());
++    try std.testing.expectEqual(@as(usize, 1), owner.releases);
++}
++
++test "batched pin release composes with concurrent producer and cache pin updates" {
++    if (@import("builtin").single_threaded) return error.SkipZigTest;
++    const Producer = struct {
++        snapshot: configurations.Snapshot = .{},
++        start: std.Io.Event = .unset,
++        channel: u32,
++
++        fn run(self: *@This()) void {
++            self.start.waitUncancelable(std.testing.io);
++            for (0..10000) |_| {
++                self.snapshot.retainChannel(self.channel);
++                self.snapshot.releaseChannel(self.channel);
++            }
++        }
++    };
++    for ([_]u32{ 0, 1, 64 }) |channel| {
++        var producer: Producer = .{ .channel = channel };
++        // Model the stable channel-cache or owner pin separately from all
++        // accepted record pins; completing a batch must not consume it.
++        producer.snapshot.retainChannel(channel);
++        for (0..31 * 1000) |_| producer.snapshot.retainChannel(channel);
++        const thread = try std.Thread.spawn(.{}, Producer.run, .{&producer});
++        var written: Atomic(u64) = .init(0);
++        producer.start.set(std.testing.io);
++        for (0..1000) |_| {
++            var acks: Acknowledgements = .{};
++            for (0..31) |_| acks.acknowledged(&producer.snapshot, channel, &written);
++            acks.flush();
++        }
++        // The producer may still be cycling a temporary pin, so wait for its
++        // completion before observing the exact remaining cache-pin count.
++        thread.join();
++        try std.testing.expectEqual(@as(u64, 31000), written.load(.monotonic));
++        try std.testing.expectEqual(@as(usize, 1), producer.snapshot.pendingCount());
++        producer.snapshot.releaseChannel(channel);
++        try std.testing.expectEqual(@as(usize, 0), producer.snapshot.pendingCount());
++    }
++}
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index d5fe1b6..d998f02 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -834,8 +834,10 @@ pub const Runtime = struct {
+             defer self.delivery_mutex.unlock(self.io);
+             var versions = delivery_batch.Configurations.init(self.configurationManager());
+             defer versions.deinit();
+-            var written_counts: delivery_batch.WrittenCounts = .{};
+-            defer written_counts.flush();
++            var acknowledgements: delivery_batch.Acknowledgements = .{};
++            // Defers run before versions.deinit, keeping all snapshots live
++            // while completed prefixes publish their pin/count updates.
++            defer acknowledgements.flush();
+             for (batch, 0..) |record, index| {
+                 var fields: [codec.decode_scratch_fields]Field = undefined;
+                 const fused = blk: {
+@@ -870,10 +872,9 @@ pub const Runtime = struct {
+             }
+             for (batch, channels[0..batch.len], snapshots[0..batch.len], boundaries[0..batch.len]) |record, channel, snapshot, boundary| {
+                 try journal.releaseAfter(record, boundary);
+-                snapshot.releaseChannel(channel);
+-                written_counts.acknowledged(&self.countersFor(channel).written);
++                acknowledgements.acknowledged(snapshot, channel, &self.countersFor(channel).written);
+             }
+-            written_counts.flush();
++            acknowledgements.flush();
+             self.notifyProgress();
+         }
+         return worked;
+diff --git a/src/core/runtime_delivery_tests.zig b/src/core/runtime_delivery_tests.zig
+index 42da14e..a2a1c84 100644
+--- a/src/core/runtime_delivery_tests.zig
++++ b/src/core/runtime_delivery_tests.zig
+@@ -51,6 +51,7 @@ test "real shared and SPSC batches perform one configuration lookup for 31 recor
+         for (0..31) |index| try std.testing.expectEqual(@import("logger.zig").EmitResult.accepted, try log.tryEmit(.info, "same batch", .{ .id = @as(u64, index) }));
+         try std.testing.expectEqual(@as(usize, 32), journal.pending());
+         const updates = batch_module.TestingAudit.written_updates.load(.monotonic);
++        const pin_releases = routes.TestingAudit.record_pin_releases.load(.monotonic);
+         gap.abort();
+         try runtime.flush(.written);
+         try std.testing.expectEqual(@as(usize, 31), output.memory.records);
+@@ -63,6 +64,7 @@ test "real shared and SPSC batches perform one configuration lookup for 31 recor
+         try std.testing.expectEqual(@as(u64, 31), runtime.health().written);
+         try std.testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
+         try std.testing.expectEqual(@as(usize, 1), batch_module.TestingAudit.written_updates.load(.monotonic) - updates);
++        try std.testing.expectEqual(@as(usize, 1), routes.TestingAudit.record_pin_releases.load(.monotonic) - pin_releases);
+     }
+ }
+ 
+@@ -155,13 +157,18 @@ test "batched written counts retain the exact acknowledged prefix after late rec
+         .submission = .asynchronous,
+         .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024 },
+         .routes = &.{.{ .name = "file", .sink = output.sink() }},
++        .configuration_slots = 2,
+         .idle = .sleep,
+     });
+     defer runtime.destroy();
+     output.journal = runtime.journal;
+     var gap = try runtime.journal.?.reserve();
+     defer gap.abort();
++    const configuration = runtime.currentConfiguration();
+     for (0..3) |index| _ = try runtime.scoped("prefix").tryEmit(.info, "written payload", .{ .index = index });
++    // Retire the old version before delivery; a successful prefix must drop
++    // only its own pins while the two damaged/unreclaimed records keep it live.
++    _ = try runtime.replaceConfiguration(&.{.{ .name = "new", .sink = output.sink() }}, .{});
+     gap.abort();
+     try std.testing.expectError(error.CorruptRecord, runtime.flush(.written));
+     try std.testing.expectEqual(@as(usize, 3), output.memory.records);
+@@ -170,10 +177,10 @@ test "batched written counts retain the exact acknowledged prefix after late rec
+     try std.testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
+     try std.testing.expectEqual(@as(u64, 2), runtime.journal.?.writtenTarget());
+     try std.testing.expectError(error.CorruptRecord, runtime.journal.?.peekChecked());
+-    const configuration = runtime.currentConfiguration();
+     const manager: *routes.Manager = @ptrCast(@alignCast(runtime.configuration_handle));
+     const view = try manager.find(configuration.generation, configuration.fingerprint);
+     defer view.release();
+     try std.testing.expectEqual(@as(usize, 2), view.snapshot.pendingCount());
+     try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
++    try std.testing.expectEqual(@as(usize, 0), try runtime.collectConfigurations());
+ }

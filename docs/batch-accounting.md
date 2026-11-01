@@ -8,6 +8,10 @@
 
 ## 确认与观测边界
 
+后续尝试聚合配置record pin释放：每条journal完整回收成功后按snapshot/channel合成一次fetchSub，分别验证独立pin/written计数和统一确认计数。两版各100项完整文件试验及20项长流程PMU共逐条核对3224万条JSON，语义正确，但两版的完整吞吐均未取得改善资格，多个Memory负向中位与高spread全部保留，因此生产实现已撤回，仍逐条释放record pin。候选源码、原始试验与拒绝依据见`bench/evidence/2026-11-01-batch-pins/`。不能以原子次数下降替代完整流程性能证据。
+
+此次保留的故障回归扩展到共享/SPSC：交付前先retire旧配置，三条输出flush后损坏第二条，确认written=1、pending=2、水位只跨成功前缀。SPSC detach后旧配置仍有两条record pins；释放检查View后collect仍失败，旧lease不释放，Runtime销毁才释放一次。该测试覆盖真实后台与资源生命周期，不改变生产协议。
+
 journal仍逐条执行完整CRC检查、顺序校验和written/durable reclaim。每个槽位的释放、水位、schema引用和恢复协议保持原来实现，未引入批量journal回收接口。批次只聚合计数，不能将后续失败的记录计入成功前缀。
 
 并发health是分别读取各原子值的观测，不是事务快照。written计数可以在批内短暂落后于journal水位，批次结束前会更新；错误返回也保留实际已确认计数。显式flush/shutdown仍是确认接口：它们获取原来的delivery锁，返回前能观察到已完成批次计数，不能通过“health队列为空”替代barrier。

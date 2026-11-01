@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+批量配置record pin优化资格已完成并拒绝：两个候选分别100项完整文件与20项PMU，共240试验、3224万条物理JSON全部正确，但未取得完整吞吐改善资格，多个负向中位和高spread保留；生产配置/交付模块保持`8a351c0`。保留共享/SPSC旧版本晚期回收损坏回归：written=1、pending=2、检查View与SPSC cache释放后剩余record pins仍阻止旧lease回收，destroy只释放一次。最终三优化级别batch定向均18/18（含import fixtures），证据及候选源码见`bench/evidence/2026-11-01-batch-pins/`。后续优化仍需完整流程证据，不能以原子数量下降宣称收益。
+
 native数字输出进一步直接写入已有Writer buffer：剩余至少21字节时精确计算位数并写入，仅更新实际end；独立helper避免扩张递归value渲染，短buffer/streaming/宽值继续bounded stack fallback。公开encoder的12完整记录、16486 fixed与49494 generic前缀和新增内部buffer物理短写前缀保持；Safe公开时间/配置/predicate/文件30/30、最终完整ReleaseFast89/89步骤和522/522测试通过。100个完整文件试验逐条核对1010万条日志，五组吞吐中位提升3.0%–4.0%，均满足本轮CV/spread，SPSC Memory P4中位区间不重叠，其余仍重叠。另20个长流程核对602万条：SPSC P4 user cycles减少4.99%、instructions增加1.00%，候选极慢producer样本使长流程吞吐仍inconclusive，全部保留。早期inline/table方案nested负向与最终helper结果分别保存；不叠加为Foundation排名。百万条完整流程profile与mmap慢启动调用已确认：一个5.1s启动中msync约3.1s、file/dir fsync约2.0s，协议保持。证据见`bench/evidence/2026-11-01-decimal-direct/`、`2026-11-01-delivery-profile/`和`2026-11-01-init-profile/`。
 
 当前源码`4447fe6`完整文件流程已同轮比较Foundation真实spdlog前端/Rust后台、独立spdlog1.17和kron：140/140项正式试验、1414万条物理JSON全部逐条核对，accepted=written且pending/drop=0。包含关闭的P1/P4中位M条/s：Foundation Memory2.116/2.309、Mmap1.800/2.079，spdlog1.640/0.673，kron SPSC Memory2.174/2.108、Mmap2.251/2.117；shared组及各阶段也分别保存。kron本轮中位高于独立spdlog，P4 Memory仍落后Foundation约9%，P4 Mmap差异小于spread，SPSC Mmap完整生命周期约107ms对Foundation58ms。独立spdlog和部分Foundation组超10%门限，安静窗口跨库优势仍未资格；未启用predicate，正则局部收益不混入该比较。精确源码、完整慢值与分析见[当前完整工作流](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。

@@ -37,4 +37,6 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 已实现条目按对应证据报告，其余条目是后续优先级。每项须有修改前源码、同语义完整工作流、故障门禁和明确性能限制，最终再与Quill/Foundation同轮复测。移动平台实际资格和长期fuzz仍按总验收清单继续。
 
+后续配置record pin批量释放实验已实际执行两版候选，分别以100项完整文件和20项完整PMU试验验证，共核对3224万条日志。语义测试确认31条同配置记录可从31次pin原子减法合成1次，但多个Memory组的负向中位、高spread和不重叠收益缺失使两版均未通过性能推广条件，生产实现恢复逐条pin释放。原始数据保留在`bench/evidence/2026-11-01-batch-pins/`，并保留更强的旧配置晚期损坏/lease回归。引用计数优化必须同时考虑逐条分支、状态维护、缓存竞争和完整流程；源码中看见的重复操作只能提供假设。
+
 参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。
