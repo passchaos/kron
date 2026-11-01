@@ -1,5 +1,7 @@
 # C++ 和 Foundation Logging 性能对照
 
+当前源码`4447fe6`的Foundation/独立spdlog/kron同轮对照已完成140项试验、1414万条JSON核对。当前中位结果与资格在[完整工作流比较](cpp-full-workflow.md)页首和[当前源码证据](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)；Foundation使用其真实spdlog前端和Rust后台，不是独立spdlog替代实现。当前kron仍未全面超过该组合。
+
 最新实测使用 spdlog 1.17.0、Quill 13.1.0、当前 kron，以及用户指定的 `~/robotics/onboard-monorepo/foundation/logging` C++ 前端与 Rust 后台。结果、完整流程分段和边界见 [完整工作流比较](cpp-full-workflow.md)。2026-11-01 主矩阵 260 个试验逐条确认 26,260,000 条日志；Foundation 原生默认格式另有 40 个试验、4,040,000 条日志。没有日志缺失或格式失败。
 
 ```sh

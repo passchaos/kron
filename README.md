@@ -102,6 +102,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 [业界实现与优化方向](docs/industry-performance-lessons.md)记录从Quill/Foundation实际源码、fmtlog/NanoLog/Reckless/BqLog设计中确认的机制，按完整流程profile推进批处理、配置复用与CRC工作量优化。
 
+当前源码`4447fe6`已另完成Foundation（真实spdlog前端＋Rust后台）、独立spdlog和kron的140项完整文件流程同轮对照，1414万条JSON逐条核对。kron本轮中位高于独立spdlog，仍未全面超过Foundation：P4 Memory约落后9%，P4 Mmap稳态接近，SPSC Mmap完整生命周期初始化成本较高；波动与未资格范围见[当前完整报告](bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+
 ## 实施顺序
 
 1. 固定事件、字段、配置和可靠性契约，建立 Zig 0.16 构建骨架。

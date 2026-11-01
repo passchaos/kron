@@ -1,6 +1,20 @@
 # 完整日志工作流性能比较
 
-2026-11-01 后续已实现 PCLMUL IEEE CRC、decoded-delivery 校验复用和 fused wire-to-record（JSON/text/logfmt），并在宿主 load 约 88–110 的同一窗口完成了 Foundation/kron 同轮复测：120 个试验、1212 万条记录全部通过独立 oracle，所有组因 spread 超门限标为 inconclusive。同轮中位数显示 kron 在 P1 memory/mmap 领先，P4 仍略落后 Foundation；该窗口不是稳定排名，安静窗口复测仍需完成。详细数据见 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。下方归档表仍是最后一次稳定窗口对照，不把新窗口数据混入旧排名。
+当前源码`4447fe6`已重新与Foundation（真实spdlog C++前端＋Rust后台）和独立spdlog 1.17做同轮完整文件流程对照：140个试验逐条验证1414万条JSON。kron的完整流程中位成绩高于独立spdlog，仍未全面超过Foundation组合；P4 memory约落后9%，P4 mmap稳态接近且差异小于波动，SPSC mmap完整生命周期初始化成本仍较高。源码归档、全部慢值与资格见[当前完整对照](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+
+| 当前源码配置 | P1包含关闭 M条/s | P4包含关闭 M条/s | P4完整生命周期 ms |
+| --- | ---: | ---: | ---: |
+| Foundation memory | 2.116 | 2.309 | 44.17 |
+| Foundation mmap | 1.800 | 2.079 | 58.09 |
+| spdlog async | 1.640 | 0.673 | 149.91 |
+| kron async memory | 2.141 | 2.064 | 49.73 |
+| kron async mmap | 2.188 | 2.075 | 70.45 |
+| kron SPSC memory | 2.174 | 2.108 | 49.08 |
+| kron SPSC mmap | 2.251 | 2.117 | 107.38 |
+
+这是五次batch试验中位数；包含producer、后台格式化/文件写出、written flush、shutdown和清理。生命周期另包括初始化/预热。spdlog P1/P4 spread约28%/22%，Foundation P1 mmap约38%、P4 memory的关闭成本存在极慢值；达到10%局部重复性门限的其他组也不能仅凭1%–2%的中位差宣称跨库稳定领先。固定CPU affinity仍处于load约85–94的宿主窗口，稳定资格与不同业务负载继续验收。当前组未启用predicate，本轮正则优化的局部收益不用于解释该对照差异。
+
+此前已实现 PCLMUL IEEE CRC、decoded-delivery 校验复用和 fused wire-to-record（JSON/text/logfmt），并在宿主 load 约 88–110 的同一窗口完成了 Foundation/kron 同轮复测：120 个试验、1212 万条记录全部通过独立 oracle，所有组因 spread 超门限标为 inconclusive。同轮中位数显示 kron 在 P1 memory/mmap 领先，P4 仍略落后 Foundation；该窗口不是稳定排名，安静窗口复测仍需完成。详细数据见 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。下方保留早期源码归档表，不把不同源码窗口的数据混合排名。
 
 2026-11-01跨库测量的归档快照中，kron尚未超过主要高性能C++参考库。单producer的Quill延迟格式化测得约2.26M条/s，Foundation Memory/Mmap约1.94M/1.83M；kron不同配置约0.84–1.24M。4个producer时Foundation约2.27–2.36M，Quill延迟格式化约1.65M，kron约1.06–1.13M。kron的4producer结果高于本轮spdlog async约0.85M。
 
@@ -130,6 +144,6 @@ producer p50/p99（sampled）显示 P1 调用延迟已与 Foundation 接近：Me
 
 lifecycle表的每个数字是对应完整区间的中位数，各阶段中位数不能相加重建同一个试验。大多数指标超过10%spread门限，详细min/max、spread和资格在analysis.json中。只有少数组合达到本轮局部重复性门限，不能将其推广成跨机器保证。
 
-当前结论是：Quill的延迟格式化显著减少producer工作；Foundation在本轮完整文件流程中更快；kron与spdlog的相对结果取决于producer数。kron仍需要基于完整输入profile优化字段校验、捕获/CRC以及后台decode/JSON交付，不能靠省略元数据、切换为更弱可靠性或只报告入队时间宣布胜出。
+早期归档快照的结论是：Quill的延迟格式化显著减少producer工作；Foundation在该轮完整文件流程中更快；当时kron与spdlog的相对结果取决于producer数。最新当前源码结果以页首同轮数据为准；后续优化仍按完整输入profile与完成边界验证，不省略元数据或降低可靠性来声明优势。
 
 原始结果、精确测量源码归档、编译/依赖哈希与当前验证见 [本地验收报告](../bench/cpp_reference/evidence/2026-11-01-full-workflow/README.md)。执行与复现命令见 [C++比较入口](cpp-comparison.md)。
