@@ -77,6 +77,7 @@ pub const Runtime = struct {
     thread_registry: ?*thread_module.Registry(Runtime) = null,
     overflow: Overflow,
     idle: Idle,
+    consumer_batches_per_queue: usize,
     output: []u8,
     session: u64,
     sync_sequence: Atomic(u64) = .init(0),
@@ -820,7 +821,10 @@ pub const Runtime = struct {
         var channels: [64]u32 = undefined;
         var snapshots: [64]*configurations.Snapshot = undefined;
         var boundaries: [64]JournalModule.ReclaimBoundary = undefined;
-        for (0..4) |_| {
+        // A bounded queue quantum keeps the current batch's write/reclaim
+        // boundary intact. The default retains four batches; applications can
+        // select fewer to reduce the number of records served before peers.
+        for (0..self.consumer_batches_per_queue) |_| {
             const before = journal.pending();
             const batch = if (@hasDecl(Journal, "peekBatchChecked")) try journal.peekBatchChecked(&records) else blk: {
                 const record = journal.peek() orelse break :blk records[0..0];

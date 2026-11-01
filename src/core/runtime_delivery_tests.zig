@@ -66,6 +66,109 @@ test "real shared and SPSC batches perform one configuration lookup for 31 recor
     }
 }
 
+test "Memory and Mmap consumer quantum bounds shared and SPSC peer service" {
+    const FairSink = struct {
+        memory: MemorySink,
+        entered: std.Io.Event = .unset,
+        proceed: std.Io.Event = .unset,
+        peer_at: ?usize = null,
+        peer_channel: u32,
+        sequences: [3]u64 = @splat(0),
+
+        fn number(bytes: []const u8, key: []const u8) !u64 {
+            const start = (std.mem.find(u8, bytes, key) orelse return error.MissingMetadata) + key.len;
+            var end = start;
+            while (end < bytes.len and std.ascii.isDigit(bytes[end])) : (end += 1) {}
+            return std.fmt.parseInt(u64, bytes[start..end], 10);
+        }
+        fn write(raw: *anyopaque, bytes: []const u8) anyerror!void {
+            const self: *@This() = @ptrCast(@alignCast(raw));
+            const index = self.memory.records;
+            if (index == 0) {
+                self.entered.set(std.testing.io);
+                self.proceed.waitUncancelable(std.testing.io);
+            }
+            const channel = try number(bytes, "\"channel\":");
+            if (channel > 2) return error.InvalidChannel;
+            const sequence = try number(bytes, "\"sequence\":");
+            if (sequence != self.sequences[channel] + 1) return error.OutOfOrder;
+            self.sequences[channel] = sequence;
+            if (channel == self.peer_channel and self.peer_at == null) self.peer_at = index;
+            try self.memory.writeRecord(bytes);
+        }
+        fn flush(raw: *anyopaque) anyerror!void {
+            const self: *@This() = @ptrCast(@alignCast(raw));
+            try self.memory.flush();
+        }
+        fn sink(self: *@This()) Sink {
+            return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush } };
+        }
+    };
+    inline for (.{ false, true }) |persistent| {
+        inline for (.{ false, true }) |shared_peer| {
+            inline for (.{ 1, 2, 3, 4 }) |quantum| {
+                var temporary = std.testing.tmpDir(.{});
+                defer temporary.cleanup();
+                var path_buffer: [192]u8 = undefined;
+                const path = try std.fmt.bufPrint(&path_buffer, ".zig-cache/tmp/{s}/fairness.journal", .{temporary.sub_path});
+                var bytes: [128 * 1024]u8 = undefined;
+                var output: FairSink = .{ .memory = MemorySink.initBuffer(&bytes), .peer_channel = if (shared_peer) 0 else 2 };
+                var failing = std.testing.FailingAllocator.init(std.testing.allocator, .{});
+                const runtime = try Runtime.create(failing.allocator(), std.testing.io, .{
+                    .submission = .low_latency,
+                    .memory_queue = if (persistent) null else .{ .capacity = 256, .max_record_bytes = 1024 },
+                    .journal = if (persistent) .{ .path = path, .capacity = 256, .max_record_bytes = 1024, .recover = false } else null,
+                    .max_thread_channels = if (shared_peer) 1 else 2,
+                    .thread_channel_capacity = 256,
+                    .routes = &.{.{ .name = "observed", .sink = output.sink(), .recovery_identity = "fairness-memory-output" }},
+                    .idle = .sleep,
+                    .consumer_batches_per_queue = quantum,
+                });
+                defer runtime.destroy();
+                const busy = try runtime.attachThread(.{ .scope = "busy" });
+                defer busy.detach() catch {};
+                const peer = if (comptime shared_peer) runtime.scoped("shared.peer") else try runtime.attachThread(.{ .scope = "peer" });
+                defer if (comptime !shared_peer) peer.detach() catch {};
+                // Every failure after starting delivery must unblock the worker before
+                // detach/destroy. The first callback freezes an actual one-record batch.
+                defer output.proceed.set(std.testing.io);
+                _ = try busy.tryEmit(.info, "first", .{});
+                const deadline = std.Io.Timeout{ .duration = .{ .clock = .awake, .raw = .fromSeconds(5) } };
+                try output.entered.waitTimeout(std.testing.io, deadline);
+                failing.fail_index = failing.alloc_index;
+                failing.resize_fail_index = failing.resize_index;
+                for (0..160) |index| _ = try busy.tryEmit(.info, "backlog", .{ .index = index });
+                _ = try peer.tryEmit(.info, "peer", .{});
+                output.proceed.set(std.testing.io);
+                try runtime.flush(.written);
+                try std.testing.expectEqual(@as(usize, 162), output.memory.records);
+                // The first batch has one record; subsequent full batches
+                // have at most 64. Check all allowed service quanta without
+                // asserting an operating-system wall-clock scheduling bound.
+                const expected_peer = @min(161, 1 + (quantum - 1) * 64);
+                try std.testing.expectEqual(@as(?usize, expected_peer), output.peer_at);
+                try std.testing.expectEqualSlices(u64, if (shared_peer) &.{ 1, 161, 0 } else &.{ 0, 161, 1 }, &output.sequences);
+                try std.testing.expectEqual(@as(u64, 162), runtime.health().written);
+                try std.testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
+                try std.testing.expect(!failing.has_induced_failure);
+            }
+        }
+    }
+}
+
+test "consumer quantum rejects unbounded or zero budgets before allocation" {
+    var bytes: [1024]u8 = undefined;
+    var memory = MemorySink.initBuffer(&bytes);
+    var failing = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
+    for ([_]usize{ 0, 5, std.math.maxInt(usize) }) |quantum| {
+        try std.testing.expectError(error.InvalidOptions, Runtime.create(failing.allocator(), std.testing.io, .{
+            .routes = &.{.{ .name = "output", .sink = memory.sink() }},
+            .consumer_batches_per_queue = quantum,
+        }));
+    }
+    try std.testing.expect(!failing.has_induced_failure);
+}
+
 test "mixed version batch releases its views on sink failure but keeps record pins and leases" {
     const Lease = struct {
         memory: MemorySink,

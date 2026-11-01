@@ -321,6 +321,82 @@ test "external runtime: shutdown wakes a producer actually waiting on a full blo
     try testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
 }
 
+test "external runtime: Memory and Mmap SPSC full wait wakes on shutdown" {
+    try linuxOnly();
+    const Blocked = struct {
+        runtime: *kron.Runtime,
+        failure: ?anyerror = null,
+        result: ?kron.EmitResult = null,
+        done: std.Io.Event = .unset,
+
+        fn run(self: *@This()) void {
+            defer self.done.set(testing.io);
+            self.emit() catch |err| {
+                self.failure = err;
+            };
+        }
+        fn emit(self: *@This()) !void {
+            const log = try self.runtime.attachThread(.{ .scope = "full.channel" });
+            defer log.detach() catch {};
+            const journal = self.runtime.thread_registry.?.getJournal(0);
+            var first = try journal.reserveSingleProducer(log.owner.producer_token);
+            defer first.abort();
+            var second = try journal.reserveSingleProducer(log.owner.producer_token);
+            defer second.abort();
+            self.result = try log.tryEmit(.info, "blocked", .{ .field = @as(u64, 1) });
+        }
+    };
+    inline for (.{ false, true }) |persistent| {
+        var tmp = testing.tmpDir(.{});
+        defer tmp.cleanup();
+        var path_buffer: [128]u8 = undefined;
+        var bytes: [4096]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        var observer: FutexObserver = .{};
+        FutexObserver.current.store(&observer, .release);
+        defer FutexObserver.current.store(null, .release);
+        var vtable = testing.io.vtable.*;
+        vtable.futexWaitUncancelable = FutexObserver.observe;
+        const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
+        const runtime = try kron.Runtime.create(testing.allocator, io, .{
+            .submission = .low_latency,
+            .overflow = .block,
+            .journal = if (persistent) .{ .path = try journalPath(&tmp, &path_buffer), .capacity = 2, .max_record_bytes = 512 } else null,
+            .memory_queue = if (persistent) null else .{ .capacity = 2, .max_record_bytes = 512 },
+            .max_thread_channels = 1,
+            .thread_channel_capacity = 2,
+            .idle = .sleep,
+            .routes = &.{.{ .name = "memory", .sink = memory.sink(), .recovery_identity = "full-channel-output" }},
+        });
+        defer runtime.destroy();
+        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
+        var producer: Blocked = .{ .runtime = runtime };
+        const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
+        var shutdown_thread: ?std.Thread = null;
+        defer {
+            // Closing wakes the admitted producer so its owner can abort the
+            // manual reservations before join; flush notifies those tombstones.
+            runtime.shutdown(.drain) catch {};
+            thread.join();
+            if (shutdown_thread) |handle| handle.join();
+        }
+        try wait(&observer.entered);
+        try testing.expect(!producer.done.isSet());
+        var shutdown: Shutdown = .{ .runtime = runtime };
+        shutdown_thread = try std.Thread.spawn(.{}, Shutdown.run, .{&shutdown});
+        try wait(&producer.done);
+        try runtime.flush(.drain);
+        try wait(&shutdown.done);
+        if (producer.failure) |err| return err;
+        if (shutdown.failure) |err| return err;
+        try testing.expectEqual(@as(?kron.EmitResult, .rejected_closing), producer.result);
+        try testing.expectEqual(@as(u64, 1), runtime.health().rejected_closing);
+        try testing.expectEqual(@as(u64, 0), runtime.health().accepted);
+        try testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
+        try testing.expectEqual(@as(usize, 0), memory.records);
+    }
+}
+
 test "external runtime: closing waits for an admitted event and rejects a later logger call" {
     var bytes: [4096]u8 = undefined;
     var memory = kron.MemorySink.initBuffer(&bytes);

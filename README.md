@@ -74,6 +74,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [批内确认与统计](docs/batch-accounting.md)：预计算durable路由需求，聚合已确认记录的written计数，错误保留准确前缀。
 - [路由过滤性能](docs/route-filter-performance.md)：配置期派生level掩码，保留scope覆盖和旧版本决策。
 - [异步存储选择](docs/async-storage.md)：普通内存异步与mmap异步，共同接口、明确恢复区别。
+- [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四批，可按负载选择一到四批。
 - [文件可靠性](docs/file-reliability.md)：部分写入、轮转、显式durable和恢复边界。
 - [嵌套字段](docs/structured-values.md)：显式array/group，固定遍历预算和递归脱敏。
 - [编码与归档](docs/encoding.md)：全树验证、长度计算与二进制framing的共同路径。

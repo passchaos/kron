@@ -80,6 +80,9 @@ pub const Options = struct {
     redaction: []const redact_module.Rule = &.{},
     max_encoded_record_bytes: usize = 64 * 1024,
     idle: ?Idle = null,
+    /// Maximum checked batches served from one queue before visiting peers.
+    /// 1..4; smaller values trade batch locality for shorter peer service gaps.
+    consumer_batches_per_queue: usize = 4,
     max_thread_channels: usize = 0,
     thread_channel_capacity: usize = 256,
     max_journal_bytes: usize = 256 * 1024 * 1024,

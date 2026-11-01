@@ -11,6 +11,7 @@ const Options = struct {
     mode: []const u8 = "async",
     storage: []const u8 = "mmap",
     schema: bool = false,
+    consumer_batches: usize = 4,
 };
 
 const Gate = struct {
@@ -127,6 +128,7 @@ pub fn main(init: std.process.Init) !void {
         .max_encoded_record_bytes = 512,
         .overflow = .block,
         .idle = .sleep,
+        .consumer_batches_per_queue = options.consumer_batches,
         .routes = &.{.{ .name = "reference", .sink = file.sink(), .format = .json }},
     });
     var runtime_live = true;
@@ -201,6 +203,7 @@ pub fn main(init: std.process.Init) !void {
         .mode = options.mode,
         .storage = options.storage,
         .prepared_schema = options.schema,
+        .consumer_batches_per_queue = options.consumer_batches,
         .metadata = "full",
         .events = options.events,
         .producers = options.producers,
@@ -260,6 +263,9 @@ fn parse(arguments: []const []const u8) !Options {
             result.storage = value;
         } else if (std.mem.eql(u8, key, "--schema")) {
             result.schema = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidSchema;
+        } else if (std.mem.eql(u8, key, "--consumer-batches")) {
+            result.consumer_batches = try std.fmt.parseInt(usize, value, 10);
+            if (result.consumer_batches == 0 or result.consumer_batches > 4) return error.InvalidBudget;
         } else {
             const count = try std.fmt.parseInt(usize, value, 10);
             if (std.mem.eql(u8, key, "--events")) {
