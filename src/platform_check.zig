@@ -46,7 +46,7 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     const sync = try kron.Runtime.create(allocator, io, .{ .routes = &.{.{ .name = "file", .sink = file.sink(), .timestamp = .{ .offset = try kron.time.UtcOffset.init(480) } }} });
     defer sync.destroy();
     const log = sync.loggerWithClock(kron.NativeClock, "platform");
-    _ = try log.tryEmit(.info, "cross", .{ .id = @as(u64, 1), .name = "native" });
+    _ = try log.tryEmitAt(kron.source.fromModule("src", @src()), .info, "cross", .{ .id = @as(u64, 1), .name = "native" });
     _ = try log.tryEmit(.info, "empty", .{});
     _ = try log.withBorrowed(.{ .request = @as(u64, 1) }).tryEmit(.info, "context", .{ .request = @as(u64, 2) });
     var encoded_bytes: [2048]u8 = undefined;

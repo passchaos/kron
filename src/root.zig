@@ -14,6 +14,7 @@ pub const time = @import("time/root.zig");
 pub const Format = encoder.Format;
 pub const format = @import("submit/format.zig");
 pub const callsite = @import("submit/callsite.zig");
+pub const source = @import("submit/source.zig");
 pub const schema_site = @import("submit/schema_site.zig");
 pub const Filter = @import("config/filter.zig").Filter;
 pub const DynamicFilter = @import("config/reload.zig").DynamicFilter;

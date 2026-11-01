@@ -37,6 +37,8 @@ pub fn build(b: *std.Build) void {
 
 `b.dependency` 创建库模块；应用不需要编译或运行库自身的工具和测试。Android/Apple 目标的系统库依赖由模块表达，应用仍需正常平台工具链和沙盒内文件路径；平台编译与运行资格见 [platforms.md](platforms.md)。
 
+上例的应用模块根文件在 `src/main.zig`，Zig的 `@src().file` 以 `src/` 为模块根。要输出仓库相对路径，在调用点使用 `kron.source.fromModule("src", @src())`；或将模块入口移到仓库根 `main.zig` 并导入 `src/main.zig`。text会输出无外围引号的 `src/路径.zig:行:列`，完整步骤见 [源码位置](usage.md#时间trace-与源位置)。
+
 ## 应用生命周期
 
 ```zig

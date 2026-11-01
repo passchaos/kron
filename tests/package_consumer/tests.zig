@@ -2,6 +2,23 @@ const std = @import("std");
 const kron = @import("kron");
 const consumer = @import("consumer");
 
+test "independent consumer maps its module source root for terminal paths" {
+    // This fixture's module root is the consumer repository root. Applications
+    // rooted in src/main.zig use "src" as documented in docs/package.md.
+    const location = comptime kron.source.fromModule(".", @src());
+    var bytes: [4096]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&bytes);
+    const logging = try kron.Logging.create(std.testing.allocator, std.testing.io, .{ .output = .{ .writer = &writer } });
+    defer logging.destroy();
+    _ = try logging.scoped("app").tryEmitAt(location, .info, "repository relative", .{});
+    try logging.shutdown();
+    const expected = try std.fmt.allocPrint(std.testing.allocator, " source={s}:{d}:{d}", .{ location.file, location.line, location.column });
+    defer std.testing.allocator.free(expected);
+    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), expected) != null);
+    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "source=\"") == null);
+    try std.testing.expectEqualStrings("tests.zig", location.file);
+}
+
 test "independent consumer system local time capability and dependency option" {
     var bytes: [4096]u8 = undefined;
     var writer = std.Io.Writer.fixed(&bytes);

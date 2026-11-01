@@ -7,6 +7,52 @@ pub const logfmt = @import("logfmt.zig");
 pub const binary = @import("../archive/writer.zig");
 const time = @import("../time/root.zig");
 
+test {
+    _ = @import("source_path.zig");
+}
+
+test "source location text keeps repository paths linkable and identical after inline and schema decoding" {
+    const field = @import("../core/field.zig");
+    const codec = @import("../core/codec.zig");
+    const schema = @import("../journal/schema.zig");
+    const references = @import("../core/schema_codec.zig");
+    const wire = @import("wire_json.zig");
+    const source = @import("../submit/source.zig").fromModule("src", .{ .module = "app", .file = "http/handler.zig", .fn_name = "handle", .line = 42, .column = 7 });
+    const event: Event = .{ .level = .info, .scope = "http", .message = "completed", .timestamp_ns = 0, .source = source, .fields = &.{field.kv("status", @as(u16, 200))} };
+    var ordinary_bytes: [2048]u8 = undefined;
+    var ordinary = std.Io.Writer.fixed(&ordinary_bytes);
+    try encode(.text, event, &ordinary);
+    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), " source=src/http/handler.zig:42:7 ") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ordinary.buffered(), "source=\"") == null);
+    var json_bytes: [2048]u8 = undefined;
+    var json_output = std.Io.Writer.fixed(&json_bytes);
+    try encode(.json, event, &json_output);
+    const parsed = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, json_output.buffered(), .{});
+    defer parsed.deinit();
+    try std.testing.expectEqualStrings(source.file, parsed.value.object.get("source").?.object.get("file").?.string);
+    var payload_bytes: [2048]u8 = undefined;
+    const payload = try codec.encode(event, &payload_bytes);
+    var keys: [256]field.Field = undefined;
+    var output_bytes: [2048]u8 = undefined;
+    const inline_output = try wire.render(.text, payload, try codec.readHeader(payload, codec.version), &output_bytes, &keys, null);
+    try std.testing.expectEqualStrings(ordinary.buffered(), inline_output);
+    var field_metadata: [64]schema.FieldSchema = undefined;
+    var arg_metadata: [64]schema.FieldSchema = undefined;
+    const metadata = try references.eventMetadata(event, &field_metadata, &arg_metadata);
+    const layout = try schema.layout(4096, 1, 1024);
+    const region = try std.testing.allocator.alignedAlloc(u8, .fromByteUnits(4096), layout.size);
+    defer std.testing.allocator.free(region);
+    @memset(region, 0);
+    var registry = try schema.Registry.init(std.testing.allocator, std.testing.io, @alignCast(region[layout.offset..]), layout);
+    defer registry.deinit();
+    const reference = (try registry.register(metadata)).ref;
+    try registry.markReady(reference);
+    const definition = try registry.resolve(reference);
+    const referenced = try references.encodeReference(event, definition, &payload_bytes);
+    const reference_output = try wire.renderReference(.text, referenced, try references.readReferenceHeader(referenced, definition, keys.len), definition, &output_bytes, &keys, null);
+    try std.testing.expectEqualStrings(ordinary.buffered(), reference_output);
+}
+
 /// Event descriptors and borrowed bytes must remain valid and unchanged until
 /// this call returns. Writer callbacks must preserve that borrowed storage.
 pub fn encode(format: Format, event: Event, writer: *std.Io.Writer) std.Io.Writer.Error!void {

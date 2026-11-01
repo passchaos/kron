@@ -9,6 +9,7 @@ const decimal = @import("decimal.zig");
 const time = @import("../time/root.zig");
 
 const escaping_primitives = @import("escaping.zig");
+const source_path = @import("source_path.zig");
 pub const Escaping = escaping_primitives.Escaping;
 pub const quoted = escaping_primitives.quoted;
 pub const QuotedWriter = escaping_primitives.QuotedWriter;
@@ -169,7 +170,7 @@ pub fn encodeTextWithAttributes(event: Event, readable: ?[]const u8, writer: *st
     }
     if (event.source) |source| {
         try writer.writeAll(" source=");
-        try quoted(writer, source.file, .text);
+        try source_path.write(writer, source.file);
         try writer.writeByte(':');
         try decimal.write(writer, source.line);
         try writer.writeByte(':');

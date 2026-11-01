@@ -476,8 +476,7 @@ pub fn build(b: *std.Build) void {
     verify.dependOn(&run_capture_bench_tests.step);
 
     inline for (.{ .{ "quick-start", "examples/quick_start.zig" }, .{ "file-logging", "examples/file_logging.zig" }, .{ "structured", "examples/structured.zig" }, .{ "threaded", "examples/threaded.zig" }, .{ "rolling", "examples/rolling.zig" }, .{ "basic", "examples/basic.zig" }, .{ "readable-time", "examples/readable_time.zig" }, .{ "async-memory", "examples/async_memory.zig" }, .{ "std-log", "examples/std_log.zig" }, .{ "prepared", "examples/prepared.zig" }, .{ "hot-configuration", "examples/hot_configuration.zig" }, .{ "configuration-sources", "examples/configuration_sources.zig" }, .{ "predicates", "examples/predicates.zig" }, .{ "tsc-clock", "examples/tsc_clock.zig" } }) |example| {
-        const example_module = b.createModule(.{ .root_source_file = b.path(example[1]), .target = target, .optimize = optimize });
-        example_module.addImport("kron", module);
+        const example_module = createExampleModule(b, target, optimize, module, example[1], null);
         const exe = b.addExecutable(.{ .name = "kron-" ++ example[0], .root_module = example_module });
         const run = b.addRunArtifact(exe);
         b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example").dependOn(&run.step);
@@ -490,8 +489,7 @@ pub fn build(b: *std.Build) void {
         .{ "mmap", "examples/mmap.zig" },
         .{ "source-location", "examples/source_location.zig" },
     }) |example| {
-        const local_example_module = b.createModule(.{ .root_source_file = b.path(example[1]), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
-        local_example_module.addImport("kron", module);
+        const local_example_module = createExampleModule(b, target, optimize, module, example[1], target.result.os.tag != .windows);
         const local_example = b.addExecutable(.{ .name = "kron-" ++ example[0] ++ "-example", .root_module = local_example_module });
         b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example with system local timestamps").dependOn(&b.addRunArtifact(local_example).step);
         verify.dependOn(&local_example.step);
@@ -499,4 +497,13 @@ pub fn build(b: *std.Build) void {
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);
+}
+
+fn createExampleModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, kron: *std.Build.Module, path: []const u8, link_libc: ?bool) *std.Build.Module {
+    const selection = b.addOptions();
+    selection.addOption([]const u8, "name", std.fs.path.stem(path));
+    const example = b.createModule(.{ .root_source_file = b.path("examples.zig"), .target = target, .optimize = optimize, .link_libc = link_libc });
+    example.addImport("kron", kron);
+    example.addOptions("kron_example", selection);
+    return example;
 }

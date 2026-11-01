@@ -491,7 +491,18 @@ zig build run-source-location -Doptimize=ReleaseSafe
 
 它向 `kron-source-location.jsonl` 和stdout同时输出JSON，使用本地时间。`tryEmitAt(@src(), ...)` 演示直接消息，`tryLogfAt(@src(), ...)` 演示格式串；JSON的source包含 `module`（Zig构建模块）、`file`、`function`、`line`、`column`。`scope="http.server"` 是应用指定的业务组件名称，与 `source.module` 各有用途。把 `@src()` 放在需要定位的调用点；包装函数内部的 `@src()` 定位包装函数，想记录上层调用者时应显式传入source。
 
-现有 [Mmap例子](../examples/mmap.zig) 和 [文件/stdout本地时间例子](../examples/file_stdout_local_time.zig) 也使用 `tryLogfAt(@src(), ...)`：文件JSON保留完整source，stdout text显示 `source="文件名":行:列`。需要在stdout也看到完整module/function等信息时选择JSON。
+现有 [Mmap例子](../examples/mmap.zig) 和 [文件/stdout本地时间例子](../examples/file_stdout_local_time.zig) 也使用 `tryLogfAt(@src(), ...)`：文件JSON保留完整source，stdout text显示 `source=examples/mmap.zig:35:31`，路径相对仓库根目录且没有外围引号，方便IDE终端识别跳转。需要在stdout也看到完整module/function等信息时选择JSON。
+
+Zig的 `@src().file` 相对当前模块的源码根目录。仓库示例统一从根目录 [examples.zig](../examples.zig) 导入，因此保留 `examples/` 前缀；JSON的 `source.file` 同样保存此完整相对路径。JSON路径仍是合法JSON字符串。
+
+消费应用有两种接法：将编译入口放在仓库根目录，例如根 `main.zig` 中 `pub const main = @import("src/main.zig").main`；或者保留 `src/main.zig` 模块入口，在调用点通过编译期helper补上模块目录：
+
+```zig
+_ = try log.tryLogfAt(kron.source.fromModule("src", @src()), .info,
+    "request {d} completed", .{request}, .{});
+```
+
+该例将 `http/handler.zig` 映射为 `src/http/handler.zig`。多个模块分别提供自己的仓库相对目录，如 `packages/http/src`；无需查文件、读取cwd或在每条事件上分配/拼接。helper将目录分隔符规范为 `/`，保留module/function/line/column，拒绝绝对路径和越过仓库根目录的 `..`。普通编码器保留事件已经捕获的完整路径，不自动推断未知模块目录。text对控制字符转义，正常相对路径直接输出；logfmt仍按其格式要求引用路径字段。
 
 时钟高级选择使用借用 Runtime：`logging.runtime().loggerWithClock(kron.NativeClock, "scope")`；静态最低级别使用 `loggerWithLevel(.info, "scope")`。静态被禁用的级别无法动态打开。TSC 需显式资格检查，见 [TSC 时钟](tsc-clock.md)。
 
