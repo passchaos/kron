@@ -1,13 +1,13 @@
 //! Prepared measurement stays in the current safe runtime call; public codecs
 //! and rewritten events still validate their complete borrowed value tree.
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const types = @import("runtime_types.zig");
-const field = @import("field.zig");
-const Event = @import("event.zig").Event;
-const reference = @import("schema_codec.zig");
-const codec = @import("codec.zig");
-const MemorySink = @import("../sink/memory.zig").MemorySink;
+const Runtime = @import("../runtime.zig").Runtime;
+const types = @import("../runtime_types.zig");
+const field = @import("../field.zig");
+const Event = @import("../event.zig").Event;
+const reference = @import("../schema_codec.zig");
+const codec = @import("../codec.zig");
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
 
 test "prepared runtime measure visits the final tree once while public reference codecs always validate" {
     inline for (.{ .asynchronous, .low_latency }) |submission| {

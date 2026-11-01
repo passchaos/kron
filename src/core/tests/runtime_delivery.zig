@@ -1,11 +1,11 @@
 //! Real worker batches: call counts are observed on the callback thread, while
 //! reservation gaps establish a complete mixed/one-version batch beforehand.
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const MemorySink = @import("../sink/memory.zig").MemorySink;
-const Sink = @import("../sink/interface.zig").Sink;
-const routes = @import("../config/routes.zig");
-const batch_module = @import("delivery_batch.zig");
+const Runtime = @import("../runtime.zig").Runtime;
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
+const Sink = @import("../../sink/interface.zig").Sink;
+const routes = @import("../../config/routes.zig");
+const batch_module = @import("../delivery_batch.zig");
 
 const ObservedSink = struct {
     memory: MemorySink,
@@ -48,7 +48,7 @@ test "real shared and SPSC batches perform one configuration lookup for 31 recor
         defer gap.abort();
         failing.fail_index = failing.alloc_index;
         failing.resize_fail_index = failing.resize_index;
-        for (0..31) |index| try std.testing.expectEqual(@import("logger.zig").EmitResult.accepted, try log.tryEmit(.info, "same batch", .{ .id = @as(u64, index) }));
+        for (0..31) |index| try std.testing.expectEqual(@import("../logger.zig").EmitResult.accepted, try log.tryEmit(.info, "same batch", .{ .id = @as(u64, index) }));
         try std.testing.expectEqual(@as(usize, 32), journal.pending());
         const updates = batch_module.TestingAudit.written_updates.load(.monotonic);
         gap.abort();
@@ -229,7 +229,7 @@ test "mixed version batch releases its views on sink failure but keeps record pi
 test "batched written counts retain the exact acknowledged prefix after late reclaim corruption" {
     const CorruptOnFlush = struct {
         memory: MemorySink,
-        journal: ?*@import("../journal/journal.zig").Journal = null,
+        journal: ?*@import("../../journal/journal.zig").Journal = null,
         corrupt: bool = true,
         releases: usize = 0,
 

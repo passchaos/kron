@@ -1,9 +1,9 @@
 //! Space wait registration and terminal broadcasts use each stable SPSC queue.
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const JournalModule = @import("../journal/journal.zig");
-const MemorySink = @import("../sink/memory.zig").MemorySink;
-const types = @import("runtime_types.zig");
+const Runtime = @import("../runtime.zig").Runtime;
+const JournalModule = @import("../../journal/journal.zig");
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
+const types = @import("../runtime_types.zig");
 
 const Observer = struct {
     var active: ?*Observer = null;
@@ -115,7 +115,7 @@ test "queue progress unrelated written batches never notify the SPSC space waite
         const before = journal.single.space_epoch.load(.seq_cst);
         for (0..3) |index| {
             _ = try runtime.scoped("peer").tryEmit(.info, "unrelated", .{});
-            const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+            const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
             while (runtime.health().written != index + 1) {
                 if (deadline.expired(std.testing.io)) return error.PeerDidNotWrite;
                 std.atomic.spinLoopHint();
@@ -125,7 +125,7 @@ test "queue progress unrelated written batches never notify the SPSC space waite
         try std.testing.expectEqual(@as(usize, 0), observer.wakes.load(.acquire));
         var shutdown: Shutdown = .{ .runtime = runtime };
         closing_thread = try std.Thread.spawn(.{}, Shutdown.run, .{&shutdown});
-        const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+        const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
         while (observer.wakes.load(.acquire) == 0) {
             if (deadline.expired(std.testing.io)) return error.CloseDidNotNotify;
             std.atomic.spinLoopHint();
@@ -214,7 +214,7 @@ test "queue progress worker failure on another journal broadcasts the original e
         try wait(&observer.entered);
         const before = journal.single.space_epoch.load(.seq_cst);
         _ = try runtime.scoped("shared.failure").tryEmit(.info, "fails on different journal", .{});
-        const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+        const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
         while (observer.wakes.load(.acquire) == 0) {
             if (deadline.expired(std.testing.io)) return error.WorkerErrorDidNotNotify;
             std.atomic.spinLoopHint();

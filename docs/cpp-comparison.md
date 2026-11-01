@@ -1,12 +1,15 @@
 # C++ 和 Foundation Logging 性能对照
 
+本页主要保留历史对照的复现方式与当时结果。最新归档的完整Memory/Mmap同轮对照绑定源码 `e8bd353`，真实Foundation spdlog前端＋Rust后台与kron共200项试验、2020万条物理JSON核对，见 [详细报告](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。下面的182fc9e、4447fe6和更早快照保持自己的身份，不作为整理后当前源码的新排名。所有性能入口见 [bench导航](../bench/README.md)。
+
+
 文件后端可独立测量：`bench/cpp_reference/kron_reference.zig`新增`--backend=portable|linux_uring|auto`及实际后端报告，默认portable。`bench/cpp_reference/compare_backends.py`以同一程序比较两种后端，Memory/Mmap分开逐条核对完整文件。当前160项数据的io_uring中位慢约17%–19%，具体负载与资格见[io_uring证据](../bench/evidence/2026-11-01-uring-current/README.md)。此后端实验未运行Foundation，不用于更新其跨库排名。
 
-最新按Memory/Mmap范围的同轮比较使用源码`182fc9e`默认consumer budget4，只运行Foundation/kron：120项完整文件试验、1212万条JSON全部核对。Memory下kron中位领先，Mmap单producer中位领先、四producer仍落后，波动与初始化/尾部限制见[当前Memory/Mmap证据](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。没有把更早对照或可选budget1与当前默认结果混合。
+此前按Memory/Mmap范围的同轮比较使用源码`182fc9e`默认consumer budget4，只运行Foundation/kron：120项完整文件试验、1212万条JSON全部核对。Memory下kron中位领先，Mmap单producer中位领先、四producer仍落后，波动与初始化/尾部限制见[当前Memory/Mmap证据](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。没有把更早对照或可选budget1与当前默认结果混合。
 
-当前源码`4447fe6`的Foundation/独立spdlog/kron同轮对照已完成140项试验、1414万条JSON核对。当前中位结果与资格在[完整工作流比较](cpp-full-workflow.md)页首和[当前源码证据](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)；Foundation使用其真实spdlog前端和Rust后台，不是独立spdlog替代实现。当前kron仍未全面超过该组合。
+此前源码`4447fe6`的Foundation/独立spdlog/kron同轮对照已完成140项试验、1414万条JSON核对。该快照中位结果与资格在[完整工作流比较](cpp-full-workflow.md)页首和[当前源码证据](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)；Foundation使用其真实spdlog前端和Rust后台，不是独立spdlog替代实现。当前kron仍未全面超过该组合。
 
-最新实测使用 spdlog 1.17.0、Quill 13.1.0、当前 kron，以及用户指定的 `~/robotics/onboard-monorepo/foundation/logging` C++ 前端与 Rust 后台。结果、完整流程分段和边界见 [完整工作流比较](cpp-full-workflow.md)。2026-11-01 主矩阵 260 个试验逐条确认 26,260,000 条日志；Foundation 原生默认格式另有 40 个试验、4,040,000 条日志。没有日志缺失或格式失败。
+更早主矩阵使用 spdlog 1.17.0、Quill 13.1.0、当前 kron，以及用户指定的 `~/robotics/onboard-monorepo/foundation/logging` C++ 前端与 Rust 后台。结果、完整流程分段和边界见 [完整工作流比较](cpp-full-workflow.md)。2026-11-01 主矩阵 260 个试验逐条确认 26,260,000 条日志；Foundation 原生默认格式另有 40 个试验、4,040,000 条日志。没有日志缺失或格式失败。
 
 ```sh
 python3 bench/cpp_reference/run.py \

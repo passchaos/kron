@@ -1,9 +1,9 @@
 //! Accepted records and open shared admissions protect a configuration separately.
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const configurations = @import("../config/routes.zig");
-const MemorySink = @import("../sink/memory.zig").MemorySink;
-const Sink = @import("../sink/interface.zig").Sink;
+const Runtime = @import("../runtime.zig").Runtime;
+const configurations = @import("../../config/routes.zig");
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
+const Sink = @import("../../sink/interface.zig").Sink;
 
 const Lease = struct {
     memory: MemorySink,
@@ -12,7 +12,7 @@ const Lease = struct {
         const self: *@This() = @ptrCast(@alignCast(raw));
         self.released += 1;
     }
-    fn route(self: *@This(), name: []const u8) @import("runtime_types.zig").RouteOptions {
+    fn route(self: *@This(), name: []const u8) @import("../runtime_types.zig").RouteOptions {
         return .{ .name = name, .sink = self.memory.sink(), .recovery_identity = name, .release = .{ .context = self, .release = release } };
     }
 };
@@ -47,7 +47,7 @@ test "shared admission retains its checked view without a pending pin conversion
         try std.testing.expectEqual(@as(usize, 2), view.snapshot.readers.load(.seq_cst));
         try std.testing.expectEqual(@as(usize, 0), view.snapshot.pendingCount());
         try std.testing.expectEqual(before, configurations.TestingAudit.global_pending_rmw.load(.monotonic));
-        try std.testing.expectEqual(@import("runtime_types.zig").EmitResult.accepted, try runtime.submit(admission, .{ .level = .info, .scope = "view", .message = "held", .timestamp_ns = 0, .fields = &.{} }));
+        try std.testing.expectEqual(@import("../runtime_types.zig").EmitResult.accepted, try runtime.submit(admission, .{ .level = .info, .scope = "view", .message = "held", .timestamp_ns = 0, .fields = &.{} }));
         try std.testing.expectEqual(@as(usize, 1), view.snapshot.pendingCount());
         runtime.end();
         admitted = false;
@@ -108,8 +108,8 @@ test "shared admission old view preserves retired lease before reserve and after
     try std.testing.expectEqual(@as(usize, 0), old.released);
     try std.testing.expectEqual(@as(usize, 1), snapshot.readers.load(.seq_cst));
     try std.testing.expectEqual(@as(usize, 0), snapshot.pendingCount());
-    try std.testing.expectEqual(@import("runtime_types.zig").EmitResult.accepted, try runtime.submit(admission, .{ .level = .info, .scope = "held", .message = "old", .timestamp_ns = 0, .fields = &.{} }));
-    const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+    try std.testing.expectEqual(@import("../runtime_types.zig").EmitResult.accepted, try runtime.submit(admission, .{ .level = .info, .scope = "held", .message = "old", .timestamp_ns = 0, .fields = &.{} }));
+    const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
     while (runtime.health().written != 1 or snapshot.readers.load(.seq_cst) != 1) {
         if (deadline.expired(std.testing.io)) return error.WorkerDidNotWrite;
         std.atomic.spinLoopHint();
@@ -141,15 +141,15 @@ test "shared admission view unwinds filtered sampled capture failure and sync de
     defer view.release();
     const pins_before = configurations.TestingAudit.global_pending_rmw.load(.monotonic);
     for (0..100) |_| {
-        try std.testing.expectEqual(@import("runtime_types.zig").EmitResult.filtered, try runtime.scoped("out").tryEmit(.debug, "filtered", .{}));
-        try std.testing.expectEqual(@import("runtime_types.zig").EmitResult.sampled, try runtime.scoped("out").tryEmit(.info, "sampled", .{}));
+        try std.testing.expectEqual(@import("../runtime_types.zig").EmitResult.filtered, try runtime.scoped("out").tryEmit(.debug, "filtered", .{}));
+        try std.testing.expectEqual(@import("../runtime_types.zig").EmitResult.sampled, try runtime.scoped("out").tryEmit(.info, "sampled", .{}));
     }
     try std.testing.expectEqual(pins_before, configurations.TestingAudit.global_pending_rmw.load(.monotonic));
     try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
     try std.testing.expectEqual(@as(usize, 0), view.snapshot.pendingCount());
     // Warn bypasses the exhausted sampler, enters capture, then duplicate keys
     // unwind the admission reader without leaving a record or pending pin.
-    try std.testing.expectError(error.DuplicateKey, runtime.scoped("out").tryEmit(.warn, "bad", &.{ @import("field.zig").kv("same", 1), @import("field.zig").kv("same", 2) }));
+    try std.testing.expectError(error.DuplicateKey, runtime.scoped("out").tryEmit(.warn, "bad", &.{ @import("../field.zig").kv("same", 1), @import("../field.zig").kv("same", 2) }));
     try std.testing.expectEqual(@as(usize, 1), view.snapshot.readers.load(.seq_cst));
     try std.testing.expectEqual(@as(u64, 0), runtime.activeAdmissions());
     try std.testing.expectEqual(pins_before, configurations.TestingAudit.global_pending_rmw.load(.monotonic));

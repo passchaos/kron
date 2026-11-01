@@ -1,6 +1,6 @@
 const std = @import("std");
-const Logging = @import("logging.zig").Logging;
-const EmitResult = @import("core/logger.zig").EmitResult;
+const Logging = @import("root.zig").Logging;
+const EmitResult = @import("../core/logger.zig").EmitResult;
 
 test "managed logging writer lifetime context snapshots filtering and shutdown allocate only at initialization" {
     inline for (.{ .sync, .asynchronous, .spsc }) |mode| {
@@ -64,7 +64,7 @@ test "managed logging owns file cleanup and mmap close reopen including prepared
             .format = .json,
             .queue = if (persistent) .{ .mmap = .{ .path = journal_path, .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } } else .{ .memory = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
         };
-        const shape: @import("core/event.zig").Event = .{ .level = .info, .scope = "prepared", .message = "event {d}", .message_template = true, .timestamp_ns = 0, .fields = &.{@import("core/field.zig").kv("n", @as(u64, 0))}, .format_args = &.{@import("core/field.zig").kv("0", @as(u64, 0))} };
+        const shape: @import("../core/event.zig").Event = .{ .level = .info, .scope = "prepared", .message = "event {d}", .message_template = true, .timestamp_ns = 0, .fields = &.{@import("../core/field.zig").kv("n", @as(u64, 0))}, .format_args = &.{@import("../core/field.zig").kv("0", @as(u64, 0))} };
         const logging = try Logging.create(std.testing.allocator, std.testing.io, options);
         var live = true;
         defer if (live) logging.destroy();
@@ -140,8 +140,8 @@ test "managed logging file initialization rolls back each allocation failure" {
 }
 
 test "managed logging failed prepared attachment releases its channel and shared prepared logger works" {
-    const event = @import("core/event.zig");
-    const field = @import("core/field.zig");
+    const event = @import("../core/event.zig");
+    const field = @import("../core/field.zig");
     inline for (.{ .asynchronous, .spsc }) |mode| {
         var bytes: [8192]u8 = undefined;
         var writer = std.Io.Writer.fixed(&bytes);

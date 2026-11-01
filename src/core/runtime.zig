@@ -1358,8 +1358,8 @@ pub const Runtime = struct {
 };
 
 test {
-    _ = @import("runtime_queue_progress_tests.zig");
-    _ = @import("runtime_coalesced_tests.zig");
-    _ = @import("runtime_tests.zig");
-    _ = @import("runtime_delivery_tests.zig");
+    _ = @import("tests/runtime_queue_progress.zig");
+    _ = @import("tests/runtime_coalesced.zig");
+    _ = @import("tests/runtime.zig");
+    _ = @import("tests/runtime_delivery.zig");
 }

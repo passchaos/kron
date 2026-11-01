@@ -1,593 +1,137 @@
 # kron 整体设计
 
-状态：设计与实现验收持续更新。  
-讨论汇总日期：2026-10-31。  
-目标工具链：Zig 0.16.0。
-
-本文是实现与评审的统一依据。它替代早期讨论中“所有异步日志先格式化再入普通内存队列”的主线方案：最终高性能路径采用自包含二进制事件、file-backed mmap journal、后台格式化以及可选 io_uring 输出。
-
-本文描述目标架构；当前已有实现与测试，实际 API 以公开模块和运行示例为准，完成证据与剩余缺口见 [实现验收清单](implementation-status.md)。下列最初接口草案不保证与当前命名完全一致；外部性能数字仍只作为调研证据，不能作为 kron 的已有成绩或保证。
-
-按用户补充，异步支持显式普通内存队列与mmap journal两种选项。普通内存accepted不具备进程崩溃恢复，mmap仍作为可靠文件日志主线；两者共用捕获、过滤、采样、后台交付与确认接口。选择和验证见 [异步存储](async-storage.md)。
-
-## 当前实施范围
-
-2026-10-31 按用户要求，当前范围是 Windows/Linux/macOS/Android/iOS 单机日志：同步/SPSC/共享 journal、text/JSON/logfmt、文件与轮转、动态配置、脱敏、结构化字段、归档/恢复、可靠性边界和性能。网络 sink 和 exporter 已删除。跨平台状态必须区分后端实现、交叉编译和实际设备运行。
-
-公共接口仅提供 Zig API；五个平台通过同一个 Zig 包导入。应用的 target、优化级别与线程配置传入库模块，接入示例和源码分发验收见 [Zig 包接入](package.md)。
-
-时间处理提供UTC与显式固定偏移，并可显式启用系统local；local采用平台时区/DST规则与按秒缓存，异步消费者负责格式化，不内置自己的地理时区/IANA数据库。可读RFC3339时间在交付阶段生成，同秒日期缓存由配置版本拥有；事件仍保存原始Unix纳秒，单调时钟继续负责deadline、采样和轮转。日期、Timestamp、Duration类型及配置/恢复契约见 [时间处理](time.md)。
-
-单线程构建支持 `.submission = .sync`，初始化不创建控制线程或后台线程。普通 flush、durable 文件确认、配置 reload 和 shutdown 继续有效；异步/SPSC 返回 `ThreadsUnavailable`，带 deadline 的控制接口返回 `TimedControlUnavailable`，避免以阻塞 sink 调用冒充有限时间保证。
+工具链：Zig 0.16。本文说明当前架构、不可放宽的协议与完整验收要求。应用接入见 [使用指南](usage.md)，源码依赖见 [代码结构](code-structure.md)，已完成证据与差距见 [当前状态](implementation-status.md)。原设计的研究记录与已替换接口草案保存在 [历史设计](history/design-2026-10-31.md)。
 
 ## 1. 目标和边界
 
-### 1.1 产品目标
+1. Zig原生结构化事件，利用comptime检查格式与字段。
+2. 降低producer开销，将数值、转义、日期和文件I/O放在异步消费者。
+3. text/JSON可直接查看和采集，logfmt/binary作为可选格式。
+4. Mmap提供完整提交的进程崩溃恢复，Memory提供显式易失队列。
+5. 明确accepted、written、durable和过载/磁盘错误边界。
+6. 初始化与准备后，内建正常producer路径不调用堆allocator。
+7. queue、schema、channel、config、输出scratch和在途I/O均有预算并可观察。
+8. 用清晰前端、配置、队列、encoder、sink/backend边界组合实现。
 
-1. Zig 原生，结构化事件是一等公民，利用 comptime 校验格式与字段。
-2. 降低应用线程的日志开销，将数值格式化、JSON 转义、日期格式化和文件 I/O 移到后台。
-3. 默认产生 text 或 JSON Lines，保持 `tail`、`less`、`grep` 和现有采集系统的使用体验。
-4. 文件日志主线提供进程崩溃恢复：已完整提交到 mmap journal 的事件可以在进程异常退出后恢复。
-5. 明确描述进程崩溃、系统崩溃、断电、磁盘错误和过载下的行为，禁止将入队成功宣传为持久化成功。
-6. 初始化和预热后，内建类型的正常同步/异步 producer 路径不调用堆 allocator。
-7. 所有资源有预算；丢弃、失败、积压、恢复与持久化进度可观测。
-8. 可组合 filter、encoder、sink 和 adapter，避免一个巨型 Logger 承担全部职责。
+当前范围为Windows/Linux/macOS/Android/iOS单机日志，公共接口为Zig；网络sink/exporter已移除。实现、交叉编译、链接、设备运行和持久化资格分别记录。运行时不承诺任意硬件普遍最快、恒定低纳秒、任意I/O有限时间完成或Mmap自动抵抗断电。多进程并发轮转同一文件、自动任意对象图和信号handler排空Runtime不在当前保证内。
 
-### 1.2 首版不承诺
+## 2. 业界参考与取舍
 
-- 所有日志调用恒定个位数纳秒，或任意硬件上超越全部 C++ 日志库。
-- mmap 写入天然抵抗机器断电。
-- 后台线程永远在指定毫秒数内被调度，或任意负载下不会积压。
-- 自动序列化任意指针、对象图或具有副作用的用户 formatter。
-- 多个进程共同写入并轮转同一日志文件集合。
-- 对任意 sink 提供恰好一次交付；首版崩溃恢复采用可识别重复的至少一次语义。
-- 任意异步请求提交成功后都一定完成；必须检查完成结果。
-- 信号处理函数能够安全排空整个日志运行时。
-
-## 2. 业界参考与采用决策
-
-| 参考库/标准 | 借鉴的机制 | kron 的约束或调整 |
+| 参考 | 采用的机制 | kron边界 |
 | --- | --- | --- |
-| Rust tracing/log | Event、Metadata、Layer、静态调用点、编译期 level | 上下文显式传递，调用点缓存按 runtime/配置版本隔离 |
-| Go slog | Enabled 前置、不可变派生 logger、结构化属性 | 增加可检查错误接口与健康统计 |
-| Go zap | typed fields、checked event、atomic level、采样 | 不建立 Sugared/typed 两套庞大前端 |
-| Go zerolog | 直接编码、低分配、非阻塞输出 | 主 API 不依赖最后调用 Msg/send 才产生事件 |
-| Java Log4j2/Logback | 有界异步、配置快照、批量 flush、明确背压 | 不默认无限扩容，不依赖全局线程池或隐式传播 |
-| C++ spdlog | sink 组合、同步/异步分离、flight recorder | 所有权显式，fatal 不自动退出进程 |
-| C++ Quill/fmtlog | 每线程 SPSC、静态元数据、二进制参数捕获、后台格式化 | journal channel 使用文件映射，字符串必须复制，线程显式注册 |
-| C++ PlatformLab NanoLog | 编译期静态信息提取、紧凑事件、离线解码 | 二进制直接落盘为可选归档，默认仍输出可读日志 |
-| C++ Morgan Stanley Binlog | 自包含 schema/metadata、二进制事件、恢复工具 | 独立恢复不能依赖已经退出的进程或裸指针 |
-| C++ Reckless | 延迟格式化、批量 I/O、业务工作负载评估 | 不以借用动态指针换取默认路径的性能 |
-| C++ XTR | io_uring 和 POSIX 两种文件后端 | 后端可替换，收益通过同语义基准决定 |
-| Tencent BqLog | 压缩归档、不同负载和多平台吞吐评估 | 独立报告压缩/文本吞吐，不据不同格式排统一名次 |
-| Python logging | logger/filter/formatter/handler 分层 | 应用配置运行时，库不隐式启动后台服务 |
-| .NET Serilog | enrichment、结构化属性、多 sink | 稳定字段语义、敏感字段前置处理 |
-| OpenTelemetry Logs 数据模型 | severity、TraceId、SpanId、scope、时间字段 | 借鉴本地结构化事件模型 |
+| tracing / Go slog / zap | 结构化事件、enabled前置、不可变context、编译期元数据 | 显式context/trace传播；单一应用owner |
+| spdlog / Foundation | sink组合、按秒日期缓存、直接数字生成 | local在消费者格式化；源码路径按项目根显示 |
+| Quill / fmtlog / NanoLog | 每线程SPSC、typed参数捕获、后台格式化 | 动态字节在accepted前复制，显式线程附着 |
+| Binlog / journaling实现 | 自包含metadata、CRC、独立读取与恢复 | 不持久化进程裸指针，版本独立校验 |
+| OS file/mmap/io_uring | 有界批次、文件身份、写出完成与sync | 部分写/CQE错误保留准确前缀，durable独立确认 |
 
-### 2.1 C++ 性能证据如何使用
+具体tracing职责映射见 [接口架构](api-design.md)，实际源码机制和性能实验见 [业界优化参考](industry-performance-lessons.md)。跨库排名必须来自相同负载与完成边界的同轮测量。
 
-- NanoLog 官方历史结果约 7ns 中位 producer 延迟、80M+ 条/秒，包含二进制输出和离线解码设计。
-- fmtlog 官方历史结果约 6ns producer 延迟，但同表文本吞吐约 3–7M 条/秒；其文档明确指出不能直接与 NanoLog 二进制吞吐比较。
-- Quill v13 的调优机器结果中，部分数字事件 producer p50 约 6–8ns。系统调优、参数类型、queue policy 和线程数均影响结果。
-- Binlog 官方示例中，单整数 no-clock/TSC 约 8–9ns，system clock 约 34ns，字符串约 38ns；cache-cold 场景明显更慢。
-- Reckless 的性能文档特别展示队列饱和、业务工作负载以及后台线程竞争 CPU 对结果的影响。
+## 3. 事件流
 
-这些数据说明设计方向值得采用，并不证明 kron 能达到相同数字。前端入队、文本格式化、文件写出和 durable sync 必须分别测量。
-
-## 3. 最终架构
-
-```text
-                       应用线程
-                          │
-                Logger / ChildLogger
-                          │
-       comptime filter → runtime filter → sampler
-                          │
-           producer redaction + typed capture
-                          │
-           ┌──────────────┴─────────────────┐
-           │                                │
-      sync submission                journal submission
-           │                                │
-      text/JSON encode              file-backed MAP_SHARED
-           │                        self-contained records
-           │                                │
-           │                          后台 后台交付线程
-           │                                │
-           │                    decode → Router → encode
-           │                                │
-           └──────────────┬─────────────────┘
-                          │
-                  合并完整输出批次
-                          │
-           ┌──────────────┴─────────────────┐
-           │                                │
-     write/writev backend             io_uring backend
-           │                                │
-           └──────────────┬─────────────────┘
-                          │
-                   text / JSON files
-
-  异常退出后：打开 journal → 扫描有效提交 → 重放尚未确认事件
-  可选输出：版本化 binary archive，配套 kroncat
+```mermaid
+flowchart TD
+    A[应用logger] --> B[静态level与配置版本入场]
+    B --> C[filter / sampling / typed capture / redaction / predicate]
+    C --> D{提交方式}
+    D -->|sync| E[串行交付]
+    D -->|shared或SPSC| F[有界Memory或Mmap队列]
+    F --> G[消费者校验与解析]
+    G --> E
+    E --> H[按原route配置编码 / 日期缓存]
+    H --> I[文件 / 轮转 / writer]
+    I --> J[portable或io_uring批量写]
+    J --> K[written屏障 / 可选durable / 回收]
 ```
 
-异步路径的 producer 直接写文件映射。不能先写普通内存队列，再由后台搬到 journal，否则这个前置队列仍然是进程崩溃丢失窗口。
+filter/sampler入场在昂贵字段构造前，字段predicate需要捕获后的值。记录接受时固定配置版本与目标，消费者不按最新filter重新决定旧记录。Mmap记录直接写入文件映射；不能先放易失队列再异步搬到journal而声称原accepted可恢复。
 
-### 3.1 提交模式与输出格式分开
+## 4. 公共接口
 
-| 提交模式 | 队列/存储 | 使用场景 | 顺序与开销 |
-| --- | --- | --- | --- |
-| sync | 调用线程编码并写 sink | 启动、关键错误、需要直接错误反馈的记录 | 延迟包含编码、锁和 I/O |
-| async | 共享有界 mmap journal，MPSC | 普通并发文件日志的默认异步路径 | 共享 reservation 竞争，提供提交顺序 |
-| low_latency | 显式 attach 的每线程 mmap SPSC channel | 高频、低尾延迟日志 | 每线程 FIFO，无默认跨线程全序 |
-
-text、JSON Lines、logfmt 和 binary archive 是输出格式/sink，不能当成另一套提交 API。
-
-运行时不根据负载静默切换模式。stdout/stderr、测试和无文件环境可选择 sync；可选 volatile async 必须明确标注不提供进程崩溃恢复，不能作为 journal 模式的隐藏降级。
-
-早期讨论中的 async_preencoded 保留为显式兼容策略：遇到不适合 typed capture 的自定义格式化时，调用者选择前端编码，并把完整字节直接提交到 journal。不能偷偷退化并改变 latency 模型。
-
-## 4. 公共接口草案
-
-以下示例表达行为契约，不是已编译通过的代码，也不固定最终 factory 命名。
+统一应用入口是 `kron.Logging.create(allocator, io, options)`。一个owner管理单输出、多输出与轮转；`scoped`、`attachThread`、prepared helpers返回直接借用底层Runtime的logger，没有新增每事件owner转发。
 
 ```zig
-const kron = @import("kron");
-
-var runtime = try kron.Runtime.create(allocator, init.io, .{
-    .submission = .async,
-    .journal = .{
-        .path = "logs/app.journal",
-        .max_bytes = 64 * 1024 * 1024,
-        .overflow = .block,
-        .recovery = .replay,
-    },
-    .routes = .{
-        .{
-            .name = "console", .format = .text, .min_level = .warn,
-            .delivery = .best_effort,
-        },
-        .{
-            .name = "file", .format = .json, .path = "logs/app.jsonl",
-            .delivery = .required, .reclaim_after = .written,
-        },
-    },
-    .file_backend = .auto,
+const logging = try kron.Logging.create(allocator, io, .{
+    .mode = .asynchronous,
+    .output = .{ .file = .{ .path = "app.jsonl", .backend = .portable } },
+    .format = .json,
 });
-defer runtime.destroy();
-
-const log = runtime.logger(.{ .scope = "http.server" });
-log.info("request completed", .{
-    .status = @as(u16, 200),
-    .request_id = request_id,
-    .latency = kron.durationNs(elapsed_ns),
-});
-
-var thread_log = try runtime.attachThread(.{ .scope = "worker" });
-defer thread_log.detach();
-thread_log.infoAt(@src(), "request {d} completed", .{request_id}, .{});
-
-try runtime.reloadFilter("info,http=debug,db.query=trace,noisy=off");
-try runtime.flush(.written);
-try runtime.flush(.durable);
-try runtime.shutdown(.drain);
+defer logging.destroy();
+logging.scoped("app").info("started", .{});
+try logging.shutdown();
 ```
 
-首版默认 journal 过载策略为 block，以避免静默丢失；低延迟使用者必须显式选择 drop_newest，并接受计数可见的丢失。配置具体容量只是示例，不是默认性能保证。
+默认stderr/sync/text/info。async/SPSC默认有界Memory，Mmap显式路径，SPSC显式线程预算。多目标使用 `output.multiple`；required Mmap目标需要稳定文件身份，stdout/writer可作为best_effort。底层Runtime保留为外部sink、复杂配置事务、跨代恢复和时钟扩展。
 
-### 4.1 Logger 前端
+logger的 `tryEmit/tryLogf` 返回错误和精确接受结果，普通void方法通过diagnostics报告错误。带 `At` 的入口显式传source；编译期 `source.fromModule` 或根入口保证项目相对文件路径。text输出无外围引号的 `路径:行:列`，控制字符继续转义。
 
-- `trace/debug/info/warn/err/fatal`：普通 best-effort 方法，错误进入统计与诊断 hook。
-- `tryEmit`：返回接受、过滤、采样、满队列、超限、关闭等精确结果。
-- `logf`：comptime format + typed arguments。
-- `log`：运行时 message + structured fields；动态字符串内容仍需复制。
-- `infoAt(@src(), ...)` 等：显式采集调用者 source location。
-- `enabled(level)`、`comptimeEnabled(level)` 和 lazy API：在昂贵字段构造前判断。
-- `withBorrowed(fields)`：不可变派生上下文，调用者管理生命周期。
-- `withOwned(fields)`：显式分配并深拷贝上下文。
+## 5. 事件、字段与context
 
-普通 Zig 函数参数可能在进入 logger 前求值。内部过滤不能保证 `log.debug(... expensive() ...)` 不执行 expensive；必须使用 guard/lazy API。
+Event保存level/scope/message、typed fields/format args、Unix纳秒、session/channel/sequence、route/config身份、可选source与trace。session区分owner运行批次，channel区分提交队列，sequence由队列预留或同步计数分配；组合身份用于关联输出与至少一次重放。
 
-`fatal` 只代表严重级别，不隐式 exit/abort/panic。需要 drain、同步写或 durable 确认时，由调用者显式选择。
+支持内建标量、optional、enum/error名称、bytes、duration/timestamp和显式array/group。任意对象指针/图不自动遍历；Adapter只捕获明确选择的成员。顶层字段64项，attributes/args共用8层/256节点预算，循环/重复key/超限明确拒绝。
 
-### 4.2 静态泛型与运行时接口
+borrowed context依赖存储覆盖所有logger使用；owned context初始化时深拷贝父子合并内容，销毁一次。事件接受前复制消息、key、string/bytes和嵌套描述符，不借用producer栈给消费者。合并顺序parent < child < event；Secret原值不进入捕获，redaction规则在队列前执行。详见 [capture](capture.md) 和 [structured values](structured-values.md)。
 
-- typed 前端负责字段校验、轻量 capture 和静态描述符生成。
-- encoder 的重逻辑尽量共享，避免每个调用点复制整套 JSON/数值格式化代码。
-- 运行时类型擦除接口用于 sink、依赖注入和配置组装；低延迟提交路径保留静态专门化。
-- factory 隐藏复杂生成类型，不要求使用者手写嵌套泛型类型。
+## 6. Queue协议与恢复
 
-低延迟模式提供显式 prewarm/调用点注册。schema 注册、channel 创建、首次映射和文件空间分配与稳态 benchmark 分开；不能把第一次调用的注册成本隐去。自动注册仅为便利路径，其冷启动成本和容量耗尽错误必须公开。
+Memory和Mmap共用固定slot、sequence/generation、reserve/commit/abort、CRC与单consumer确认协议。Mmap通过平台共享文件映射；文件布局、schema表与event载荷版本分别检查。schema-ready发布在适用同步成功后，引用记录不能指向未就绪/缺失/损坏定义。
 
-## 5. 事件、字段与上下文
+消费者按checked记录交付，确认屏障后回收；预留缺口不会被当成完整事件，崩溃扫描仍恢复缺口后的完整commit。slot重用、wrap、水位/checkpoint与独占锁有显式验证。未知版本、layout或目标身份不符必须失败并保留journal。
 
-### 5.1 事件模型
+恢复记录不依赖旧应用二进制或裸指针，允许至少一次重复；稳定目标与session/channel/sequence帮助去重。durable不能从accepted推导，两个文件写入不构成原子事务。protocol和版本详见 [encoding](encoding.md)、[schema](schema.md)、[storage](async-storage.md)。
 
-Metadata 包含 level、scope/target、event name、可选 source、format/schema。
+## 7. 并发、顺序与线程附着
 
-EventView 是当前调用有效的借用视图，包含动态字段、context、trace 关联和时间。它不能逃逸日志调用。
+shared队列的producer并发预留，SPSC channel由所属OS线程独占提交。控制块、token cookie/generation、scope复制和配置cache在初始化/附着建立；错误线程、退役/复用后的stale handle拒绝访问新channel。
 
-提交后的 journal record 自包含，不保存 EventView 或外部对象指针。记录可包含：
+所有channel初始化预分配，预算包含普通共享队列。detach必须在所属线程且无未完成admission/reservation时执行；channel存储保留供消费者排空，Runtime销毁前停止所有用户。任务跨线程迁移时使用shared logger。
 
-- 版本化 record type、总长度和序号。
-- schema ID 和 schema version。
-- channel ID、channel-local sequence、generation。
-- wall-clock 时间或可恢复的 monotonic/fast-clock 映射信息。
-- TraceId、SpanId、TraceFlags。
-- 提交时决定的路由/过滤信息与配置 generation。
-- 已脱敏的 typed payload、复制的字符串/bytes。
-- 校验和与最终 commit 标记。
+shared按reservation交付；SPSC提供每channel FIFO，跨channel没有全局墙钟/因果排序。sync串行输出不交错，分配序号与锁顺序不等于调用时间。fallback_sync使用独立channel命名空间。服务预算在peer公平性与批次局部性间选择，不靠活跃度猜测安全退役。
 
-### 5.2 支持的字段
+## 8. 输出、文件与io_uring
 
-首版覆盖 null、bool、明确宽度的整数、浮点、enum、error、optional、UTF-8 string、显式 bytes、timestamp、duration 和 secret。后续增加显式 group/array 和受限对象适配。
+encoder共享重逻辑，typed frontend不把完整JSON算法复制到每个调用点。同format/time相邻目标复用编码，其他格式单独渲染；fast wire/reference路径须保留完整checked边界及fallback。文件输出串行管理显式offset、staging和在途buffer。
 
-禁止默认捕获任意裸指针、递归对象图和用户自定义 formatter 地址。用户 formatter 可有副作用或分配；不纳入内建零分配保证。
+portable和io_uring共同保证完整批次写出；CQE完成、短写/零进展、错误、buffer lease和shutdown明确处理。SQE提交成功不是written，flush必须等待用户态buffer和在途I/O。目录持久化等平台能力不可用时durable明确拒绝。自动后端选择与实际后端报告分开，见 [文件可靠性](file-reliability.md)。
 
-字段覆盖为：父 context < 子 context < 当前事件字段。最终每个 key 只输出一次。同层冲突在可静态判断时编译失败，动态输入校验失败。
+## 9. 动态配置与策略
 
-JSON 核心元数据与 attributes 分开，用户字段不能覆盖核心 timestamp/severity。非 UTF-8、NaN/Inf、大整数、bytes 编码和 log injection 必须有明确 encoder 策略与测试，不能产生非法 JSON。
+默认filter支持全局阈值与最长组件scope匹配；独立route filter形成接受并集。初始化/reload解析文本，producer不读环境或配置文件。编译期level与enabled/lazy可避开昂贵构造；普通函数参数仍先求值。
 
-### 5.3 生命周期和秘密数据
+defaults < file < environment < explicit合并并一次发布不可变配置。旧admission/accepted记录持有版本和sink lease，配置替换后旧记录仍送原目标。filter-only更新保留sampler相位；full replacement创建新策略状态。配置slot/metadata预算耗尽和OOM保留当前版本，collection确认旧引用与屏障后释放资源。详见 [configuration](configuration.md)、[predicates](predicates.md)、[sampling](sampling.md)。
 
-- borrowed context 的 key/string/bytes 在每次调用结束前必须有效。
-- owned context 在创建时深拷贝，并有显式 destroy。
-- 异步调用返回前，动态字符串和上下文值已复制到 journal。
-- `secret(value)` 在 producer 上替换；原值不进入 journal、归档或后台待处理缓冲。
-- 按 key 的 redaction 使用提交时配置快照，不能后台拿当前策略重新解释旧记录。
-- 已经拼入 message 的秘密不能靠字段 key 规则自动清洗；需要显式安全格式化或只放在结构化字段中。
+## 10. 完成、deadline与关闭
 
-## 6. mmap journal 与崩溃恢复
+accepted表示提交成功，written表示required输出完整写出，durable进一步执行支持的输出同步与适用journal checkpoint。subset输出durable不宣告其他目标或全局journal已经durable。
 
-### 6.1 为什么选 file-backed MAP_SHARED
+flush建立admission cut，纳入此前正在捕获但未预留的事件，不能靠瞬时空队列推断完成。deadline采用单调时钟，包含等待控制槽、cut、消费者与sink屏障；Timeout只停止等待，不取消已发布任务，所有资源保持存活，destroy仍阻塞。
 
-普通匿名内存队列随进程消失。文件支持的 MAP_SHARED 映射修改文件页缓存，操作系统继续运行时，已经完成的共享页修改可在进程退出后重新读取。
+关闭顺序：停止producer并join/detach、解除std.log、按需flush/durable、shutdown、销毁Logging或Runtime/sink，最后清理应用I/O。重入submit/sink/worker/diagnostic中的控制与销毁被禁止；关闭错误锁存并可重复观察。单线程仅sync与普通flush/shutdown，async和timed接口明确返回能力错误。详见 [lifecycle](lifecycle.md)。
 
-这解决进程崩溃恢复，不自动解决内核崩溃或断电。MAP_PRIVATE、匿名映射和 tmpfs journal 不能被当成磁盘耐久日志；journal 路径与存储类型必须明确。
+## 11. 背压与可观察状态
 
-已有本机实验：向 MAP_SHARED 文件写入记录，不调用 msync，随后 SIGKILL 子进程，父进程重新打开文件成功读回。该实验只证明当前 Linux 上的进程退出恢复，不是掉电、跨平台或完整并发协议测试。
+队列满按block/drop_newest/fallback_sync处理：等待空间、拒绝新事件或调用线程同步交付。关闭/worker错误必须唤醒等待producer。采样是配置版本内所有producer共享预算，默认warn以上仅绕过采样，不绕过filter/predicate。
 
-### 6.2 文件布局
+Health观察accepted/written、filtered/sampled/drop、capture/write/flush/sync errors、pending/high-water/recovered、实际存储/预算/channel和state。各原子值不是事务快照，精确结尾核对先停止用户并完成shutdown。diagnostics有界合并，在内部锁外执行hook，防止递归/错误风暴无限工作。
 
-布局分为：
+## 12. 编码、归档、轮转与工具
 
-1. 文件头：magic、format version、端序、build/session identity、容量布局。
-2. schema/control 区：可独立解码的格式串、字段名、类型和时钟映射。
-3. channel/segment 描述区：所有者、generation、序列和恢复状态。
-4. 有界数据区：共享 MPSC 或每线程 SPSC 的完整记录。
-5. checkpoint 区：版本/序号校验的恢复进度与 durable 水位。
+text可读，JSON保留结构与类型，logfmt使用统一key/value，binary使用版本化自包含frame。字符串转义保持单行，非法UTF-8与key编码有明确规则，短buffer/字段错误不宣告成功。
 
-内部 capture 可以使用本机布局优化，但跨进程恢复与工具读取必须通过显式版本化 codec。不能把 Zig struct 的 padding、slice 布局或裸 metadata 指针当成稳定文件协议。
+轮转按完整记录检查大小与可选单调时间间隔，retention/reopen/sync及失败路径保持目标身份。压缩归档使用标准zlib framing，kroncat支持只读导出、查询、follow与journal inspection；所有版本与CRC通过校验。详见 [encoding](encoding.md)、[archive](compressed-archive.md)、[tools](../tools/README.md)。
 
-schema 必须先完整提交，引用它的事件才能发布。动态库卸载后、换版本启动时也必须能独立解码旧 journal。
+## 13. 时间、trace与std.log
 
-Journal MVP 的共享 MPSC 数据区采用固定 slot 布局，不使用无法确定下一条边界的可变长度 reservation。每个 slot 具有固定偏移的原子状态/sequence、长度、schema ID、checksum 和固定最大 payload 区；slot 起点由文件头、区域基址和 slot index 计算。reserve 后尚未写 header 就崩溃，也不会影响定位其他 slot。
+事件保存真实Unix纳秒，deadline/轮转/采样使用独立单调时钟。UTC/固定分钟offset是纯Zig；显式system local使用平台规则/DST，同秒缓存、跨秒/回拨刷新，在异步消费者格式化。系统时区配置运行期保持稳定，来源身份进入Mmap恢复fingerprint；不内置IANA数据库。见 [time](time.md) 和 [TSC](tsc-clock.md)。
 
-恢复器枚举所有 slot，验证 commit、session/generation、长度和 checksum，再按 sequence/checkpoint 判断是否重放；不依赖已崩溃 producer 的内存游标。已安全确认的旧记录在复用前失效，未确认的 slot 不能复用。schema 区同样使用可独立定位的 descriptor 和明确提交状态。
+TraceContext显式按值传播，Span用于本地关联，没有自动task继承或ID生成。std.log Bridge通过根std_options与bind/unbind接入，有界producer预格式化，与typed deferred路径的成本分开。
 
-固定 slot 的空间利用率作为 MVP 的已知代价，必须记录 max_record_bytes 与实际 payload 分布。可变长度 byte ring 属于后续优化，必须先引入独立固定 descriptor/边界索引及恢复证明，不能直接替换该格式破坏缺口恢复。
+## 14. 目录与依赖
 
-### 6.3 提交协议
+公共 `src/root.zig` 按使用职责分组，原名字保留。`logging/` 负责应用配置/资源/lifetime，`core/` 负责frontend/codec/Runtime协调，`config/` 管理版本与策略，`journal/` 管理存储协议，`encoder/` 渲染，`sink/backend/platform/` 隔离I/O与平台。
 
-1. 确认空间、record 长度、schema 可用与配置快照。
-2. reserve 未被 consumer 使用的区域。
-3. 写 header/payload/checksum。
-4. 最后以 release 发布原子 commit 状态。
-5. consumer acquire 确认后读取，完成前 producer 不可覆盖。
-
-commit 状态必须正确对齐，并包含 generation/sequence，防止环回后把旧 commit 识别为新记录。恢复扫描验证长度、类型、generation 和校验，不能信任共享游标或任意字节中的 magic。
-
-原子 release/acquire 规定并发内存可见性，不规定磁盘写回顺序。durable checkpoint 必须在相关数据和元数据持久化完成后更新；崩溃中断 sync 时不得用 commit 位推断已经 durable。
-
-未完成 reservation、wrap marker、超限与取消必须有可恢复状态。正常运行中，失败 reservation 发布 tombstone，避免阻塞 consumer。
-
-进程崩溃后，恢复工具不能遇到第一个未 commit 的 MPSC reservation 就丢掉后面其他线程已经提交的记录。共享队列格式必须具备独立可验证的 slot/边界；可变长度格式需可靠 reservation 描述信息。此项是 journal MVP 的强制验收条件。
-
-### 6.4 预分配、page fault 与预算
-
-- 设置文件长度并尽可能实际预分配空间；仅 ftruncate 不能等同实际磁盘空间保证。
-- 预映射、预触页；first-touch 和扩容移出正常低延迟路径。
-- 严格限制总 journal bytes、channel 数、schema 区、后台缓冲和在途 I/O。
-- 不允许外部进程随意 truncate 活跃映射，避免访问 EOF 外区域。
-- 页错误、dirty throttling、内核回写和存储故障会影响 mmap 的尾延迟，不能宣称 wait-free。
-- 初始化失败返回错误。配置了恢复要求时，不能默默切换到 volatile queue。
-
-### 6.5 回收、重放与重复
-
-记录不能在后台刚读出、刚格式化或刚提交 SQE 时就回收。必须等待所有要求交付的 route 达到对应确认边界。
-
-进程崩溃保护至少需要完整写成功后再回收。断电保护还需要输出数据、相关元数据与 checkpoint 按协议完成 durable sync；仅推进 written 水位后覆盖 journal 可能破坏掉电恢复。
-
-首版恢复为至少一次：写成功但 checkpoint 尚未更新时崩溃，重放可能产生重复。输出携带 session/channel/sequence 作为稳定事件 ID，工具可报告重复或做显式去重。不能承诺任意 sink 恰好一次。
-
-对可恢复文件 sink，后续可通过明确 offset、输出长度、尾部修复与 checkpoint 协议降低重复。不能认为两个文件的更新天然原子。
-
-坏记录、未知版本或缺失 schema 返回可诊断错误；损坏尾部隔离，保留证据，不静默格式化为正常事件。
-
-## 7. 并发、顺序与线程退出
-
-### 7.1 共享 MPSC
-
-- 适合普通 Logger，不要求每个短生命周期线程注册。
-- 控制 reserve/commit/reuse 的 acquire/release 顺序。
-- 提交热点与缓存行竞争需实测；共享状态做合理 cache-line 分离。
-- 正常消费顺序可使用 reservation 顺序，但 reserve 后被抢占会造成 head-of-line blocking。
-- 不为绕过缺口而破坏 slot 所有权；进程退出后的恢复扫描是单独的流程。
-
-### 7.2 每线程 SPSC
-
-- `attachThread()` 获取固定预算 channel，`detach()` 显式退役。
-- write cursor 和 read cursor 分离到适当 cache line。
-- producer 不执行每条事件的全局 fetch-add；统计尽量按 channel 累加后汇总。
-- consumer 公平轮询/按预算批量 drain，防止高频线程饿死低频线程。
-- detach 后 channel 保留到 consumer 排空再回收。
-- 不依赖 TLS destructor 或 heartbeat 猜测线程死亡。
-- 漏 detach 的 channel 由 runtime 保持所有权，并报告 attachment 泄漏；shutdown 只排空并失效，不释放旧 token 仍可访问的 control block。
-
-SPSC token 只允许创建它的线程提交；不能被复制到多个 producer 或在任务迁移后继续使用。显式 Context 可以跨线程，channel token 不可以。
-
-token 保存稳定 control block 和 generation，emit/detach 先检查 runtime 状态及 generation，再访问数据区域。detach 后再次使用或 pool 复用后的旧 token 被拒绝，不能访问新 channel。control block 在 runtime 存活期间保持地址有效；shutdown 后的迟到 detach 安全处理。最终释放发生于 destroy 前置条件满足后，不能仅因为 worker 已 join 就释放 token 可达对象。
-
-### 7.3 顺序
-
-- sync：每条输出记录不交错，锁顺序不等于调用时间顺序。
-- MPSC：规定 reservation/交付顺序，不承诺 wall-clock 全序。
-- SPSC：保证每线程 FIFO，默认不承诺跨线程全序。
-- 可选 timestamp merge 仅在明确 grace window 下近似合并，不能宣称因果全序。
-- 可选 global sequence 会重新引入共享原子热点和缺口等待，单独测量。
-
-## 8. 文件输出与 io_uring
-
-### 8.1 共同基础
-
-后台先生成完整 text/JSON 记录，再合并批次。text/JSON encoder 与 I/O 后端解耦。
-
-两种后端：
-
-- portable：批量 write/writev 或标准库等价接口。
-- linux_uring：预分配 buffer pool、批量 SQE、CQE 完成处理。
-
-`.auto` 只做初始化时的能力/配置选择；默认是否优先 io_uring 由同语义基准决定。已存在在途 I/O 时不能不经排空就换后端。
-
-mmap journal 的 producer store 不需要额外 write 一遍。io_uring 加速的是后台输出与文件同步请求，不代替 journal 提交协议。
-
-### 8.2 为什么不无条件使用 io_uring
-
-批量 write/writev 已经能摊薄系统调用成本。单文件顺序写、低日志量或格式化受限时，SQ/CQ 管理可能没有净收益。io_uring 适合重叠编码和 I/O、多文件输出以及持续高吞吐。
-
-buffered 文件写入仍使用页缓存，registered buffer 也不等于零拷贝。SQPOLL、O_DIRECT、巨大队列和大量 pinned buffer 都不是默认条件；逐项 profile 和测试。
-
-### 8.3 正确性契约
-
-- 单个后台 owner 分配明确 file offset，不依赖并发操作共享隐式文件位置。
-- buffer 在相关 CQE 到达并确认后才能复用。
-- 检查 negative result、short write 和零进展；短写补完前 batch 不算 written。
-- 完成可能乱序，只推进连续成功的输出水位，不能把末尾成功误判为前面的缺口已完成。
-- flush 等待目标范围完整写入；durable 进一步等待正确排序的 fsync/fdatasync 完成。
-- 多个写请求后提交 fsync 不天然保证依赖，使用 completion barrier 或经过验证的 link/drain 协议。
-- 轮转、关闭、取消、shutdown 都必须处理在途 I/O 的生命周期。
-- 文件写失败时保留尚未安全回收的 journal，并进入明确背压/失败状态。
-
-后端维护 `user_data → operation state` 表，记录 batch、buffer、file generation、journal 范围、原 SQE 与取消 SQE 的状态。cancel CQE 成功不代表原请求已终结；必须继续回收原请求的成功、错误或 ECANCELED CQE。短写补交形成同一逻辑 batch 的子请求链，全部字节成功前不推进 written 水位。
-
-operation ID 不得在旧完成仍可能到达时复用。buffer、registered buffer/file slot、文件关闭和相关 journal 回收，必须等待引用它们的原请求/重提交请求终结；取消请求自身的完成也需回收后才能销毁 operation state。shutdown/deinit 不能通过取消已提交来推断资源已经安全释放。
-
-初始基准比较 64/128/256KiB 批次和 queue depth 1/4/16，报告 CPU、延迟、内存、完成吞吐和 durable 成本；这些是测试参数，不是承诺的最优配置。
-
-## 9. 动态 filter 与配置
-
-### 9.1 环境变量
-
-```bash
-KRON_LOG='info,http=debug,db.query=trace,noisy=off' ./app
-```
-
-- 无 target 的 level 是默认规则。
-- `scope=level` 为命名空间覆盖。
-- 最长命名空间匹配优先，按组件边界匹配：`http` 匹配 `http.client`，不匹配 `httpx`。
-- 同一 scope 重复出现时，后规则覆盖前规则。
-- off 关闭对应范围。
-- 每个命名 route 可以有独立规则；配置文件/API 支持路由级 filter。
-
-环境变量在应用启动时读取。另一个 shell 的 export 不会改变已经运行的进程。运行时修改通过 `setLevel`、`reloadFilter`、应用管理接口或配置文件 reload 完成。
-
-配置来源默认优先级为：库默认值 < 应用配置文件 < 环境变量 < 显式应用覆盖。运行时 API 是明确的新配置事务；不能周期性用旧环境变量悄悄覆盖它。应用可选择不同优先级，但要显式声明。
-
-### 9.2 热路径和配置发布
-
-1. reload 在线程上下文中解析、校验完整配置。
-2. 生成不可变快照与 generation。
-3. 原子发布。
-4. 旧快照通过引用计数/epoch 等安全机制回收。
-
-热路径不读取环境变量、不解析规则、不持有全局配置互斥锁。简单全局 level 使用原子值；按 scope/route 的结果可缓存，generation 变化时刷新。
-
-cache key 必须区分 runtime、scope/callsite 和 generation，不能一个全局静态调用点缓存污染不同 logger。提前过滤的粗粒度 level 必须考虑所有 route/override，不能因全局 info 误删 http=trace 事件。
-
-reload 成功后的新调用使用新规则；已开始的调用可完成于它获取的旧快照。每条事件的 filter/redaction/route 决策来自一致快照。
-
-已接受记录按提交时决策交付，后台不能用最新 filter 重新丢弃旧记录。可恢复 journal 中保存必要的路由标识与决策，不仅保存一个进程内旧快照指针。
-
-首版热 reload 只调整 filter/level 等不改变资源所有权的策略。后续若支持 sink/route 热替换，旧 route 必须保持有效直到其已接受记录完成；journal 保存稳定 route ID 与必要文件恢复信息。自定义 sink 由应用提供跨重启的 ID 绑定，缺失绑定时报告未交付并保留 journal，不能静默转发到新目标或回收。
-
-### 9.3 编译期与复杂过滤
-
-编译期已经删除的 debug/trace 无法被 runtime 重新启用。需要现场诊断的构建应保留相应调用点。
-
-level/scope 是首版常用过滤。字段谓词、消息匹配、regex 为后续扩展；所有决定是否交付的过滤必须在 journal commit/accepted 之前完成。需要先格式化才能匹配的规则，要求使用者显式选择前端预编码策略并承担成本，不能让 deferred 后台撤销 accepted。
-
-后台查询/展示过滤仅用于工具视图或另行声明的查询接口，不属于 delivery filter，不减少 accepted/written 交付要求。
-
-配置非法时整份拒绝，返回具体位置和原因，保留旧配置，不部分应用。SIGHUP 处理函数只通知配置线程，不能在 signal handler 内解析、分配或 reload。
-
-## 10. 可靠性、flush 与 shutdown
-
-### 10.1 完成边界
-
-| 边界 | 含义 | 不代表 |
-| --- | --- | --- |
-| accepted | 当前策略接受；journal 模式已完整提交自包含记录 | text/JSON 已写出或文件已 durable |
-| written | 对应输出字节已完整写成功，不再停留在用户态 writer buffer | 抵抗系统崩溃/断电 |
-| durable | 所需数据、元数据和 checkpoint 完成平台规定的同步 | 任意硬件故障都无损 |
-
-若存在 volatile 模式，它的 accepted 只表示普通内存入队，必须单独声明不具备 journal 恢复保证。
-
-`flush(.drain)` 等待目标已接受记录被后台处理；`flush(.written)` 进一步等待 writer 和在途输出完成；`flush(.durable)` 等待文件持久化和 checkpoint。drain 本身不允许提前回收未 written 的 journal。
-
-sink 声明它支持的确认能力。stdout/stderr 的 written 表示成功交给对应描述符；custom sink 需要自身确认契约。不支持 durable 的 route 必须返回 UnsupportedDurability 或由调用者显式排除，不能把普通 flush 当作 durable 成功。
-
-route 明确声明 required/best_effort，以及 journal 回收要求的 written/durable 边界。每个 required route 独立维护确认水位；某事件只有在其提交时选中的全部 required route 满足要求后才可回收。best_effort route 的失败可计数，但不无限阻塞其他 route 的 journal 回收。
-
-无指定 route 的 flush 默认作用于全部 required route；其中任何 route 不支持所请求能力，整次返回明确错误，不自动跳过。API 另提供显式 route 集合。示例中的 console 是 best_effort、file 是 required，因此 flush(.durable) 确认 file 及相关 durable checkpoint，不承诺 console durable。
-
-若要求 accepted 事件也在断电后可重放，需要将相应 required route 的 reclaim_after 设为 durable，或者采用保留持久化 journal 副本的等价协议。不能在仅 written 后覆盖 journal，却对未确认 durable 的事件承诺断电无损。
-
-### 10.2 Flush snapshot
-
-- MPSC 使用明确目标 reservation/commit barrier，处理此前正在提交的 producer。
-- SPSC `flushThread` 发布本 channel barrier 并等待 ack。
-- `flushAll` 在 registry generation 下快照 channel 的 committed 位置，等待 后台交付线程 越过目标。
-- snapshot 后的新事件不属于本次 flush。
-- admission/in-flight 机制决定跨线程 flush 的线性化边界，不以“队列看起来为空”判断完成。
-- 后台交付线程 自身调用 blocking flush 返回明确错误，避免自锁。
-
-### 10.3 Shutdown
-
-状态机：running → closing → closed。
-
-1. 关闭新 attach 和新事件 admission。
-2. 唤醒 block 策略下等待的 producer。
-3. 等待当前 in-flight producer 完成或发布可识别中止状态。
-4. 排空 active/retiring channel。
-5. 完成目标输出、sync 策略和 checkpoint。
-6. 回收在途 I/O，join worker。
-7. 进入 closed，报告未交付数量与错误。
-
-shutdown 幂等。带 deadline 的返回不意味着还能立即释放被线程/I/O 使用的内存；超时后资源保持有效，直到真正停止或调用者退出进程。
-
-destroy 只能在所有 logger/token 不再并发使用后调用。运行时启动后拥有稳定地址，不能移动仍被 worker 引用的对象。
-
-### 10.4 进程崩溃与断电
-
-- 正常退出：drain + written/durable 按配置执行。
-- SIGSEGV、abort、SIGKILL：依靠 journal 扫描恢复，不能依赖退出代码或 crash handler。
-- 系统崩溃/断电：只承诺已经成功确认的 durable 水位；written/accepted 未必幸存。
-- 对新建或轮转文件，目录项、文件长度和必要元数据的同步也属于 durable 协议。
-- journal 自身发生存储错误或损坏时报告故障，不承诺无损。
-
-## 11. 背压、采样与健康状态
-
-### 11.1 过载策略
-
-- block：等待空间，保持接受语义，但延迟不再有低上界。
-- drop_newest：当前事件不接受，计数精确，适合显式允许丢失的低延迟场景。
-- fallback_sync：显式同步写；可能越过旧排队事件，文档标注顺序变化。
-- drop_oldest：首版不实现，避免覆盖 consumer/in-flight I/O 使用的数据。
-
-超大记录采用 drop 或显式同步/预编码 fallback。必须返回 dropped_oversize，不能向 JSON 输出半截记录。
-
-采样在 capture 前执行；默认关键级别可绕过，但级别不能代替审计可靠性要求。后续实现确定性计数采样、token bucket 和限速。
-
-### 11.2 结果与统计
-
-producer 结果与 delivery 结果分开统计，避免 accepted 被误当成功写出。
-
-- producer：accepted、filtered、sampled、dropped_full、dropped_oversize、rejected_closing。
-- delivery：written、durable、write_errors、sync_errors、recovered、replay_duplicates、corrupt_records。
-- resource：journal backlog bytes/records、oldest age、high-water mark、channel 数、在途 I/O、worker 状态。
-- diagnosis：first/last error、最后 written/durable 时间与水位、配置 generation。
-
-统计尽量使用 per-channel 计数，减少全局 cache-line 竞争。drop 恢复后可由 后台交付线程 生成汇总 loss record，不为每个 drop 递归写日志。
-
-错误 hook 非递归、限流，不持 sink 锁调用用户代码。kron 内部不能用 std.log 回写同一个 kron runtime。
-
-## 12. 编码、文件轮转和工具
-
-### 12.1 输出格式
-
-- text：便于人读，控制字符正确转义，颜色仅用于明确终端输出。
-- JSON Lines：一行一个合法完整 JSON，保留原始 typed attributes。
-- logfmt：后续补充，固定 escaping 规则。
-- binary archive：可选长期存储 sink，保留 schema 和完整事件，单独预算 retention。
-
-正常文件错误可能已经造成 OS 级部分写，因此“完整记录”指不主动提交半截 encoder 结果；文件恢复需检测并修复损坏尾部，不能承诺硬件错误也绝不留下半行。
-
-### 12.2 轮转
-
-首版按 size + retention，后续时间轮转和外部 reopen。
-
-- 只在完整输出 batch/记录边界轮转。
-- 单条超大事件不任意拆分；显式配置允许超限单文件或拒绝事件。
-- 等待旧文件在途写完成后关闭。
-- rename/delete/sync 失败可诊断，不删除唯一恢复副本。
-- 不支持多进程同时轮转同一集合。
-
-### 12.3 kroncat 草案
-
-```bash
-kroncat app.kron
-kroncat --follow app.kron
-kroncat --level warn app.kron
-kroncat --where 'request_id == "abc"' app.kron
-kroncat --json app.kron
-kroncat --recover app.journal
-```
-
-工具读取版本化 schema 与记录，支持合法提交边界、坏尾部诊断和恢复报告。不能需要旧应用二进制或指向旧地址空间的指针才能解码。
-
-live follow 默认显示已完整提交事件，不把它描述为 durable。binary archive 是用户主动选择，普通 text/JSON 查看不依赖 kroncat。
-
-## 13. 时钟、trace 与 std.log 适配
-
-- 墙钟使用 std.Io.Clock.real；deadline、耗时和采样周期使用单调时钟。
-- 时间戳是可配置成本，不能默认每条都格式化日期或符号化栈。
-- 可选 TSC/硬件快速时钟需平台能力、校准、跨核和虚拟化验证；journal 中必须持有可恢复映射。
-- 不把每条重新读单调时钟的路径宣传成 TSC 的纳秒结果。
-- Source 使用显式 @src()；普通函数内部 @src() 不代表外部调用位置。
-- TraceContext 显式携带 TraceId/SpanId/flags，轻量 Span 后续实现。
-- std.log bridge 由应用根模块设置 std_options.logFn，映射四个标准级别与 scope。
-- bridge 不能运行时替换 std.options.logFn，动态调整的是它绑定的 runtime filter。
-- 未绑定、shutdown 和错误路径不能递归调用同一个日志 bridge。
-
-## 14. 模块结构与依赖
-
-```text
-src/
-  root.zig
-  core/        level, field, event, logger, context, runtime
-  config/      parser, filter, snapshot, reload
-  submit/      sync, capture, callsite, thread_channel
-  journal/     format, schema, mmap_store, commit, checkpoint, recovery
-  pipeline/    route, router, sampler, redact
-  encoder/     text, json, logfmt
-  sink/        interface, writer, file, rolling_file, multi
-  backend/     portable, linux_uring, buffer_pool
-  platform/    io, mapping, clock
-  telemetry/   trace_context, span
-  adapters/    std_log
-tools/
-  kroncat
-tests/
-  compile_fail, crash, fault, integration
-bench/
-  producer, encode, output, end_to_end, business_workload
-docs/
-  design.md
-```
-
-typed front-end 依赖 core/config/submit；capture 依赖 journal codec；后台依赖 pipeline/encoder/sink；sink 依赖 backend/platform。sink 和底层 journal 不反向依赖 Logger，避免递归与循环依赖。
-
-root.zig 维护稳定公共导出面，不直接公开全部内部实现。模块按稳定职责拆分，重逻辑保持共享，避免文件膨胀和调用点代码爆炸。
-
-Zig 0.16 的平台约束：
-
-- 显式接收 std.Io。
-- 使用 std.Io.Mutex/Condition；不沿用旧 std.Thread.Mutex。
-- Writer 接收 *std.Io.Writer，具体文件 writer 保留底层错误。
-- std.os.linux.IoUring 已有 write/writev/fsync 和 buffer/file 注册接口。
-- 映射、sync、文件元数据和线程接口集中隔离，平台能力不支持时明确返回或选择已授权模式。
-- Windows/Linux/macOS/Android/iOS 使用相同事件与journal协议；Linux、Windows、Darwin提供独立文件映射后端。其他平台实际恢复与durable资格须通过设备专项测试后声明，当前编译/运行证据见 [平台支持](platforms.md)。
+模块测试紧邻实现或集中在 `core/tests/`，公共集成/故障在 `tests/`。构建支持位于 `build/`，示例从仓库根入口保留source路径；分发清单包含所有模块。源码图、私有边界与独立验证入口见 [code-structure](code-structure.md)。
 
 ## 15. 验证与性能门禁
 
@@ -632,19 +176,11 @@ SIGKILL 测试不是断电测试。durable 保证必须通过虚拟机/块设备
 
 绝对纳秒/吞吐指标在实现后固定机器建立。稳定基线后设同环境 5%–10% 回归门限；噪声和样本不足不能被误判为优化收益。
 
-## 16. 分阶段交付
+## 16. 后续交付与资格
 
-1. 语义和骨架：冻结事件、字段、结果、配置与可靠性边界，建立 Debug/ReleaseSafe 最小验证。
-2. 同步基线：text/JSON、context、redaction、filter、writer/file sink、fault tests。
-3. Journal MVP：自包含 schema、file-backed layout、commit/generation、恢复工具、SIGKILL 与 MPSC 缺口测试。
-4. 异步主线：共享 journal、后台格式化、written checkpoint、背压、flush/shutdown；这是首个提供进程崩溃恢复的异步版本。
-5. Durable 协议：data/schema/output/checkpoint 的同步顺序和系统故障验证，明确至少一次恢复。
-6. Low latency：显式 SPSC attach/detach、静态调用点、紧凑 capture、per-channel stats、预热。
-7. Linux 加速：io_uring、批量/在途 I/O、轮转，对照 portable 基准选择默认后端。
-8. 运维与生态：完整热 reload、sampling、std.log bridge、flight recorder、trace adapter。
-9. 可选归档：binary archive、kroncat follow/query、压缩、版本兼容和 retention。
+主要功能已有实现，最终目标按当前状态逐项推进：稳定完整性能优势、尾部/背压对应用的影响、Mmap启动与保留成本、业务/durable矩阵、长期fuzz与升级组合、更多文件系统/设备故障及非Linux真实运行。历史实验否决和负向数据保留，功能存在不替代对应资格。
 
-实现内部可以先用测试 memory queue 验证 codec，但不能把没有 journal 的异步里程碑宣称满足最终崩溃恢复方案。
+开发先运行最小相关验证，再按影响范围升级到完整gate；发布前独立包/源码分发、单线程和目标平台都要有对应证据。性能比较不改变事件/输出/恢复语义来宣称等价优化。详见 [development](development.md) 与 [剩余优先级](implementation-status.md#剩余工作的优先级)。
 
 ## 17. 参考资料
 

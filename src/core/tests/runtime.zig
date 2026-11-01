@@ -1,12 +1,12 @@
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const EmitResult = @import("logger.zig").EmitResult;
-const MemorySink = @import("../sink/memory.zig").MemorySink;
+const Runtime = @import("../runtime.zig").Runtime;
+const EmitResult = @import("../logger.zig").EmitResult;
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
 test {
-    _ = @import("runtime_prepared_measure_tests.zig");
-    _ = @import("runtime_admission_view_tests.zig");
+    _ = @import("runtime_prepared_measure.zig");
+    _ = @import("runtime_admission_view.zig");
 }
-const fields = @import("field.zig");
+const fields = @import("../field.zig");
 
 test "admission paused after old snapshot retains its already completed filter overlay" {
     const Context = struct {
@@ -45,7 +45,7 @@ test "admission paused after old snapshot retains its already completed filter o
     var joined = false;
     defer if (!joined) producer.join();
     defer context.proceed.store(true, .release);
-    const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+    const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
     while (!context.entered.load(.acquire)) {
         if (deadline.expired(std.testing.io)) return error.ProducerDidNotEnter;
         std.atomic.spinLoopHint();
@@ -62,8 +62,8 @@ test "admission paused after old snapshot retains its already completed filter o
 }
 
 test "warmed SPSC configuration and filter guards perform no shared reader or pending RMW" {
-    const routes = @import("../config/routes.zig");
-    const reload = @import("../config/reload.zig");
+    const routes = @import("../../config/routes.zig");
+    const reload = @import("../../config/reload.zig");
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     var path: [128]u8 = undefined;
@@ -184,7 +184,7 @@ test "runtime sync and filter allocate nothing after initialization" {
 }
 
 test "runtime asynchronous journal drains and snapshots borrowed inputs" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_bytes: [128]u8 = undefined;
@@ -212,7 +212,7 @@ test "runtime asynchronous journal drains and snapshots borrowed inputs" {
 }
 
 test "runtime SPSC attached logger uses copied generation and survives late detach" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_bytes: [128]u8 = undefined;
@@ -243,7 +243,7 @@ test "runtime SPSC attached logger uses copied generation and survives late deta
 }
 
 test "runtime recovery refuses changed required route binding before acceptance" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_bytes: [128]u8 = undefined;
@@ -302,7 +302,7 @@ test "typed producer clock skips callback dispatch without changing the pipeline
     try std.testing.expectEqual(EmitResult.accepted, try runtime.scoped("dynamic").tryEmit(.info, "dynamic", .{}));
     const static_log = runtime.loggerWithClock(Static, "static").withBorrowed(.{ .context = true });
     try std.testing.expectEqual(EmitResult.accepted, try static_log.tryLogf(.info, "value {d}", .{3}, .{}));
-    const no_clock = runtime.loggerWithClock(@import("../platform/static_clock.zig").ZeroClock, "zero");
+    const no_clock = runtime.loggerWithClock(@import("../../platform/static_clock.zig").ZeroClock, "zero");
     try std.testing.expectEqual(EmitResult.accepted, try no_clock.tryEmit(.info, "zero", .{}));
     try std.testing.expectEqual(@as(usize, 1), fake.calls);
     try std.testing.expect(std.mem.indexOf(u8, memory.written(), "\"timestamp_ns\":202") != null);
@@ -317,7 +317,7 @@ test "runtime error hooks run outside delivery locks and reject logger recursion
         lock_was_free: bool = false,
         recursive_result: ?EmitResult = null,
 
-        fn hook(context: ?*anyopaque, _: @import("diagnostics.zig").ErrorEvent) void {
+        fn hook(context: ?*anyopaque, _: @import("../diagnostics.zig").ErrorEvent) void {
             const self: *@This() = @ptrCast(@alignCast(context.?));
             const runtime = self.runtime.?;
             self.calls += 1;
@@ -349,7 +349,7 @@ test "runtime error hooks run outside delivery locks and reject logger recursion
 }
 
 test "sleeping SPSC worker wakes when shutdown observes the final channel admission end" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     const Context = struct {
         runtime: *Runtime,
         submitted: std.Io.Event = .unset,
@@ -424,7 +424,7 @@ test "sleeping SPSC worker wakes when shutdown observes the final channel admiss
 }
 
 test "runtime SPSC closing publication drains every successfully accepted event" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     const Context = struct {
         runtime: *Runtime,
         ready: std.atomic.Value(u32) = .init(0),
@@ -505,7 +505,7 @@ test "runtime SPSC closing publication drains every successfully accepted event"
 }
 
 test "prepared runtime schema removes static capture bytes and keeps output self contained" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_bytes: [128]u8 = undefined;
@@ -520,7 +520,7 @@ test "prepared runtime schema removes static capture bytes and keeps output self
         .redaction = &.{.{ .key = "password", .action = .mask }},
     });
     defer runtime.destroy();
-    const example: @import("event.zig").Event = .{
+    const example: @import("../event.zig").Event = .{
         .level = .info,
         .scope = "prepared.worker",
         .message = "request {d}",
@@ -548,7 +548,7 @@ test "prepared runtime schema removes static capture bytes and keeps output self
 }
 
 test "prepared thread schema retains SPSC ownership and metadata across collector output" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_bytes: [128]u8 = undefined;
@@ -612,7 +612,7 @@ test "same-format routes share exact encoded records while mixed formats keep th
 }
 
 test "prepared binding definitions cannot relabel values and full fallback preserves shape checks" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_buffer: [128]u8 = undefined;
@@ -648,7 +648,7 @@ test "prepared binding definitions cannot relabel values and full fallback prese
 }
 
 test "comptime prepared format preserves optional masks and transforms redacted metadata" {
-    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var temporary = std.testing.tmpDir(.{});
     defer temporary.cleanup();
     var path_buffer: [128]u8 = undefined;
@@ -695,7 +695,7 @@ test "comptime prepared format preserves optional masks and transforms redacted 
 test "new snapshot uses its complete baseline while bound filter publication is delayed" {
     const Writer = struct {
         runtime: *Runtime,
-        route: @import("runtime_types.zig").RouteOptions,
+        route: @import("../runtime_types.zig").RouteOptions,
         done: std.atomic.Value(bool) = .init(false),
         failure: ?anyerror = null,
         fn run(self: *@This()) void {
@@ -711,14 +711,14 @@ test "new snapshot uses its complete baseline while bound filter publication is 
     var current = MemorySink.initBuffer(&new_bytes);
     const runtime = try Runtime.create(std.testing.allocator, std.testing.io, .{ .filter = "off,hot=debug", .routes = &.{.{ .name = "old", .sink = old.sink() }} });
     defer runtime.destroy();
-    const filter: *@import("../config/reload.zig").DynamicFilter = @ptrCast(@alignCast(runtime.filter_handle));
+    const filter: *@import("../../config/reload.zig").DynamicFilter = @ptrCast(@alignCast(runtime.filter_handle));
     filter.writer_mutex.lockUncancelable(std.testing.io);
     var writer: Writer = .{ .runtime = runtime, .route = .{ .name = "new", .sink = current.sink() } };
     const thread = try std.Thread.spawn(.{}, Writer.run, .{&writer});
     defer thread.join();
     var locked = true;
     defer if (locked) filter.writer_mutex.unlock(std.testing.io);
-    const deadline = @import("control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
+    const deadline = @import("../control.zig").Deadline.after(std.testing.io, 5 * std.time.ns_per_s);
     while (runtime.currentConfiguration().generation != 2) {
         if (writer.done.load(.acquire) or deadline.expired(std.testing.io)) return error.PublicationNotObserved;
         std.atomic.spinLoopHint();

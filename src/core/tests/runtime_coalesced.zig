@@ -2,12 +2,12 @@
 //! The callback records actual batch flushes; corruption is injected only
 //! while every output record still belongs to the consumer.
 const std = @import("std");
-const Runtime = @import("runtime.zig").Runtime;
-const Journal = @import("../journal/journal.zig").Journal;
-const MemorySink = @import("../sink/memory.zig").MemorySink;
-const Sink = @import("../sink/interface.zig").Sink;
-const configurations = @import("../config/routes.zig");
-const fields = @import("field.zig");
+const Runtime = @import("../runtime.zig").Runtime;
+const Journal = @import("../../journal/journal.zig").Journal;
+const MemorySink = @import("../../sink/memory.zig").MemorySink;
+const Sink = @import("../../sink/interface.zig").Sink;
+const configurations = @import("../../config/routes.zig");
+const fields = @import("../field.zig");
 
 const WindowSink = struct {
     memory: MemorySink,
@@ -70,7 +70,7 @@ test "coalesced service window flushes all 255 queued records before reclaim wit
                 const log = if (submission == .low_latency) try runtime.attachThread(.{ .scope = "window" }) else runtime.scoped("window");
                 defer if (submission == .low_latency) log.detach() catch {};
                 const journal = if (submission == .low_latency) runtime.thread_registry.?.getJournal(0) else runtime.journal.?;
-                const shape: @import("event.zig").Event = .{ .level = .info, .scope = "window", .message = "queued", .timestamp_ns = 0, .fields = &.{fields.kv("index", @as(u64, 0))} };
+                const shape: @import("../event.zig").Event = .{ .level = .info, .scope = "window", .message = "queued", .timestamp_ns = 0, .fields = &.{fields.kv("index", @as(u64, 0))} };
                 const ready = if (prepared) (if (submission == .low_latency)
                     try runtime.threadLoggerWithSchema(log, try runtime.prewarmThreadSchema(1, shape))
                 else

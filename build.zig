@@ -1,4 +1,5 @@
 const std = @import("std");
+const validation = @import("build/validation.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -22,29 +23,10 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run kron unit and integration tests");
     test_step.dependOn(&run_tests.step);
 
-    const platform_step = b.step("check-platforms", "Compile real public file/runtime/journal paths for five OS families");
-    const platform_queries = [_]std.Target.Query{
-        .{ .cpu_arch = .x86_64, .os_tag = .linux, .abi = .musl },
-        .{ .cpu_arch = .aarch64, .os_tag = .linux, .abi = .musl },
-        .{ .cpu_arch = .x86_64, .os_tag = .windows, .abi = .gnu },
-        .{ .cpu_arch = .aarch64, .os_tag = .macos },
-        .{ .cpu_arch = .x86_64, .os_tag = .macos },
-        .{ .cpu_arch = .aarch64, .os_tag = .linux, .abi = .android },
-        .{ .cpu_arch = .x86_64, .os_tag = .linux, .abi = .android },
-        .{ .cpu_arch = .aarch64, .os_tag = .ios },
-        .{ .cpu_arch = .aarch64, .os_tag = .ios, .abi = .simulator },
-    };
-    for (platform_queries) |query| {
-        const platform_target = b.resolveTargetQuery(query);
-        const platform_module = b.createModule(.{ .root_source_file = b.path("src/platform_check.zig"), .target = platform_target, .optimize = .ReleaseSafe, .link_libc = switch (query.os_tag.?) {
-            .macos, .ios => true,
-            .linux => true,
-            else => null,
-        } });
-        const object = b.addObject(.{ .name = b.fmt("kron-{s}-{s}-{s}", .{ @tagName(query.cpu_arch.?), @tagName(query.os_tag.?), @tagName(query.abi orelse .none) }), .root_module = platform_module });
-        _ = object.getEmittedBin();
-        platform_step.dependOn(&object.step);
-    }
+    const logging_tests = b.addTest(.{ .name = "kron-logging", .root_module = module, .filters = &.{"managed logging"} });
+    b.step("test-logging", "Verify application logging ownership, outputs and lifetime").dependOn(&b.addRunArtifact(logging_tests).step);
+
+    validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });
     adapter_module.addImport("kron", module);
@@ -475,35 +457,8 @@ pub fn build(b: *std.Build) void {
     b.step("test-capture-bench", "Verify capture benchmark shapes and bounded inputs").dependOn(&run_capture_bench_tests.step);
     verify.dependOn(&run_capture_bench_tests.step);
 
-    inline for (.{ .{ "quick-start", "examples/quick_start.zig" }, .{ "file-logging", "examples/file_logging.zig" }, .{ "structured", "examples/structured.zig" }, .{ "threaded", "examples/threaded.zig" }, .{ "rolling", "examples/rolling.zig" }, .{ "basic", "examples/basic.zig" }, .{ "readable-time", "examples/readable_time.zig" }, .{ "async-memory", "examples/async_memory.zig" }, .{ "std-log", "examples/std_log.zig" }, .{ "prepared", "examples/prepared.zig" }, .{ "hot-configuration", "examples/hot_configuration.zig" }, .{ "configuration-sources", "examples/configuration_sources.zig" }, .{ "predicates", "examples/predicates.zig" }, .{ "tsc-clock", "examples/tsc_clock.zig" } }) |example| {
-        const example_module = createExampleModule(b, target, optimize, module, example[1], null);
-        const exe = b.addExecutable(.{ .name = "kron-" ++ example[0], .root_module = example_module });
-        const run = b.addRunArtifact(exe);
-        b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example").dependOn(&run.step);
-        verify.dependOn(&exe.step);
-    }
-
-    inline for (.{
-        .{ "local-time", "examples/local_time.zig" },
-        .{ "file-stdout-local-time", "examples/file_stdout_local_time.zig" },
-        .{ "mmap", "examples/mmap.zig" },
-        .{ "source-location", "examples/source_location.zig" },
-    }) |example| {
-        const local_example_module = createExampleModule(b, target, optimize, module, example[1], target.result.os.tag != .windows);
-        const local_example = b.addExecutable(.{ .name = "kron-" ++ example[0] ++ "-example", .root_module = local_example_module });
-        b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example with system local timestamps").dependOn(&b.addRunArtifact(local_example).step);
-        verify.dependOn(&local_example.step);
-    }
+    validation.addExamples(b, target, optimize, module, verify);
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);
-}
-
-fn createExampleModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, kron: *std.Build.Module, path: []const u8, link_libc: ?bool) *std.Build.Module {
-    const selection = b.addOptions();
-    selection.addOption([]const u8, "name", std.fs.path.stem(path));
-    const example = b.createModule(.{ .root_source_file = b.path("examples.zig"), .target = target, .optimize = optimize, .link_libc = link_libc });
-    example.addImport("kron", kron);
-    example.addOptions("kron_example", selection);
-    return example;
 }

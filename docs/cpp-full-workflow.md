@@ -1,5 +1,7 @@
 # 完整日志工作流性能比较
 
+本页记录多个历史源码快照的完整对照。最新归档报告绑定 `e8bd353`，详见 [同轮详细结果](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)；下面每组数据只适用于标明的源码与负载。结构/接口整理没有重新建立跨库排名，当前证据和复现入口见 [bench导航](../bench/README.md)。
+
 最新源码 **`e8bd353`** 已重新同轮比较Foundation真实spdlog C++前端＋Rust后台，仅Memory/Mmap、P1/P4、shared/SPSC，并单列inline/schema：**200/200试验、2020万条物理JSON**逐条核对，accepted=written且pending/drop=0，kron实际后端全部portable。正式吞吐包括producer、后台格式化/写出、最终written flush、shutdown和清理，初始化/preparation单列。普通inline SPSC中位在四组均高于Foundation，所有完整关闭吞吐跨库组仍因波动超门限标 **inconclusive**；schema多数配置较慢，p99.9与Mmap初始化仍有明显差距。完整新数据、源码/binary/依赖身份及CV/spread/区间见[最新详细对照](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。
 
 | 普通inline，M条/s | Memory P1 | Memory P4 | Mmap P1 | Mmap P4 |
