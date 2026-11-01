@@ -6,7 +6,11 @@
 
 ## 当前单机门禁
 
-当前完整文件portable/io_uring同二进制对照已完成160/160试验、1616万条物理JSON逐条核对：Memory/Mmap、shared/SPSC、P1/P4分别运行五次sampled/batch，所有显式io_uring实际选择linux_uring，accepted=written且pending/drop=0。io_uring中位吞吐在此负载低约17%–19%，8个batch组中6个两侧CV/spread通过、2个inconclusive，全部slow trials保存。当前checked batch确认边界限制I/O重叠，不能推广为所有负载的后端结论；文件后端报告会拒绝fallback/预算变化/不完整输出。Safe定向8/8步骤、14/14 Zig测试及Python负向校验通过，Memory/Mmap真实worker错误唤醒回归Debug/Fast也通过。生产源码保持`c4b7f34`，新增可复现入口及结果见[io_uring完整对照](../bench/evidence/2026-11-01-uring-current/README.md)。
+就绪记录合并交付已完成：原64条服务量子预算1..4保持，每次checked peek合并当前剩余预算内最多256条连续就绪记录，不等待补满；配置组仍最多64，每条CRC/schema/旧路由pin和输出后checked reclaim保持。真实runtime覆盖Memory/Mmap×shared/SPSC×inline/schema，255条第一次屏障全部输出且初始化后零分配；初始晚期损坏零输出，混合旧/新配置最后flush/durable失败保留全部255条与150/105个pin，回收晚期损坏只确认190条并保留65条旧pin。预算与合并定向Debug/Safe/Fast通过；完整ReleaseSafe门禁 **93/93步骤、540/540测试**，包含实际SIGKILL、独立五模式/单线程/源码分发包与Linux宿主自校验；九目标ReleaseSafe对象编译10/10步骤通过，其他平台设备运行仍未取得。两个新子QEMU停机schema ACK31/inline ACK3恢复通过，限Linux6.8/ext4虚拟机。四个记录跟踪数组本机5440→21760字节，消费者栈增加16320字节，配置组与heap/journal/file预算不增。这不是完整编译器栈帧测量。
+
+与基线`45f5ec1`完成portable160项与独立io_uring80项完整文件试验，共2424万条物理JSON逐条核对，accepted=written、pending/drop=0，保持系统墙钟、完整字段和written flush/关闭/清理终点。Portable Memory P1/P4 shared中位提升4.44%/6.90%、SPSC提升5.78%/9.97%，四组CV/spread通过、后三组bootstrap中位区间不重叠；Mmap多数组仍inconclusive。io_uring P4 Memory shared/SPSC中位提升14.18%/23.62%，两组CV/spread通过且区间不重叠；Mmap未资格。共享Memory io_uring p99中位22459→34674ns为可重复负向，portable共享P4尾部负向中位仍inconclusive。保留此前io_uring54项完整行的中断测量及所有慢值，不并入正式80项资格。单对trace pwritev1581→833、futex9184→4533用于诊断，不能等同时间收益。当前源码/归档/二进制/门禁身份及完整限制见[批次合并报告](../bench/evidence/2026-11-01-coalesced-delivery/README.md)与同目录qualification.json；本轮没有新的Foundation或同轮后端排名。
+
+此前源码`c4b7f34`的完整文件portable/io_uring同二进制对照已完成160/160试验、1616万条物理JSON逐条核对：Memory/Mmap、shared/SPSC、P1/P4分别运行五次sampled/batch，所有显式io_uring实际选择linux_uring，accepted=written且pending/drop=0。io_uring中位吞吐在此负载低约17%–19%，8个batch组中6个两侧CV/spread通过、2个inconclusive，全部slow trials保存。checked batch确认边界限制I/O重叠，不能推广为所有负载的后端结论；文件后端报告会拒绝fallback/预算变化/不完整输出。Safe定向8/8步骤、14/14 Zig测试及Python负向校验通过，Memory/Mmap真实worker错误唤醒回归Debug/Fast也通过。新增可复现入口及结果见[该轮io_uring完整对照](../bench/evidence/2026-11-01-uring-current/README.md)。
 
 条件progress wake候选未推广：登记waiter后条件futex唤醒的并发窗口测试通过，160项日志全部正确，但多个共享队列吞吐负向中位和bootstrap重叠未证实收益。饱和追踪总futex数量未下降，说明该负载仍有真实waiters；生产恢复原来通知。保留Memory/Mmap满SPSC队列等待者在worker写失败时被唤醒、返回原错误、两条accepted记录仍pending的实际回归。候选源码、1616万条原始结果与拒绝依据见`bench/evidence/2026-11-01-progress-wakeup/`。
 

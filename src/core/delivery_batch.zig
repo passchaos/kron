@@ -11,7 +11,26 @@ pub const TestingAudit = if (@import("builtin").is_test) struct {
     pub var written_updates: Atomic(usize) = .init(0);
 } else struct {};
 
-pub const max_records = 64;
+pub const records_per_quantum = 64;
+pub const max_records = records_per_quantum * 4;
+const max_groups = configurations.max_capacity;
+
+/// Consume the original 64-record quanta. A short checked window still costs
+/// one quantum, preserving bounded peer service when producers arrive during
+/// output. Already-ready records can share a single output/confirmation pass.
+pub const ServiceBudget = struct {
+    remaining: usize,
+
+    pub fn capacity(self: ServiceBudget) usize {
+        std.debug.assert(self.remaining <= 4);
+        return self.remaining * records_per_quantum;
+    }
+
+    pub fn consume(self: *ServiceBudget, records: usize) void {
+        std.debug.assert(records != 0 and records <= self.capacity());
+        self.remaining -= (records - 1) / records_per_quantum + 1;
+    }
+};
 
 pub const Group = struct {
     view: configurations.View,
@@ -68,7 +87,7 @@ pub const WrittenCounts = struct {
 
 pub const Configurations = struct {
     manager: *configurations.Manager,
-    storage: [max_records]Group = undefined,
+    storage: [max_groups]Group = undefined,
     count: usize = 0,
 
     pub fn init(manager: *configurations.Manager) Configurations {
@@ -88,7 +107,7 @@ pub const Configurations = struct {
             view.release();
             return group;
         };
-        if (self.count == max_records) {
+        if (self.count == max_groups) {
             view.release();
             return error.DeliveryBatchTooLarge;
         }
@@ -107,6 +126,31 @@ pub const Configurations = struct {
         self.count = 0;
     }
 };
+
+test "coalesced service budget charges short windows and bounds every allowed quantum" {
+    for (1..5) |quanta| {
+        var budget: ServiceBudget = .{ .remaining = quanta };
+        const original = budget.capacity();
+        var served: usize = 0;
+        while (budget.remaining != 0) {
+            const count = @min(65, budget.capacity());
+            served += count;
+            budget.consume(count);
+        }
+        try std.testing.expect(served <= original);
+        for (1..original + 1) |length| {
+            budget = .{ .remaining = quanta };
+            budget.consume(length);
+            try std.testing.expect(length + budget.capacity() <= original);
+            try std.testing.expect(budget.capacity() % records_per_quantum == 0);
+        }
+    }
+    var budget: ServiceBudget = .{ .remaining = 4 };
+    budget.consume(1);
+    try std.testing.expectEqual(@as(usize, 192), budget.capacity());
+    budget.consume(160);
+    try std.testing.expectEqual(@as(usize, 0), budget.capacity());
+}
 
 const Sink = @import("../sink/interface.zig").Sink;
 const EmptySink = struct {

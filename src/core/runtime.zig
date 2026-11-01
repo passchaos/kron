@@ -817,22 +817,24 @@ pub const Runtime = struct {
 
     fn drainJournal(self: *Runtime, journal: *Journal) !bool {
         var worked = false;
-        var records: [64]JournalModule.Record = undefined;
-        var channels: [64]u32 = undefined;
-        var snapshots: [64]*configurations.Snapshot = undefined;
-        var boundaries: [64]JournalModule.ReclaimBoundary = undefined;
+        var records: [delivery_batch.max_records]JournalModule.Record = undefined;
+        var channels: [delivery_batch.max_records]u32 = undefined;
+        var snapshots: [delivery_batch.max_records]*configurations.Snapshot = undefined;
+        var boundaries: [delivery_batch.max_records]JournalModule.ReclaimBoundary = undefined;
         // A bounded queue quantum keeps the current batch's write/reclaim
         // boundary intact. The default retains four batches; applications can
         // select fewer to reduce the number of records served before peers.
-        for (0..self.consumer_batches_per_queue) |_| {
+        var budget: delivery_batch.ServiceBudget = .{ .remaining = self.consumer_batches_per_queue };
+        while (budget.remaining != 0) {
             const before = journal.pending();
-            const batch = if (@hasDecl(Journal, "peekBatchChecked")) try journal.peekBatchChecked(&records) else blk: {
+            const batch = if (@hasDecl(Journal, "peekBatchChecked")) try journal.peekBatchChecked(records[0..budget.capacity()]) else blk: {
                 const record = journal.peek() orelse break :blk records[0..0];
                 records[0] = record;
                 break :blk records[0..1];
             };
             if (journal.pending() != before) self.notifyProgress();
             if (batch.len == 0) return worked;
+            budget.consume(batch.len);
             worked = true;
             self.delivery_mutex.lockUncancelable(self.io);
             defer self.delivery_mutex.unlock(self.io);
@@ -1305,6 +1307,7 @@ pub const Runtime = struct {
 };
 
 test {
+    _ = @import("runtime_coalesced_tests.zig");
     _ = @import("runtime_tests.zig");
     _ = @import("runtime_delivery_tests.zig");
 }

@@ -2,7 +2,7 @@
 
 后台处理一批记录时，配置组已经由受保护的View保持不可变。现在每组预先计算required且reclaim_after=durable的route位图，记录用route_mask与该位图判断确认边界。这个结果只在当前批次使用，不改变配置发布、文件格式或具体sync调用。
 
-任意required route要求durable时，仍将该事件的完整route_mask纳入原有durable barrier，确认该事件选择的全部required目标。best_effort route不会单独改变journal的确认边界；它的写入/flush/sync行为继续由交付管线处理。记录的确认边界存入固定64条数组，不在回收时重新扫描route。
+任意required route要求durable时，仍将该事件的完整route_mask纳入原有durable barrier，确认该事件选择的全部required目标。best_effort route不会单独改变journal的确认边界；它的写入/flush/sync行为继续由交付管线处理。记录的确认边界存入固定数组，不在回收时重新扫描route；当前合并窗口最多256条，配置组仍最多64项，见[合并交付](coalesced-delivery.md)。
 
 完成计数按连续channel聚合：journal.releaseAfter和配置record pin释放都成功后，才把这条记录加入临时计数。换channel时提交上一段；批次完成和发布progress之前提交剩余计数；错误退出通过defer提交已经确认的前缀。最终原子更新仍使用fetchAdd，因此同步/fallback路径并发增加同一计数器时不会丢计数。相同channel的31条完整批次由31次written RMW减少为1次。
 

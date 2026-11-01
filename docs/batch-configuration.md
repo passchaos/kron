@@ -1,6 +1,6 @@
 # 后台批次的配置复用
 
-后台从一个journal取出最多64条记录后，对该批次中的每个配置版本持有一个受保护的View。相同generation与fingerprint的后续记录复用这个View，不再逐条扫描配置表、增加并减少reader计数。这个做法借鉴Quill和Foundation将消费端重复操作合并到批次的方向；journal的commit、CRC、顺序和输出确认边界保持不变。
+后台从一个journal取出有界checked交付窗口后，对其中每个配置版本持有一个受保护的View。当前窗口可以合并剩余64条服务量子内已就绪记录，默认最多256条；相同generation与fingerprint的后续记录复用View，不再逐条扫描配置表、增加并减少reader计数。配置组仍最多64项，与配置表上限一致。这个做法借鉴Quill和Foundation将消费端重复操作合并到批次的方向；journal的commit、CRC、顺序和每条回收检查保持不变。新窗口的写出/确认取舍见[合并交付](coalesced-delivery.md)。
 
 临时批次对象位于consumer栈上，容量固定为64组，不分配堆内存。记录解码后仍核对完整配置身份与route_mask，按原route、format和sink交付；各组累积route mask，执行相同written/durable barrier。旧View在整批交付、barrier和record reclaim完成后才释放。错误路径也通过defer释放批次View，但不撤销未确认记录的pending pin，不触发资源lease提前释放。
 

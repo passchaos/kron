@@ -17,7 +17,7 @@
 - 进程崩溃后恢复完整提交但尚未写出的记录，不依赖 crash handler 排空普通内存队列。
 - 明确区分 `accepted`、`written` 和 `durable`；抵抗断电需要同步持久化确认。
 - Linux 提供可选 io_uring 批量写入后端，并保留普通批量写入后端。
-- 当前完整Memory/Mmap文件对照中，io_uring中位低于portable约17%–19%；实际后端验证、完成边界和负载限制见[io_uring对照](bench/evidence/2026-11-01-uring-current/README.md)。
+- 源码 `c4b7f34` 的完整Memory/Mmap同轮对照中，io_uring中位低于portable约17%–19%；实际后端验证、完成边界和负载限制见[io_uring对照](bench/evidence/2026-11-01-uring-current/README.md)。后续批次合并同时改善两种后端，当前后端排名仍需新一轮同轮对照。
 - 支持环境变量、运行时 API 和配置热加载；常用 filter 不在每条日志上解析配置或读取环境变量。
 - 内存、journal 空间、线程 channel 和在途 I/O 均有明确预算。
 
@@ -73,9 +73,10 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [配置热替换](docs/configuration.md)：旧事件保留原交付目标，资源lease完成后释放。
 - [批次配置复用](docs/batch-configuration.md)：后台同版本日志共用受保护View，失败保留记录与资源引用。
 - [批内确认与统计](docs/batch-accounting.md)：预计算durable路由需求，聚合已确认记录的written计数，错误保留准确前缀。
+- [就绪批次合并](docs/coalesced-delivery.md)：在原64条服务量子的预算内合并最多256条就绪记录，共享输出屏障，逐条校验和回收。
 - [路由过滤性能](docs/route-filter-performance.md)：配置期派生level掩码，保留scope覆盖和旧版本决策。
 - [异步存储选择](docs/async-storage.md)：普通内存异步与mmap异步，共同接口、明确恢复区别。
-- [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四批，可按负载选择一到四批。
+- [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四个64条服务量子，可按负载选择一到四个。
 - [文件可靠性](docs/file-reliability.md)：部分写入、轮转、显式durable和恢复边界。
 - [Mmap冷发布](docs/mmap-publication.md)：Linux全文件同步覆盖映射脏页，减少重复发布操作并保留schema就绪与故障边界。
 - [嵌套字段](docs/structured-values.md)：显式array/group，固定遍历预算和递归脱敏。
@@ -105,9 +106,11 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 [业界实现与优化方向](docs/industry-performance-lessons.md)记录从Quill/Foundation实际源码、fmtlog/NanoLog/Reckless/BqLog设计中确认的机制，按完整流程profile推进批处理、配置复用与CRC工作量优化。
 
-最新仅Memory/Mmap对照已用源码`182fc9e`默认配置同轮比较Foundation真实spdlog前端＋Rust后台：120项试验、1212万条完整JSON核对。Memory中位kron领先，Mmap单producer中位领先、四producer仍落后；Foundation组波动均超门限，mmap初始化与SPSC调用尾部仍有差距。数据与证据见[当前Memory/Mmap完整报告](bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)，不以更早源码数据推导当前排名。
+此前仅Memory/Mmap对照使用源码`182fc9e`默认配置同轮比较Foundation真实spdlog前端＋Rust后台：120项试验、1212万条完整JSON核对。Memory中位kron领先，Mmap单producer中位领先、四producer仍落后；Foundation组波动均超门限，mmap初始化与SPSC调用尾部仍有差距。数据与证据见[该轮Memory/Mmap完整报告](bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)，不以更早源码数据推导当前排名。
 
-当前源码`4447fe6`已另完成Foundation（真实spdlog前端＋Rust后台）、独立spdlog和kron的140项完整文件流程同轮对照，1414万条JSON逐条核对。kron本轮中位高于独立spdlog，仍未全面超过Foundation：P4 Memory约落后9%，P4 Mmap稳态接近，SPSC Mmap完整生命周期初始化成本较高；波动与未资格范围见[当前完整报告](bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+此前源码`4447fe6`另完成Foundation（真实spdlog前端＋Rust后台）、独立spdlog和kron的140项完整文件流程同轮对照，1414万条JSON逐条核对。kron本轮中位高于独立spdlog，仍未全面超过Foundation：P4 Memory约落后9%，P4 Mmap稳态接近，SPSC Mmap完整生命周期初始化成本较高；波动与未资格范围见[该轮完整报告](bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+
+当前就绪批次合并与基线 `45f5ec1` 完成240项完整文件试验、2424万条物理JSON逐条核对，保持系统时钟、完整字段、原队列/文件预算和最终written flush/关闭/清理。Portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组仍inconclusive。独立io_uring P4 Memory中位提升14.2%/23.6%，共享Memory的p99也出现负向，不能声称所有尾延迟改善。完整ReleaseSafe门禁93/93步骤、540/540测试和九目标对象编译通过；原始慢值、未完成测量、额外消费者栈与恢复证据见[批次合并报告](bench/evidence/2026-11-01-coalesced-delivery/README.md)。两种后端的独立捕获窗口不提供新的后端或Foundation排名；后续候选优先级见[业界实现与优化方向](docs/industry-performance-lessons.md)。
 
 ## 实施顺序
 

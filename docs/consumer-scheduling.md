@@ -1,6 +1,6 @@
 # Memory/Mmap consumer 服务预算
 
-`consumer_batches_per_queue` 在 Runtime 初始化时选择后台从一条队列连续处理的批次数，允许1到4，默认4。每个checked batch最多64条记录；完成完整写出/barrier和逐条回收后，再开始下一批或服务下一个队列。默认最多连续服务256条，显式1则最多64条。共享主队列与SPSC channel使用同一预算，只有一条队列时仍按该预算运行。同步模式没有后台drain，初始化时仍校验该选项的范围。
+`consumer_batches_per_queue` 在 Runtime 初始化时选择后台从一条队列连续处理的服务量子数，允许1到4，默认4。每个量子最多64条记录；当前可将剩余量子内已经就绪的连续记录合成一个checked交付窗口，完整写出/barrier和逐条回收后，再取新窗口或服务下一个队列。短窗口也扣除至少一个量子，默认最多连续服务256条，显式1则最多64条。共享主队列与SPSC channel使用同一预算，只有一条队列时仍按该预算运行。同步模式没有后台drain，初始化时仍校验该选项的范围。具体合并与确认边界见[合并交付](coalesced-delivery.md)。
 
 ```zig
 const runtime = try kron.Runtime.create(allocator, io, .{

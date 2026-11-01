@@ -1,0 +1,125 @@
+diff --git a/src/core/delivery_batch.zig b/src/core/delivery_batch.zig
+index 7a27d73..e15504e 100644
+--- a/src/core/delivery_batch.zig
++++ b/src/core/delivery_batch.zig
+@@ -11,7 +11,26 @@ pub const TestingAudit = if (@import("builtin").is_test) struct {
+     pub var written_updates: Atomic(usize) = .init(0);
+ } else struct {};
+ 
+-pub const max_records = 64;
++pub const records_per_quantum = 64;
++pub const max_records = records_per_quantum * 4;
++const max_groups = configurations.max_capacity;
++
++/// Consume the original 64-record quanta. A short checked window still costs
++/// one quantum, preserving bounded peer service when producers arrive during
++/// output. Already-ready records can share a single output/confirmation pass.
++pub const ServiceBudget = struct {
++    remaining: usize,
++
++    pub fn capacity(self: ServiceBudget) usize {
++        std.debug.assert(self.remaining <= 4);
++        return self.remaining * records_per_quantum;
++    }
++
++    pub fn consume(self: *ServiceBudget, records: usize) void {
++        std.debug.assert(records != 0 and records <= self.capacity());
++        self.remaining -= (records - 1) / records_per_quantum + 1;
++    }
++};
+ 
+ pub const Group = struct {
+     view: configurations.View,
+@@ -68,7 +87,7 @@ pub const WrittenCounts = struct {
+ 
+ pub const Configurations = struct {
+     manager: *configurations.Manager,
+-    storage: [max_records]Group = undefined,
++    storage: [max_groups]Group = undefined,
+     count: usize = 0,
+ 
+     pub fn init(manager: *configurations.Manager) Configurations {
+@@ -88,7 +107,7 @@ pub const Configurations = struct {
+             view.release();
+             return group;
+         };
+-        if (self.count == max_records) {
++        if (self.count == max_groups) {
+             view.release();
+             return error.DeliveryBatchTooLarge;
+         }
+@@ -108,6 +127,31 @@ pub const Configurations = struct {
+     }
+ };
+ 
++test "coalesced service budget charges short windows and bounds every allowed quantum" {
++    for (1..5) |quanta| {
++        var budget: ServiceBudget = .{ .remaining = quanta };
++        const original = budget.capacity();
++        var served: usize = 0;
++        while (budget.remaining != 0) {
++            const count = @min(65, budget.capacity());
++            served += count;
++            budget.consume(count);
++        }
++        try std.testing.expect(served <= original);
++        for (1..original + 1) |length| {
++            budget = .{ .remaining = quanta };
++            budget.consume(length);
++            try std.testing.expect(length + budget.capacity() <= original);
++            try std.testing.expect(budget.capacity() % records_per_quantum == 0);
++        }
++    }
++    var budget: ServiceBudget = .{ .remaining = 4 };
++    budget.consume(1);
++    try std.testing.expectEqual(@as(usize, 192), budget.capacity());
++    budget.consume(160);
++    try std.testing.expectEqual(@as(usize, 0), budget.capacity());
++}
++
+ const Sink = @import("../sink/interface.zig").Sink;
+ const EmptySink = struct {
+     fn write(_: *anyopaque, _: []const u8) anyerror!void {}
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 3e44dd8..ffec186 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -817,22 +817,24 @@ pub const Runtime = struct {
+ 
+     fn drainJournal(self: *Runtime, journal: *Journal) !bool {
+         var worked = false;
+-        var records: [64]JournalModule.Record = undefined;
+-        var channels: [64]u32 = undefined;
+-        var snapshots: [64]*configurations.Snapshot = undefined;
+-        var boundaries: [64]JournalModule.ReclaimBoundary = undefined;
++        var records: [delivery_batch.max_records]JournalModule.Record = undefined;
++        var channels: [delivery_batch.max_records]u32 = undefined;
++        var snapshots: [delivery_batch.max_records]*configurations.Snapshot = undefined;
++        var boundaries: [delivery_batch.max_records]JournalModule.ReclaimBoundary = undefined;
+         // A bounded queue quantum keeps the current batch's write/reclaim
+         // boundary intact. The default retains four batches; applications can
+         // select fewer to reduce the number of records served before peers.
+-        for (0..self.consumer_batches_per_queue) |_| {
++        var budget: delivery_batch.ServiceBudget = .{ .remaining = self.consumer_batches_per_queue };
++        while (budget.remaining != 0) {
+             const before = journal.pending();
+-            const batch = if (@hasDecl(Journal, "peekBatchChecked")) try journal.peekBatchChecked(&records) else blk: {
++            const batch = if (@hasDecl(Journal, "peekBatchChecked")) try journal.peekBatchChecked(records[0..budget.capacity()]) else blk: {
+                 const record = journal.peek() orelse break :blk records[0..0];
+                 records[0] = record;
+                 break :blk records[0..1];
+             };
+             if (journal.pending() != before) self.notifyProgress();
+             if (batch.len == 0) return worked;
++            budget.consume(batch.len);
+             worked = true;
+             self.delivery_mutex.lockUncancelable(self.io);
+             defer self.delivery_mutex.unlock(self.io);
+@@ -1305,6 +1307,7 @@ pub const Runtime = struct {
+ };
+ 
+ test {
++    _ = @import("runtime_coalesced_tests.zig");
+     _ = @import("runtime_tests.zig");
+     _ = @import("runtime_delivery_tests.zig");
+ }

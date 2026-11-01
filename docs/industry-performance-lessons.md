@@ -1,6 +1,6 @@
 # 从高性能日志库落实优化
 
-设计借鉴以实际热路径和完成边界为依据。2026-11-01的同条件完整JSON对照中位结果尚不支持kron领先于Quill和Foundation；下一步先解决已测得的重复工作。正式数据见 [完整工作流](cpp-full-workflow.md)。
+设计借鉴以实际热路径和完成边界为依据。Memory/Mmap所有组合稳定超越Foundation的证据仍未取得；各轮排名以当轮源码和完整JSON对照为准。后续从当前热路径的可测成本出发，正式跨库数据见 [完整工作流](cpp-full-workflow.md)。
 
 ## 源码中确认的机制
 
@@ -40,5 +40,23 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 已实现条目按对应证据报告，其余条目是后续优先级。每项须有修改前源码、同语义完整工作流、故障门禁和明确性能限制，最终再与Quill/Foundation同轮复测。移动平台实际资格和长期fuzz仍按总验收清单继续。
 
 后续配置record pin批量释放实验已实际执行两版候选，分别以100项完整文件和20项完整PMU试验验证，共核对3224万条日志。语义测试确认31条同配置记录可从31次pin原子减法合成1次，但多个Memory组的负向中位、高spread和不重叠收益缺失使两版均未通过性能推广条件，生产实现恢复逐条pin释放。原始数据保留在`bench/evidence/2026-11-01-batch-pins/`，并保留更强的旧配置晚期损坏/lease回归。引用计数优化必须同时考虑逐条分支、状态维护、缓存竞争和完整流程；源码中看见的重复操作只能提供假设。
+
+## 批次合并后的Memory/Mmap优先级
+
+当前已将原四个64条服务量子内的就绪记录合并为最多256条窗口。240项完整文件试验核对2424万条物理JSON，portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组未资格。独立io_uring P4 Memory两组中位提升14.2%/23.6%，共享Memory的调用p99也出现可重复负向。单对trace的pwritev1581→833、futex9184→4533只证明本次诊断操作数下降。源码、全部慢值、确认与恢复门禁见 [就绪批次合并](coalesced-delivery.md) 和 [完整证据](../bench/evidence/2026-11-01-coalesced-delivery/README.md)。
+
+下表列的是待验证的候选，优先级综合当前证据、常用路径覆盖与实现复杂度；没有预先承诺百分比收益。新一轮先重新采集批次合并后的producer/consumer/系统调用profile，避免继续使用旧CRC占比解释当前瓶颈。
+
+| 优先级 | 候选与 owning source | 现有成本与拟验证变化 | 验证重点 |
+| --- | --- | --- | --- |
+| 1 | 有界窗口与满队列尾延迟；`core/runtime.zig`、`core/delivery_batch.zig` | 固定最多256条在吞吐和槽位释放频率之间有取舍；研究按当前积压/输出字节控制窗口，保持每轮64条量子预算，不增加补满等待 | 稀疏、突发、持续饱和负载；P1/P4的完整written吞吐、调用p99/p99.9、低频可见时间与peer服务；不能只挑最优分位数 |
+| 2 | 减少consumer到file的复制；`core/delivery.zig`、`sink/file.zig`、`backend/buffer_pool.zig` | 当前格式化到runtime scratch，再由FileSink复制入文件缓冲，io_uring再复制到稳定pool；研究私有的有界reserve/commit或批量writer，在完整验证后提交记录 | 所有格式字节与短缓冲失败前缀；invalid记录零输出；在途缓冲生命周期、partial write、flush/关闭和轮转 |
+| 3 | schema/prepared的融合输出与静态元信息复用；`core/runtime.zig`、`core/schema_codec.zig`、`encoder/wire_json.zig` | 当前融合路径仅覆盖inline v4单route、无deferred/args；schema仍resolve成Event再encode；研究直接读取已验证定义和值、缓存静态key/metadata的转义结果 | 按schema身份与配置版本失效，定义持久化先于ready；保留template语义、nullable/nested/source/trace、错误优先级与恢复；注册/preparation单独计时 |
+| 4 | 多producer原子与缓存行竞争；`core/runtime.zig`、`core/admission.zig`、`core/thread_registry.zig`、`journal/journal.zig` | shared队列tail/accounting、全局admission/wake和channel counters仍有原子更新；SPSC也存在全局生命周期协调；先用PMU/cache-to-cache诊断定位，再研究热字段分离或精确分片统计 | P1/P4扩展、系统与用户CPU、满队列尾部；flush admission cut、关闭、错误唤醒和准确统计不变；当前证据不能归因于parking_lot |
+| 5 | Mmap冷启动与channel准备；`journal/storage.zig`、`platform/mapping/linux.zig`、`core/thread_registry.zig` | mmap建立/初始化/文件与目录发布仍影响生命周期；研究显式预建channel、初始化内存访问与系统调用覆盖范围 | 单独报告init/preparation与written稳态，保留磁盘/channel预算、文件/目录发布和schema顺序；不能把启动同步成本用于解释普通written稳态差距 |
+| 6 | io_uring跨窗口流水线；`backend/linux_uring.zig`、`core/runtime.zig` | backend已有稳定buffer pool和CQE进度，但runtime每个交付窗口后flush会排空在途写；研究有限pending windows，让下一窗口格式化与前一窗口I/O重叠 | 只有实际CQE完整成功才推进written/回收；mixed配置pin、短写、失败前缀、shutdown/deadline和资源上界。收益先与portable同轮复测，复杂度高于前几项 |
+| 7 | 显式durable的批量checkpoint/reclaim；`journal/journal.zig` | durable `releaseAfter`当前逐条执行数据同步、checkpoint同步及slot失效同步；可研究对已完成durable输出的连续前缀进行有界整批持久回收 | checkpoint/slot复用顺序、torn write、每个失败边界与子VM掉电恢复；只对durable路径有意义，当前普通written性能试验未执行这些逐条同步 |
+
+此前条件progress wake候选虽然并发门禁通过，完整吞吐仍未取得收益，饱和负载futex次数也未下降，已恢复原通知策略，见`bench/evidence/2026-11-01-progress-wakeup/`。这和批量pin的负向结果说明后续应测量新的成本或改变机制，避免重复推广同一未通过候选。PCLMUL CRC、默认脱敏scratch、重复树校验、批内配置View、written聚合和就绪批次合并均已落实，不作为新的待做项目。
 
 参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。
