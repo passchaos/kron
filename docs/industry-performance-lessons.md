@@ -1,5 +1,7 @@
 # 从高性能日志库落实优化
 
+Prepared提交中独立的一次重复树遍历已进一步消除：runtime原有predicate前校验顺便统计value/nested key长度，私有context在同一未改写调用内复用，canonical形状/引用和公开codec全树检查保持。Debug/Safe/Fast各64项及4096项旧/新codec差分一致；380项完整对照核对6438万条JSON，三个schema用户态指令组减少约4%，shared Memory P1长batch吞吐中位+4.89%，局部重复性与置信区间通过。P1 sampled极端分位有负向，未取得一般tail/P4/Mmap吞吐资格。该方案针对runtime与codec之间的重复校验，和下方被否决的shape-in-visitor循环合并不同；全部正负结果见`bench/evidence/2026-11-01-prepared-measure/`。
+
 最新schema形状/类型检查合并遍历候选未推广：完整树校验和长度visitor期间观察schema key/type并延后形状错误，保持tree→metadata/shape→level→overflow优先级，4096项冻结旧/新差分一致。但独立PMU的schema SPSC指令增加0.463%，完整320项吞吐各组未取得资格，因此恢复原实现。全部400项/5640万条文件/PMU结果保存（其中首40项有潜在测试结束重叠，正式clean360项4436万条）；证据见`bench/evidence/2026-11-01-schema-shape-visitor/`。后续schema优化不能重复推广这一未通过的合并遍历机制，应继续从真实profile定位昂贵操作，并保留完整树校验与错误顺序。
 
 设计借鉴以实际热路径和完成边界为依据。Memory/Mmap所有组合稳定超越Foundation的证据仍未取得；各轮排名以当轮源码和完整JSON对照为准。后续从当前热路径的可测成本出发，正式跨库数据见 [完整工作流](cpp-full-workflow.md)。

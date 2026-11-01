@@ -65,3 +65,9 @@ QEMU harness 的 `--schema` 选项运行真实 v2 writer。在当前 Linux/ext4 
 静态key唯一性由原schema定义校验保证，scope/source和可选静态message借用已验证定义；这些借用只在当前受保护记录的交付期间使用。动态message、历史v2 scalar定义、nested v5和三种文本输出均有逐字节对照。少于64条的窗口、template/args、多route和binary继续使用materialized resolve；同一记录的canonical definition查找可在fallback内复用。路由拒绝的冷路径保留先decode、再报告路由错误的优先级。
 
 原服务预算、输出written/durable barrier、第二次CRC回收、配置pin和至少一次恢复契约继续适用。性能与故障证据见[schema消费者对照](../bench/evidence/2026-11-01-consumer-post-coalescing/README.md)，不能从该路径的局部CPU变化推导跨库排名。
+
+## Prepared提交内的值长度复用
+
+无脱敏规则的prepared提交在原有predicate之前完成一次全树校验，同时统计动态value和nested key字节。private submission context只在本次未改写的调用内携带该长度；canonical schema解析、shape/type/level、full/drop/fallback和容量检查仍在原边界执行。trace/header/dynamic message长度在canonical确定载荷形状后加入。`reference_encoding.zig`是内部共用实现，公开`encodedReferenceSize`/`encodeReference`仍每次校验完整树，不导出measured encoder或可保存校验凭证，也不信任Event.tree_validated或调用方Binding.definition。
+
+redaction会改写树，继续独立校验原/新事件，不复用改写前的长度。reserve/commit/consumer/reclaim的ready引用检查、CRC、record pin和barrier均保持。真实Memory/Mmap×shared/SPSC计数确认五个value只在runtime提交内校验五次，公开codec另独立校验五次；predicate与full/drop/fallback错误顺序、超长/无效level、伪造hint和脱敏路径有实际测试。完整对照与旧codec差分见`bench/evidence/2026-11-01-prepared-measure/`。

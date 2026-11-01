@@ -122,6 +122,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 
 SPSC满队列现在等待本队列的进程内space epoch，避免由其他队列进度触发重复等待；原队列服务顺序、CRC/配置引用与确认边界保持。正式400项完整文件/PMU/百万条对照核对8440万条JSON，Memory inline SPSC四producer长sampled p99.9中位366.312→340.708µs（−6.99%），通过本轮重复性门限且中位区间不重叠；普通吞吐、p50/p99与Mmap尾部多数未资格。每Journal对象增加64字节、队列/file预算和分配次数不增。原短流程P1负向与所有慢值保留，诊断计数和并发唤醒证据见[队列进度报告](bench/evidence/2026-11-01-queue-progress/README.md)；这不是新的Foundation同轮排名。
 
+当前prepared优化通过556项完整ReleaseSafe测试和九目标对象编译。Prepared提交在原全树校验中测量动态value/nested key字节，只在本次未改写调用中复用；公开reference codec、canonical/ready引用、CRC/pin/barrier继续校验。380项完整文件/PMU/百万条对照核对6438万条JSON，schema用户态指令减少约4%，shared Memory单producer长batch吞吐中位+4.89%，重复性通过且区间不重叠。P1长sampled p99.9负向、P4和Mmap多数未资格，全部慢值和限制见[prepared测量报告](bench/evidence/2026-11-01-prepared-measure/README.md)；不以局部收益推导当前跨库排名。
+
 ## 实施顺序
 
 1. 固定事件、字段、配置和可靠性契约，建立 Zig 0.16 构建骨架。

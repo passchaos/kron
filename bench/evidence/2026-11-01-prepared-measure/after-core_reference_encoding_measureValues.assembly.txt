@@ -1,0 +1,253 @@
+
+bench/evidence/2026-11-01-prepared-measure/kron-ref-after-final:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000001109f50 <core.reference_encoding.measureValues>:
+ 1109f50:	push   %rbp
+ 1109f51:	mov    %rsp,%rbp
+ 1109f54:	push   %r15
+ 1109f56:	push   %r14
+ 1109f58:	push   %r13
+ 1109f5a:	push   %r12
+ 1109f5c:	push   %rbx
+ 1109f5d:	sub    $0xe8,%rsp
+ 1109f64:	mov    0x20(%rsi),%r13
+ 1109f68:	mov    0x28(%rsi),%rbx
+ 1109f6c:	mov    0x30(%rsi),%r14
+ 1109f70:	mov    0x38(%rsi),%rcx
+ 1109f74:	vpxor  %xmm0,%xmm0,%xmm0
+ 1109f78:	vmovdqu %ymm0,-0xa0(%rbp)
+ 1109f80:	vmovdqu %ymm0,-0xb0(%rbp)
+ 1109f88:	vmovdqu %ymm0,-0xd0(%rbp)
+ 1109f90:	vmovdqu %ymm0,-0xf0(%rbp)
+ 1109f98:	vmovdqu %ymm0,-0x110(%rbp)
+ 1109fa0:	movq   $0x0,-0x38(%rbp)
+ 1109fa8:	mov    %rdi,-0x40(%rbp)
+ 1109fac:	lea    -0x110(%rbp),%rax
+ 1109fb3:	mov    %rax,-0x30(%rbp)
+ 1109fb7:	mov    $0x8f,%ax
+ 1109fbb:	mov    %rcx,-0x48(%rbp)
+ 1109fbf:	cmp    $0x100,%rcx
+ 1109fc6:	jbe    1109fe5 <core.reference_encoding.measureValues+0x95>
+ 1109fc8:	mov    -0x40(%rbp),%rcx
+ 1109fcc:	mov    %ax,0x8(%rcx)
+ 1109fd0:	add    $0xe8,%rsp
+ 1109fd7:	pop    %rbx
+ 1109fd8:	pop    %r12
+ 1109fda:	pop    %r13
+ 1109fdc:	pop    %r14
+ 1109fde:	pop    %r15
+ 1109fe0:	pop    %rbp
+ 1109fe1:	vzeroupper
+ 1109fe4:	ret
+ 1109fe5:	cmpq   $0x0,-0x48(%rbp)
+ 1109fea:	je     110a2ba <core.reference_encoding.measureValues+0x36a>
+ 1109ff0:	xor    %r12d,%r12d
+ 1109ff3:	xor    %r15d,%r15d
+ 1109ff6:	lea    (%r15,%r15,2),%rax
+ 1109ffa:	shl    $0x4,%rax
+ 1109ffe:	vmovdqu (%r14,%rax,1),%ymm0
+ 110a004:	vmovdqu %ymm0,-0x80(%rbp)
+ 110a009:	mov    0x28(%r14,%rax,1),%rcx
+ 110a00e:	test   %r15,%r15
+ 110a011:	je     110a250 <core.reference_encoding.measureValues+0x300>
+ 110a017:	mov    0x20(%r14,%rax,1),%rsi
+ 110a01c:	mov    %rcx,%rdi
+ 110a01f:	sub    $0x1,%rdi
+ 110a023:	mov    %rsi,%rdx
+ 110a026:	mov    $0x1,%eax
+ 110a02b:	cmovb  %rax,%rdx
+ 110a02f:	cmp    $0x10,%rcx
+ 110a033:	ja     110a0b0 <core.reference_encoding.measureValues+0x160>
+ 110a035:	mov    %rcx,%r8
+ 110a038:	shr    $1,%r8
+ 110a03b:	cmp    $0x4,%rcx
+ 110a03f:	jae    110a138 <core.reference_encoding.measureValues+0x1e8>
+ 110a045:	xor    %r9d,%r9d
+ 110a048:	jmp    110a05d <core.reference_encoding.measureValues+0x10d>
+ 110a04a:	nopw   0x0(%rax,%rax,1)
+ 110a050:	add    $0x30,%r9
+ 110a054:	cmp    %r9,%r12
+ 110a057:	je     110a250 <core.reference_encoding.measureValues+0x300>
+ 110a05d:	cmp    %rcx,0x28(%r14,%r9,1)
+ 110a062:	jne    110a050 <core.reference_encoding.measureValues+0x100>
+ 110a064:	mov    $0x42,%ax
+ 110a068:	test   %rcx,%rcx
+ 110a06b:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a071:	mov    0x20(%r14,%r9,1),%r10
+ 110a076:	cmp    %rdx,%r10
+ 110a079:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a07f:	movzbl (%r10),%r11d
+ 110a083:	cmp    (%rsi),%r11b
+ 110a086:	jne    110a050 <core.reference_encoding.measureValues+0x100>
+ 110a088:	movzbl (%rdx,%rdi,1),%r11d
+ 110a08d:	cmp    %r11b,(%r10,%rdi,1)
+ 110a091:	jne    110a050 <core.reference_encoding.measureValues+0x100>
+ 110a093:	movzbl (%rdx,%r8,1),%r11d
+ 110a098:	cmp    %r11b,(%r10,%r8,1)
+ 110a09c:	jne    110a050 <core.reference_encoding.measureValues+0x100>
+ 110a09e:	jmp    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a0a3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 110a0b0:	cmp    $0x21,%rcx
+ 110a0b4:	jae    110a1a9 <core.reference_encoding.measureValues+0x259>
+ 110a0ba:	xor    %edi,%edi
+ 110a0bc:	jmp    110a0cd <core.reference_encoding.measureValues+0x17d>
+ 110a0be:	xchg   %ax,%ax
+ 110a0c0:	add    $0x30,%rdi
+ 110a0c4:	cmp    %rdi,%r12
+ 110a0c7:	je     110a250 <core.reference_encoding.measureValues+0x300>
+ 110a0cd:	cmp    %rcx,0x28(%r14,%rdi,1)
+ 110a0d2:	jne    110a0c0 <core.reference_encoding.measureValues+0x170>
+ 110a0d4:	mov    0x20(%r14,%rdi,1),%r8
+ 110a0d9:	mov    $0x42,%ax
+ 110a0dd:	cmp    %rdx,%r8
+ 110a0e0:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a0e6:	vmovd  0x4(%rdx),%xmm0
+ 110a0eb:	vmovq  0x8(%rdx),%xmm1
+ 110a0f0:	movzbl (%rsi),%r9d
+ 110a0f4:	vmovd  %r9d,%xmm2
+ 110a0f9:	vpinsrb $0x1,0x1(%rdx),%xmm2,%xmm2
+ 110a100:	vpinsrb $0x2,0x2(%rdx),%xmm2,%xmm2
+ 110a107:	vpinsrb $0x3,0x3(%rdx),%xmm2,%xmm2
+ 110a10e:	vpunpckldq %xmm0,%xmm2,%xmm0
+ 110a112:	vpunpcklqdq %xmm1,%xmm0,%xmm0
+ 110a116:	vpxor  (%r8),%xmm0,%xmm0
+ 110a11b:	vmovdqu -0x10(%r8,%rcx,1),%xmm1
+ 110a122:	vpxor  -0x10(%rsi,%rcx,1),%xmm1,%xmm1
+ 110a128:	vpor   %xmm1,%xmm0,%xmm0
+ 110a12c:	vptest %xmm0,%xmm0
+ 110a131:	jne    110a0c0 <core.reference_encoding.measureValues+0x170>
+ 110a133:	jmp    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a138:	lea    -0x4(%rcx),%rax
+ 110a13c:	and    $0xc,%r8d
+ 110a140:	mov    %rax,-0x58(%rbp)
+ 110a144:	sub    %r8,%rax
+ 110a147:	mov    %rax,-0x50(%rbp)
+ 110a14b:	xor    %r10d,%r10d
+ 110a14e:	jmp    110a15d <core.reference_encoding.measureValues+0x20d>
+ 110a150:	add    $0x30,%r10
+ 110a154:	cmp    %r10,%r12
+ 110a157:	je     110a250 <core.reference_encoding.measureValues+0x300>
+ 110a15d:	cmp    %rcx,0x28(%r14,%r10,1)
+ 110a162:	jne    110a150 <core.reference_encoding.measureValues+0x200>
+ 110a164:	mov    0x20(%r14,%r10,1),%r11
+ 110a169:	mov    $0x42,%ax
+ 110a16d:	cmp    %rdx,%r11
+ 110a170:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a176:	mov    (%rsi),%r9d
+ 110a179:	cmp    (%r11),%r9d
+ 110a17c:	jne    110a150 <core.reference_encoding.measureValues+0x200>
+ 110a17e:	mov    -0x58(%rbp),%rdi
+ 110a182:	mov    (%r11,%rdi,1),%r9d
+ 110a186:	cmp    %r9d,(%rsi,%rdi,1)
+ 110a18a:	jne    110a150 <core.reference_encoding.measureValues+0x200>
+ 110a18c:	mov    (%r11,%r8,1),%r9d
+ 110a190:	cmp    %r9d,(%rsi,%r8,1)
+ 110a194:	jne    110a150 <core.reference_encoding.measureValues+0x200>
+ 110a196:	mov    -0x50(%rbp),%rdi
+ 110a19a:	mov    (%r11,%rdi,1),%r9d
+ 110a19e:	cmp    %r9d,(%rsi,%rdi,1)
+ 110a1a2:	jne    110a150 <core.reference_encoding.measureValues+0x200>
+ 110a1a4:	jmp    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a1a9:	shr    $0x5,%rdi
+ 110a1ad:	xor    %esi,%esi
+ 110a1af:	jmp    110a1cc <core.reference_encoding.measureValues+0x27c>
+ 110a1b1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 110a1c0:	inc    %rsi
+ 110a1c3:	cmp    %r15,%rsi
+ 110a1c6:	je     110a250 <core.reference_encoding.measureValues+0x300>
+ 110a1cc:	lea    (%rsi,%rsi,2),%rax
+ 110a1d0:	shl    $0x4,%rax
+ 110a1d4:	mov    0x28(%r14,%rax,1),%r9
+ 110a1d9:	mov    $0x1,%r8d
+ 110a1df:	test   %r9,%r9
+ 110a1e2:	je     110a1e9 <core.reference_encoding.measureValues+0x299>
+ 110a1e4:	mov    0x20(%r14,%rax,1),%r8
+ 110a1e9:	cmp    %rcx,%r9
+ 110a1ec:	jne    110a1c0 <core.reference_encoding.measureValues+0x270>
+ 110a1ee:	mov    $0x42,%ax
+ 110a1f2:	test   %r9,%r9
+ 110a1f5:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a1fb:	cmp    %rdx,%r8
+ 110a1fe:	je     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a204:	xor    %r9d,%r9d
+ 110a207:	mov    %rdi,%r10
+ 110a20a:	nopw   0x0(%rax,%rax,1)
+ 110a210:	vmovdqu (%r8,%r9,1),%ymm0
+ 110a216:	vpxor  (%rdx,%r9,1),%ymm0,%ymm0
+ 110a21c:	vptest %ymm0,%ymm0
+ 110a221:	jne    110a1c0 <core.reference_encoding.measureValues+0x270>
+ 110a223:	add    $0x20,%r9
+ 110a227:	dec    %r10
+ 110a22a:	jne    110a210 <core.reference_encoding.measureValues+0x2c0>
+ 110a22c:	vmovdqu -0x20(%r8,%rcx,1),%ymm0
+ 110a233:	vpxor  -0x20(%rdx,%rcx,1),%ymm0,%ymm0
+ 110a239:	vptest %ymm0,%ymm0
+ 110a23e:	jne    110a1c0 <core.reference_encoding.measureValues+0x270>
+ 110a240:	jmp    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a245:	data16 cs nopw 0x0(%rax,%rax,1)
+ 110a250:	mov    -0x30(%rbp),%rax
+ 110a254:	cmpq   $0x0,0x8(%rax)
+ 110a259:	je     110a27b <core.reference_encoding.measureValues+0x32b>
+ 110a25b:	mov    -0x38(%rbp),%rax
+ 110a25f:	movabs $0x100000000,%rdx
+ 110a269:	cmp    %rdx,%rcx
+ 110a26c:	cmovae %rdx,%rcx
+ 110a270:	add    %rcx,%rax
+ 110a273:	add    $0x4,%rax
+ 110a277:	mov    %rax,-0x38(%rbp)
+ 110a27b:	lea    -0x110(%rbp),%rdi
+ 110a282:	lea    -0x80(%rbp),%rsi
+ 110a286:	lea    -0x38(%rbp),%rdx
+ 110a28a:	vzeroupper
+ 110a28d:	call   110a750 <core.field.ValueValidator.valueWith__anon_37021>
+ 110a292:	test   %ax,%ax
+ 110a295:	jne    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a29b:	inc    %r15
+ 110a29e:	add    $0x30,%r12
+ 110a2a2:	cmp    -0x48(%rbp),%r15
+ 110a2a6:	jne    1109ff6 <core.reference_encoding.measureValues+0xa6>
+ 110a2ac:	mov    $0x100,%ecx
+ 110a2b1:	sub    -0x110(%rbp),%rcx
+ 110a2b8:	jmp    110a2bf <core.reference_encoding.measureValues+0x36f>
+ 110a2ba:	mov    $0x100,%ecx
+ 110a2bf:	mov    $0x8f,%ax
+ 110a2c3:	cmp    %rcx,%rbx
+ 110a2c6:	ja     1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a2cc:	test   %rbx,%rbx
+ 110a2cf:	je     110a34f <core.reference_encoding.measureValues+0x3ff>
+ 110a2d1:	lea    -0x80(%rbp),%r15
+ 110a2d5:	lea    -0x38(%rbp),%r12
+ 110a2d9:	movabs $0x100000000,%r14
+ 110a2e3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 110a2f0:	mov    0x20(%r13),%rax
+ 110a2f4:	mov    %rax,-0x60(%rbp)
+ 110a2f8:	vmovdqu 0x0(%r13),%ymm0
+ 110a2fe:	vmovdqu %ymm0,-0x80(%rbp)
+ 110a303:	mov    -0x30(%rbp),%rax
+ 110a307:	cmpq   $0x0,0x8(%rax)
+ 110a30c:	je     110a328 <core.reference_encoding.measureValues+0x3d8>
+ 110a30e:	mov    0x28(%r13),%rax
+ 110a312:	mov    -0x38(%rbp),%rcx
+ 110a316:	cmp    %r14,%rax
+ 110a319:	cmovae %r14,%rax
+ 110a31d:	add    %rcx,%rax
+ 110a320:	add    $0x4,%rax
+ 110a324:	mov    %rax,-0x38(%rbp)
+ 110a328:	lea    -0x110(%rbp),%rdi
+ 110a32f:	mov    %r15,%rsi
+ 110a332:	mov    %r12,%rdx
+ 110a335:	vzeroupper
+ 110a338:	call   110a750 <core.field.ValueValidator.valueWith__anon_37021>
+ 110a33d:	test   %ax,%ax
+ 110a340:	jne    1109fc8 <core.reference_encoding.measureValues+0x78>
+ 110a346:	add    $0x30,%r13
+ 110a34a:	dec    %rbx
+ 110a34d:	jne    110a2f0 <core.reference_encoding.measureValues+0x3a0>
+ 110a34f:	mov    -0x38(%rbp),%rax
+ 110a353:	mov    -0x40(%rbp),%rcx
+ 110a357:	movw   $0x0,0x8(%rcx)
+ 110a35d:	mov    %rax,(%rcx)
+ 110a360:	jmp    1109fd0 <core.reference_encoding.measureValues+0x80>

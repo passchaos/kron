@@ -6,9 +6,13 @@
 
 ## 当前单机门禁
 
+Prepared测量复用的最终源码通过完整ReleaseSafe **93/93步骤、556/556 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，独立五模式/单线程/源码分发包、配置/过滤/生命周期/文件故障、随机SIGKILL和wire/schema损坏矩阵均通过。正式380项/6438万条数据、节点计数、4096项旧/新codec差分、额外提交函数栈帧与P1极端分位负向绑定于`bench/evidence/2026-11-01-prepared-measure/qualification.json`。当前目标仍有稳定完整性能、业务/durable基线、长期fuzz与其他平台设备运行等缺口，见下方剩余验收项。
+
+Prepared无脱敏提交已复用本次全树校验得到的动态value/nested key字节，canonical shape/level/reference、queue full/fallback和capacity边界保持；公开reference codec仍完整校验，内部实现移到`reference_encoding.zig`，无外部measured入口。真实Memory/Mmap共享/SPSC、predicate/tree、full/drop/fallback、超长/level、脱敏和伪造binding/hint相关Debug/Safe/Fast各64项通过，旧/新codec4096项独立差分一致，public Runtime节点计数由8→4。380项完整文件/PMU/百万条对照核对6438万条JSON，schema SPSC Memory/Mmap与shared Memory P1用户态指令减少3.99%/3.97%/4.33%，CV/spread通过且区间不重叠；shared Memory P1百万条batch吞吐中位+4.89%同样通过。P1长sampled p99.9中位1017→15974ns为明显负向、波动超门限，其他吞吐/尾部多数未资格；这些限制和所有慢值保留。来源与有限收益见`bench/evidence/2026-11-01-prepared-measure/`；不推导新的Foundation排名。
+
 schema形状检查并入size visitor的候选已验证并否决：与冻结旧源码4096项独立模块差分（342项成功字节一致、3754项拒绝错误与未写缓冲一致），相关Safe63项、Debug/Fast各29项通过。400项完整文件/PMU共核对5640万条JSON；首40项PMU存在测试结束阶段潜在重叠，单独标记，正式clean360项核对4436万条。独立PMU的schema SPSC Memory/Mmap指令中位增加0.463%、两侧波动通过且区间不重叠，完整320项吞吐各组均inconclusive，多数schema P4负向中位。没有取得可推广收益，生产src精确恢复`cd00f1f`，保留原552项/九目标资格；候选的完整源码、priority测试、差分与全部慢值见`bench/evidence/2026-11-01-schema-shape-visitor/qualification.json`。未更改字段验证、schema检查或跨库排名。
 
-SPSC本队列space通知源码已通过完整ReleaseSafe **93/93步骤、552/552 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**；相关Debug/Safe/Fast各25项及外部Memory/Mmap SPSC shutdown/worker错误各2项通过。真实wait前关闭、epoch回绕、own abort回收与不同队列worker错误广播不丢唤醒，共享producer/control保持原global协议。正式400项完整文件/PMU/百万条对照核对8440万条JSON，另24项诊断核对242.4万条；Memory inline SPSC P4长sampled p99.9中位366.312→340.708µs（−6.99%），CV/spread通过且置信区间不重叠。普通吞吐、p50/p99和Mmap多数未资格，短Memory P1约−10%负向中位保留且长P1 batch未重现；每Journal进程内对象增64字节，不增加分配次数或队列/file backing。源码/binary/格式/故障与全部慢值见`bench/evidence/2026-11-01-queue-progress/qualification.json`，Foundation跨库排名仍以此前同轮e8bd353为准，其他平台设备运行资格仍未取得。
+此前SPSC本队列space通知源码通过完整ReleaseSafe **93/93步骤、552/552 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**；相关Debug/Safe/Fast各25项及外部Memory/Mmap SPSC shutdown/worker错误各2项通过。真实wait前关闭、epoch回绕、own abort回收与不同队列worker错误广播不丢唤醒，共享producer/control保持原global协议。正式400项完整文件/PMU/百万条对照核对8440万条JSON，另24项诊断核对242.4万条；Memory inline SPSC P4长sampled p99.9中位366.312→340.708µs（−6.99%），CV/spread通过且置信区间不重叠。普通吞吐、p50/p99和Mmap多数未资格，短Memory P1约−10%负向中位保留且长P1 batch未重现；每Journal进程内对象增64字节，不增加分配次数或队列/file backing。源码/binary/格式/故障与全部慢值见`bench/evidence/2026-11-01-queue-progress/qualification.json`，Foundation跨库排名仍以此前同轮e8bd353为准，其他平台设备运行资格仍未取得。
 
 跨队列64条轮次交付候选已实验并否决：真实四队列Memory/Mmap×inline/schema、稀疏tracking容量、peek/flush/durable/late reclaim损坏与原peer服务位置在Debug/Safe/Fast定向各26/26通过；440项完整文件/PMU/现有单量子控制核对5244万条JSON。p99.9中位降低但p50/p99明显负向，多数组吞吐负向且所有完整性能资格仍inconclusive；四组指令中位增加0.58%–0.71%，新增调度/跨来源确认与栈空间未取得整体收益。生产src精确恢复`714c470/e8bd353`，现有调度/API与549项综合资格保持。完整候选/失败/原始慢值/控制和否决理由见`bench/evidence/2026-11-01-cross-queue-delivery/qualification.json`；不改变已归档Foundation同轮排名。
 
@@ -140,6 +144,19 @@ native数字输出进一步直接写入已有Writer buffer：剩余至少21字�
 | 结构化扩展 | 显式group/array、8层/256节点预算、递归脱敏、nullable/source/trace；受限对象适配器5项外部测试及9项负向编译 | 更广nested故障与性能资格 |
 | 文件与归档 | size/time轮转、retention/reopen、自包含与标准DEFLATE归档 | 更全面持久化格式升级矩阵、随机/更多文件系统故障门禁 |
 | 生态与平台 | std.log、JSON、Windows/aarch64编译、真实单线程同步文件日志 | Windows/macOS/Android/iOS实际运行与journal资格 |
+
+### 当前差距的优先级
+
+功能主体已经覆盖当前五平台单机日志的主要API，目标仍不能标完成。按`design.md`第15节的实际性能/正确性范围，后续优先级如下；有限测试计数与局部before/after收益不能替代完整范围资格。
+
+| 优先级 | 差距 | 当前证据与下一步 |
+| --- | --- | --- |
+| 1 | 稳定的完整流程性能优势 | 最近Foundation真实spdlog/Rust后台同轮200项对照仍全部inconclusive；仅Memory/Mmap的部分中位领先。需对最终源码在可控噪声下建立包含flush/关闭的基线，核对CPU/资源与同语义跨库结果 |
+| 1 | 尾延迟和过载下的应用影响 | Memory SPSC P4长流程p99.9仍约340µs，prepared P1最新long-sampled p99.9有负向。需覆盖burst/持续满队列、慢sink、更多producer，测阻塞/积压年龄并与无日志应用基线比较CPU/cache/调度竞争 |
+| 1 | Mmap启动/预热与资源成本 | 较早同轮SPSC Mmap P4初始化曾有约1.25秒中位；每producer独立固定slot队列带来额外保留。需降低冷发布/channel准备成本，按真实payload分布报告预算和生命周期，保持发布/恢复协议 |
+| 2 | 性能负载覆盖和发布回归门限 | 设计要求0/5/10 fields、长短字符串、1/4/16 producers、warm/cold、线程频繁attach/detach、reload/rolling，以及独立durable吞吐/延迟。当前完整对照主要为五数字字段P1/P4，需要补齐业务与durable基线并形成低噪声回归门禁 |
+| 2 | 更广故障与持续fuzz | 已有真实SIGKILL、子QEMU与有界mutation/coverage-guided试验；还需多文件系统/设备的系统停机/掉电边界、更长期seed和sanitizer资格、nested/轮转/格式升级组合故障 |
+| 2 | 非Linux平台运行 | Windows/macOS/Android/iOS实现和对象/部分链接证据存在，尚缺对应设备上的实际日志、生命周期、恢复与可用durable能力报告；Linux运行不能替代它们 |
 
 API已明确哪些能力属于可选增强；后续验收应逐项给出源码、运行结果或明确的平台能力边界。本轮以用户更新后的单机范围推进；更大硬件故障和跨平台资格仍按实测报告。
 

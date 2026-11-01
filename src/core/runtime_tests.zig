@@ -3,6 +3,7 @@ const Runtime = @import("runtime.zig").Runtime;
 const EmitResult = @import("logger.zig").EmitResult;
 const MemorySink = @import("../sink/memory.zig").MemorySink;
 test {
+    _ = @import("runtime_prepared_measure_tests.zig");
     _ = @import("runtime_admission_view_tests.zig");
 }
 const fields = @import("field.zig");

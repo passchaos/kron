@@ -21,13 +21,13 @@ schema的key/type形状检查合并到size visitor曾做完整before/after实验
 
 两次payload遍历是计算CRC后先写header的必要步骤；重复校验和长度计算已经合并。不会导出unchecked写入函数或可复用的validation token。Event以及descriptor、key、string/bytes在整个调用和Writer回调期间都必须保持稳定，这是所有借用编码接口的前置条件。
 
-Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.measure`，用同一次完整树校验得到 wire 长度，并把该长度传给接受后的 `codec.encodeSized`。`encodeSized` 仍重新检查 level 和 destination 容量，只省去同一未变事件的第二次长度遍历；redaction 会重写借用存储，schema binding 使用不同 wire 形状，因此两者继续独立校验/测量。`codec.measure` 有意不检查 level，保持既有顺序：树错误先于 predicate，level 错误只在接受的写入边界出现。公开 `codec.encode` 仍先校验完整树，不导出可复用的 unchecked writer 或 validation token；用不同字段/消息的长度误用由调用契约和 debug assert 拒绝。
+Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.measure`，用同一次完整树校验得到 wire 长度，并把该长度传给接受后的 `codec.encodeSized`。`encodeSized` 仍重新检查 level 和 destination 容量，只省去同一未变事件的第二次长度遍历；redaction 会重写借用存储，继续独立校验/测量；prepared schema最新路径复用本次全树检查中统计的value/nested key字节，形状和引用仍在原边界检查。`codec.measure` 有意不检查 level，保持既有顺序：树错误先于 predicate，level 错误只在接受的写入边界出现。公开 `codec.encode` 仍先校验完整树，不导出可复用的 unchecked writer 或 validation token；用不同字段/消息的长度误用由调用契约和 debug assert 拒绝。
 
 消费者 decoded delivery 复用 checked decoder 的树校验：`codec.decode`/`schema_codec.resolve`在完成wire树、节点预算、深度、重复key和长度检查后设置内部`Event.tree_validated`；内部`encoder.common.encodeDecoded`只对该证明跳过第二次`ValueValidator`，否则仍走校验路径。公开`encoder.encode/encodeWithTime`忽略该提示并始终校验；runtime先用admission的`codec.measure`或redaction/binding校验，再由`submitSafeDestination`用可信上下文覆盖调用方提示。binary route继续使用公开校验入口。测试锁定伪造提示的invalid tree仍被公开encoder拒绝、runtime重复key仍返回`DuplicateKey`、decoded text/JSON/logfmt与公开encoder字节一致。
 
 进一步为常见形状增加 fused wire-to-JSON 路径：当前 v4 inline、单个 JSON/text/logfmt route、非 deferred message、无 format args 时，checked wire parser 只解析一次 header/scope/message/trace/source/attributes；nested attributes 使用 caller scratch arena，并在 scratch 中写出与公开 encoder 相同的 JSON/text/logfmt 记录；top-level key 去重和完整 value tag 校验在写入 sink 前完成。其他形状返回 `error.Fallback` 走 decode+encode。journal 协议、公开 encoder 和校验边界不变。
 
-测试锁定 filtered invalid level 仍返回 filtered、invalid tree 仍在 predicate 前失败，并核对 sized 写入与公开 encode 的完整字节一致。Redaction 路径和 prepared schema 仍各自维护入口校验；没有用“之前校验过”跳过公开提交边界。
+测试锁定 filtered invalid level 仍返回 filtered、invalid tree 仍在 predicate 前失败，并核对 sized 写入与公开 encode 的完整字节一致。Redaction路径维持原/新树独立校验；prepared最新路径只在同一安全提交内复用已经检查的最终树长度。公开codec和runtime提交入口仍完整校验，不接受可复用的外部凭证。
 
 测试确认size、encode和stream每个节点仅校验一次，archive也是一次prepare；覆盖全部value tags、独立/组合node预算、invalid tree零输出、size overflow后的错误优先级、Secret脱敏和wire字节一致。Runtime、redaction和context仍各自维护它们的入口校验；本轮没有用“之前校验过”跳过公开提交边界。
 
@@ -37,7 +37,7 @@ Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.
 
 此前参考编码在检查完整事件后，为每个顶层 value 计算长度时再次递归校验，写出时调用公开 value writer 又校验一遍。现在 node-local 长度统计位于内部 `wire_size.zig`，底层字节写入位于内部 `wire_write.zig`，供两个已经完整校验的 payload codec 使用。公开 `codec.writeValue` 继续在写出前独立校验，不能通过公共模块取得跳过校验的 writer 或凭证。
 
-参考编码保持原有错误顺序：完整树错误 → schema shape/type 与 level 错误 → wire 长度上限 → destination 容量。长度仍用 u128 累计到校验完成后检查；失败不修改 destination。schema payload v5/84-byte header、旧 v2 读取、inline v4 与旧 v1/v3 读取均保留。新增测试直接计算全部 scalar/container 标签的长度，检查一次遍历计数、nested key、重复 positional key、256 节点与深度边界、长度溢出优先级，以及公开 value writer 无效输入零输出。
+参考编码保持原有错误顺序：完整树错误 → schema shape/type 与 level 错误 → wire 长度上限 → destination 容量。长度使用有界u64累计，单项截于u32_max+1，在校验和形状/level检查后判断wire上限；失败不修改destination。schema payload v5/84-byte header、旧 v2 读取、inline v4 与旧 v1/v3 读取均保留。新增测试直接计算全部 scalar/container 标签的长度，检查一次遍历计数、nested key、重复 positional key、256 节点与深度边界、长度溢出优先级，以及公开 value writer 无效输入零输出。
 
 ## 性能证据
 
@@ -69,3 +69,7 @@ Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.
 schema定义另做完整body的逐字节变异：修改后按协议重新计算带域前缀的SHA256和entry CRC，再调用严格decodeEntry，因此结构错误不能仅靠旧checksum拒绝。合法定义重新生成canonical metadata并核对hash，随后尝试解析引用载荷。磁盘矩阵使用8个真实文件，经公开Reader各独立只读导出两次，核对事件和原始文件字节。历史载荷fixture由明确header转换构造，独立历史golden与plain/compressed混合版本读取仍由原有codec/query测试覆盖。
 
 这套门禁可重复、资源有界，用于兼容和回归；它不是覆盖全部输入的证明，也不替代长期coverage-guided fuzz或硬件故障资格。原始输出与源码身份见 `bench/evidence/2026-11-01-decoder-matrix/`。
+
+## Prepared runtime测量复用
+
+无脱敏prepared Runtime路径在predicate前的完整树检查同时统计动态value与nested key字节，本次private context只对同一个未改写事件复用它。canonical定义决定是否加入dynamic message长度，shape/level、queue full/fallback和容量错误保持原顺序。内部`reference_encoding.zig`共用这些primitive，公开`encodedReferenceSize`和`encodeReference`每次先校验树；没有公开measured编码或外部token。redaction和消费者独立检查不删，所有ready引用/CRC/pin/barrier不变。相关64项、4096项独立codec差分和完整性能正负证据见`bench/evidence/2026-11-01-prepared-measure/`。

@@ -570,12 +570,12 @@ pub const Runtime = struct {
         if (producer_token == null and original.channel != 0) return error.InvalidChannel;
         if (producer_token != null and (original.channel == 0 or original.channel > (if (self.thread_registry) |registry| registry.channelCount() else 0))) return error.InvalidChannel;
         const snapshot = try self.admittedSnapshot(admission);
-        // The default inline path validates the complete tree once here and
-        // carries the measured size into the accepted write. Redaction rewrites
-        // borrowed storage and prepared bindings use a different wire shape, so
-        // those paths keep their independent validation/measurement.
-        const measured: ?usize = if (binding == null and snapshot.redactor.rule_count == 0)
-            try codec.measure(original)
+        // Validate the final borrowed tree once before predicates. Inline
+        // carries its complete size; schema carries dynamic value/nested-key
+        // bytes, leaving canonical shape/level checks at their original later
+        // boundary. Redaction rewrites values and retains independent checks.
+        const measured: ?usize = if (snapshot.redactor.rule_count == 0)
+            (if (binding != null) @intCast(try @import("reference_encoding.zig").measureValues(original)) else try codec.measure(original))
         else blk: {
             var validator: @import("field.zig").ValueValidator = .{};
             try validator.fields(original.fields);
@@ -654,7 +654,10 @@ pub const Runtime = struct {
                             .fallback_sync => {
                                 // Full fallback cannot bypass a prepared shape
                                 // contract merely because no slot was obtained.
-                                if (definition) |canonical| _ = try schema_codec.encodedReferenceSize(event, canonical);
+                                if (definition) |canonical| _ = if (context.encoded_size) |values_bytes|
+                                    try @import("reference_encoding.zig").sizeMeasured(event, canonical, values_bytes)
+                                else
+                                    try schema_codec.encodedReferenceSize(event, canonical);
                                 var fallback = event;
                                 // A synchronous bypass has a distinct channel
                                 // namespace, so its local sequence cannot
@@ -685,7 +688,10 @@ pub const Runtime = struct {
                 defer reservation.abort();
                 event.sequence = reservation.sequence;
                 const encoded = if (definition) |canonical|
-                    schema_codec.encodeReference(event, canonical, reservation.buffer())
+                    (if (context.encoded_size) |values_bytes|
+                        @import("reference_encoding.zig").writeMeasured(event, canonical, values_bytes, reservation.buffer())
+                    else
+                        schema_codec.encodeReference(event, canonical, reservation.buffer()))
                 else if (context.encoded_size) |size|
                     codec.encodeSized(event, size, reservation.buffer())
                 else

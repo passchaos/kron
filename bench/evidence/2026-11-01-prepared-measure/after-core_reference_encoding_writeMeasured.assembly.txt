@@ -1,0 +1,299 @@
+
+bench/evidence/2026-11-01-prepared-measure/kron-ref-after-final:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000010fb040 <core.reference_encoding.writeMeasured>:
+ 10fb040:	push   %rbp
+ 10fb041:	mov    %rsp,%rbp
+ 10fb044:	push   %r15
+ 10fb046:	push   %r14
+ 10fb048:	push   %r13
+ 10fb04a:	push   %r12
+ 10fb04c:	push   %rbx
+ 10fb04d:	sub    $0x198,%rsp
+ 10fb054:	mov    %r9,%r13
+ 10fb057:	mov    %r8,-0x90(%rbp)
+ 10fb05e:	mov    %rsi,%r12
+ 10fb061:	mov    %rdi,-0x38(%rbp)
+ 10fb065:	mov    0x10(%rsi),%rax
+ 10fb069:	mov    %rax,-0xc0(%rbp)
+ 10fb070:	mov    0x18(%rsi),%rax
+ 10fb074:	mov    %rax,-0x80(%rbp)
+ 10fb078:	mov    0x20(%rsi),%r14
+ 10fb07c:	mov    0x28(%rsi),%rax
+ 10fb080:	mov    %rax,-0x98(%rbp)
+ 10fb087:	mov    0x30(%rsi),%r15
+ 10fb08b:	mov    0x38(%rsi),%rbx
+ 10fb08f:	vmovups 0xae(%rsi),%ymm0
+ 10fb097:	vmovups %ymm0,-0x152(%rbp)
+ 10fb09f:	vmovups 0xa0(%rsi),%ymm0
+ 10fb0a7:	vmovups %ymm0,-0x160(%rbp)
+ 10fb0af:	vmovups 0x80(%rsi),%ymm0
+ 10fb0b7:	vmovups %ymm0,-0x180(%rbp)
+ 10fb0bf:	vmovups 0x60(%rsi),%ymm0
+ 10fb0c4:	vmovups %ymm0,-0x1a0(%rbp)
+ 10fb0cc:	vmovups 0x40(%rsi),%ymm0
+ 10fb0d1:	vmovups %ymm0,-0x1c0(%rbp)
+ 10fb0d9:	movzbl 0xce(%rsi),%eax
+ 10fb0e0:	mov    %al,-0x2a(%rbp)
+ 10fb0e3:	movzbl 0xd7(%rsi),%eax
+ 10fb0ea:	mov    %al,-0x29(%rbp)
+ 10fb0ed:	mov    0xcf(%rsi),%rax
+ 10fb0f4:	mov    %rax,-0xb0(%rbp)
+ 10fb0fb:	mov    0x10(%rdx),%rax
+ 10fb0ff:	mov    %rax,-0xb8(%rbp)
+ 10fb106:	lea    -0xd8(%rbp),%rdi
+ 10fb10d:	vzeroupper
+ 10fb110:	call   1107ab0 <core.reference_encoding.sizeMeasured>
+ 10fb115:	movzwl -0xd0(%rbp),%eax
+ 10fb11c:	test   %ax,%ax
+ 10fb11f:	jne    10fb1ba <core.reference_encoding.writeMeasured+0x17a>
+ 10fb125:	mov    -0xd8(%rbp),%rdx
+ 10fb12c:	cmp    %rdx,%r13
+ 10fb12f:	jae    10fb14e <core.reference_encoding.writeMeasured+0x10e>
+ 10fb131:	vmovups -0x94479(%rip),%xmm0        # 1066cc0 <__anon_33302>
+ 10fb139:	mov    -0x38(%rbp),%rax
+ 10fb13d:	vmovups %xmm0,(%rax)
+ 10fb141:	movq   $0x67,0x10(%rax)
+ 10fb149:	jmp    10fb40c <core.reference_encoding.writeMeasured+0x3cc>
+ 10fb14e:	movq   $0x1064a10,-0x58(%rbp)
+ 10fb156:	mov    -0x90(%rbp),%rax
+ 10fb15d:	mov    %rax,-0x50(%rbp)
+ 10fb161:	mov    %rdx,-0x48(%rbp)
+ 10fb165:	movq   $0x0,-0x40(%rbp)
+ 10fb16d:	movzbl 0xbc(%r12),%eax
+ 10fb176:	mov    0x1071500(,%rax,8),%rax
+ 10fb17e:	movzwl (%rax),%eax
+ 10fb181:	test   %ax,%ax
+ 10fb184:	jne    10fb1e6 <core.reference_encoding.writeMeasured+0x1a6>
+ 10fb186:	movabs $0xffffffff00000000,%rax
+ 10fb190:	lea    (%rdx,%rax,1),%rcx
+ 10fb194:	or     $0x54,%rax
+ 10fb198:	cmp    %rax,%rcx
+ 10fb19b:	setb   %al
+ 10fb19e:	mov    %rbx,%rcx
+ 10fb1a1:	or     -0x98(%rbp),%rcx
+ 10fb1a8:	shr    $0x20,%rcx
+ 10fb1ac:	setne  %cl
+ 10fb1af:	or     %al,%cl
+ 10fb1b1:	cmp    $0x1,%cl
+ 10fb1b4:	jne    10fb1c7 <core.reference_encoding.writeMeasured+0x187>
+ 10fb1b6:	mov    $0x125,%ax
+ 10fb1ba:	mov    -0x38(%rbp),%rcx
+ 10fb1be:	mov    %ax,0x10(%rcx)
+ 10fb1c2:	jmp    10fb40c <core.reference_encoding.writeMeasured+0x3cc>
+ 10fb1c7:	lea    -0x58(%rbp),%rax
+ 10fb1cb:	mov    %rax,-0x68(%rbp)
+ 10fb1cf:	lea    -0x68(%rbp),%rdi
+ 10fb1d3:	mov    %rdx,%r13
+ 10fb1d6:	mov    %r12,%rsi
+ 10fb1d9:	mov    $0x5,%ecx
+ 10fb1de:	call   10fc030 <core.codec.writeHeaderTo__anon_33356>
+ 10fb1e3:	mov    %r13,%rdx
+ 10fb1e6:	mov    %rdx,-0xa8(%rbp)
+ 10fb1ed:	test   %ax,%ax
+ 10fb1f0:	jne    10fb536 <core.reference_encoding.writeMeasured+0x4f6>
+ 10fb1f6:	cmpb   $0x0,-0x2a(%rbp)
+ 10fb1fa:	je     10fb29d <core.reference_encoding.writeMeasured+0x25d>
+ 10fb200:	vmovups -0x142(%rbp),%xmm0
+ 10fb208:	vmovaps %xmm0,-0xf0(%rbp)
+ 10fb210:	xor    %r12d,%r12d
+ 10fb213:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+ 10fb220:	lea    (%r12,%rbp,1),%rsi
+ 10fb224:	add    $0xffffffffffffff10,%rsi
+ 10fb22b:	mov    $0x10,%r13d
+ 10fb231:	sub    %r12,%r13
+ 10fb234:	mov    -0x40(%rbp),%rdi
+ 10fb238:	lea    (%rdi,%r13,1),%rax
+ 10fb23c:	cmp    -0x48(%rbp),%rax
+ 10fb240:	ja     10fb25d <core.reference_encoding.writeMeasured+0x21d>
+ 10fb242:	add    -0x50(%rbp),%rdi
+ 10fb246:	mov    %r13,%rdx
+ 10fb249:	call   113fa80 <compiler_rt.memcpy.memcpyFast>
+ 10fb24e:	add    %r13,-0x40(%rbp)
+ 10fb252:	add    %r13,%r12
+ 10fb255:	cmp    $0x10,%r12
+ 10fb259:	jb     10fb220 <core.reference_encoding.writeMeasured+0x1e0>
+ 10fb25b:	jmp    10fb29d <core.reference_encoding.writeMeasured+0x25d>
+ 10fb25d:	mov    -0x58(%rbp),%rax
+ 10fb261:	mov    (%rax),%rax
+ 10fb264:	mov    %rsi,-0x78(%rbp)
+ 10fb268:	mov    %r13,-0x70(%rbp)
+ 10fb26c:	mov    $0x1,%ecx
+ 10fb271:	mov    $0x1,%r8d
+ 10fb277:	lea    -0x68(%rbp),%rdi
+ 10fb27b:	lea    -0x58(%rbp),%rsi
+ 10fb27f:	lea    -0x78(%rbp),%rdx
+ 10fb283:	call   *%rax
+ 10fb285:	cmpw   $0x0,-0x60(%rbp)
+ 10fb28a:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb290:	mov    -0x68(%rbp),%r13
+ 10fb294:	add    %r13,%r12
+ 10fb297:	cmp    $0x10,%r12
+ 10fb29b:	jb     10fb220 <core.reference_encoding.writeMeasured+0x1e0>
+ 10fb29d:	cmpb   $0x0,-0x29(%rbp)
+ 10fb2a1:	je     10fb33d <core.reference_encoding.writeMeasured+0x2fd>
+ 10fb2a7:	mov    -0xb0(%rbp),%rax
+ 10fb2ae:	mov    %rax,-0xc8(%rbp)
+ 10fb2b5:	xor    %r12d,%r12d
+ 10fb2b8:	nopl   0x0(%rax,%rax,1)
+ 10fb2c0:	lea    (%r12,%rbp,1),%rsi
+ 10fb2c4:	add    $0xffffffffffffff38,%rsi
+ 10fb2cb:	mov    $0x8,%r13d
+ 10fb2d1:	sub    %r12,%r13
+ 10fb2d4:	mov    -0x40(%rbp),%rdi
+ 10fb2d8:	lea    (%rdi,%r13,1),%rax
+ 10fb2dc:	cmp    -0x48(%rbp),%rax
+ 10fb2e0:	ja     10fb2fd <core.reference_encoding.writeMeasured+0x2bd>
+ 10fb2e2:	add    -0x50(%rbp),%rdi
+ 10fb2e6:	mov    %r13,%rdx
+ 10fb2e9:	call   113fa80 <compiler_rt.memcpy.memcpyFast>
+ 10fb2ee:	add    %r13,-0x40(%rbp)
+ 10fb2f2:	add    %r13,%r12
+ 10fb2f5:	cmp    $0x8,%r12
+ 10fb2f9:	jb     10fb2c0 <core.reference_encoding.writeMeasured+0x280>
+ 10fb2fb:	jmp    10fb33d <core.reference_encoding.writeMeasured+0x2fd>
+ 10fb2fd:	mov    -0x58(%rbp),%rax
+ 10fb301:	mov    (%rax),%rax
+ 10fb304:	mov    %rsi,-0x78(%rbp)
+ 10fb308:	mov    %r13,-0x70(%rbp)
+ 10fb30c:	mov    $0x1,%ecx
+ 10fb311:	mov    $0x1,%r8d
+ 10fb317:	lea    -0x68(%rbp),%rdi
+ 10fb31b:	lea    -0x58(%rbp),%rsi
+ 10fb31f:	lea    -0x78(%rbp),%rdx
+ 10fb323:	call   *%rax
+ 10fb325:	cmpw   $0x0,-0x60(%rbp)
+ 10fb32a:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb330:	mov    -0x68(%rbp),%r13
+ 10fb334:	add    %r13,%r12
+ 10fb337:	cmp    $0x8,%r12
+ 10fb33b:	jb     10fb2c0 <core.reference_encoding.writeMeasured+0x280>
+ 10fb33d:	cmpq   $0x0,-0xb8(%rbp)
+ 10fb345:	mov    -0x80(%rbp),%rax
+ 10fb349:	je     10fb41e <core.reference_encoding.writeMeasured+0x3de>
+ 10fb34f:	lea    -0x58(%rbp),%rax
+ 10fb353:	mov    %rax,-0xa0(%rbp)
+ 10fb35a:	test   %rbx,%rbx
+ 10fb35d:	je     10fb39d <core.reference_encoding.writeMeasured+0x35d>
+ 10fb35f:	lea    -0xa0(%rbp),%r12
+ 10fb366:	lea    -0x110(%rbp),%r13
+ 10fb36d:	nopl   (%rax)
+ 10fb370:	vmovups (%r15),%ymm0
+ 10fb375:	vmovups %ymm0,-0x110(%rbp)
+ 10fb37d:	mov    %r12,%rdi
+ 10fb380:	mov    %r13,%rsi
+ 10fb383:	vzeroupper
+ 10fb386:	call   10fb550 <core.wire_write.writeValueTo__anon_33322>
+ 10fb38b:	test   %ax,%ax
+ 10fb38e:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb394:	add    $0x30,%r15
+ 10fb398:	dec    %rbx
+ 10fb39b:	jne    10fb370 <core.reference_encoding.writeMeasured+0x330>
+ 10fb39d:	mov    -0x98(%rbp),%rbx
+ 10fb3a4:	test   %rbx,%rbx
+ 10fb3a7:	je     10fb3ed <core.reference_encoding.writeMeasured+0x3ad>
+ 10fb3a9:	lea    -0xa0(%rbp),%r12
+ 10fb3b0:	lea    -0x130(%rbp),%r13
+ 10fb3b7:	nopw   0x0(%rax,%rax,1)
+ 10fb3c0:	vmovups (%r14),%ymm0
+ 10fb3c5:	vmovups %ymm0,-0x130(%rbp)
+ 10fb3cd:	mov    %r12,%rdi
+ 10fb3d0:	mov    %r13,%rsi
+ 10fb3d3:	vzeroupper
+ 10fb3d6:	call   10fb550 <core.wire_write.writeValueTo__anon_33322>
+ 10fb3db:	test   %ax,%ax
+ 10fb3de:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb3e4:	add    $0x30,%r14
+ 10fb3e8:	dec    %rbx
+ 10fb3eb:	jne    10fb3c0 <core.reference_encoding.writeMeasured+0x380>
+ 10fb3ed:	mov    -0x38(%rbp),%rax
+ 10fb3f1:	movw   $0x0,0x10(%rax)
+ 10fb3f7:	mov    -0x90(%rbp),%rcx
+ 10fb3fe:	mov    %rcx,(%rax)
+ 10fb401:	mov    -0xa8(%rbp),%rcx
+ 10fb408:	mov    %rcx,0x8(%rax)
+ 10fb40c:	add    $0x198,%rsp
+ 10fb413:	pop    %rbx
+ 10fb414:	pop    %r12
+ 10fb416:	pop    %r13
+ 10fb418:	pop    %r14
+ 10fb41a:	pop    %r15
+ 10fb41c:	pop    %rbp
+ 10fb41d:	ret
+ 10fb41e:	mov    %eax,-0x84(%rbp)
+ 10fb424:	xor    %r12d,%r12d
+ 10fb427:	nopw   0x0(%rax,%rax,1)
+ 10fb430:	lea    (%r12,%rbp,1),%rsi
+ 10fb434:	add    $0xffffffffffffff7c,%rsi
+ 10fb43b:	mov    $0x4,%r13d
+ 10fb441:	sub    %r12,%r13
+ 10fb444:	mov    -0x40(%rbp),%rdi
+ 10fb448:	lea    (%rdi,%r13,1),%rax
+ 10fb44c:	cmp    -0x48(%rbp),%rax
+ 10fb450:	ja     10fb46d <core.reference_encoding.writeMeasured+0x42d>
+ 10fb452:	add    -0x50(%rbp),%rdi
+ 10fb456:	mov    %r13,%rdx
+ 10fb459:	call   113fa80 <compiler_rt.memcpy.memcpyFast>
+ 10fb45e:	add    %r13,-0x40(%rbp)
+ 10fb462:	add    %r13,%r12
+ 10fb465:	cmp    $0x4,%r12
+ 10fb469:	jb     10fb430 <core.reference_encoding.writeMeasured+0x3f0>
+ 10fb46b:	jmp    10fb4ad <core.reference_encoding.writeMeasured+0x46d>
+ 10fb46d:	mov    -0x58(%rbp),%rax
+ 10fb471:	mov    (%rax),%rax
+ 10fb474:	mov    %rsi,-0x78(%rbp)
+ 10fb478:	mov    %r13,-0x70(%rbp)
+ 10fb47c:	mov    $0x1,%ecx
+ 10fb481:	mov    $0x1,%r8d
+ 10fb487:	lea    -0x68(%rbp),%rdi
+ 10fb48b:	lea    -0x58(%rbp),%rsi
+ 10fb48f:	lea    -0x78(%rbp),%rdx
+ 10fb493:	call   *%rax
+ 10fb495:	cmpw   $0x0,-0x60(%rbp)
+ 10fb49a:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb4a0:	mov    -0x68(%rbp),%r13
+ 10fb4a4:	add    %r13,%r12
+ 10fb4a7:	cmp    $0x4,%r12
+ 10fb4ab:	jb     10fb430 <core.reference_encoding.writeMeasured+0x3f0>
+ 10fb4ad:	mov    -0x80(%rbp),%r13
+ 10fb4b1:	test   %r13,%r13
+ 10fb4b4:	je     10fb34f <core.reference_encoding.writeMeasured+0x30f>
+ 10fb4ba:	xor    %r12d,%r12d
+ 10fb4bd:	nopl   (%rax)
+ 10fb4c0:	mov    -0xc0(%rbp),%rax
+ 10fb4c7:	lea    (%rax,%r12,1),%rsi
+ 10fb4cb:	sub    %r12,%r13
+ 10fb4ce:	mov    -0x40(%rbp),%rdi
+ 10fb4d2:	lea    (%rdi,%r13,1),%rax
+ 10fb4d6:	cmp    -0x48(%rbp),%rax
+ 10fb4da:	ja     10fb4fd <core.reference_encoding.writeMeasured+0x4bd>
+ 10fb4dc:	add    -0x50(%rbp),%rdi
+ 10fb4e0:	mov    %r13,%rdx
+ 10fb4e3:	call   113fa80 <compiler_rt.memcpy.memcpyFast>
+ 10fb4e8:	add    %r13,-0x40(%rbp)
+ 10fb4ec:	add    %r13,%r12
+ 10fb4ef:	mov    -0x80(%rbp),%r13
+ 10fb4f3:	cmp    %r13,%r12
+ 10fb4f6:	jb     10fb4c0 <core.reference_encoding.writeMeasured+0x480>
+ 10fb4f8:	jmp    10fb34f <core.reference_encoding.writeMeasured+0x30f>
+ 10fb4fd:	mov    -0x58(%rbp),%rax
+ 10fb501:	mov    (%rax),%rax
+ 10fb504:	mov    %rsi,-0x78(%rbp)
+ 10fb508:	mov    %r13,-0x70(%rbp)
+ 10fb50c:	mov    $0x1,%ecx
+ 10fb511:	mov    $0x1,%r8d
+ 10fb517:	lea    -0x68(%rbp),%rdi
+ 10fb51b:	lea    -0x58(%rbp),%rsi
+ 10fb51f:	lea    -0x78(%rbp),%rdx
+ 10fb523:	call   *%rax
+ 10fb525:	cmpw   $0x0,-0x60(%rbp)
+ 10fb52a:	jne    10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb530:	mov    -0x68(%rbp),%r13
+ 10fb534:	jmp    10fb4ec <core.reference_encoding.writeMeasured+0x4ac>
+ 10fb536:	movzwl %ax,%ecx
+ 10fb539:	cmp    $0xa1,%ecx
+ 10fb53f:	je     10fb131 <core.reference_encoding.writeMeasured+0xf1>
+ 10fb545:	jmp    10fb1ba <core.reference_encoding.writeMeasured+0x17a>

@@ -6,8 +6,7 @@ pub const schema = @import("../journal/schema.zig");
 const Event = @import("event.zig").Event;
 const field_module = @import("field.zig");
 const Field = field_module.Field;
-const SizeVisitor = @import("wire_size.zig").SizeVisitor;
-const wire = @import("wire_write.zig");
+const reference_encoding = @import("reference_encoding.zig");
 
 pub const version: u16 = codec.reference_version;
 pub const EventMeta = schema.EventMeta;
@@ -37,75 +36,16 @@ pub fn eventMetadata(event: Event, fields: []FieldSchema, arguments: []FieldSche
     };
 }
 
-fn validateShape(event: Event, definition: Definition) EncodeError!void {
-    if (!std.mem.eql(u8, event.scope, definition.scope) or event.message_template != definition.message_template or !schema.sourceEqual(event.source, definition.source) or event.fields.len != definition.field_count or event.format_args.len != definition.argument_count) return error.SchemaMismatch;
-    if (definition.message) |message| if (!std.mem.eql(u8, event.message, message)) return error.SchemaMismatch;
-    var fields = definition.fields();
-    for (event.fields) |field| {
-        const expected = (try fields.next()) orelse return error.SchemaMismatch;
-        if (!std.mem.eql(u8, field.key, expected.key) or expected.kind_mask & schema.kindMask(codec.valueTag(field.value)) == 0) return error.SchemaMismatch;
-    }
-    var arguments = definition.arguments();
-    for (event.format_args) |argument| {
-        const expected = (try arguments.next()) orelse return error.SchemaMismatch;
-        if (!std.mem.eql(u8, argument.key, expected.key) or expected.kind_mask & schema.kindMask(codec.valueTag(argument.value)) == 0) return error.SchemaMismatch;
-    }
-    if (event.level == .off) return error.InvalidLevel;
-}
-
+/// Public entry always validates the complete event tree before checking its
+/// shape/level and wire size. Callers cannot provide reusable measured state.
 pub fn encodedReferenceSize(event: Event, definition: Definition) EncodeError!usize {
-    var validator: field_module.ValueValidator = .{};
-    var visitor: ReferenceSizeVisitor = .{ .size = .{ .total = codec.header_size }, .validator = &validator };
-    if (event.trace_id != null) visitor.size.add(16);
-    if (event.span_id != null) visitor.size.add(8);
-    if (definition.message == null) visitor.size.blob(event.message.len, false);
-    try validator.fieldsWith(event.fields, &visitor);
-    try validator.argumentsWith(event.format_args, &visitor);
-    // Preserve complete-tree validation before shape/level errors, and those
-    // errors before wire overflow. Nothing has written destination yet.
-    try validateShape(event, definition);
-    return visitor.size.result();
+    return reference_encoding.sizeMeasured(event, definition, try reference_encoding.measureValues(event));
 }
-
-const ReferenceSizeVisitor = struct {
-    pub const Error = error{};
-    size: SizeVisitor,
-    validator: *const field_module.ValueValidator,
-
-    pub fn onField(self: *@This(), entry: Field) Error!void {
-        // Top-level keys live in the schema. A nested group key remains part
-        // of this payload and must be counted, including groups in arguments.
-        if (self.validator.depth != 0) try self.size.onField(entry);
-    }
-
-    pub fn onValue(self: *@This(), value: field_module.Value) Error!void {
-        try self.size.onValue(value);
-    }
-};
 
 /// Validates shape/types/capacity before touching destination. Only dynamic
 /// message, nested keys and all typed values are copied into the event payload.
 pub fn encodeReference(event: Event, definition: Definition, destination: []u8) EncodeError![]const u8 {
-    const size = try encodedReferenceSize(event, definition);
-    if (destination.len < size) return error.BufferTooSmall;
-    var output = std.Io.Writer.fixed(destination[0..size]);
-    codec.writeHeader(event, size, version, &output) catch |err| switch (err) {
-        error.WriteFailed => return error.BufferTooSmall,
-        else => |other| return other,
-    };
-    if (event.trace_id) |id| output.writeAll(&id) catch return error.BufferTooSmall;
-    if (event.span_id) |id| output.writeAll(&id) catch return error.BufferTooSmall;
-    if (definition.message == null) {
-        var length: [4]u8 = undefined;
-        std.mem.writeInt(u32, &length, @intCast(event.message.len), .little);
-        output.writeAll(&length) catch return error.BufferTooSmall;
-        output.writeAll(event.message) catch return error.BufferTooSmall;
-    }
-    var values_output: wire.StreamOutput = .{ .writer = &output };
-    for (event.fields) |field| wire.writeValueTo(&values_output, field.value) catch return error.BufferTooSmall;
-    for (event.format_args) |argument| wire.writeValueTo(&values_output, argument.value) catch return error.BufferTooSmall;
-    std.debug.assert(output.end == size);
-    return destination[0..size];
+    return reference_encoding.writeMeasured(event, definition, try reference_encoding.measureValues(event), destination);
 }
 
 /// Shared checked prefix for materialized and fused reference consumers.

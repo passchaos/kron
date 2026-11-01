@@ -1,0 +1,1357 @@
+
+bench/evidence/2026-11-01-queue-progress/kron-ref-after-final:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000010f6df0 <core.runtime.Runtime.submitSafeDestination>:
+ 10f6df0:	push   %rbp
+ 10f6df1:	mov    %rsp,%rbp
+ 10f6df4:	push   %r15
+ 10f6df6:	push   %r14
+ 10f6df8:	push   %r13
+ 10f6dfa:	push   %r12
+ 10f6dfc:	push   %rbx
+ 10f6dfd:	sub    $0xe38,%rsp
+ 10f6e04:	mov    %rsi,%r14
+ 10f6e07:	mov    0xb8(%rdx),%r13d
+ 10f6e0e:	mov    (%rcx),%r8
+ 10f6e11:	mov    0x8(%rcx),%rax
+ 10f6e15:	mov    %rax,-0x48(%rbp)
+ 10f6e19:	mov    0x20(%rcx),%r12
+ 10f6e1d:	mov    0x28(%rcx),%rax
+ 10f6e21:	mov    %rax,-0x60(%rbp)
+ 10f6e25:	vmovups 0x30(%rcx),%xmm0
+ 10f6e2a:	vmovaps %xmm0,-0x290(%rbp)
+ 10f6e32:	movzbl 0x40(%rcx),%eax
+ 10f6e36:	mov    %al,-0x2a(%rbp)
+ 10f6e39:	vmovups 0x68(%rcx),%ymm0
+ 10f6e3e:	vmovups %ymm0,-0xa30(%rbp)
+ 10f6e46:	vmovups 0x88(%rcx),%ymm0
+ 10f6e4e:	vmovups %ymm0,-0xa10(%rbp)
+ 10f6e56:	vmovups 0xa8(%rcx),%ymm0
+ 10f6e5e:	vmovups %ymm0,-0x9f0(%rbp)
+ 10f6e66:	vmovups 0xc8(%rcx),%ymm0
+ 10f6e6e:	vmovups %ymm0,-0x9d0(%rbp)
+ 10f6e76:	vmovups 0xe8(%rcx),%ymm0
+ 10f6e7e:	vmovups %ymm0,-0x9b0(%rbp)
+ 10f6e86:	vmovups 0x108(%rcx),%ymm0
+ 10f6e8e:	vmovups %ymm0,-0x990(%rbp)
+ 10f6e96:	mov    0x128(%rcx),%rax
+ 10f6e9d:	mov    %rax,-0x970(%rbp)
+ 10f6ea4:	vmovups 0x48(%rcx),%ymm0
+ 10f6ea9:	vmovups %ymm0,-0xa50(%rbp)
+ 10f6eb1:	movzbl 0x130(%rcx),%eax
+ 10f6eb8:	mov    %al,-0xc0(%rbp)
+ 10f6ebe:	movzbl 0x140(%rcx),%eax
+ 10f6ec5:	mov    %al,-0x2b(%rbp)
+ 10f6ec8:	mov    0x138(%rcx),%rax
+ 10f6ecf:	mov    %rax,-0x178(%rbp)
+ 10f6ed6:	movzbl 0x148(%rcx),%eax
+ 10f6edd:	lea    -0x41(%r13),%ecx
+ 10f6ee1:	lea    -0x1(%r13),%esi
+ 10f6ee5:	shl    $0x6,%rsi
+ 10f6ee9:	cmp    $0xffffffc0,%ecx
+ 10f6eec:	mov    0x40(%rdx),%rcx
+ 10f6ef0:	mov    %rcx,-0x1f0(%rbp)
+ 10f6ef7:	vmovups (%rdx),%ymm0
+ 10f6efb:	vmovups 0x20(%rdx),%ymm1
+ 10f6f00:	vmovups %ymm1,-0x210(%rbp)
+ 10f6f08:	vmovups %ymm0,-0x230(%rbp)
+ 10f6f10:	mov    0x50(%rdx),%rcx
+ 10f6f14:	mov    %rcx,-0x90(%rbp)
+ 10f6f1b:	vmovups 0x98(%rdx),%ymm0
+ 10f6f23:	vmovups %ymm0,-0x250(%rbp)
+ 10f6f2b:	vmovups 0x78(%rdx),%ymm0
+ 10f6f30:	vmovups %ymm0,-0x270(%rbp)
+ 10f6f38:	vmovups 0xbc(%rdx),%xmm0
+ 10f6f40:	vmovups 0xc9(%rdx),%xmm1
+ 10f6f48:	vmovups %xmm1,-0x163(%rbp)
+ 10f6f50:	vmovaps %xmm0,-0x170(%rbp)
+ 10f6f58:	mov    0xda(%rdx),%ecx
+ 10f6f5e:	mov    %ecx,-0x34(%rbp)
+ 10f6f61:	lea    (%rsi,%rsi,2),%rcx
+ 10f6f65:	mov    $0x3000,%r15d
+ 10f6f6b:	movzwl 0xde(%rdx),%esi
+ 10f6f72:	cmovae %rcx,%r15
+ 10f6f76:	mov    %si,-0x30(%rbp)
+ 10f6f7a:	and    $0x1,%al
+ 10f6f7c:	mov    %al,-0x29(%rbp)
+ 10f6f7f:	add    %r14,%r15
+ 10f6f82:	cmpb   $0x0,0x7420(%r12)
+ 10f6f8b:	mov    0x3178(%r14),%rax
+ 10f6f92:	mov    %rax,-0x68(%rbp)
+ 10f6f96:	mov    0x7430(%r12),%rax
+ 10f6f9e:	mov    %rax,-0x58(%rbp)
+ 10f6fa2:	mov    0x7438(%r12),%rax
+ 10f6faa:	mov    %rax,-0x70(%rbp)
+ 10f6fae:	mov    %rdi,-0x40(%rbp)
+ 10f6fb2:	je     10f70ca <core.runtime.Runtime.submitSafeDestination+0x2da>
+ 10f6fb8:	mov    0x40(%rdx),%rax
+ 10f6fbc:	mov    %rax,-0x4c0(%rbp)
+ 10f6fc3:	vmovups (%rdx),%ymm0
+ 10f6fc7:	vmovups 0x20(%rdx),%ymm1
+ 10f6fcc:	vmovups %ymm1,-0x4e0(%rbp)
+ 10f6fd4:	vmovups %ymm0,-0x500(%rbp)
+ 10f6fdc:	mov    -0x68(%rbp),%rax
+ 10f6fe0:	mov    %rax,-0x4b8(%rbp)
+ 10f6fe7:	mov    -0x90(%rbp),%rax
+ 10f6fee:	mov    %rax,-0x4b0(%rbp)
+ 10f6ff5:	mov    %r8,%rbx
+ 10f6ff8:	mov    %r8,-0x4a8(%rbp)
+ 10f6fff:	mov    -0x70(%rbp),%rax
+ 10f7003:	mov    %rax,-0x4a0(%rbp)
+ 10f700a:	mov    -0x58(%rbp),%rax
+ 10f700e:	mov    %rax,-0x498(%rbp)
+ 10f7015:	mov    -0x48(%rbp),%rax
+ 10f7019:	mov    %rax,-0x490(%rbp)
+ 10f7020:	lea    0x78(%rdx),%rax
+ 10f7024:	vmovups (%rax),%ymm0
+ 10f7028:	vmovups 0x20(%rax),%ymm1
+ 10f702d:	lea    0xbc(%rdx),%rax
+ 10f7034:	vmovups %ymm0,-0x488(%rbp)
+ 10f703c:	vmovups %ymm1,-0x468(%rbp)
+ 10f7044:	mov    %r13d,-0x448(%rbp)
+ 10f704b:	vmovups (%rax),%xmm0
+ 10f704f:	vmovups 0xd(%rax),%xmm1
+ 10f7054:	vmovups %xmm0,-0x444(%rbp)
+ 10f705c:	vmovups %xmm1,-0x437(%rbp)
+ 10f7064:	movzbl -0x29(%rbp),%eax
+ 10f7068:	lea    0xda(%rdx),%rcx
+ 10f706f:	mov    %al,-0x427(%rbp)
+ 10f7075:	mov    (%rcx),%eax
+ 10f7077:	mov    %eax,-0x426(%rbp)
+ 10f707d:	movzwl 0x4(%rcx),%eax
+ 10f7081:	mov    %ax,-0x422(%rbp)
+ 10f7088:	lea    0x1000(%r12),%rsi
+ 10f7090:	lea    -0xc8(%rbp),%rdi
+ 10f7097:	lea    -0x500(%rbp),%rdx
+ 10f709e:	vzeroupper
+ 10f70a1:	call   1108200 <pipeline.predicate.Predicate.matches>
+ 10f70a6:	movzwl -0xc8(%rbp),%eax
+ 10f70ad:	test   %ax,%ax
+ 10f70b0:	jne    10f8ab5 <core.runtime.Runtime.submitSafeDestination+0x1cc5>
+ 10f70b6:	cmpb   $0x0,-0xc6(%rbp)
+ 10f70bd:	mov    %rbx,%r8
+ 10f70c0:	mov    -0x40(%rbp),%rdi
+ 10f70c4:	je     10f7272 <core.runtime.Runtime.submitSafeDestination+0x482>
+ 10f70ca:	mov    %r13,-0x80(%rbp)
+ 10f70ce:	mov    %r15,-0xb8(%rbp)
+ 10f70d5:	mov    %r14,-0x50(%rbp)
+ 10f70d9:	mov    0x7448(%r12),%r15
+ 10f70e1:	test   %r15,%r15
+ 10f70e4:	mov    %r12,-0x148(%rbp)
+ 10f70eb:	je     10f7253 <core.runtime.Runtime.submitSafeDestination+0x463>
+ 10f70f1:	mov    0x7440(%r12),%rbx
+ 10f70f9:	lea    -0xab8(%rbp),%r12
+ 10f7100:	movzbl -0x29(%rbp),%eax
+ 10f7104:	mov    %al,-0x78(%rbp)
+ 10f7107:	xor    %r13d,%r13d
+ 10f710a:	jmp    10f7133 <core.runtime.Runtime.submitSafeDestination+0x343>
+ 10f710c:	mov    $0x1,%eax
+ 10f7111:	shlx   %r13,%rax,%rax
+ 10f7116:	andn   %r14,%rax,%r8
+ 10f711b:	nopl   0x0(%rax,%rax,1)
+ 10f7120:	inc    %r13
+ 10f7123:	add    $0x7640,%rbx
+ 10f712a:	cmp    %r13,%r15
+ 10f712d:	je     10f7253 <core.runtime.Runtime.submitSafeDestination+0x463>
+ 10f7133:	bt     %r13,%r8
+ 10f7137:	jae    10f7120 <core.runtime.Runtime.submitSafeDestination+0x330>
+ 10f7139:	cmpb   $0x0,0x6420(%rbx)
+ 10f7140:	je     10f7120 <core.runtime.Runtime.submitSafeDestination+0x330>
+ 10f7142:	mov    -0x1f0(%rbp),%rax
+ 10f7149:	mov    %rax,-0xaf0(%rbp)
+ 10f7150:	vmovups -0x230(%rbp),%ymm0
+ 10f7158:	vmovups -0x210(%rbp),%ymm1
+ 10f7160:	vmovups %ymm1,-0xb10(%rbp)
+ 10f7168:	vmovups %ymm0,-0xb30(%rbp)
+ 10f7170:	mov    -0x68(%rbp),%rax
+ 10f7174:	mov    %rax,-0xae8(%rbp)
+ 10f717b:	mov    -0x90(%rbp),%rax
+ 10f7182:	mov    %rax,-0xae0(%rbp)
+ 10f7189:	mov    %r8,%r14
+ 10f718c:	mov    %r8,-0xad8(%rbp)
+ 10f7193:	mov    -0x70(%rbp),%rax
+ 10f7197:	mov    %rax,-0xad0(%rbp)
+ 10f719e:	mov    -0x58(%rbp),%rax
+ 10f71a2:	mov    %rax,-0xac8(%rbp)
+ 10f71a9:	mov    -0x48(%rbp),%rax
+ 10f71ad:	mov    %rax,-0xac0(%rbp)
+ 10f71b4:	vmovups -0x270(%rbp),%ymm0
+ 10f71bc:	vmovups -0x250(%rbp),%ymm1
+ 10f71c4:	vmovups %ymm1,0x20(%r12)
+ 10f71cb:	vmovups %ymm0,(%r12)
+ 10f71d1:	mov    -0x80(%rbp),%rax
+ 10f71d5:	mov    %eax,-0xa78(%rbp)
+ 10f71db:	vmovups -0x163(%rbp),%xmm0
+ 10f71e3:	vmovups %xmm0,0x51(%r12)
+ 10f71ea:	vmovaps -0x170(%rbp),%xmm0
+ 10f71f2:	vmovups %xmm0,0x44(%r12)
+ 10f71f9:	movzbl -0x78(%rbp),%eax
+ 10f71fd:	mov    %al,-0xa57(%rbp)
+ 10f7203:	movzwl -0x30(%rbp),%eax
+ 10f7207:	mov    %ax,0x66(%r12)
+ 10f720d:	mov    -0x34(%rbp),%eax
+ 10f7210:	mov    %eax,0x62(%r12)
+ 10f7215:	lea    -0xcc(%rbp),%rdi
+ 10f721c:	mov    %rbx,%rsi
+ 10f721f:	lea    -0xb30(%rbp),%rdx
+ 10f7226:	vzeroupper
+ 10f7229:	call   1108200 <pipeline.predicate.Predicate.matches>
+ 10f722e:	movzwl -0xcc(%rbp),%eax
+ 10f7235:	test   %ax,%ax
+ 10f7238:	jne    10f8ab5 <core.runtime.Runtime.submitSafeDestination+0x1cc5>
+ 10f723e:	cmpb   $0x0,-0xca(%rbp)
+ 10f7245:	je     10f710c <core.runtime.Runtime.submitSafeDestination+0x31c>
+ 10f724b:	mov    %r14,%r8
+ 10f724e:	jmp    10f7120 <core.runtime.Runtime.submitSafeDestination+0x330>
+ 10f7253:	test   %r8,%r8
+ 10f7256:	je     10f7281 <core.runtime.Runtime.submitSafeDestination+0x491>
+ 10f7258:	mov    -0x50(%rbp),%r13
+ 10f725c:	movzwl 0x31e8(%r13),%eax
+ 10f7264:	test   %ax,%ax
+ 10f7267:	mov    -0x40(%rbp),%rbx
+ 10f726b:	je     10f72ae <core.runtime.Runtime.submitSafeDestination+0x4be>
+ 10f726d:	mov    %ax,(%rbx)
+ 10f7270:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f7272:	lock incq 0x48(%r15)
+ 10f7277:	mov    -0x85a2d(%rip),%eax        # 1071850 <__anon_28814>
+ 10f727d:	mov    %eax,(%rdi)
+ 10f727f:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f7281:	mov    -0xb8(%rbp),%rax
+ 10f7288:	lock incq 0x48(%rax)
+ 10f728d:	mov    -0x85a43(%rip),%eax        # 1071850 <__anon_28814>
+ 10f7293:	mov    -0x40(%rbp),%rcx
+ 10f7297:	mov    %eax,(%rcx)
+ 10f7299:	add    $0xe38,%rsp
+ 10f72a0:	pop    %rbx
+ 10f72a1:	pop    %r12
+ 10f72a3:	pop    %r13
+ 10f72a5:	pop    %r14
+ 10f72a7:	pop    %r15
+ 10f72a9:	pop    %rbp
+ 10f72aa:	vzeroupper
+ 10f72ad:	ret
+ 10f72ae:	cmpb   $0x0,-0xc0(%rbp)
+ 10f72b5:	je     10f7385 <core.runtime.Runtime.submitSafeDestination+0x595>
+ 10f72bb:	mov    -0x60(%rbp),%r15
+ 10f72bf:	test   %r15,%r15
+ 10f72c2:	je     10f79e4 <core.runtime.Runtime.submitSafeDestination+0xbf4>
+ 10f72c8:	cmpb   $0x0,0x288(%r15)
+ 10f72d0:	je     10f7b3a <core.runtime.Runtime.submitSafeDestination+0xd4a>
+ 10f72d6:	mov    %r8,%r14
+ 10f72d9:	lea    -0x980(%rbp),%rsi
+ 10f72e0:	mov    -0x980(%rbp),%ebx
+ 10f72e6:	lea    0x208(%r15),%rdi
+ 10f72ed:	vzeroupper
+ 10f72f0:	call   111ff30 <journal.schema.Registry.validateReady>
+ 10f72f5:	test   %ax,%ax
+ 10f72f8:	jne    10f87d6 <core.runtime.Runtime.submitSafeDestination+0x19e6>
+ 10f72fe:	dec    %ebx
+ 10f7300:	mov    0x270(%r15),%rax
+ 10f7307:	imul   $0xd8,%rbx,%rcx
+ 10f730e:	vmovups 0xa8(%rax,%rcx,1),%ymm0
+ 10f7317:	vmovups %ymm0,-0xb60(%rbp)
+ 10f731f:	vmovups 0x88(%rax,%rcx,1),%ymm0
+ 10f7328:	vmovups %ymm0,-0xb80(%rbp)
+ 10f7330:	vmovups 0x8(%rax,%rcx,1),%ymm0
+ 10f7336:	vmovups 0x28(%rax,%rcx,1),%ymm1
+ 10f733c:	vmovups 0x48(%rax,%rcx,1),%ymm2
+ 10f7342:	vmovups 0x68(%rax,%rcx,1),%ymm3
+ 10f7348:	vmovups %ymm3,-0xba0(%rbp)
+ 10f7350:	vmovups %ymm2,-0xbc0(%rbp)
+ 10f7358:	vmovups %ymm1,-0xbe0(%rbp)
+ 10f7360:	lea    -0xb40(%rbp),%rcx
+ 10f7367:	vmovups %ymm0,-0xc00(%rbp)
+ 10f736f:	movb   $0x1,-0xb40(%rbp)
+ 10f7376:	lea    -0xc00(%rbp),%r12
+ 10f737d:	mov    %r14,%r8
+ 10f7380:	mov    %r15,%rsi
+ 10f7383:	jmp    10f739d <core.runtime.Runtime.submitSafeDestination+0x5ad>
+ 10f7385:	mov    -0x60(%rbp),%rsi
+ 10f7389:	test   %rsi,%rsi
+ 10f738c:	je     10f7b46 <core.runtime.Runtime.submitSafeDestination+0xd56>
+ 10f7392:	mov    $0x1066c48,%ecx
+ 10f7397:	mov    $0x1066b88,%r12d
+ 10f739d:	lea    0x140(%rsi),%rbx
+ 10f73a4:	lea    0x208(%rsi),%rdi
+ 10f73ab:	lea    0x31c4(%r13),%r9
+ 10f73b2:	movzbl -0x2a(%rbp),%r10d
+ 10f73b7:	test   %r10b,%r10b
+ 10f73ba:	mov    %rbx,%r14
+ 10f73bd:	cmove  %r9,%r14
+ 10f73c1:	lea    -0x980(%rbp),%rdx
+ 10f73c8:	lea    -0xdc8(%rbp),%r15
+ 10f73cf:	lea    -0xe10(%rbp),%rax
+ 10f73d6:	test   %r10b,%r10b
+ 10f73d9:	je     10f76af <core.runtime.Runtime.submitSafeDestination+0x8bf>
+ 10f73df:	mov    (%rbx),%r10d
+ 10f73e2:	cmpb   $0x0,-0xc0(%rbp)
+ 10f73e9:	mov    %rcx,-0x78(%rbp)
+ 10f73ed:	mov    %rdi,-0x140(%rbp)
+ 10f73f4:	mov    %r9,-0x138(%rbp)
+ 10f73fb:	mov    %r14,-0x1d8(%rbp)
+ 10f7402:	mov    %r10d,-0xc4(%rbp)
+ 10f7409:	je     10f7543 <core.runtime.Runtime.submitSafeDestination+0x753>
+ 10f740f:	cmpb   $0x0,0x288(%rsi)
+ 10f7416:	je     10f7560 <core.runtime.Runtime.submitSafeDestination+0x770>
+ 10f741c:	mov    %r8,-0x88(%rbp)
+ 10f7423:	mov    -0x980(%rbp),%r15d
+ 10f742a:	movzwl -0x97c(%rbp),%r13d
+ 10f7432:	mov    %rdx,%rsi
+ 10f7435:	vzeroupper
+ 10f7438:	call   111ff30 <journal.schema.Registry.validateReady>
+ 10f743d:	test   %ax,%ax
+ 10f7440:	jne    10f7595 <core.runtime.Runtime.submitSafeDestination+0x7a5>
+ 10f7446:	lea    -0x1d0(%rbp),%rdi
+ 10f744d:	mov    -0x60(%rbp),%r14
+ 10f7451:	mov    %r14,%rsi
+ 10f7454:	lea    -0x290(%rbp),%rdx
+ 10f745b:	call   10f6bb0 <journal.journal.Journal.reserveSingleProducer>
+ 10f7460:	movzwl -0x190(%rbp),%eax
+ 10f7467:	test   %ax,%ax
+ 10f746a:	jne    10f7577 <core.runtime.Runtime.submitSafeDestination+0x787>
+ 10f7470:	vmovups -0x1c0(%rbp),%xmm0
+ 10f7478:	mov    -0x194(%rbp),%eax
+ 10f747e:	cmpl   $0x1,0x2f0(%r14)
+ 10f7486:	mov    -0x88(%rbp),%r8
+ 10f748d:	lea    -0x980(%rbp),%rdi
+ 10f7494:	je     10f74d9 <core.runtime.Runtime.submitSafeDestination+0x6e9>
+ 10f7496:	mov    -0x60(%rbp),%rdx
+ 10f749a:	mov    0x1a0(%rdx),%rcx
+ 10f74a1:	mov    0x200(%rdx),%rdx
+ 10f74a8:	imul   -0x1c0(%rbp),%rdx
+ 10f74b0:	movw   $0x0,0x1026(%rcx,%rdx,1)
+ 10f74ba:	mov    %r15d,0x1020(%rcx,%rdx,1)
+ 10f74c2:	mov    %r13w,0x1024(%rcx,%rdx,1)
+ 10f74cb:	vmovups 0x6(%rdi),%xmm1
+ 10f74d0:	vmovups %xmm1,0x1028(%rcx,%rdx,1)
+ 10f74d9:	movw   $0x0,-0x2b0(%rbp)
+ 10f74e2:	vmovups -0x1d0(%rbp),%xmm1
+ 10f74ea:	vmovaps %xmm1,-0x2f0(%rbp)
+ 10f74f2:	vmovaps %xmm0,-0x2e0(%rbp)
+ 10f74fa:	mov    0x10(%rdi),%rcx
+ 10f74fe:	lea    -0x2d0(%rbp),%rsi
+ 10f7505:	mov    %rcx,0x10(%rsi)
+ 10f7509:	vmovups (%rdi),%xmm0
+ 10f750d:	vmovups %xmm0,(%rsi)
+ 10f7511:	movb   $0x1,-0x2b8(%rbp)
+ 10f7518:	lea    -0x197(%rbp),%rdx
+ 10f751f:	movzbl 0x2(%rdx),%ecx
+ 10f7523:	mov    %cl,0x1b(%rsi)
+ 10f7526:	movzwl (%rdx),%ecx
+ 10f7529:	mov    %cx,0x19(%rsi)
+ 10f752d:	mov    %eax,-0x2b4(%rbp)
+ 10f7533:	lea    -0x2f0(%rbp),%r15
+ 10f753a:	mov    -0x50(%rbp),%r13
+ 10f753e:	jmp    10f76ff <core.runtime.Runtime.submitSafeDestination+0x90f>
+ 10f7543:	mov    %r8,%r14
+ 10f7546:	mov    %rax,%rdi
+ 10f7549:	lea    -0x290(%rbp),%rdx
+ 10f7550:	mov    %rax,%r15
+ 10f7553:	vzeroupper
+ 10f7556:	call   10f6bb0 <journal.journal.Journal.reserveSingleProducer>
+ 10f755b:	jmp    10f76fc <core.runtime.Runtime.submitSafeDestination+0x90c>
+ 10f7560:	mov    $0x80,%ax
+ 10f7564:	mov    %ax,-0x2b0(%rbp)
+ 10f756b:	lea    -0x2f0(%rbp),%r15
+ 10f7572:	jmp    10f76ff <core.runtime.Runtime.submitSafeDestination+0x90f>
+ 10f7577:	mov    %ax,-0x2b0(%rbp)
+ 10f757e:	lea    -0x2f0(%rbp),%r15
+ 10f7585:	mov    -0x50(%rbp),%r13
+ 10f7589:	mov    -0x88(%rbp),%r8
+ 10f7590:	jmp    10f76ff <core.runtime.Runtime.submitSafeDestination+0x90f>
+ 10f7595:	mov    -0x50(%rbp),%r13
+ 10f7599:	mov    -0x88(%rbp),%r8
+ 10f75a0:	jmp    10f7564 <core.runtime.Runtime.submitSafeDestination+0x774>
+ 10f75a2:	mov    %r8,-0x88(%rbp)
+ 10f75a9:	cmp    $0x129,%ecx
+ 10f75af:	jne    10f87e2 <core.runtime.Runtime.submitSafeDestination+0x19f2>
+ 10f75b5:	mov    -0x50(%rbp),%rax
+ 10f75b9:	movzbl 0x31ef(%rax),%eax
+ 10f75c0:	test   $0x3,%al
+ 10f75c2:	jne    10f8808 <core.runtime.Runtime.submitSafeDestination+0x1a18>
+ 10f75c8:	cmpb   $0x0,-0x2a(%rbp)
+ 10f75cc:	je     10f7602 <core.runtime.Runtime.submitSafeDestination+0x812>
+ 10f75ce:	mov    $0x1,%al
+ 10f75d0:	mov    -0x60(%rbp),%rcx
+ 10f75d4:	xchg   %al,0x164(%rcx)
+ 10f75da:	mov    -0x50(%rbp),%rax
+ 10f75de:	movzwl 0x31e8(%rax),%eax
+ 10f75e5:	test   %ax,%ax
+ 10f75e8:	jne    10f8aa9 <core.runtime.Runtime.submitSafeDestination+0x1cb9>
+ 10f75ee:	mov    -0x50(%rbp),%rax
+ 10f75f2:	movzbl 0x31ee(%rax),%eax
+ 10f75f9:	test   %al,%al
+ 10f75fb:	je     10f7629 <core.runtime.Runtime.submitSafeDestination+0x839>
+ 10f75fd:	jmp    10f8ac1 <core.runtime.Runtime.submitSafeDestination+0x1cd1>
+ 10f7602:	mov    -0x50(%rbp),%rax
+ 10f7606:	movzwl 0x31e8(%rax),%eax
+ 10f760d:	test   %ax,%ax
+ 10f7610:	jne    10f8ab5 <core.runtime.Runtime.submitSafeDestination+0x1cc5>
+ 10f7616:	mov    -0x50(%rbp),%rax
+ 10f761a:	movzbl 0x31ee(%rax),%eax
+ 10f7621:	test   %al,%al
+ 10f7623:	jne    10f8adb <core.runtime.Runtime.submitSafeDestination+0x1ceb>
+ 10f7629:	mov    -0x50(%rbp),%r13
+ 10f762d:	mov    0x3110(%r13),%rdi
+ 10f7634:	mov    0x3118(%r13),%rax
+ 10f763b:	mov    -0x1d8(%rbp),%r14
+ 10f7642:	mov    %r14,%rsi
+ 10f7645:	mov    -0xc4(%rbp),%edx
+ 10f764b:	vzeroupper
+ 10f764e:	call   *0x68(%rax)
+ 10f7651:	movzbl -0x2a(%rbp),%r10d
+ 10f7656:	test   %r10b,%r10b
+ 10f7659:	mov    -0x88(%rbp),%r8
+ 10f7660:	mov    -0x60(%rbp),%rsi
+ 10f7664:	mov    -0x78(%rbp),%rcx
+ 10f7668:	mov    -0x140(%rbp),%rdi
+ 10f766f:	mov    -0x138(%rbp),%r9
+ 10f7676:	lea    -0x980(%rbp),%rdx
+ 10f767d:	lea    -0xdc8(%rbp),%r15
+ 10f7684:	lea    -0xe10(%rbp),%r11
+ 10f768b:	je     10f76af <core.runtime.Runtime.submitSafeDestination+0x8bf>
+ 10f768d:	xor    %eax,%eax
+ 10f768f:	mov    %rcx,%rsi
+ 10f7692:	mov    -0x60(%rbp),%rcx
+ 10f7696:	xchg   %al,0x164(%rcx)
+ 10f769c:	mov    %r11,%rax
+ 10f769f:	mov    %rsi,%rcx
+ 10f76a2:	mov    -0x60(%rbp),%rsi
+ 10f76a6:	test   %r10b,%r10b
+ 10f76a9:	jne    10f73df <core.runtime.Runtime.submitSafeDestination+0x5ef>
+ 10f76af:	mov    %r14,-0x1d8(%rbp)
+ 10f76b6:	mov    %rdi,-0x140(%rbp)
+ 10f76bd:	mov    %rcx,-0x78(%rbp)
+ 10f76c1:	mov    %r8,%r14
+ 10f76c4:	mov    %r9,-0x138(%rbp)
+ 10f76cb:	mov    (%r9),%eax
+ 10f76ce:	mov    %eax,-0xc4(%rbp)
+ 10f76d4:	cmpb   $0x0,-0xc0(%rbp)
+ 10f76db:	je     10f76ea <core.runtime.Runtime.submitSafeDestination+0x8fa>
+ 10f76dd:	mov    %r15,%rdi
+ 10f76e0:	vzeroupper
+ 10f76e3:	call   10f6910 <journal.journal.Journal.reserveWithSchema>
+ 10f76e8:	jmp    10f76fc <core.runtime.Runtime.submitSafeDestination+0x90c>
+ 10f76ea:	lea    -0xe58(%rbp),%r15
+ 10f76f1:	mov    %r15,%rdi
+ 10f76f4:	vzeroupper
+ 10f76f7:	call   10f66f0 <journal.journal.Journal.reserve>
+ 10f76fc:	mov    %r14,%r8
+ 10f76ff:	movzwl 0x40(%r15),%ecx
+ 10f7704:	test   %ecx,%ecx
+ 10f7706:	jne    10f75a2 <core.runtime.Runtime.submitSafeDestination+0x7b2>
+ 10f770c:	vmovups (%r15),%ymm0
+ 10f7711:	vmovups %ymm0,-0x110(%rbp)
+ 10f7719:	vmovups 0x20(%r15),%ymm0
+ 10f771f:	vmovups %ymm0,-0xf0(%rbp)
+ 10f7727:	mov    -0x108(%rbp),%rcx
+ 10f772e:	mov    -0x78(%rbp),%rax
+ 10f7732:	cmpb   $0x0,(%rax)
+ 10f7735:	mov    %rcx,-0x90(%rbp)
+ 10f773c:	je     10f79ef <core.runtime.Runtime.submitSafeDestination+0xbff>
+ 10f7742:	vmovups 0xa0(%r12),%ymm0
+ 10f774c:	vmovups %ymm0,-0xc20(%rbp)
+ 10f7754:	vmovups 0x80(%r12),%ymm0
+ 10f775e:	vmovups %ymm0,-0xc40(%rbp)
+ 10f7766:	vmovups 0x20(%r12),%ymm0
+ 10f776d:	vmovups 0x40(%r12),%ymm1
+ 10f7774:	vmovups 0x60(%r12),%ymm2
+ 10f777b:	vmovups %ymm2,-0xc60(%rbp)
+ 10f7783:	vmovups %ymm1,-0xc80(%rbp)
+ 10f778b:	vmovups %ymm0,-0xca0(%rbp)
+ 10f7793:	vmovups (%r12),%ymm0
+ 10f7799:	vmovups %ymm0,-0xcc0(%rbp)
+ 10f77a1:	vmovups -0x230(%rbp),%ymm0
+ 10f77a9:	vmovups %ymm0,-0x3d0(%rbp)
+ 10f77b1:	vmovups -0x210(%rbp),%ymm0
+ 10f77b9:	vmovups %ymm0,-0x3b0(%rbp)
+ 10f77c1:	mov    -0x1f0(%rbp),%rax
+ 10f77c8:	mov    %rax,-0x390(%rbp)
+ 10f77cf:	mov    -0x68(%rbp),%rax
+ 10f77d3:	mov    %rax,-0x388(%rbp)
+ 10f77da:	mov    %rcx,-0x380(%rbp)
+ 10f77e1:	mov    %r8,-0x378(%rbp)
+ 10f77e8:	mov    -0x70(%rbp),%rax
+ 10f77ec:	mov    %rax,-0x370(%rbp)
+ 10f77f3:	mov    -0x58(%rbp),%rax
+ 10f77f7:	mov    %rax,-0x368(%rbp)
+ 10f77fe:	mov    -0x48(%rbp),%rax
+ 10f7802:	mov    %rax,-0x360(%rbp)
+ 10f7809:	vmovups -0x270(%rbp),%ymm0
+ 10f7811:	vmovups -0x250(%rbp),%ymm1
+ 10f7819:	vmovups %ymm1,-0x338(%rbp)
+ 10f7821:	vmovups %ymm0,-0x358(%rbp)
+ 10f7829:	mov    -0x80(%rbp),%rax
+ 10f782d:	mov    %eax,-0x318(%rbp)
+ 10f7833:	vmovaps -0x170(%rbp),%xmm0
+ 10f783b:	vmovups %xmm0,-0x314(%rbp)
+ 10f7843:	vmovups -0x163(%rbp),%xmm0
+ 10f784b:	vmovups %xmm0,-0x307(%rbp)
+ 10f7853:	movzbl -0x29(%rbp),%eax
+ 10f7857:	mov    %al,-0x2f7(%rbp)
+ 10f785d:	mov    -0x34(%rbp),%eax
+ 10f7860:	mov    %eax,-0x2f6(%rbp)
+ 10f7866:	movzwl -0x30(%rbp),%eax
+ 10f786a:	mov    %ax,-0x2f2(%rbp)
+ 10f7871:	movzbl -0xd4(%rbp),%eax
+ 10f7878:	mov    %al,-0x68(%rbp)
+ 10f787b:	mov    -0x110(%rbp),%rax
+ 10f7882:	mov    -0x100(%rbp),%rcx
+ 10f7889:	mov    0x200(%rax),%r12
+ 10f7890:	mov    %rcx,-0x78(%rbp)
+ 10f7894:	imul   %rcx,%r12
+ 10f7898:	mov    0x1a0(%rax),%rcx
+ 10f789f:	mov    %rcx,-0x60(%rbp)
+ 10f78a3:	mov    %rax,-0x70(%rbp)
+ 10f78a7:	mov    0x1f8(%rax),%r14
+ 10f78ae:	mov    -0x3c0(%rbp),%rax
+ 10f78b5:	mov    %rax,-0x58(%rbp)
+ 10f78b9:	mov    -0x3b8(%rbp),%rax
+ 10f78c0:	mov    %rax,-0x48(%rbp)
+ 10f78c4:	mov    -0x3b0(%rbp),%r13
+ 10f78cb:	mov    -0x3a8(%rbp),%rax
+ 10f78d2:	mov    %rax,-0xc0(%rbp)
+ 10f78d9:	mov    -0x3a0(%rbp),%r15
+ 10f78e0:	mov    -0x398(%rbp),%rbx
+ 10f78e7:	movzbl -0x302(%rbp),%eax
+ 10f78ee:	mov    %al,-0x2a(%rbp)
+ 10f78f1:	mov    -0x301(%rbp),%rax
+ 10f78f8:	mov    %rax,-0x140(%rbp)
+ 10f78ff:	movzbl -0x2f9(%rbp),%eax
+ 10f7906:	mov    %al,-0x2b(%rbp)
+ 10f7909:	mov    -0xcb0(%rbp),%rax
+ 10f7910:	mov    %rax,-0x178(%rbp)
+ 10f7917:	lea    -0x2a0(%rbp),%rdi
+ 10f791e:	lea    -0x3d0(%rbp),%rsi
+ 10f7925:	lea    -0xcc0(%rbp),%rdx
+ 10f792c:	vzeroupper
+ 10f792f:	call   10fcf70 <core.schema_codec.encodedReferenceSize>
+ 10f7934:	movzwl -0x298(%rbp),%esi
+ 10f793b:	test   %si,%si
+ 10f793e:	jne    10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f7944:	mov    -0x2a0(%rbp),%rdi
+ 10f794b:	mov    $0x67,%si
+ 10f794f:	cmp    %rdi,%r14
+ 10f7952:	jb     10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f7958:	mov    -0x60(%rbp),%rax
+ 10f795c:	add    %r12,%rax
+ 10f795f:	add    $0x1040,%rax
+ 10f7965:	movq   $0x1064a10,-0xb0(%rbp)
+ 10f7970:	mov    %rax,-0xa8(%rbp)
+ 10f7977:	mov    %rdi,-0xa0(%rbp)
+ 10f797e:	movq   $0x0,-0x98(%rbp)
+ 10f7989:	movzbl -0x314(%rbp),%eax
+ 10f7990:	mov    0x1071500(,%rax,8),%rax
+ 10f7998:	movzwl (%rax),%eax
+ 10f799b:	test   %ax,%ax
+ 10f799e:	mov    -0xc0(%rbp),%rdx
+ 10f79a5:	jne    10f7c79 <core.runtime.Runtime.submitSafeDestination+0xe89>
+ 10f79ab:	movabs $0xffffffff00000000,%rax
+ 10f79b5:	lea    (%rdi,%rax,1),%rcx
+ 10f79b9:	or     $0x54,%rax
+ 10f79bd:	cmp    %rax,%rcx
+ 10f79c0:	setb   %al
+ 10f79c3:	mov    %rbx,%rcx
+ 10f79c6:	or     %rdx,%rcx
+ 10f79c9:	shr    $0x20,%rcx
+ 10f79cd:	setne  %cl
+ 10f79d0:	or     %al,%cl
+ 10f79d2:	cmp    $0x1,%cl
+ 10f79d5:	jne    10f7c4a <core.runtime.Runtime.submitSafeDestination+0xe5a>
+ 10f79db:	mov    $0x125,%si
+ 10f79df:	jmp    10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f79e4:	movl   $0x122,(%rbx)
+ 10f79ea:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f79ef:	cmpb   $0x0,-0x2b(%rbp)
+ 10f79f3:	je     10f7ecf <core.runtime.Runtime.submitSafeDestination+0x10df>
+ 10f79f9:	mov    -0x1f0(%rbp),%rax
+ 10f7a00:	mov    %rax,-0x760(%rbp)
+ 10f7a07:	vmovups -0x230(%rbp),%ymm0
+ 10f7a0f:	vmovups -0x210(%rbp),%ymm1
+ 10f7a17:	vmovups %ymm1,-0x780(%rbp)
+ 10f7a1f:	vmovups %ymm0,-0x7a0(%rbp)
+ 10f7a27:	mov    -0x68(%rbp),%rax
+ 10f7a2b:	mov    %rax,-0x758(%rbp)
+ 10f7a32:	mov    %rcx,-0x750(%rbp)
+ 10f7a39:	mov    %r8,-0x748(%rbp)
+ 10f7a40:	mov    -0x70(%rbp),%rax
+ 10f7a44:	mov    %rax,-0x740(%rbp)
+ 10f7a4b:	mov    -0x58(%rbp),%rax
+ 10f7a4f:	mov    %rax,-0x738(%rbp)
+ 10f7a56:	mov    -0x48(%rbp),%rax
+ 10f7a5a:	mov    %rax,-0x730(%rbp)
+ 10f7a61:	vmovups -0x270(%rbp),%ymm0
+ 10f7a69:	vmovups -0x250(%rbp),%ymm1
+ 10f7a71:	vmovups %ymm0,-0x728(%rbp)
+ 10f7a79:	vmovups %ymm1,-0x708(%rbp)
+ 10f7a81:	mov    -0x80(%rbp),%rax
+ 10f7a85:	mov    %eax,-0x6e8(%rbp)
+ 10f7a8b:	vmovups -0x163(%rbp),%xmm0
+ 10f7a93:	vmovups %xmm0,-0x6d7(%rbp)
+ 10f7a9b:	vmovaps -0x170(%rbp),%xmm0
+ 10f7aa3:	vmovups %xmm0,-0x6e4(%rbp)
+ 10f7aab:	movzbl -0x29(%rbp),%eax
+ 10f7aaf:	mov    %al,-0x6c7(%rbp)
+ 10f7ab5:	movzwl -0x30(%rbp),%eax
+ 10f7ab9:	mov    %ax,-0x6c2(%rbp)
+ 10f7ac0:	mov    -0x34(%rbp),%eax
+ 10f7ac3:	mov    %eax,-0x6c6(%rbp)
+ 10f7ac9:	movzbl -0xd4(%rbp),%r14d
+ 10f7ad1:	mov    -0x110(%rbp),%rbx
+ 10f7ad8:	mov    -0x100(%rbp),%rcx
+ 10f7adf:	mov    0x200(%rbx),%rax
+ 10f7ae6:	mov    %rcx,-0x78(%rbp)
+ 10f7aea:	imul   %rcx,%rax
+ 10f7aee:	mov    0x1a0(%rbx),%rcx
+ 10f7af5:	mov    0x1f8(%rbx),%r8
+ 10f7afc:	add    %rax,%rcx
+ 10f7aff:	add    $0x1040,%rcx
+ 10f7b06:	lea    -0x408(%rbp),%rdi
+ 10f7b0d:	lea    -0x7a0(%rbp),%rsi
+ 10f7b14:	mov    -0x178(%rbp),%rdx
+ 10f7b1b:	vzeroupper
+ 10f7b1e:	call   10fa8e0 <core.codec.encodeSized>
+ 10f7b23:	movzwl -0x3f8(%rbp),%esi
+ 10f7b2a:	mov    -0x40(%rbp),%r15
+ 10f7b2e:	lea    -0x400(%rbp),%rcx
+ 10f7b35:	jmp    10f8176 <core.runtime.Runtime.submitSafeDestination+0x1386>
+ 10f7b3a:	mov    $0x80,%ax
+ 10f7b3e:	mov    %ax,(%rbx)
+ 10f7b41:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f7b46:	mov    -0x1f0(%rbp),%rax
+ 10f7b4d:	mov    %rax,-0x920(%rbp)
+ 10f7b54:	vmovups -0x230(%rbp),%ymm0
+ 10f7b5c:	vmovups -0x210(%rbp),%ymm1
+ 10f7b64:	vmovups %ymm1,-0x940(%rbp)
+ 10f7b6c:	vmovups %ymm0,-0x960(%rbp)
+ 10f7b74:	mov    -0x68(%rbp),%rax
+ 10f7b78:	mov    %rax,-0x918(%rbp)
+ 10f7b7f:	mov    -0x90(%rbp),%rax
+ 10f7b86:	mov    %rax,-0x910(%rbp)
+ 10f7b8d:	mov    %r8,-0x908(%rbp)
+ 10f7b94:	mov    -0x70(%rbp),%rax
+ 10f7b98:	mov    %rax,-0x900(%rbp)
+ 10f7b9f:	mov    -0x58(%rbp),%rax
+ 10f7ba3:	mov    %rax,-0x8f8(%rbp)
+ 10f7baa:	mov    -0x48(%rbp),%rax
+ 10f7bae:	mov    %rax,-0x8f0(%rbp)
+ 10f7bb5:	vmovups -0x270(%rbp),%ymm0
+ 10f7bbd:	vmovups -0x250(%rbp),%ymm1
+ 10f7bc5:	vmovups %ymm0,-0x8e8(%rbp)
+ 10f7bcd:	vmovups %ymm1,-0x8c8(%rbp)
+ 10f7bd5:	mov    -0x80(%rbp),%rax
+ 10f7bd9:	mov    %eax,-0x8a8(%rbp)
+ 10f7bdf:	vmovups -0x163(%rbp),%xmm0
+ 10f7be7:	vmovups %xmm0,-0x897(%rbp)
+ 10f7bef:	vmovaps -0x170(%rbp),%xmm0
+ 10f7bf7:	vmovups %xmm0,-0x8a4(%rbp)
+ 10f7bff:	movzbl -0x29(%rbp),%eax
+ 10f7c03:	mov    %al,-0x887(%rbp)
+ 10f7c09:	movzwl -0x30(%rbp),%eax
+ 10f7c0d:	mov    %ax,-0x882(%rbp)
+ 10f7c14:	mov    -0x34(%rbp),%eax
+ 10f7c17:	mov    %eax,-0x886(%rbp)
+ 10f7c1d:	lea    -0x180(%rbp),%rdi
+ 10f7c24:	lea    -0x960(%rbp),%rdx
+ 10f7c2b:	mov    %r13,%rsi
+ 10f7c2e:	mov    -0x148(%rbp),%rcx
+ 10f7c35:	vzeroupper
+ 10f7c38:	call   10fcce0 <core.runtime.Runtime.submitSync>
+ 10f7c3d:	mov    -0x180(%rbp),%eax
+ 10f7c43:	mov    %eax,(%rbx)
+ 10f7c45:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f7c4a:	lea    -0xb0(%rbp),%rax
+ 10f7c51:	mov    %rax,-0x1d0(%rbp)
+ 10f7c58:	mov    %rdi,%r14
+ 10f7c5b:	lea    -0x1d0(%rbp),%rdi
+ 10f7c62:	lea    -0x3d0(%rbp),%rsi
+ 10f7c69:	mov    %r14,%rdx
+ 10f7c6c:	mov    $0x5,%ecx
+ 10f7c71:	call   10fba70 <core.codec.writeHeaderTo__anon_33332>
+ 10f7c76:	mov    %r14,%rdi
+ 10f7c79:	mov    %rdi,-0x138(%rbp)
+ 10f7c80:	test   %ax,%ax
+ 10f7c83:	jne    10f87ee <core.runtime.Runtime.submitSafeDestination+0x19fe>
+ 10f7c89:	cmpb   $0x0,-0x2a(%rbp)
+ 10f7c8d:	je     10f7d55 <core.runtime.Runtime.submitSafeDestination+0xf65>
+ 10f7c93:	vmovups -0x312(%rbp),%xmm0
+ 10f7c9b:	vmovaps %xmm0,-0x3e0(%rbp)
+ 10f7ca3:	xor    %r12d,%r12d
+ 10f7ca6:	cs nopw 0x0(%rax,%rax,1)
+ 10f7cb0:	lea    (%r12,%rbp,1),%rsi
+ 10f7cb4:	add    $0xfffffffffffffc20,%rsi
+ 10f7cbb:	mov    $0x10,%r14d
+ 10f7cc1:	sub    %r12,%r14
+ 10f7cc4:	mov    -0x98(%rbp),%rdi
+ 10f7ccb:	lea    (%rdi,%r14,1),%rax
+ 10f7ccf:	cmp    -0xa0(%rbp),%rax
+ 10f7cd6:	ja     10f7cf9 <core.runtime.Runtime.submitSafeDestination+0xf09>
+ 10f7cd8:	add    -0xa8(%rbp),%rdi
+ 10f7cdf:	mov    %r14,%rdx
+ 10f7ce2:	call   113f490 <compiler_rt.memcpy.memcpyFast>
+ 10f7ce7:	add    %r14,-0x98(%rbp)
+ 10f7cee:	add    %r14,%r12
+ 10f7cf1:	cmp    $0x10,%r12
+ 10f7cf5:	jb     10f7cb0 <core.runtime.Runtime.submitSafeDestination+0xec0>
+ 10f7cf7:	jmp    10f7d55 <core.runtime.Runtime.submitSafeDestination+0xf65>
+ 10f7cf9:	mov    -0xb0(%rbp),%rax
+ 10f7d00:	mov    (%rax),%rax
+ 10f7d03:	mov    %rsi,-0x130(%rbp)
+ 10f7d0a:	mov    %r14,-0x128(%rbp)
+ 10f7d11:	mov    $0x1,%ecx
+ 10f7d16:	mov    $0x1,%r8d
+ 10f7d1c:	lea    -0x1d0(%rbp),%rdi
+ 10f7d23:	lea    -0xb0(%rbp),%rsi
+ 10f7d2a:	lea    -0x130(%rbp),%rdx
+ 10f7d31:	call   *%rax
+ 10f7d33:	cmpw   $0x0,-0x1c8(%rbp)
+ 10f7d3b:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f7d41:	mov    -0x1d0(%rbp),%r14
+ 10f7d48:	add    %r14,%r12
+ 10f7d4b:	cmp    $0x10,%r12
+ 10f7d4f:	jb     10f7cb0 <core.runtime.Runtime.submitSafeDestination+0xec0>
+ 10f7d55:	cmpb   $0x0,-0x2b(%rbp)
+ 10f7d59:	je     10f7e15 <core.runtime.Runtime.submitSafeDestination+0x1025>
+ 10f7d5f:	mov    -0x140(%rbp),%rax
+ 10f7d66:	mov    %rax,-0x280(%rbp)
+ 10f7d6d:	xor    %r12d,%r12d
+ 10f7d70:	lea    (%r12,%rbp,1),%rsi
+ 10f7d74:	add    $0xfffffffffffffd80,%rsi
+ 10f7d7b:	mov    $0x8,%r14d
+ 10f7d81:	sub    %r12,%r14
+ 10f7d84:	mov    -0x98(%rbp),%rdi
+ 10f7d8b:	lea    (%rdi,%r14,1),%rax
+ 10f7d8f:	cmp    -0xa0(%rbp),%rax
+ 10f7d96:	ja     10f7db9 <core.runtime.Runtime.submitSafeDestination+0xfc9>
+ 10f7d98:	add    -0xa8(%rbp),%rdi
+ 10f7d9f:	mov    %r14,%rdx
+ 10f7da2:	call   113f490 <compiler_rt.memcpy.memcpyFast>
+ 10f7da7:	add    %r14,-0x98(%rbp)
+ 10f7dae:	add    %r14,%r12
+ 10f7db1:	cmp    $0x8,%r12
+ 10f7db5:	jb     10f7d70 <core.runtime.Runtime.submitSafeDestination+0xf80>
+ 10f7db7:	jmp    10f7e15 <core.runtime.Runtime.submitSafeDestination+0x1025>
+ 10f7db9:	mov    -0xb0(%rbp),%rax
+ 10f7dc0:	mov    (%rax),%rax
+ 10f7dc3:	mov    %rsi,-0x130(%rbp)
+ 10f7dca:	mov    %r14,-0x128(%rbp)
+ 10f7dd1:	mov    $0x1,%ecx
+ 10f7dd6:	mov    $0x1,%r8d
+ 10f7ddc:	lea    -0x1d0(%rbp),%rdi
+ 10f7de3:	lea    -0xb0(%rbp),%rsi
+ 10f7dea:	lea    -0x130(%rbp),%rdx
+ 10f7df1:	call   *%rax
+ 10f7df3:	cmpw   $0x0,-0x1c8(%rbp)
+ 10f7dfb:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f7e01:	mov    -0x1d0(%rbp),%r14
+ 10f7e08:	add    %r14,%r12
+ 10f7e0b:	cmp    $0x8,%r12
+ 10f7e0f:	jb     10f7d70 <core.runtime.Runtime.submitSafeDestination+0xf80>
+ 10f7e15:	cmpq   $0x0,-0x178(%rbp)
+ 10f7e1d:	mov    -0x48(%rbp),%rax
+ 10f7e21:	je     10f8009 <core.runtime.Runtime.submitSafeDestination+0x1219>
+ 10f7e27:	lea    -0xb0(%rbp),%rax
+ 10f7e2e:	mov    %rax,-0x1e0(%rbp)
+ 10f7e35:	test   %rbx,%rbx
+ 10f7e38:	mov    -0xc0(%rbp),%r12
+ 10f7e3f:	je     10f7e79 <core.runtime.Runtime.submitSafeDestination+0x1089>
+ 10f7e41:	lea    -0x130(%rbp),%r14
+ 10f7e48:	vmovups (%r15),%ymm0
+ 10f7e4d:	vmovups %ymm0,-0x130(%rbp)
+ 10f7e55:	lea    -0x1e0(%rbp),%rdi
+ 10f7e5c:	mov    %r14,%rsi
+ 10f7e5f:	vzeroupper
+ 10f7e62:	call   10faf90 <core.wire_write.writeValueTo__anon_33300>
+ 10f7e67:	test   %ax,%ax
+ 10f7e6a:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f7e70:	add    $0x30,%r15
+ 10f7e74:	dec    %rbx
+ 10f7e77:	jne    10f7e48 <core.runtime.Runtime.submitSafeDestination+0x1058>
+ 10f7e79:	test   %r12,%r12
+ 10f7e7c:	je     10f7eba <core.runtime.Runtime.submitSafeDestination+0x10ca>
+ 10f7e7e:	lea    -0x1e0(%rbp),%rbx
+ 10f7e85:	lea    -0x1d0(%rbp),%r14
+ 10f7e8c:	vmovups 0x0(%r13),%ymm0
+ 10f7e92:	vmovups %ymm0,-0x1d0(%rbp)
+ 10f7e9a:	mov    %rbx,%rdi
+ 10f7e9d:	mov    %r14,%rsi
+ 10f7ea0:	vzeroupper
+ 10f7ea3:	call   10faf90 <core.wire_write.writeValueTo__anon_33300>
+ 10f7ea8:	test   %ax,%ax
+ 10f7eab:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f7eb1:	add    $0x30,%r13
+ 10f7eb5:	dec    %r12
+ 10f7eb8:	jne    10f7e8c <core.runtime.Runtime.submitSafeDestination+0x109c>
+ 10f7eba:	mov    -0x138(%rbp),%rax
+ 10f7ec1:	mov    %rax,-0x278(%rbp)
+ 10f7ec8:	xor    %esi,%esi
+ 10f7eca:	jmp    10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f7ecf:	mov    -0x1f0(%rbp),%rax
+ 10f7ed6:	mov    %rax,-0x840(%rbp)
+ 10f7edd:	vmovups -0x230(%rbp),%ymm0
+ 10f7ee5:	vmovups -0x210(%rbp),%ymm1
+ 10f7eed:	vmovups %ymm1,-0x860(%rbp)
+ 10f7ef5:	vmovups %ymm0,-0x880(%rbp)
+ 10f7efd:	mov    -0x68(%rbp),%rax
+ 10f7f01:	mov    %rax,-0x838(%rbp)
+ 10f7f08:	mov    %rcx,-0x830(%rbp)
+ 10f7f0f:	mov    %r8,-0x828(%rbp)
+ 10f7f16:	mov    -0x70(%rbp),%rax
+ 10f7f1a:	mov    %rax,-0x820(%rbp)
+ 10f7f21:	mov    -0x58(%rbp),%rax
+ 10f7f25:	mov    %rax,-0x818(%rbp)
+ 10f7f2c:	mov    -0x48(%rbp),%rax
+ 10f7f30:	mov    %rax,-0x810(%rbp)
+ 10f7f37:	vmovups -0x270(%rbp),%ymm0
+ 10f7f3f:	vmovups -0x250(%rbp),%ymm1
+ 10f7f47:	vmovups %ymm0,-0x808(%rbp)
+ 10f7f4f:	vmovups %ymm1,-0x7e8(%rbp)
+ 10f7f57:	mov    -0x80(%rbp),%rax
+ 10f7f5b:	mov    %eax,-0x7c8(%rbp)
+ 10f7f61:	vmovups -0x163(%rbp),%xmm0
+ 10f7f69:	vmovups %xmm0,-0x7b7(%rbp)
+ 10f7f71:	vmovaps -0x170(%rbp),%xmm0
+ 10f7f79:	vmovups %xmm0,-0x7c4(%rbp)
+ 10f7f81:	movzbl -0x29(%rbp),%eax
+ 10f7f85:	mov    %al,-0x7a7(%rbp)
+ 10f7f8b:	movzwl -0x30(%rbp),%eax
+ 10f7f8f:	mov    %ax,-0x7a2(%rbp)
+ 10f7f96:	mov    -0x34(%rbp),%eax
+ 10f7f99:	mov    %eax,-0x7a6(%rbp)
+ 10f7f9f:	movzbl -0xd4(%rbp),%r14d
+ 10f7fa7:	mov    -0x110(%rbp),%rbx
+ 10f7fae:	mov    -0x100(%rbp),%rcx
+ 10f7fb5:	mov    0x200(%rbx),%rax
+ 10f7fbc:	mov    %rcx,-0x78(%rbp)
+ 10f7fc0:	imul   %rcx,%rax
+ 10f7fc4:	mov    0x1a0(%rbx),%rdx
+ 10f7fcb:	mov    0x1f8(%rbx),%rcx
+ 10f7fd2:	add    %rax,%rdx
+ 10f7fd5:	add    $0x1040,%rdx
+ 10f7fdc:	lea    -0x420(%rbp),%rdi
+ 10f7fe3:	lea    -0x880(%rbp),%rsi
+ 10f7fea:	vzeroupper
+ 10f7fed:	call   10fa860 <core.codec.encode>
+ 10f7ff2:	movzwl -0x410(%rbp),%esi
+ 10f7ff9:	lea    -0x418(%rbp),%rcx
+ 10f8000:	mov    -0x40(%rbp),%r15
+ 10f8004:	jmp    10f8176 <core.runtime.Runtime.submitSafeDestination+0x1386>
+ 10f8009:	mov    %eax,-0x184(%rbp)
+ 10f800f:	xor    %r12d,%r12d
+ 10f8012:	lea    (%r12,%rbp,1),%rsi
+ 10f8016:	add    $0xfffffffffffffe7c,%rsi
+ 10f801d:	mov    $0x4,%r14d
+ 10f8023:	sub    %r12,%r14
+ 10f8026:	mov    -0x98(%rbp),%rdi
+ 10f802d:	lea    (%rdi,%r14,1),%rax
+ 10f8031:	cmp    -0xa0(%rbp),%rax
+ 10f8038:	ja     10f805b <core.runtime.Runtime.submitSafeDestination+0x126b>
+ 10f803a:	add    -0xa8(%rbp),%rdi
+ 10f8041:	mov    %r14,%rdx
+ 10f8044:	call   113f490 <compiler_rt.memcpy.memcpyFast>
+ 10f8049:	add    %r14,-0x98(%rbp)
+ 10f8050:	add    %r14,%r12
+ 10f8053:	cmp    $0x4,%r12
+ 10f8057:	jb     10f8012 <core.runtime.Runtime.submitSafeDestination+0x1222>
+ 10f8059:	jmp    10f80b7 <core.runtime.Runtime.submitSafeDestination+0x12c7>
+ 10f805b:	mov    -0xb0(%rbp),%rax
+ 10f8062:	mov    (%rax),%rax
+ 10f8065:	mov    %rsi,-0x130(%rbp)
+ 10f806c:	mov    %r14,-0x128(%rbp)
+ 10f8073:	mov    $0x1,%ecx
+ 10f8078:	mov    $0x1,%r8d
+ 10f807e:	lea    -0x1d0(%rbp),%rdi
+ 10f8085:	lea    -0xb0(%rbp),%rsi
+ 10f808c:	lea    -0x130(%rbp),%rdx
+ 10f8093:	call   *%rax
+ 10f8095:	cmpw   $0x0,-0x1c8(%rbp)
+ 10f809d:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f80a3:	mov    -0x1d0(%rbp),%r14
+ 10f80aa:	add    %r14,%r12
+ 10f80ad:	cmp    $0x4,%r12
+ 10f80b1:	jb     10f8012 <core.runtime.Runtime.submitSafeDestination+0x1222>
+ 10f80b7:	mov    -0x48(%rbp),%r14
+ 10f80bb:	test   %r14,%r14
+ 10f80be:	je     10f7e27 <core.runtime.Runtime.submitSafeDestination+0x1037>
+ 10f80c4:	xor    %r12d,%r12d
+ 10f80c7:	mov    -0x58(%rbp),%rax
+ 10f80cb:	lea    (%rax,%r12,1),%rsi
+ 10f80cf:	sub    %r12,%r14
+ 10f80d2:	mov    -0x98(%rbp),%rdi
+ 10f80d9:	lea    (%rdi,%r14,1),%rax
+ 10f80dd:	cmp    -0xa0(%rbp),%rax
+ 10f80e4:	ja     10f810d <core.runtime.Runtime.submitSafeDestination+0x131d>
+ 10f80e6:	add    -0xa8(%rbp),%rdi
+ 10f80ed:	mov    %r14,%rdx
+ 10f80f0:	call   113f490 <compiler_rt.memcpy.memcpyFast>
+ 10f80f5:	add    %r14,-0x98(%rbp)
+ 10f80fc:	add    %r14,%r12
+ 10f80ff:	mov    -0x48(%rbp),%r14
+ 10f8103:	cmp    %r14,%r12
+ 10f8106:	jb     10f80c7 <core.runtime.Runtime.submitSafeDestination+0x12d7>
+ 10f8108:	jmp    10f7e27 <core.runtime.Runtime.submitSafeDestination+0x1037>
+ 10f810d:	mov    -0xb0(%rbp),%rax
+ 10f8114:	mov    (%rax),%rax
+ 10f8117:	mov    %rsi,-0x130(%rbp)
+ 10f811e:	mov    %r14,-0x128(%rbp)
+ 10f8125:	mov    $0x1,%ecx
+ 10f812a:	mov    $0x1,%r8d
+ 10f8130:	lea    -0x1d0(%rbp),%rdi
+ 10f8137:	lea    -0xb0(%rbp),%rsi
+ 10f813e:	lea    -0x130(%rbp),%rdx
+ 10f8145:	call   *%rax
+ 10f8147:	cmpw   $0x0,-0x1c8(%rbp)
+ 10f814f:	jne    10f815a <core.runtime.Runtime.submitSafeDestination+0x136a>
+ 10f8151:	mov    -0x1d0(%rbp),%r14
+ 10f8158:	jmp    10f80fc <core.runtime.Runtime.submitSafeDestination+0x130c>
+ 10f815a:	mov    $0x67,%si
+ 10f815e:	lea    -0x278(%rbp),%rcx
+ 10f8165:	mov    -0x40(%rbp),%r15
+ 10f8169:	mov    -0x50(%rbp),%r13
+ 10f816d:	mov    -0x70(%rbp),%rbx
+ 10f8171:	movzbl -0x68(%rbp),%r14d
+ 10f8176:	test   %si,%si
+ 10f8179:	je     10f8207 <core.runtime.Runtime.submitSafeDestination+0x1417>
+ 10f817f:	test   $0x1,%r14b
+ 10f8183:	jne    10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f8189:	mov    -0xf8(%rbp),%rax
+ 10f8190:	test   %rax,%rax
+ 10f8193:	je     10f82e1 <core.runtime.Runtime.submitSafeDestination+0x14f1>
+ 10f8199:	testb  $0x1,0x2fc(%rbx)
+ 10f81a0:	je     10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f81a6:	mov    0x150(%rbx),%rcx
+ 10f81ad:	mov    %rcx,%rdx
+ 10f81b0:	shr    $0x2,%rdx
+ 10f81b4:	xor    %rdx,%rax
+ 10f81b7:	and    $0x3,%ecx
+ 10f81ba:	or     %rax,%rcx
+ 10f81bd:	jne    10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f81c3:	mov    %fs:0xfffffffffffbffb8,%rax
+ 10f81cc:	test   %rax,%rax
+ 10f81cf:	je     10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f81d5:	mov    0x148(%rbx),%rcx
+ 10f81dc:	cmp    %rax,%rcx
+ 10f81df:	jne    10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f81e5:	mov    0x160(%rbx),%edx
+ 10f81eb:	cmpb   $0x1,%fs:0xfffffffffffbfff4
+ 10f81f4:	jne    10f845d <core.runtime.Runtime.submitSafeDestination+0x166d>
+ 10f81fa:	mov    %fs:0xfffffffffffbfff0,%eax
+ 10f8202:	jmp    10f8475 <core.runtime.Runtime.submitSafeDestination+0x1685>
+ 10f8207:	mov    -0x80(%rbp),%rax
+ 10f820b:	test   %eax,%eax
+ 10f820d:	je     10f8223 <core.runtime.Runtime.submitSafeDestination+0x1433>
+ 10f820f:	shl    $0x6,%rax
+ 10f8213:	mov    -0x148(%rbp),%r13
+ 10f821a:	add    %r13,%rax
+ 10f821d:	add    $0xffffffffffffffc0,%rax
+ 10f8221:	jmp    10f8231 <core.runtime.Runtime.submitSafeDestination+0x1441>
+ 10f8223:	mov    -0x148(%rbp),%r13
+ 10f822a:	lea    0x9800(%r13),%rax
+ 10f8231:	mov    (%rcx),%r12
+ 10f8234:	lock incq (%rax)
+ 10f8238:	mov    $0x12a,%bx
+ 10f823c:	cmpb   $0x0,-0xd4(%rbp)
+ 10f8243:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f8249:	mov    -0xf8(%rbp),%rcx
+ 10f8250:	test   %rcx,%rcx
+ 10f8253:	je     10f8540 <core.runtime.Runtime.submitSafeDestination+0x1750>
+ 10f8259:	mov    -0x110(%rbp),%rax
+ 10f8260:	mov    $0x82,%bx
+ 10f8264:	testb  $0x1,0x2fc(%rax)
+ 10f826b:	je     10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f8271:	mov    0x150(%rax),%rdx
+ 10f8278:	mov    %rdx,%rsi
+ 10f827b:	shr    $0x2,%rsi
+ 10f827f:	mov    $0x84,%bx
+ 10f8283:	cmp    %rsi,%rcx
+ 10f8286:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f828c:	mov    $0x85,%bx
+ 10f8290:	test   $0x3,%dl
+ 10f8293:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f8299:	mov    %fs:0xfffffffffffbffb8,%rcx
+ 10f82a2:	mov    $0x86,%bx
+ 10f82a6:	test   %rcx,%rcx
+ 10f82a9:	je     10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f82af:	mov    0x148(%rax),%rdx
+ 10f82b6:	cmp    %rcx,%rdx
+ 10f82b9:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f82bf:	mov    0x160(%rax),%edx
+ 10f82c5:	cmpb   $0x1,%fs:0xfffffffffffbfff4
+ 10f82ce:	jne    10f8520 <core.runtime.Runtime.submitSafeDestination+0x1730>
+ 10f82d4:	mov    %fs:0xfffffffffffbfff0,%eax
+ 10f82dc:	jmp    10f8538 <core.runtime.Runtime.submitSafeDestination+0x1748>
+ 10f82e1:	mov    -0x90(%rbp),%rdx
+ 10f82e8:	mov    -0x78(%rbp),%rdi
+ 10f82ec:	mov    0x1a0(%rbx),%rcx
+ 10f82f3:	imul   0x200(%rbx),%rdi
+ 10f82fb:	lea    0x1(,%rdx,4),%rax
+ 10f8303:	lea    0x3(,%rdx,4),%rdx
+ 10f830b:	lock cmpxchg %rdx,0x1000(%rcx,%rdi,1)
+ 10f8315:	setne  -0x1d0(%rbp)
+ 10f831c:	jne    10f8336 <core.runtime.Runtime.submitSafeDestination+0x1546>
+ 10f831e:	cmpq   $0x0,-0xf8(%rbp)
+ 10f8326:	je     10f8336 <core.runtime.Runtime.submitSafeDestination+0x1546>
+ 10f8328:	mov    -0x110(%rbp),%rax
+ 10f832f:	decq   0x158(%rax)
+ 10f8336:	movb   $0x1,-0xd4(%rbp)
+ 10f833d:	testb  $0x1,0x31ea(%r13)
+ 10f8345:	je     10f8353 <core.runtime.Runtime.submitSafeDestination+0x1563>
+ 10f8347:	movzbl 0x31ee(%r13),%eax
+ 10f834f:	test   %al,%al
+ 10f8351:	je     10f8394 <core.runtime.Runtime.submitSafeDestination+0x15a4>
+ 10f8353:	lock incl 0x31d8(%r13)
+ 10f835b:	movzbl 0x31ec(%r13),%eax
+ 10f8363:	test   $0x1,%al
+ 10f8365:	jne    10f8373 <core.runtime.Runtime.submitSafeDestination+0x1583>
+ 10f8367:	movzbl 0x31ee(%r13),%eax
+ 10f836f:	test   %al,%al
+ 10f8371:	je     10f8394 <core.runtime.Runtime.submitSafeDestination+0x15a4>
+ 10f8373:	mov    %esi,%ebx
+ 10f8375:	lea    0x31d8(%r13),%rsi
+ 10f837c:	mov    0x3110(%r13),%rdi
+ 10f8383:	mov    0x3118(%r13),%rax
+ 10f838a:	mov    $0xffffffff,%edx
+ 10f838f:	call   *0x70(%rax)
+ 10f8392:	mov    %ebx,%esi
+ 10f8394:	movzwl %si,%eax
+ 10f8397:	cmp    $0x125,%eax
+ 10f839c:	je     10f83a7 <core.runtime.Runtime.submitSafeDestination+0x15b7>
+ 10f839e:	cmp    $0x67,%eax
+ 10f83a1:	jne    10f843e <core.runtime.Runtime.submitSafeDestination+0x164e>
+ 10f83a7:	mov    -0xb8(%rbp),%rax
+ 10f83ae:	lock incq 0x60(%rax)
+ 10f83b3:	cmpb   $0x0,-0xd4(%rbp)
+ 10f83ba:	jne    10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f83c0:	mov    -0xf8(%rbp),%rcx
+ 10f83c7:	test   %rcx,%rcx
+ 10f83ca:	je     10f84b3 <core.runtime.Runtime.submitSafeDestination+0x16c3>
+ 10f83d0:	mov    -0x110(%rbp),%rax
+ 10f83d7:	testb  $0x1,0x2fc(%rax)
+ 10f83de:	je     10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f83e4:	mov    0x150(%rax),%rdx
+ 10f83eb:	mov    %rdx,%rsi
+ 10f83ee:	shr    $0x2,%rsi
+ 10f83f2:	xor    %rsi,%rcx
+ 10f83f5:	and    $0x3,%edx
+ 10f83f8:	or     %rcx,%rdx
+ 10f83fb:	jne    10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f8401:	mov    %fs:0xfffffffffffbffb8,%rcx
+ 10f840a:	test   %rcx,%rcx
+ 10f840d:	je     10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f8413:	mov    0x148(%rax),%rdx
+ 10f841a:	cmp    %rcx,%rdx
+ 10f841d:	jne    10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f8423:	mov    0x160(%rax),%edx
+ 10f8429:	cmpb   $0x1,%fs:0xfffffffffffbfff4
+ 10f8432:	jne    10f8497 <core.runtime.Runtime.submitSafeDestination+0x16a7>
+ 10f8434:	mov    %fs:0xfffffffffffbfff0,%eax
+ 10f843c:	jmp    10f84af <core.runtime.Runtime.submitSafeDestination+0x16bf>
+ 10f843e:	mov    %r13,%rdi
+ 10f8441:	mov    %esi,%ebx
+ 10f8443:	call   10fa5a0 <core.runtime.Runtime.reportError>
+ 10f8448:	lea    -0x110(%rbp),%rdi
+ 10f844f:	call   10fa760 <journal.journal.Reservation.abort>
+ 10f8454:	mov    %bx,(%r15)
+ 10f8458:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f845d:	mov    $0xba,%eax
+ 10f8462:	syscall
+ 10f8464:	mov    %eax,%fs:0xfffffffffffbfff0
+ 10f846c:	movb   $0x1,%fs:0xfffffffffffbfff4
+ 10f8475:	cmp    %eax,%edx
+ 10f8477:	jne    10f833d <core.runtime.Runtime.submitSafeDestination+0x154d>
+ 10f847d:	mov    -0x110(%rbp),%rbx
+ 10f8484:	mov    -0x108(%rbp),%rdx
+ 10f848b:	mov    -0x100(%rbp),%rdi
+ 10f8492:	jmp    10f82ec <core.runtime.Runtime.submitSafeDestination+0x14fc>
+ 10f8497:	mov    $0xba,%eax
+ 10f849c:	syscall
+ 10f849e:	mov    %eax,%fs:0xfffffffffffbfff0
+ 10f84a6:	movb   $0x1,%fs:0xfffffffffffbfff4
+ 10f84af:	cmp    %eax,%edx
+ 10f84b1:	jne    10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f84b3:	mov    -0x110(%rbp),%rax
+ 10f84ba:	mov    -0x108(%rbp),%rcx
+ 10f84c1:	mov    0x1a0(%rax),%rdx
+ 10f84c8:	mov    0x200(%rax),%rsi
+ 10f84cf:	imul   -0x100(%rbp),%rsi
+ 10f84d7:	lea    0x1(,%rcx,4),%rax
+ 10f84df:	lea    0x3(,%rcx,4),%rcx
+ 10f84e7:	lock cmpxchg %rcx,0x1000(%rdx,%rsi,1)
+ 10f84f1:	setne  -0x1d0(%rbp)
+ 10f84f8:	jne    10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f84fa:	cmpq   $0x0,-0xf8(%rbp)
+ 10f8502:	je     10f8512 <core.runtime.Runtime.submitSafeDestination+0x1722>
+ 10f8504:	mov    -0x110(%rbp),%rax
+ 10f850b:	decq   0x158(%rax)
+ 10f8512:	mov    -0x86cf0(%rip),%eax        # 1071828 <__anon_32989>
+ 10f8518:	mov    %eax,(%r15)
+ 10f851b:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f8520:	mov    $0xba,%eax
+ 10f8525:	syscall
+ 10f8527:	mov    %eax,%fs:0xfffffffffffbfff0
+ 10f852f:	movb   $0x1,%fs:0xfffffffffffbfff4
+ 10f8538:	cmp    %eax,%edx
+ 10f853a:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f8540:	cmpb   $0x0,-0xd8(%rbp)
+ 10f8547:	mov    -0x110(%rbp),%r14
+ 10f854e:	je     10f857a <core.runtime.Runtime.submitSafeDestination+0x178a>
+ 10f8550:	cmpb   $0x0,0x288(%r14)
+ 10f8558:	je     10f8607 <core.runtime.Runtime.submitSafeDestination+0x1817>
+ 10f855e:	lea    -0xf0(%rbp),%rsi
+ 10f8565:	lea    0x208(%r14),%rdi
+ 10f856c:	call   111ff30 <journal.schema.Registry.validateReady>
+ 10f8571:	test   %ax,%ax
+ 10f8574:	jne    10f8af2 <core.runtime.Runtime.submitSafeDestination+0x1d02>
+ 10f857a:	mov    $0x12b,%bx
+ 10f857e:	cmp    0x1f8(%r14),%r12
+ 10f8585:	ja     10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f858b:	mov    0x200(%r14),%rsi
+ 10f8592:	imul   -0x100(%rbp),%rsi
+ 10f859a:	mov    0x1a0(%r14),%rdi
+ 10f85a1:	mov    0x1000(%rdi,%rsi,1),%rax
+ 10f85a9:	mov    -0x108(%rbp),%rcx
+ 10f85b0:	lea    0x1(,%rcx,4),%rdx
+ 10f85b8:	mov    $0x12a,%bx
+ 10f85bc:	cmp    %rdx,%rax
+ 10f85bf:	jne    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
+ 10f85c1:	mov    %rdi,-0x70(%rbp)
+ 10f85c5:	mov    %rsi,-0x48(%rbp)
+ 10f85c9:	mov    -0x110(%rbp),%r15
+ 10f85d0:	mov    -0x100(%rbp),%rsi
+ 10f85d7:	mov    0x200(%r15),%rbx
+ 10f85de:	imul   %rsi,%rbx
+ 10f85e2:	add    0x1a0(%r15),%rbx
+ 10f85e9:	mov    0x1f0(%r15),%rdi
+ 10f85f0:	lea    -0x1(%rcx),%rax
+ 10f85f4:	mov    %rax,%rdx
+ 10f85f7:	or     %rdi,%rdx
+ 10f85fa:	shr    $0x20,%rdx
+ 10f85fe:	je     10f8641 <core.runtime.Runtime.submitSafeDestination+0x1851>
+ 10f8600:	xor    %edx,%edx
+ 10f8602:	div    %rdi
+ 10f8605:	jmp    10f8645 <core.runtime.Runtime.submitSafeDestination+0x1855>
+ 10f8607:	mov    $0x80,%bx
+ 10f860b:	mov    -0x80(%rbp),%rdx
+ 10f860f:	mov    %rdx,%rax
+ 10f8612:	shl    $0x6,%rax
+ 10f8616:	lea    0x9800(%r13),%rcx
+ 10f861d:	test   %edx,%edx
+ 10f861f:	lea    -0x40(%r13,%rax,1),%rax
+ 10f8624:	cmove  %rcx,%rax
+ 10f8628:	lock decq (%rax)
+ 10f862c:	lea    -0x110(%rbp),%rdi
+ 10f8633:	call   10fa760 <journal.journal.Reservation.abort>
+ 10f8638:	mov    %bx,(%r15)
+ 10f863c:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f8641:	xor    %edx,%edx
+ 10f8643:	div    %edi
+ 10f8645:	cmpl   $0x1,0x2f0(%r15)
+ 10f864d:	je     10f869c <core.runtime.Runtime.submitSafeDestination+0x18ac>
+ 10f864f:	mov    -0xf0(%rbp),%edi
+ 10f8655:	movzwl -0xec(%rbp),%edx
+ 10f865c:	vxorps %xmm0,%xmm0,%xmm0
+ 10f8660:	cmpb   $0x0,-0xd8(%rbp)
+ 10f8667:	vmovups %xmm0,0x1020(%rbx)
+ 10f866f:	movq   $0x0,0x1030(%rbx)
+ 10f867a:	je     10f869c <core.runtime.Runtime.submitSafeDestination+0x18ac>
+ 10f867c:	mov    %edi,0x1020(%rbx)
+ 10f8682:	lea    -0xea(%rbp),%rdi
+ 10f8689:	mov    %dx,0x1024(%rbx)
+ 10f8690:	vmovups (%rdi),%xmm0
+ 10f8694:	vmovups %xmm0,0x1028(%rbx)
+ 10f869c:	lea    0x0(,%rcx,4),%r14
+ 10f86a4:	inc    %rax
+ 10f86a7:	mov    %r12d,0x1018(%rbx)
+ 10f86ae:	mov    0x1a0(%r15),%rdx
+ 10f86b5:	imul   0x200(%r15),%rsi
+ 10f86bd:	add    %rsi,%rdx
+ 10f86c0:	add    $0x1040,%rdx
+ 10f86c7:	mov    %rdx,-0x58(%rbp)
+ 10f86cb:	cmpl   $0x1,0x2f0(%r15)
+ 10f86d3:	jne    10f870c <core.runtime.Runtime.submitSafeDestination+0x191c>
+ 10f86d5:	mov    %rcx,-0x1d0(%rbp)
+ 10f86dc:	mov    %rax,-0x1c8(%rbp)
+ 10f86e3:	mov    %r12d,-0x1c0(%rbp)
+ 10f86ea:	movl   $0xffffffff,-0x130(%rbp)
+ 10f86f4:	lea    -0x130(%rbp),%r13
+ 10f86fb:	lea    -0x1d0(%rbp),%rsi
+ 10f8702:	mov    $0x14,%edx
+ 10f8707:	mov    %r13,%rdi
+ 10f870a:	jmp    10f875d <core.runtime.Runtime.submitSafeDestination+0x196d>
+ 10f870c:	lea    0x1020(%rbx),%rdx
+ 10f8713:	mov    %rdx,-0x68(%rbp)
+ 10f8717:	mov    %rcx,-0x1d0(%rbp)
+ 10f871e:	mov    %rax,-0x1c8(%rbp)
+ 10f8725:	mov    %r12d,-0x1c0(%rbp)
+ 10f872c:	movl   $0xffffffff,-0x130(%rbp)
+ 10f8736:	lea    -0x130(%rbp),%r13
+ 10f873d:	lea    -0x1d0(%rbp),%rsi
+ 10f8744:	mov    $0x14,%edx
+ 10f8749:	mov    %r13,%rdi
+ 10f874c:	call   112a820 <platform.crc32.Crc32.update>
+ 10f8751:	mov    $0x18,%edx
+ 10f8756:	mov    %r13,%rdi
+ 10f8759:	mov    -0x68(%rbp),%rsi
+ 10f875d:	call   112a820 <platform.crc32.Crc32.update>
+ 10f8762:	mov    %r13,%rdi
+ 10f8765:	mov    -0x58(%rbp),%rsi
+ 10f8769:	mov    %r12,%rdx
+ 10f876c:	call   112a820 <platform.crc32.Crc32.update>
+ 10f8771:	mov    -0x130(%rbp),%eax
+ 10f8777:	not    %eax
+ 10f8779:	mov    %eax,0x101c(%rbx)
+ 10f877f:	or     $0x2,%r14
+ 10f8783:	mov    -0x48(%rbp),%rax
+ 10f8787:	mov    -0x70(%rbp),%rcx
+ 10f878b:	mov    %r14,0x1000(%rcx,%rax,1)
+ 10f8793:	cmpq   $0x0,-0xf8(%rbp)
+ 10f879b:	je     10f87a4 <core.runtime.Runtime.submitSafeDestination+0x19b4>
+ 10f879d:	decq   0x158(%r15)
+ 10f87a4:	movb   $0x1,-0xd4(%rbp)
+ 10f87ab:	mov    -0xb8(%rbp),%rax
+ 10f87b2:	lock incq (%rax)
+ 10f87b6:	mov    -0x50(%rbp),%rdi
+ 10f87ba:	call   10f19d0 <core.runtime.Runtime.notify>
+ 10f87bf:	lea    -0x110(%rbp),%rdi
+ 10f87c6:	call   10fa760 <journal.journal.Reservation.abort>
+ 10f87cb:	mov    -0x86fad(%rip),%eax        # 1071824 <__anon_22762>
+ 10f87d1:	jmp    10f7293 <core.runtime.Runtime.submitSafeDestination+0x4a3>
+ 10f87d6:	mov    -0x40(%rbp),%rbx
+ 10f87da:	mov    %ax,(%rbx)
+ 10f87dd:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f87e2:	mov    -0x40(%rbp),%rax
+ 10f87e6:	mov    %cx,(%rax)
+ 10f87e9:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f87ee:	movzwl %ax,%ecx
+ 10f87f1:	cmp    $0xa1,%ecx
+ 10f87f7:	mov    $0x67,%si
+ 10f87fb:	je     10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f8801:	mov    %eax,%esi
+ 10f8803:	jmp    10f815e <core.runtime.Runtime.submitSafeDestination+0x136e>
+ 10f8808:	and    $0x3,%eax
+ 10f880b:	cmp    $0x1,%eax
+ 10f880e:	jne    10f8827 <core.runtime.Runtime.submitSafeDestination+0x1a37>
+ 10f8810:	mov    -0xb8(%rbp),%rax
+ 10f8817:	lock incq 0x58(%rax)
+ 10f881c:	mov    -0x86f96(%rip),%eax        # 107188c <__anon_32946>
+ 10f8822:	jmp    10f7293 <core.runtime.Runtime.submitSafeDestination+0x4a3>
+ 10f8827:	mov    -0x78(%rbp),%rax
+ 10f882b:	cmpb   $0x0,(%rax)
+ 10f882e:	movzbl -0x29(%rbp),%ebx
+ 10f8832:	je     10f899e <core.runtime.Runtime.submitSafeDestination+0x1bae>
+ 10f8838:	vmovups 0xa0(%r12),%ymm0
+ 10f8842:	vmovups %ymm0,-0xce0(%rbp)
+ 10f884a:	vmovups 0x80(%r12),%ymm0
+ 10f8854:	vmovups %ymm0,-0xd00(%rbp)
+ 10f885c:	vmovups 0x20(%r12),%ymm0
+ 10f8863:	vmovups 0x40(%r12),%ymm1
+ 10f886a:	vmovups 0x60(%r12),%ymm2
+ 10f8871:	vmovups %ymm2,-0xd20(%rbp)
+ 10f8879:	vmovups %ymm1,-0xd40(%rbp)
+ 10f8881:	vmovups %ymm0,-0xd60(%rbp)
+ 10f8889:	vmovups (%r12),%ymm0
+ 10f888f:	vmovups %ymm0,-0xd80(%rbp)
+ 10f8897:	vmovups -0x230(%rbp),%ymm0
+ 10f889f:	vmovups %ymm0,-0x5e0(%rbp)
+ 10f88a7:	vmovups -0x210(%rbp),%ymm0
+ 10f88af:	vmovups %ymm0,-0x5c0(%rbp)
+ 10f88b7:	mov    -0x1f0(%rbp),%rax
+ 10f88be:	mov    %rax,-0x5a0(%rbp)
+ 10f88c5:	mov    -0x68(%rbp),%rax
+ 10f88c9:	mov    %rax,-0x598(%rbp)
+ 10f88d0:	mov    -0x90(%rbp),%rax
+ 10f88d7:	mov    %rax,-0x590(%rbp)
+ 10f88de:	mov    -0x88(%rbp),%rax
+ 10f88e5:	mov    %rax,-0x588(%rbp)
+ 10f88ec:	mov    -0x70(%rbp),%rax
+ 10f88f0:	mov    %rax,-0x580(%rbp)
+ 10f88f7:	mov    -0x58(%rbp),%rax
+ 10f88fb:	mov    %rax,-0x578(%rbp)
+ 10f8902:	mov    -0x48(%rbp),%rax
+ 10f8906:	mov    %rax,-0x570(%rbp)
+ 10f890d:	vmovups -0x270(%rbp),%ymm0
+ 10f8915:	vmovups -0x250(%rbp),%ymm1
+ 10f891d:	vmovups %ymm1,-0x548(%rbp)
+ 10f8925:	vmovups %ymm0,-0x568(%rbp)
+ 10f892d:	mov    -0x80(%rbp),%rax
+ 10f8931:	mov    %eax,-0x528(%rbp)
+ 10f8937:	vmovaps -0x170(%rbp),%xmm0
+ 10f893f:	vmovups %xmm0,-0x524(%rbp)
+ 10f8947:	vmovups -0x163(%rbp),%xmm0
+ 10f894f:	vmovups %xmm0,-0x517(%rbp)
+ 10f8957:	mov    %bl,-0x507(%rbp)
+ 10f895d:	mov    -0x34(%rbp),%eax
+ 10f8960:	mov    %eax,-0x506(%rbp)
+ 10f8966:	movzwl -0x30(%rbp),%eax
+ 10f896a:	mov    %ax,-0x502(%rbp)
+ 10f8971:	lea    -0x3f0(%rbp),%rdi
+ 10f8978:	lea    -0x5e0(%rbp),%rsi
+ 10f897f:	lea    -0xd80(%rbp),%rdx
+ 10f8986:	vzeroupper
+ 10f8989:	call   10fcf70 <core.schema_codec.encodedReferenceSize>
+ 10f898e:	movzwl -0x3e8(%rbp),%eax
+ 10f8995:	test   %ax,%ax
+ 10f8998:	jne    10f8ab5 <core.runtime.Runtime.submitSafeDestination+0x1cc5>
+ 10f899e:	mov    -0x1f0(%rbp),%rax
+ 10f89a5:	mov    %rax,-0x680(%rbp)
+ 10f89ac:	vmovups -0x230(%rbp),%ymm0
+ 10f89b4:	vmovups -0x210(%rbp),%ymm1
+ 10f89bc:	vmovups %ymm1,-0x6a0(%rbp)
+ 10f89c4:	vmovups %ymm0,-0x6c0(%rbp)
+ 10f89cc:	vmovups -0x270(%rbp),%ymm0
+ 10f89d4:	vmovups -0x250(%rbp),%ymm1
+ 10f89dc:	vmovups %ymm0,-0x648(%rbp)
+ 10f89e4:	vmovups %ymm1,-0x628(%rbp)
+ 10f89ec:	vmovaps -0x170(%rbp),%xmm0
+ 10f89f4:	vmovups %xmm0,-0x604(%rbp)
+ 10f89fc:	vmovups -0x163(%rbp),%xmm0
+ 10f8a04:	vmovups %xmm0,-0x5f7(%rbp)
+ 10f8a0c:	mov    -0x34(%rbp),%eax
+ 10f8a0f:	mov    %eax,-0x5e6(%rbp)
+ 10f8a15:	movzwl -0x30(%rbp),%eax
+ 10f8a19:	mov    %ax,-0x5e2(%rbp)
+ 10f8a20:	mov    -0x80(%rbp),%rax
+ 10f8a24:	or     $0x80000000,%eax
+ 10f8a29:	mov    -0x68(%rbp),%rcx
+ 10f8a2d:	mov    %rcx,-0x678(%rbp)
+ 10f8a34:	mov    -0x90(%rbp),%rcx
+ 10f8a3b:	mov    %rcx,-0x670(%rbp)
+ 10f8a42:	mov    -0x88(%rbp),%rcx
+ 10f8a49:	mov    %rcx,-0x668(%rbp)
+ 10f8a50:	mov    -0x70(%rbp),%rcx
+ 10f8a54:	mov    %rcx,-0x660(%rbp)
+ 10f8a5b:	mov    -0x58(%rbp),%rcx
+ 10f8a5f:	mov    %rcx,-0x658(%rbp)
+ 10f8a66:	mov    -0x48(%rbp),%rcx
+ 10f8a6a:	mov    %rcx,-0x650(%rbp)
+ 10f8a71:	mov    %eax,-0x608(%rbp)
+ 10f8a77:	mov    %bl,-0x5e7(%rbp)
+ 10f8a7d:	lea    -0x17c(%rbp),%rdi
+ 10f8a84:	lea    -0x6c0(%rbp),%rdx
+ 10f8a8b:	mov    -0x50(%rbp),%rsi
+ 10f8a8f:	mov    -0x148(%rbp),%rcx
+ 10f8a96:	vzeroupper
+ 10f8a99:	call   10fcce0 <core.runtime.Runtime.submitSync>
+ 10f8a9e:	mov    -0x17c(%rbp),%eax
+ 10f8aa4:	jmp    10f7293 <core.runtime.Runtime.submitSafeDestination+0x4a3>
+ 10f8aa9:	xor    %ecx,%ecx
+ 10f8aab:	mov    -0x60(%rbp),%rdx
+ 10f8aaf:	xchg   %cl,0x164(%rdx)
+ 10f8ab5:	mov    -0x40(%rbp),%rcx
+ 10f8ab9:	mov    %ax,(%rcx)
+ 10f8abc:	jmp    10f7299 <core.runtime.Runtime.submitSafeDestination+0x4a9>
+ 10f8ac1:	mov    -0xb8(%rbp),%rax
+ 10f8ac8:	lock incq 0x68(%rax)
+ 10f8acd:	xor    %eax,%eax
+ 10f8acf:	mov    -0x60(%rbp),%rcx
+ 10f8ad3:	xchg   %al,0x164(%rcx)
+ 10f8ad9:	jmp    10f8ae7 <core.runtime.Runtime.submitSafeDestination+0x1cf7>
+ 10f8adb:	mov    -0xb8(%rbp),%rax
+ 10f8ae2:	lock incq 0x68(%rax)
+ 10f8ae7:	mov    -0x872b1(%rip),%eax        # 107183c <__anon_32962>
+ 10f8aed:	jmp    10f7293 <core.runtime.Runtime.submitSafeDestination+0x4a3>
+ 10f8af2:	mov    %eax,%ebx
+ 10f8af4:	jmp    10f860b <core.runtime.Runtime.submitSafeDestination+0x181b>
