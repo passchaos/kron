@@ -1,0 +1,77 @@
+/home/passchaos/project-z/kron/tests/regex_differential.py:133: FutureWarning: Possible nested set at position 1
+  case["expected"] = re.search(strict_end(pattern), text) is not None
+case 4464: differential mismatch
+  pattern_hex=5c66
+  input_hex=0c expected=true match_error=null actual=false
+case 4492: differential mismatch
+  pattern_hex=5c76
+  input_hex=0b expected=true match_error=null actual=false
+case 4502: differential mismatch
+  pattern_hex=5c61
+  input_hex=61 expected=false match_error=null actual=true
+case 4504: differential mismatch
+  pattern_hex=5c61
+  input_hex=6161 expected=false match_error=null actual=true
+case 4505: differential mismatch
+  pattern_hex=5c61
+  input_hex=6162 expected=false match_error=null actual=true
+case 4506: differential mismatch
+  pattern_hex=5c61
+  input_hex=610a expected=false match_error=null actual=true
+case 4509: differential mismatch
+  pattern_hex=5c61
+  input_hex=610a0a expected=false match_error=null actual=true
+case 4510: differential mismatch
+  pattern_hex=5c61
+  input_hex=610d0a expected=false match_error=null actual=true
+case 4511: differential mismatch
+  pattern_hex=5c61
+  input_hex=610d62 expected=false match_error=null actual=true
+case 4512: differential mismatch
+  pattern_hex=5c61
+  input_hex=610962 expected=false match_error=null actual=true
+case 4513: differential mismatch
+  pattern_hex=5c61
+  input_hex=610a62 expected=false match_error=null actual=true
+case 4520: differential mismatch
+  pattern_hex=5c61
+  input_hex=07 expected=true match_error=null actual=false
+case 4523: differential mismatch
+  pattern_hex=5c61
+  input_hex=5d61 expected=false match_error=null actual=true
+case 4525: differential mismatch
+  pattern_hex=5c61
+  input_hex=246124 expected=false match_error=null actual=true
+case 4527: differential mismatch
+  pattern_hex=5c61
+  input_hex=616161616162 expected=false match_error=null actual=true
+case 4588: differential mismatch
+  pattern_hex=5b5c7830302d5c7846465d
+  input_hex=0a expected=true match_error=null actual=false
+case 4589: differential mismatch
+  pattern_hex=5b5c7830302d5c7846465d
+  input_hex=0a0a expected=true match_error=null actual=false
+case 4595: differential mismatch
+  pattern_hex=5b5c7830302d5c7846465d
+  input_hex=00 expected=true match_error=null actual=false
+case 4596: differential mismatch
+  pattern_hex=5b5c7830302d5c7846465d
+  input_hex=ff expected=true match_error=null actual=false
+case 4597: differential mismatch
+  pattern_hex=5b5c7830302d5c7846465d
+  input_hex=7f expected=true match_error=null actual=false
+regex differential failed: 20 mismatches (first 20 reported)
+error: RegexDifferentialMismatch
+regex differential seed=0x6b726f6e72656778, cases=20124 failed
+test-regex-differential
++- run python3 failure
+error: process exited with error code 1
+failed command: python3 tests/regex_differential.py --driver ./.zig-cache/o/ffcc08e7be07c8bd3e28d756e5d7b744/kron-regex-differential
+
+Build Summary: 1/3 steps succeeded (1 failed)
+test-regex-differential transitive failure
++- run python3 failure
+   +- compile exe kron-regex-differential ReleaseSafe native success 20s MaxRSS:519M
+
+error: the following build command failed with exit code 1:
+.zig-cache/o/290d17f5b7704fc5c412c68c38ca7684/build /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib /home/passchaos/project-z/kron .zig-cache /home/passchaos/.cache/zig --seed 0x6797e512 -Z25e577a8de3cd804 test-regex-differential -Doptimize=ReleaseSafe -j1 --summary all

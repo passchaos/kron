@@ -41,6 +41,7 @@ zig build test-package-distribution -Doptimize=ReleaseSafe -j1
 zig build test-runtime-crash -Doptimize=ReleaseSafe -j1
 zig build test-platform-host -Doptimize=ReleaseSafe -j1
 zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1
+zig build test-regex-differential test-regex-fuzz -Doptimize=ReleaseSafe -j1
 zig build run-basic
 zig build run-async-memory
 zig build run-std-log

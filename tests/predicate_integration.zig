@@ -67,6 +67,20 @@ test "predicates run after recursive redaction and bounded regex failure leaves 
     const previous = runtime.currentConfiguration();
     try testing.expectError(error.InvalidRegex, runtime.replaceConfiguration(&.{.{ .name = "output", .sink = memory.sink(), .recovery_identity = "safe-regex" }}, .{ .predicate = "@message =~ \"(\"" }));
     try testing.expectEqualDeep(previous, runtime.currentConfiguration());
+    for ([_][]const u8{
+        "@message =~ \"\\\\D\"", "@message =~ \"\\\\Aabc\"", "@message =~ \"\\\\q\"",
+    }) |spec| {
+        try testing.expectError(error.UnsupportedRegex, runtime.replaceConfiguration(&.{.{ .name = "output", .sink = memory.sink(), .recovery_identity = "safe-regex" }}, .{ .predicate = spec }));
+        try testing.expectEqualDeep(previous, runtime.currentConfiguration());
+        try testing.expectEqual(target, runtime.journal.?.reservationTarget());
+    }
+    _ = try runtime.replaceConfiguration(&.{.{ .name = "output", .sink = memory.sink(), .recovery_identity = "safe-regex" }}, .{ .predicate = "@message =~ \"^[]a]+$\"" });
+    try testing.expectEqual(kron.EmitResult.accepted, try log.tryEmit(.info, "]a", .{}));
+    const accepted_target = runtime.journal.?.reservationTarget();
+    try testing.expectEqual(kron.EmitResult.filtered, try log.tryEmit(.info, "]a\n", .{}));
+    try testing.expectEqual(accepted_target, runtime.journal.?.reservationTarget());
+    try runtime.flush(.written);
+    try testing.expectEqual(@as(usize, 2), memory.records);
 }
 
 test "a validated thread cache keeps its old version through admitted reentrant guards" {

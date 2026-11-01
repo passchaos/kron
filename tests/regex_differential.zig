@@ -2,8 +2,14 @@
 //! kron's Thompson NFA with the exact independently computed Python outcomes.
 const std = @import("std");
 const kron = @import("kron");
-const Case = struct { pattern: []const u8, input: []const u8, expected: bool };
-const maximum_cases = 4096;
+const Case = struct {
+    pattern_hex: []const u8,
+    input_hex: []const u8,
+    expected: ?bool = null,
+    compile_error: ?[]const u8 = null,
+    match_error: ?[]const u8 = null,
+};
+const maximum_cases = 32768;
 const maximum_corpus_bytes = 16 * 1024 * 1024;
 
 pub fn main(init: std.process.Init) !void {
@@ -14,26 +20,39 @@ pub fn main(init: std.process.Init) !void {
     }
     const bytes = try std.Io.Dir.cwd().readFileAlloc(init.io, args[1], init.gpa, .limited(maximum_corpus_bytes));
     defer init.gpa.free(bytes);
-    const parsed = try std.json.parseFromSlice([]const Case, init.gpa, bytes, .{ .max_value_len = 8192 });
+    const parsed = try std.json.parseFromSlice([]const Case, init.gpa, bytes, .{ .max_value_len = 2 * 8193 });
     defer parsed.deinit();
     if (parsed.value.len == 0 or parsed.value.len > maximum_cases) return error.InvalidCaseCount;
     var failed: usize = 0;
+    var pattern_buffer: [1024]u8 = undefined;
+    var input_buffer: [8193]u8 = undefined;
     for (parsed.value, 0..) |case, index| {
-        if (!asciiInput(case.input) or !asciiPattern(case.pattern) or case.input.len > 8192 or case.pattern.len > 1024) return error.InvalidCorpus;
-        const pattern = kron.Pattern.init(case.pattern) catch |err| {
-            std.debug.print("case {d}: valid Python pattern was rejected: {s}\n  pattern={s}\n  input=\"{s}\" expected={any}\n", .{ index, @errorName(err), case.pattern, case.input, case.expected });
+        const expectations = @intFromBool(case.expected != null) + @as(u8, @intFromBool(case.compile_error != null)) + @as(u8, @intFromBool(case.match_error != null));
+        if (expectations != 1) return error.InvalidCorpus;
+        const pattern_bytes = std.fmt.hexToBytes(&pattern_buffer, case.pattern_hex) catch return error.InvalidCorpus;
+        const input = std.fmt.hexToBytes(&input_buffer, case.input_hex) catch return error.InvalidCorpus;
+        const pattern = kron.Pattern.init(pattern_bytes) catch |err| {
+            if (case.compile_error) |expected| if (std.mem.eql(u8, expected, @errorName(err))) continue;
+            std.debug.print("case {d}: unexpected compile error {s}\n  pattern_hex={s}\n  input_hex={s}\n", .{ index, @errorName(err), case.pattern_hex, case.input_hex });
             failed += 1;
             if (failed == 20) break;
             continue;
         };
-        const actual = pattern.matches(case.input) catch |err| {
-            std.debug.print("case {d}: NFA match failed: {s}\n  pattern={s}\n  input=\"{s}\" expected={any}\n", .{ index, @errorName(err), case.pattern, case.input, case.expected });
+        if (case.compile_error) |expected| {
+            std.debug.print("case {d}: pattern compiled instead of {s}\n  pattern_hex={s}\n", .{ index, expected, case.pattern_hex });
+            failed += 1;
+            if (failed == 20) break;
+            continue;
+        }
+        const actual = pattern.matches(input) catch |err| {
+            if (case.match_error) |expected| if (std.mem.eql(u8, expected, @errorName(err))) continue;
+            std.debug.print("case {d}: unexpected match error {s}\n  pattern_hex={s}\n  input_hex={s}\n", .{ index, @errorName(err), case.pattern_hex, case.input_hex });
             failed += 1;
             if (failed == 20) break;
             continue;
         };
-        if (actual != case.expected) {
-            std.debug.print("case {d}: differential mismatch\n  pattern={s}\n  input=\"{s}\" expected={any} actual={any}\n", .{ index, case.pattern, case.input, case.expected, actual });
+        if (case.expected == null or actual != case.expected.?) {
+            std.debug.print("case {d}: differential mismatch\n  pattern_hex={s}\n  input_hex={s} expected={any} match_error={?s} actual={any}\n", .{ index, case.pattern_hex, case.input_hex, case.expected, case.match_error, actual });
             failed += 1;
             if (failed == 20) break;
         }
@@ -42,15 +61,5 @@ pub fn main(init: std.process.Init) !void {
         std.debug.print("regex differential failed: {d} mismatches (first 20 reported)\n", .{failed});
         return error.RegexDifferentialMismatch;
     }
-    std.debug.print("regex differential passed: {d} exact comparisons\n", .{parsed.value.len});
-}
-
-fn asciiInput(bytes: []const u8) bool {
-    for (bytes) |byte| if (!std.ascii.isAlphanumeric(byte) and byte != ' ') return false;
-    return true;
-}
-
-fn asciiPattern(bytes: []const u8) bool {
-    for (bytes) |byte| if (byte < 0x20 or byte >= 0x7f) return false;
-    return true;
+    std.debug.print("regex differential passed: {d} exact outcomes\n", .{parsed.value.len});
 }

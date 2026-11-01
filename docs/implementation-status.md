@@ -6,6 +6,8 @@
 
 ## 当前单机门禁
 
+正则边界本轮补齐：编译/匹配拆到`src/pipeline/regex.zig`，字段规则/配置字符串留在`pipeline/predicate.zig`，保留Pattern/Regex公共别名与原128-state/32-depth/8KiB输入预算。修复首项`]`字符类与控制/两位hex转义，未支持类别/断言/回溯引用/未知字母转义明确返回`UnsupportedRegex`，直接量词化anchor及畸形hex返回`InvalidRegex`；UTF-8按字节、`.`排除LF、`$`严格末尾的原行为由oracle锁定。8个种子共161872项结果（161504项独立Python bytes匹配、360项精确编译拒绝、8项输入超限）及每种子8项driver负向自检全部通过；原短ASCII语料保留。5项模块测试覆盖全部65536对literal与65536对class字节、full range与精确预算边界，Debug/Safe/Fast均通过。新增8192项regex mutation/arbitrary-input与4096项predicate parser mutation进入`test-regex-fuzz`和`verify-local`；最终三优化级别定向门禁通过9/9测试，公共runtime验证失败replacement维持配置与reservation水位、首项`]`的实际交付与末尾LF过滤。语料gzip、原始失败和通过记录见`bench/evidence/2026-11-01-regex-boundaries/`；持续sanitizer fuzz与业务regex性能资格仍未完成。
+
 消费者新增 fused wire-to-JSON 路径：仅对当前自包含 v4 payload、单个 JSON/text/logfmt route、非 deferred message、无 format args；attributes 可为 scalar 或 nested，nested descriptor 使用 caller scratch arena，在 checked wire parser 验证每个 tag/top-level key 后直接写入 caller scratch；其他形状返回 `error.Fallback` 并继续走 decode+encode。journal 格式、公开 encoder、校验边界和 route 语义不变。单元测试用 flat event（含 trace/span/source）与 nested group/array 逐字节比较融合输出与 decode+encode，template 确认 Fallback；完整 `verify-local` 通过 81/81 步骤、510/510 测试（包含 nested 与 text/logfmt fused 验证）；10,000 条 SPSC-memory workflow 的 11,000 条物理记录通过独立 oracle。五对固定 CPU PMU 中 SPSC-memory P4 指令减少 5.94%、async-memory P1 减少 6.20%，spread 0.8%–1.2%；cycles/吞吐仍 inconclusive。100 个完整文件试验结果见 `bench/evidence/2026-11-01-wire-json/`。2026-11-01 负载窗口同轮 Foundation/kron 复测完成 120 个试验、1212 万条记录验证，全部组因 spread 超门限标 inconclusive；同轮中位数显示 P1 kron 领先、P4 Foundation 略领先，稳定排名仍需安静窗口复测，见 [完整工作流](cpp-full-workflow.md) 和 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。见 [提交热点](performance-hotspots.md)。
 
 消费者 decoded delivery 已复用 decoder 的完整树校验：`codec.decode` 和 `schema_codec.resolve` 在完成 wire 树、节点预算、深度、重复 key 和长度检查后设置内部 `Event.tree_validated`；内部 `encoder.common.encodeDecoded` 仅对该证明跳过第二次树校验，公开 `encoder.encode/encodeWithTime` 仍始终校验并忽略该提示。Runtime 不信任调用方提供的提示，先用 admission 的 `codec.measure` 或 redaction/binding 校验，再由 `submitSafeDestination` 用可信上下文覆盖；binary route 继续走公开校验路径。新增测试锁定：伪造提示的 invalid tree 仍被公开 encoder 拒绝且零输出、`runtime.submit` 的重复 key 仍返回 `DuplicateKey`、decoded text/JSON/logfmt 与公开 encoder 字节一致。`zig build test -Doptimize=ReleaseFast` 通过 35/35 步骤、481/481 测试；完整 `verify-local` 通过 81/81 步骤、505/505 测试；定向 ReleaseSafe proof 10/10 与 predicate 1/1 也通过。五对固定 CPU 完整流程 PMU 中，SPSC-memory P4 用户态指令中位减少 3.73%，async-memory P1 减少 4.49%，两侧 spread 0.5%–1.6%；cycles/task-clock 与吞吐仍 inconclusive。100 个完整文件试验在 52 个、525 万条记录后遇到 mmap 子进程 120 秒超时，已完成的试验全部 accepted=written、pending/drop=0，但不作为吞吐资格。证据见 `bench/evidence/2026-11-01-decoded-delivery/`。
@@ -92,7 +94,7 @@
 | --- | --- | --- |
 | 可靠性边界 | 固定边界与随机运行期真实应用SIGKILL、子QEMU停机、双checkpoint与fault sink | 更大随机系统停机campaign、不同filesystem/设备、物理掉电资格 |
 | 低延迟性能 | 分离时钟microbenchmark、prepared 64rows、C++ 60trials | TSC硬件/校准/跨核资格已验证；仍需独占/固定affinity稳定回归门限及业务负载覆盖 |
-| 动态策略 | scope/level缓存、route/redaction/sampler资源快照热替换、旧事件保留 | 字段谓词与有界NFA正则已实现；完整来源事务与有界JSON文件已实现；仍需更广正则差分/fuzz、性能资格与非默认采样热点优化 |
+| 动态策略 | scope/level缓存、route/redaction/sampler资源快照热替换、旧事件保留；8种子byte regex差分与固定mutation campaign | 字段谓词与有界NFA正则、完整来源事务与有界JSON文件已实现；仍需持续sanitizer fuzz、业务正则性能资格与非默认采样热点优化 |
 | 结构化扩展 | 显式group/array、8层/256节点预算、递归脱敏、nullable/source/trace；受限对象适配器5项外部测试及9项负向编译 | 更广nested故障与性能资格 |
 | 文件与归档 | size/time轮转、retention/reopen、自包含与标准DEFLATE归档 | 更全面持久化格式升级矩阵、随机/更多文件系统故障门禁 |
 | 生态与平台 | std.log、JSON、Windows/aarch64编译、真实单线程同步文件日志 | Windows/macOS/Android/iOS实际运行与journal资格 |
@@ -114,7 +116,7 @@ API已明确哪些能力属于可选增强；后续验收应逐项给出源码�
 
 ## 继续完成的要求
 
-deadline、子VM故障注入、schema预注册、嵌套字段、资源热替换、标准压缩归档和实际C++对照已实现并有门禁；TSC资格、字段谓词/NFA、配置缓存热点优化已实现；更大随机故障资格、稳定回归基线、正则差分fuzz与更多平台实际运行仍需继续推进。
+deadline、子VM故障注入、schema预注册、嵌套字段、资源热替换、标准压缩归档和实际C++对照已实现并有门禁；TSC资格、字段谓词/NFA、配置缓存热点优化及多种子任意字节正则差分/有界mutation已实现；更大随机故障资格、稳定回归基线、持续sanitizer fuzz与更多平台实际运行仍需继续推进。
 
 代码实现继续推进完整目标。本清单用于明确缺口，不用于缩小设计范围或提前宣告完成。
 

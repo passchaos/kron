@@ -327,6 +327,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-regex-differential", "Compare supported byte regexes with a seeded Python corpus").dependOn(&regex_check.step);
     verify.dependOn(&regex_check.step);
 
+    const regex_fuzz_module = b.createModule(.{ .root_source_file = b.path("tests/regex_fuzz.zig"), .target = target, .optimize = optimize });
+    regex_fuzz_module.addImport("kron", module);
+    const regex_fuzz = b.addTest(.{ .name = "kron-regex-fuzz", .root_module = regex_fuzz_module });
+    const run_regex_fuzz = b.addRunArtifact(regex_fuzz);
+    b.step("test-regex-fuzz", "Run byte regex and predicate parser mutation corpora").dependOn(&run_regex_fuzz.step);
+    verify.dependOn(&run_regex_fuzz.step);
+
     const bench_module = b.createModule(.{ .root_source_file = b.path("bench/main.zig"), .target = target, .optimize = optimize });
     bench_module.addImport("kron", module);
     const bench = b.addExecutable(.{ .name = "kron-bench", .root_module = bench_module });

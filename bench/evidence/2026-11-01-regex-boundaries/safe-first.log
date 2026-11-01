@@ -1,0 +1,20 @@
+test-regex-fuzz
++- run test kron-regex-fuzz 1 pass, 1 fail (2 total)
+error: 'regex_fuzz.test.byte regex mutation and arbitrary input preserve owned fixed-budget state' failed without output
+failed command: ./.zig-cache/o/07b32de69603d0be09857499bc164846/kron-regex-fuzz --cache-dir=./.zig-cache --seed=0x40e5184 --listen=-
+
+regex differential passed: 20180 exact outcomes
+regex differential seed=0x6b726f6e72656778, patterns=2197, comparisons=20134, compile_errors=45, match_errors=1 passed
+Build Summary: 7/9 steps succeeded (1 failed); 8/9 tests passed (1 failed)
+test-regex-differential success
++- run python3 success 465ms
+   +- compile exe kron-regex-differential ReleaseSafe native success 15s MaxRSS:537M
+test-regex-fuzz transitive failure
++- run test kron-regex-fuzz 1 pass, 1 fail (2 total)
+   +- compile test kron-regex-fuzz ReleaseSafe native success 15s MaxRSS:530M
+test-predicates success
++- run test kron-predicates 7 pass (7 total) 691ms MaxRSS:4M
+   +- compile test kron-predicates ReleaseSafe native success 23s MaxRSS:660M
+
+error: the following build command failed with exit code 1:
+.zig-cache/o/ab3835a4cefb193a0a88e1815818a535/build /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib /home/passchaos/project-z/kron .zig-cache /home/passchaos/.cache/zig --seed 0x40e5184 -Z3205c3583474a73f test-regex-differential test-regex-fuzz test-predicates -Doptimize=ReleaseSafe -j1 --summary all
