@@ -1,0 +1,195 @@
+diff --git a/src/config/reload.zig b/src/config/reload.zig
+index 6c78e26..da021c2 100644
+--- a/src/config/reload.zig
++++ b/src/config/reload.zig
+@@ -2,6 +2,9 @@ const std = @import("std");
+ const Level = @import("../core/level.zig").Level;
+ const filter_module = @import("filter.zig");
+ const Filter = filter_module.Filter;
++test {
++    _ = @import("tests/uniform_filter.zig");
++}
+ pub const TestingAudit = if (@import("builtin").is_test) struct {
+     pub var reader_rmw: std.atomic.Value(u64) = .init(0);
+ } else struct {};
+@@ -41,11 +44,14 @@ pub const DynamicFilter = struct {
+     writer_mutex: std.Io.Mutex = .init,
+     published: std.atomic.Value(u64) = .init(1),
+     slots: [2]Slot,
++    uniform_disabled: std.atomic.Value(bool) = .init(false),
+ 
+     const Slot = struct {
+         readers: std.atomic.Value(u64) = .init(0),
+         filter: Filter,
+         configuration_generation: u64 = 0,
++        uniform_word: std.atomic.Value(u64) = .init(0),
++        uniform_binding: std.atomic.Value(u64) = .init(0),
+     };
+ 
+     pub fn create(allocator: std.mem.Allocator, io: std.Io, initial_spec: []const u8) (std.mem.Allocator.Error || ParseError)!*DynamicFilter {
+@@ -54,14 +60,17 @@ pub const DynamicFilter = struct {
+         self.* = .{
+             .allocator = allocator,
+             .io = io,
+-            .slots = .{ .{ .filter = initial }, .{ .filter = initial } },
++            .slots = .{ .{ .filter = initial, .uniform_word = .init(uniformWord(initial, 1)) }, .{ .filter = initial, .uniform_word = .init(uniformWord(initial, 1)) } },
+         };
+         return self;
+     }
+ 
+     pub fn createBound(allocator: std.mem.Allocator, io: std.Io, initial_spec: []const u8, configuration_generation: u64) (std.mem.Allocator.Error || ParseError)!*DynamicFilter {
+         const self = try create(allocator, io, initial_spec);
+-        for (&self.slots) |*slot| slot.configuration_generation = configuration_generation;
++        for (&self.slots) |*slot| {
++            slot.configuration_generation = configuration_generation;
++            slot.uniform_binding.store(configuration_generation, .seq_cst);
++        }
+         return self;
+     }
+ 
+@@ -110,6 +119,12 @@ pub const DynamicFilter = struct {
+     }
+ 
+     pub fn boundDecision(self: *DynamicFilter, scope: []const u8) BoundDecision {
++        if (self.uniformDecision()) |uniform| return uniform;
++        return self.scopedDecision(scope);
++    }
++
++    // Keep the snapshot registration and scope scan out of uniform admission.
++    noinline fn scopedDecision(self: *DynamicFilter, scope: []const u8) BoundDecision {
+         if (@import("builtin").is_test) _ = TestingAudit.reader_rmw.fetchAdd(2, .monotonic);
+         while (true) {
+             const version = self.published.load(.seq_cst);
+@@ -152,16 +167,41 @@ pub const DynamicFilter = struct {
+         return self.published.load(.seq_cst);
+     }
+ 
++    fn uniformWord(filter: Filter, version: u64) u64 {
++        if (filter.rule_count != 0 or version == 0 or version > std.math.maxInt(u56)) return 0;
++        return version << 8 | @intFromEnum(filter.default_level);
++    }
++
++    /// The uniform mirror contains only atomics. A writer reusing this slot
++    /// first publishes the intervening generation, then updates the binding
++    /// and word. SC validation therefore rejects any mixed-version copy.
++    /// Scoped filters and full-generation overflow retain the reader protocol.
++    fn uniformDecision(self: *const DynamicFilter) ?BoundDecision {
++        const version = self.published.load(.seq_cst);
++        if (version == 0 or version > std.math.maxInt(u56)) return null;
++        const slot = &self.slots[@intCast(version & 1)];
++        const word = slot.uniform_word.load(.seq_cst);
++        if (word >> 8 != version) return null;
++        const binding = slot.uniform_binding.load(.seq_cst);
++        // Read disabled after validation: no post-wrap publication may alias
++        // a copied decision from the first generation cycle.
++        if (self.published.load(.seq_cst) != version or self.uniform_disabled.load(.seq_cst)) return null;
++        return .{ .decision = .{ .level = @enumFromInt(@as(u8, @truncate(word))), .generation = version }, .configuration_generation = binding };
++    }
++
+     fn publish(self: *DynamicFilter, replacement: Filter) void {
+         self.publishWithBinding(replacement, 0);
+     }
+ 
+     fn publishWithBinding(self: *DynamicFilter, replacement: Filter, configuration_generation: u64) void {
+         const version = self.published.load(.seq_cst) +% 1;
++        if (version == 0 or version > std.math.maxInt(u56)) self.uniform_disabled.store(true, .seq_cst);
+         const slot = &self.slots[@intCast(version & 1)];
+         while (slot.readers.load(.seq_cst) != 0) std.atomic.spinLoopHint();
+         slot.filter = replacement;
+         slot.configuration_generation = configuration_generation;
++        slot.uniform_binding.store(configuration_generation, .seq_cst);
++        slot.uniform_word.store(uniformWord(replacement, version), .seq_cst);
+         self.published.store(version, .seq_cst);
+     }
+ };
+diff --git a/src/config/tests/uniform_filter.zig b/src/config/tests/uniform_filter.zig
+new file mode 100644
+index 0000000..4decc9d
+--- /dev/null
++++ b/src/config/tests/uniform_filter.zig
+@@ -0,0 +1,85 @@
++//! Uniform atomic mirrors and scoped snapshot reads must remain equivalent.
++const std = @import("std");
++const reload = @import("../reload.zig");
++const Filter = @import("../filter.zig").Filter;
++const Level = @import("../../core/level.zig").Level;
++const Atomic = std.atomic.Value;
++
++test "uniform filter atomics preserve default level binding and scoped fallback without allocations" {
++    var allocator = std.testing.FailingAllocator.init(std.testing.allocator, .{});
++    const filter = try reload.DynamicFilter.createBound(allocator.allocator(), std.testing.io, "info", 7);
++    defer filter.destroy();
++    allocator.fail_index = allocator.alloc_index;
++    const decision_fn: *const fn (*reload.DynamicFilter, []const u8) reload.BoundDecision = &reload.DynamicFilter.boundDecision;
++    try std.testing.expectEqual(Level.info, decision_fn(filter, "function.pointer").decision.level);
++    const before = reload.TestingAudit.reader_rmw.load(.monotonic);
++    for (0..100) |_| {
++        const decision = filter.boundDecision("any.scope");
++        try std.testing.expectEqual(Level.info, decision.decision.level);
++        try std.testing.expectEqual(@as(u64, 1), decision.decision.generation);
++        try std.testing.expectEqual(@as(u64, 7), decision.configuration_generation);
++    }
++    try std.testing.expectEqual(before, reload.TestingAudit.reader_rmw.load(.monotonic));
++    filter.publishBound(try Filter.parse("warn,http=trace"), 9);
++    try std.testing.expectEqual(Level.trace, filter.boundDecision("http.client").decision.level);
++    try std.testing.expectEqual(Level.warn, filter.boundDecision("httpx").decision.level);
++    try std.testing.expectEqual(@as(u64, 9), filter.boundDecision("http").configuration_generation);
++    try std.testing.expectEqual(before + 6, reload.TestingAudit.reader_rmw.load(.monotonic));
++    filter.publishBound(try Filter.parse("off"), 10);
++    const uniform = filter.boundDecision("http");
++    try std.testing.expectEqual(Level.off, uniform.decision.level);
++    try std.testing.expectEqual(@as(u64, 3), uniform.decision.generation);
++    try std.testing.expectEqual(@as(u64, 10), uniform.configuration_generation);
++    try std.testing.expect(!allocator.has_induced_failure);
++}
++
++test "uniform filter atomics retain full generations and disable before wrap" {
++    const filter = try reload.DynamicFilter.create(std.testing.allocator, std.testing.io, "trace");
++    defer filter.destroy();
++    _ = filter.boundDecision("scope");
++    filter.published.store(std.math.maxInt(u56), .seq_cst);
++    try filter.reload("off");
++    try std.testing.expect(filter.uniform_disabled.load(.seq_cst));
++    try std.testing.expectEqual(std.math.maxInt(u56) + 1, filter.boundDecision("scope").decision.generation);
++    filter.published.store(0, .seq_cst);
++    try filter.reload("off");
++    try std.testing.expectEqual(@as(u64, 1), filter.boundDecision("scope").decision.generation);
++    try std.testing.expectEqual(Level.off, filter.boundDecision("scope").decision.level);
++}
++
++test "uniform filter atomic copies stay coherent during uniform and scoped slot reuse" {
++    if (@import("builtin").single_threaded) return error.SkipZigTest;
++    const Context = struct {
++        filter: *reload.DynamicFilter,
++        stop: Atomic(bool) = .init(false),
++        bad: Atomic(bool) = .init(false),
++        observations: Atomic(u64) = .init(0),
++        fn read(self: *@This()) void {
++            while (!self.stop.load(.acquire)) {
++                const value = self.filter.boundDecision("http.client");
++                const expected: Level = if (value.decision.generation & 1 == 1) .debug else .warn;
++                if (value.decision.level != expected or value.configuration_generation != value.decision.generation + 100) self.bad.store(true, .release);
++                _ = self.observations.fetchAdd(1, .monotonic);
++            }
++        }
++    };
++    const filter = try reload.DynamicFilter.createBound(std.testing.allocator, std.testing.io, "debug", 101);
++    defer filter.destroy();
++    var context: Context = .{ .filter = filter };
++    var readers: [4]std.Thread = undefined;
++    var started: usize = 0;
++    defer {
++        context.stop.store(true, .release);
++        for (readers[0..started]) |reader| reader.join();
++    }
++    for (&readers) |*reader| {
++        reader.* = try std.Thread.spawn(.{}, Context.read, .{&context});
++        started += 1;
++    }
++    while (context.observations.load(.monotonic) < 4) std.atomic.spinLoopHint();
++    for (0..2000) |index| filter.publishBound(try Filter.parse(if (index & 1 == 0) "err,http=warn" else "debug"), index + 102);
++    context.stop.store(true, .release);
++    for (readers) |reader| reader.join();
++    started = 0;
++    try std.testing.expect(!context.bad.load(.acquire));
++}

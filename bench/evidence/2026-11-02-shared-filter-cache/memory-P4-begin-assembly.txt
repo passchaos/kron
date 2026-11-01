@@ -1,0 +1,301 @@
+ Percent |	Source code & Disassembly of reference-kron for cpu_core/cycles/u (302 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       000000000110efe0 <core.runtime.Runtime.begin>:
+    0.00 :   110efe0:        push   %rbp
+    0.00 :   110efe1:        mov    %rsp,%rbp
+    0.00 :   110efe4:        push   %r15
+    0.00 :   110efe6:        push   %r14
+    0.61 :   110efe8:        push   %r13
+    0.00 :   110efea:        push   %r12
+    0.00 :   110efec:        push   %rbx
+    0.00 :   110efed:        sub    $0x48,%rsp
+    0.00 :   110eff1:        mov    %rcx,%r8
+    0.00 :   110eff4:        mov    %rsi,%rbx
+    0.00 :   110eff7:        mov    %fs:0xfffffffffffbb5d0,%rax
+    0.00 :   110f000:        test   %rax,%rax
+    0.00 :   110f003:        je     110f022 <core.runtime.Runtime.begin+0x42>
+    0.00 :   110f005:        lea    0x30c0(%rbx),%rcx
+    0.00 :   110f00c:        nopl   0x0(%rax)
+    0.00 :   110f010:        cmp    %rcx,(%rax)
+    0.00 :   110f013:        je     110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f019:        mov    0x8(%rax),%rax
+    0.00 :   110f01d:        test   %rax,%rax
+    0.00 :   110f020:        jne    110f010 <core.runtime.Runtime.begin+0x30>
+    0.00 :   110f022:        mov    %fs:0xfffffffffffbb5d8,%rax
+    0.00 :   110f02b:        test   %rax,%rax
+    0.00 :   110f02e:        je     110f052 <core.runtime.Runtime.begin+0x72>
+    0.00 :   110f030:        mov    %fs:0x0,%rcx
+    0.00 :   110f039:        lea    -0x45f58(%rcx),%rcx
+    0.00 :   110f040:        cmp    %rbx,(%rcx)
+    0.00 :   110f043:        je     110f0ce <core.runtime.Runtime.begin+0xee>
+    0.00 :   110f049:        add    $0x50,%rcx
+    0.00 :   110f04d:        dec    %rax
+    0.00 :   110f050:        jne    110f040 <core.runtime.Runtime.begin+0x60>
+    0.00 :   110f052:        mov    %fs:0xfffffffffffbb5b8,%rax
+    0.00 :   110f05b:        test   %rax,%rax
+    0.00 :   110f05e:        je     110f06e <core.runtime.Runtime.begin+0x8e>
+    0.00 :   110f060:        cmp    %rbx,(%rax)
+    0.00 :   110f063:        je     110f0ce <core.runtime.Runtime.begin+0xee>
+    0.00 :   110f065:        mov    0x8(%rax),%rax
+    0.00 :   110f069:        test   %rax,%rax
+    0.00 :   110f06c:        jne    110f060 <core.runtime.Runtime.begin+0x80>
+    0.09 :   110f06e:        mov    0x31d0(%rbx),%esi
+   18.90 :   110f074:        cmpb   $0x1,%fs:0xfffffffffffbb5f4
+    0.00 :   110f07d:        jne    110f0b2 <core.runtime.Runtime.begin+0xd2>
+    0.00 :   110f07f:        mov    %fs:0xfffffffffffbb5f0,%eax
+    0.00 :   110f087:        cmp    %eax,%esi
+    0.00 :   110f089:        je     110f0ce <core.runtime.Runtime.begin+0xee>
+    0.00 :   110f08b:        cmpq   $0x40,%fs:0xfffffffffffbb5d8
+    0.00 :   110f095:        mov    %rdi,-0x50(%rbp)
+    0.00 :   110f099:        jne    110f135 <core.runtime.Runtime.begin+0x155>
+    0.00 :   110f09f:        mov    %rbx,%rdi
+    0.00 :   110f0a2:        mov    $0x149,%esi
+    0.00 :   110f0a7:        call   10fd570 <core.runtime.Runtime.reportError>
+    0.00 :   110f0ac:        mov    -0x50(%rbp),%rdi
+    0.00 :   110f0b0:        jmp    110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f0b2:        mov    $0xba,%eax
+    0.00 :   110f0b7:        syscall
+    0.00 :   110f0b9:        mov    %eax,%fs:0xfffffffffffbb5f0
+    0.00 :   110f0c1:        movb   $0x1,%fs:0xfffffffffffbb5f4
+    0.00 :   110f0ca:        cmp    %eax,%esi
+    0.00 :   110f0cc:        jne    110f08b <core.runtime.Runtime.begin+0xab>
+    0.00 :   110f0ce:        movw   $0x148,0x31e4(%rbx)
+    0.00 :   110f0d7:        movl   $0x148,0x3108(%rbx)
+    0.00 :   110f0e1:        lock incq 0x30e0(%rbx)
+    0.00 :   110f0e9:        mov    $0x1,%eax
+    0.00 :   110f0ee:        lock xadd %rax,0x30d0(%rbx)
+    0.00 :   110f0f7:        test   %rax,%rax
+    0.00 :   110f0fa:        je     110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f0fc:        lock incq 0x30d8(%rbx)
+    0.00 :   110f104:        lock incq 0x3068(%rbx)
+    0.00 :   110f10c:        mov    -0xa812b(%rip),%rax        # 1066fe8 <__anon_37724+0x20>
+    0.00 :   110f113:        mov    %rax,0x20(%rdi)
+    0.00 :   110f117:        vmovups -0xa8157(%rip),%ymm0        # 1066fc8 <__anon_37724>
+    0.00 :   110f11f:        vmovups %ymm0,(%rdi)
+    0.00 :   110f123:        add    $0x48,%rsp
+    0.00 :   110f127:        pop    %rbx
+    0.00 :   110f128:        pop    %r12
+    0.34 :   110f12a:        pop    %r13
+    0.00 :   110f12c:        pop    %r14
+    0.00 :   110f12e:        pop    %r15
+    0.00 :   110f130:        pop    %rbp
+    0.00 :   110f131:        vzeroupper
+    0.00 :   110f134:        ret
+    0.00 :   110f135:        mov    %r8,-0x60(%rbp)
+    0.00 :   110f139:        mov    0x3110(%rbx),%r15
+    0.00 :   110f140:        mov    0x3118(%rbx),%r14
+    0.00 :   110f147:        mov    0x3188(%rbx),%rax
+   15.11 :   110f14e:        test   %rax,%rax
+    0.00 :   110f151:        js     110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f153:        lea    0x31dc(%rbx),%rcx
+    0.00 :   110f15a:        mov    %rcx,-0x58(%rbp)
+    0.00 :   110f15e:        movabs $0x3fffffffffffffff,%r13
+    0.54 :   110f168:        lea    0x1(%r13),%r12
+    0.00 :   110f16c:        mov    %rdx,-0x40(%rbp)
+    0.00 :   110f170:        jmp    110f190 <core.runtime.Runtime.begin+0x1b0>
+    0.00 :   110f172:        data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   110f180:        mov    0x3188(%rbx),%rax
+    0.37 :   110f187:        test   %rax,%rax
+    0.00 :   110f18a:        js     110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f190:        cmp    %r12,%rax
+    0.00 :   110f193:        jae    110f1c0 <core.runtime.Runtime.begin+0x1e0>
+    0.00 :   110f195:        cmp    %r13,%rax
+    0.00 :   110f198:        je     110f104 <core.runtime.Runtime.begin+0x124>
+    0.00 :   110f19e:        lea    0x1(%rax),%rcx
+    0.00 :   110f1a2:        lock cmpxchg %rcx,0x3188(%rbx)
+   12.77 :   110f1ab:        setne  -0x38(%rbp)
+    0.00 :   110f1af:        setne  %cl
+    0.00 :   110f1b2:        test   %cl,%cl
+    0.00 :   110f1b4:        jne    110f187 <core.runtime.Runtime.begin+0x1a7>
+    0.20 :   110f1b6:        jmp    110f1e7 <core.runtime.Runtime.begin+0x207>
+    0.00 :   110f1b8:        nopl   0x0(%rax,%rax,1)
+    0.00 :   110f1c0:        mov    0x31dc(%rbx),%edx
+    0.00 :   110f1c6:        mov    0x3188(%rbx),%rax
+    0.00 :   110f1cd:        shr    $0x3e,%rax
+    0.00 :   110f1d1:        cmp    $0x1,%eax
+    0.00 :   110f1d4:        jne    110f180 <core.runtime.Runtime.begin+0x1a0>
+    0.00 :   110f1d6:        mov    %r15,%rdi
+    0.00 :   110f1d9:        mov    -0x58(%rbp),%rsi
+    0.00 :   110f1dd:        call   *0x68(%r14)
+    0.00 :   110f1e1:        mov    -0x50(%rbp),%rdi
+    0.00 :   110f1e5:        jmp    110f180 <core.runtime.Runtime.begin+0x1a0>
+    0.00 :   110f1e7:        mov    %rbx,%rdi
+    0.00 :   110f1ea:        call   110f4e0 <core.admission.enter>
+    0.00 :   110f1ef:        mov    0x3130(%rbx),%rax
+    0.00 :   110f1f6:        mov    0x20(%rax),%rdi
+    0.00 :   110f1fa:        mov    %edi,%ecx
+    0.00 :   110f1fc:        and    $0x1,%ecx
+    0.31 :   110f1ff:        imul   $0x11a8,%rcx,%rcx
+    0.00 :   110f206:        lea    (%rax,%rcx,1),%r12
+    0.00 :   110f20a:        add    $0x28,%r12
+    0.00 :   110f20e:        lock incq 0x28(%rax,%rcx,1)
+   20.88 :   110f214:        mov    0x20(%rax),%rcx
+    0.21 :   110f218:        cmp    %rdi,%rcx
+    0.00 :   110f21b:        jne    110f223 <core.runtime.Runtime.begin+0x243>
+    0.00 :   110f21d:        mov    -0x40(%rbp),%rsi
+    0.00 :   110f221:        jmp    110f254 <core.runtime.Runtime.begin+0x274>
+    0.00 :   110f223:        lea    0x28(%rax),%rcx
+    0.00 :   110f227:        mov    -0x40(%rbp),%rsi
+    0.00 :   110f22b:        lock decq (%r12)
+    0.00 :   110f230:        pause
+    0.00 :   110f232:        mov    0x20(%rax),%rdi
+    0.00 :   110f236:        mov    %edi,%edx
+    0.00 :   110f238:        and    $0x1,%edx
+    0.00 :   110f23b:        imul   $0x11a8,%rdx,%rdx
+    0.00 :   110f242:        lea    (%rcx,%rdx,1),%r12
+    0.00 :   110f246:        lock incq (%rcx,%rdx,1)
+    0.00 :   110f24b:        mov    0x20(%rax),%rdx
+    0.00 :   110f24f:        cmp    %rdi,%rdx
+    0.00 :   110f252:        jne    110f22b <core.runtime.Runtime.begin+0x24b>
+    0.00 :   110f254:        mov    %rdi,-0x68(%rbp)
+    0.00 :   110f258:        movzbl 0x198(%r12),%eax
+    0.24 :   110f261:        mov    %eax,-0x34(%rbp)
+    0.00 :   110f264:        mov    0x8(%r12),%r14
+    0.72 :   110f269:        test   %r14,%r14
+    0.00 :   110f26c:        je     110f30b <core.runtime.Runtime.begin+0x32b>
+    0.00 :   110f272:        lea    0x199(%r12),%rax
+    0.00 :   110f27a:        mov    %rax,-0x70(%rbp)
+    0.00 :   110f27e:        lea    0x1c(%r12),%r13
+    0.00 :   110f283:        xor    %edx,%edx
+    0.00 :   110f285:        jmp    110f298 <core.runtime.Runtime.begin+0x2b8>
+    0.00 :   110f287:        mov    -0x40(%rbp),%rsi
+    0.00 :   110f28b:        mov    -0x58(%rbp),%rdx
+    0.00 :   110f28f:        add    $0x6,%r13
+    0.00 :   110f293:        dec    %r14
+    0.00 :   110f296:        je     110f30b <core.runtime.Runtime.begin+0x32b>
+    0.00 :   110f298:        movzwl -0x2(%r13),%r15d
+    0.00 :   110f29d:        cmp    %r15,%rdx
+    0.00 :   110f2a0:        jae    110f28f <core.runtime.Runtime.begin+0x2af>
+    0.00 :   110f2a2:        cmp    %r15,-0x60(%rbp)
+    0.00 :   110f2a6:        jb     110f28f <core.runtime.Runtime.begin+0x2af>
+    0.00 :   110f2a8:        mov    %rdx,-0x58(%rbp)
+    0.00 :   110f2ac:        movzbl 0x0(%r13),%eax
+    0.00 :   110f2b1:        mov    %al,-0x29(%rbp)
+    0.00 :   110f2b4:        movzwl -0x4(%r13),%edx
+    0.00 :   110f2b9:        add    -0x70(%rbp),%rdx
+    0.00 :   110f2bd:        mov    %rsi,%rdi
+    0.00 :   110f2c0:        mov    %r15,%rsi
+    0.00 :   110f2c3:        mov    %r15,%rcx
+    0.00 :   110f2c6:        call   113c6a0 <mem.eql__anon_2586>
+    0.00 :   110f2cb:        test   $0x1,%al
+    0.00 :   110f2cd:        je     110f287 <core.runtime.Runtime.begin+0x2a7>
+    0.00 :   110f2cf:        mov    -0x60(%rbp),%rax
+    0.00 :   110f2d3:        cmp    %r15,%rax
+    0.00 :   110f2d6:        mov    -0x58(%rbp),%rdx
+    0.00 :   110f2da:        jne    110f2ec <core.runtime.Runtime.begin+0x30c>
+    0.00 :   110f2dc:        mov    %rax,%rdx
+    0.00 :   110f2df:        movzbl -0x29(%rbp),%eax
+    0.00 :   110f2e3:        mov    %eax,-0x34(%rbp)
+    0.00 :   110f2e6:        mov    -0x40(%rbp),%rsi
+    0.00 :   110f2ea:        jmp    110f28f <core.runtime.Runtime.begin+0x2af>
+    0.00 :   110f2ec:        mov    -0x40(%rbp),%rsi
+    0.00 :   110f2f0:        cmpb   $0x2e,(%rsi,%r15,1)
+    0.00 :   110f2f5:        cmove  %r15,%rdx
+    0.00 :   110f2f9:        movzbl -0x29(%rbp),%eax
+    0.00 :   110f2fd:        mov    -0x34(%rbp),%ecx
+    0.00 :   110f300:        movzbl %cl,%ecx
+    0.00 :   110f303:        cmove  %eax,%ecx
+    0.00 :   110f306:        mov    %ecx,-0x34(%rbp)
+    0.00 :   110f309:        jmp    110f28f <core.runtime.Runtime.begin+0x2af>
+    0.27 :   110f30b:        mov    0x11a0(%r12),%r15
+    0.41 :   110f313:        lock decq (%r12)
+    4.13 :   110f318:        mov    0x3120(%rbx),%rax
+    0.00 :   110f31f:        movzbl 0x6c(%rax),%ecx
+    0.32 :   110f323:        test   $0x1,%cl
+    0.00 :   110f326:        jne    110f32d <core.runtime.Runtime.begin+0x34d>
+    0.00 :   110f328:        mov    $0x1,%cl
+    0.00 :   110f32a:        xchg   %cl,0x6c(%rax)
+    0.00 :   110f32d:        mov    0x40(%rax),%rdx
+    0.00 :   110f331:        mov    %edx,%ecx
+    0.00 :   110f333:        and    $0x3f,%ecx
+    0.00 :   110f336:        mov    0x20(%rax),%r12
+    0.00 :   110f33a:        imul   $0x9c40,%rcx,%rcx
+    0.00 :   110f341:        lock incq 0x9800(%r12,%rcx,1)
+   22.71 :   110f34a:        mov    0x40(%rax),%rdi
+    0.26 :   110f34e:        cmp    %rdx,%rdi
+    0.00 :   110f351:        mov    -0x60(%rbp),%r14
+    0.00 :   110f355:        mov    -0x34(%rbp),%r13d
+    0.00 :   110f359:        jne    110f360 <core.runtime.Runtime.begin+0x380>
+    0.00 :   110f35b:        add    %rcx,%r12
+    0.00 :   110f35e:        jmp    110f3a4 <core.runtime.Runtime.begin+0x3c4>
+    0.00 :   110f360:        add    %r12,%rcx
+    0.00 :   110f363:        add    $0x9800,%rcx
+    0.00 :   110f36a:        lock decq (%rcx)
+    0.00 :   110f36e:        pause
+    0.00 :   110f370:        mov    0x40(%rax),%rdi
+    0.00 :   110f374:        mov    %edi,%ecx
+    0.00 :   110f376:        and    $0x3f,%ecx
+    0.00 :   110f379:        mov    0x20(%rax),%r12
+    0.00 :   110f37d:        imul   $0x9c40,%rcx,%rdx
+    0.00 :   110f384:        lea    (%r12,%rdx,1),%rcx
+    0.00 :   110f388:        add    $0x9800,%rcx
+    0.00 :   110f38f:        lock incq 0x9800(%r12,%rdx,1)
+    0.00 :   110f398:        mov    0x40(%rax),%r8
+    0.00 :   110f39c:        cmp    %rdi,%r8
+    0.00 :   110f39f:        jne    110f36a <core.runtime.Runtime.begin+0x38a>
+    0.00 :   110f3a1:        add    %rdx,%r12
+    0.00 :   110f3a4:        movzbl %r13b,%ecx
+    0.00 :   110f3a8:        mov    %r12,%rdi
+    0.00 :   110f3ab:        mov    %r14,%rdx
+    0.00 :   110f3ae:        mov    %r15,%r8
+    0.28 :   110f3b1:        call   110f780 <core.runtime.Runtime.routeMaskIn>
+    0.00 :   110f3b6:        mov    %rbx,%rdi
+    0.00 :   110f3b9:        test   %rax,%rax
+    0.00 :   110f3bc:        je     110f45a <core.runtime.Runtime.begin+0x47a>
+    0.00 :   110f3c2:        mov    %r12,%rsi
+    0.00 :   110f3c5:        mov    %rax,%rdx
+    0.00 :   110f3c8:        call   110f590 <core.runtime.Runtime.sampleRouteMask>
+    0.00 :   110f3cd:        test   %rax,%rax
+    0.00 :   110f3d0:        je     110f479 <core.runtime.Runtime.begin+0x499>
+    0.00 :   110f3d6:        mov    %fs:0xfffffffffffbb5d8,%rcx
+    0.00 :   110f3df:        lea    (%rcx,%rcx,4),%rdx
+    0.00 :   110f3e3:        shl    $0x4,%rdx
+    0.00 :   110f3e7:        mov    %r12,%fs:-0x45fa0(%rdx)
+    0.00 :   110f3ef:        movq   $0x110f580,%fs:-0x45f98(%rdx)
+    0.00 :   110f3fb:        mov    -0x40(%rbp),%rcx
+    0.00 :   110f3ff:        mov    %rcx,%fs:-0x45f90(%rdx)
+    0.32 :   110f407:        mov    %r14,%fs:-0x45f88(%rdx)
+    0.00 :   110f40f:        mov    -0x68(%rbp),%r8
+    0.00 :   110f413:        mov    %r8,%fs:-0x45f80(%rdx)
+    0.00 :   110f41b:        mov    %r13b,%fs:-0x45f78(%rdx)
+    0.00 :   110f423:        mov    %r15,%fs:-0x45f70(%rdx)
+    0.00 :   110f42b:        movb   $0x1,%fs:-0x45f68(%rdx)
+    0.00 :   110f433:        movb   $0x0,-0x30(%rbp)
+    0.00 :   110f437:        mov    0x7430(%r12),%rdx
+    0.00 :   110f43f:        cmp    %rdx,%r15
+    0.00 :   110f442:        je     110f44c <core.runtime.Runtime.begin+0x46c>
+    0.00 :   110f444:        mov    0x97f8(%r12),%r8
+    0.00 :   110f44c:        mov    0x7438(%r12),%rsi
+    0.00 :   110f454:        movzbl -0x30(%rbp),%ecx
+    0.00 :   110f458:        jmp    110f4ae <core.runtime.Runtime.begin+0x4ce>
+    0.00 :   110f45a:        call   10faa10 <core.runtime.Runtime.end>
+    0.00 :   110f45f:        lock incq 0x3048(%rbx)
+    0.00 :   110f467:        lock decq 0x9800(%r12)
+    0.00 :   110f470:        movzbl -0xa84b7(%rip),%ecx        # 1066fc0 <__anon_37712+0x20>
+    0.00 :   110f477:        jmp    110f499 <core.runtime.Runtime.begin+0x4b9>
+    0.00 :   110f479:        mov    %rbx,%rdi
+    0.00 :   110f47c:        call   10faa10 <core.runtime.Runtime.end>
+    0.00 :   110f481:        lock incq 0x3050(%rbx)
+    0.00 :   110f489:        lock decq 0x9800(%r12)
+    0.00 :   110f492:        movzbl -0xa8489(%rip),%ecx        # 1067010 <__anon_37745+0x20>
+    0.00 :   110f499:        movl   $0x0,-0x45(%rbp)
+    0.00 :   110f4a0:        movl   $0x0,-0x48(%rbp)
+    0.00 :   110f4a7:        xor    %esi,%esi
+    0.00 :   110f4a9:        xor    %edx,%edx
+    0.00 :   110f4ab:        xor    %r8d,%r8d
+    0.00 :   110f4ae:        mov    -0x50(%rbp),%rdi
+    0.00 :   110f4b2:        mov    %rax,(%rdi)
+    0.00 :   110f4b5:        mov    %r8,0x8(%rdi)
+    0.00 :   110f4b9:        mov    %rdx,0x10(%rdi)
+    0.00 :   110f4bd:        mov    %rsi,0x18(%rdi)
+    0.00 :   110f4c1:        mov    %cl,0x20(%rdi)
+    0.00 :   110f4c4:        mov    -0x48(%rbp),%eax
+    0.00 :   110f4c7:        mov    -0x45(%rbp),%ecx
+    0.00 :   110f4ca:        mov    %eax,0x21(%rdi)
+    0.00 :   110f4cd:        mov    %ecx,0x24(%rdi)
+    0.00 :   110f4d0:        jmp    110f123 <core.runtime.Runtime.begin+0x143>

@@ -25,6 +25,7 @@
 | [消费者批处理](evidence/2026-11-01-coalesced-delivery/README.md) | ready 批次合并、确认边界、文件与故障；两后端各自的 before/after |
 | [io_uring 对照](evidence/2026-11-01-uring-current/README.md) | 指定源码的实际后端比较；不能更新 Foundation 排名 |
 | [线程状态预算实验](evidence/2026-11-02-thread-state-budget/README.md) | 按预算分配能减少普通Runtime空间，但P1吞吐风险未排除，候选已撤回；保留资源与完整JSON对照 |
+| [当前shared profile与filter实验](evidence/2026-11-02-shared-filter-cache/README.md) | 4项profile、120项PMU、80项正式完整流程；减少filter reader原子操作未证明整体收益，候选撤回 |
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 

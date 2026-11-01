@@ -1,0 +1,48 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 865  of event 'cpu_core/cycles/u'
+# Event count (approx.): 2596437718
+#
+# Overhead  Command         Shared Object     Symbol                                             
+# ........  ..............  ................  ...................................................
+#
+    14.27%  reference-kron  reference-kron    [.] core.runtime.Runtime.submitSafeDestination
+    11.45%  reference-kron  reference-kron    [.] encoder.wire_json.render
+     9.89%  reference-kron  reference-kron    [.] encoder.decimal.writeNative
+     7.03%  reference-kron  reference-kron    [.] core.runtime.Runtime.drainJournal
+     5.93%  reference-kron  reference-kron    [.] platform.crc32.Crc32.update
+     4.99%  reference-kron  reference-kron    [.] journal.journal.Journal.reserve
+     4.22%  reference-kron  reference-kron    [.] compiler_rt.memcpy.memcpyFast
+     4.10%  reference-kron  reference-kron    [.] core.wire_write.writeValueTo__anon_33769
+     4.08%  reference-kron  reference-kron    [.] core.runtime.Runtime.begin
+     3.61%  reference-kron  reference-kron    [.] encoder.escaping.quotedAscii
+     2.78%  reference-kron  reference-kron    [.] core.codec.measure
+     2.47%  reference-kron  reference-kron    [.] core.codec.encodeSized
+     2.43%  reference-kron  reference-kron    [.] encoder.common.valueInner
+     2.28%  reference-kron  reference-kron    [.] encoder.escaping.jsonKey
+     1.90%  reference-kron  reference-kron    [.] core.codec.WireInput.value
+     1.84%  reference-kron  reference-kron    [.] kron_reference.Worker.emit__anon_38172
+     1.63%  reference-kron  reference-kron    [.] core.runtime.Runtime.submitDestination
+     1.58%  reference-kron  reference-kron    [.] journal.journal.Journal.validateSlot
+     1.52%  reference-kron  [vdso]            [.] 0x0000000000000b03
+     1.44%  reference-kron  reference-kron    [.] encoder.decimal.writeMagnitude__anon_34565
+     1.32%  reference-kron  reference-kron    [.] core.runtime.Runtime.notify
+     1.31%  reference-kron  reference-kron    [.] journal.journal.Journal.peekChecked
+     1.12%  reference-kron  reference-kron    [.] core.field.ValueValidator.valueWith__anon_37633
+     0.96%  reference-kron  reference-kron    [.] encoder.escaping.quoted
+     0.76%  reference-kron  reference-kron    [.] core.runtime.Runtime.end
+     0.68%  reference-kron  reference-kron    [.] core.runtime.Runtime.releaseAdmissionView
+     0.64%  reference-kron  reference-kron    [.] Io.Threaded.now
+     0.40%  reference-kron  reference-kron    [.] core.runtime.Runtime.sampleRouteMask
+     0.36%  reference-kron  reference-kron    [.] sink.file.FileSink.writeErased
+     0.36%  reference-kron  reference-kron    [.] core.codec.readHeader
+     0.35%  reference-kron  reference-kron    [.] encoder.common.message
+     0.35%  reference-kron  reference-kron    [.] core.runtime.Runtime.routeMaskIn
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

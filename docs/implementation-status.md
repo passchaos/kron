@@ -19,6 +19,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 
+当前shared profile与filter reader优化又完成244项、6420.4万条JSON核对。TLS scope决策缓存、uniform原子镜像和冷热拆分均未证明完整速度/尾部收益，全部候选撤回；当前src恢复2fd7f75，Logging/outputs Fast 43/43与源码分发五模式通过。完整源码/CPU工作量/慢值见 [shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)，后续优先消费者wire解析/数字输出。
+
 独立outputs接口的基线验证与当时4%~7%成本绑定58a9a9b，见 [独立输出报告](../bench/evidence/2026-11-02-independent-outputs/README.md)；源码路径和结构整理的早期门禁见 [整理报告](../bench/evidence/2026-11-02-reorganization/README.md)。系统local的八组队列/事件组合和六时区独立oracle继续通过，见 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。历史快照不替代当前源码资格。
 
 ## 能力与证据入口

@@ -47,6 +47,8 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 ## 批次合并后的Memory/Mmap优先级
 
+当前生产`2fd7f75`的shared managed完整profile核对400.4万JSON，P4 begin/submitSafeDestination仍为主要producer自占采样；filter与configuration reader登记后的publication读取处有集中样本。后续TLS scope复制缓存、无scope规则的uniform原子镜像及冷/热拆分实际完成120项PMU、80项未插桩流程，共另核对6020万JSON。filter reader RMW减少并未取得整体收益：TLS指令约+0.76%–0.78%，最终shared吞吐正负混合、区间全部重叠，尾部没有优势，候选全部撤回。后续优先从consumer wire/数字输出继续，避免只凭原子操作数推广同一机制。源码、完整数据和限制见 [当前shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)。
+
 当前已将原四个64条服务量子内的就绪记录合并为最多256条窗口。240项完整文件试验核对2424万条物理JSON，portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组未资格。独立io_uring P4 Memory两组中位提升14.2%/23.6%，共享Memory的调用p99也出现可重复负向。单对trace的pwritev1581→833、futex9184→4533只证明本次诊断操作数下降。源码、全部慢值、确认与恢复门禁见 [就绪批次合并](coalesced-delivery.md) 和 [完整证据](../bench/evidence/2026-11-01-coalesced-delivery/README.md)。
 
 下表列的是待验证的候选，优先级综合当前证据、常用路径覆盖与实现复杂度；没有预先承诺百分比收益。新一轮先重新采集批次合并后的producer/consumer/系统调用profile，避免继续使用旧CRC占比解释当前瓶颈。
