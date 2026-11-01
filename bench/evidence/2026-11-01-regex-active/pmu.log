@@ -1,0 +1,50 @@
+PMU pair 1/5: identical workload/output counts and hashes
+PMU pair 2/5: identical workload/output counts and hashes
+PMU pair 3/5: identical workload/output counts and hashes
+PMU pair 4/5: identical workload/output counts and hashes
+PMU pair 5/5: identical workload/output counts and hashes
+{
+  "cpu": 0,
+  "pairs": 5,
+  "load": [
+    93.54541015625,
+    93.63525390625,
+    94.82275390625
+  ],
+  "metrics": {
+    "instructions": {
+      "before": {
+        "median": 13099014708,
+        "min": 13099014151,
+        "max": 13099015227,
+        "relative_spread": 8.214358285610989e-08
+      },
+      "after": {
+        "median": 2443869583,
+        "min": 2443868863,
+        "max": 2443869956,
+        "relative_spread": 4.472415416940029e-07
+      },
+      "change_percent": -81.34310375644172,
+      "status": "within_noise_budget"
+    },
+    "cycles": {
+      "before": {
+        "median": 3695158193,
+        "min": 3456743795,
+        "max": 4548714719,
+        "relative_spread": 0.29551398531965367
+      },
+      "after": {
+        "median": 818671233,
+        "min": 676112905,
+        "max": 878075672,
+        "relative_spread": 0.2466958149487097
+      },
+      "change_percent": -77.84475818786684,
+      "status": "inconclusive"
+    }
+  },
+  "binary_manifest": "../context-comparison/manifest.json",
+  "scope": "whole benchmark process: eight Pattern/Predicate workloads, two sync JSON counters, compile/init, JSON reports; user PMU excludes kernel; no async or file throughput"
+}

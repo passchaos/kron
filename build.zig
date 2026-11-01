@@ -334,6 +334,27 @@ pub fn build(b: *std.Build) void {
     b.step("test-regex-fuzz", "Run byte regex and predicate parser mutation corpora").dependOn(&run_regex_fuzz.step);
     verify.dependOn(&run_regex_fuzz.step);
 
+    const regex_equivalence_module = b.createModule(.{ .root_source_file = b.path("tests/regex_equivalence.zig"), .target = target, .optimize = optimize });
+    regex_equivalence_module.addImport("kron", module);
+    const regex_equivalence = b.addTest(.{ .name = "kron-regex-equivalence", .root_module = regex_equivalence_module });
+    const run_regex_equivalence = b.addRunArtifact(regex_equivalence);
+    b.step("test-regex-equivalence", "Compare graph execution and expose coverage guided regex/parser fuzzing").dependOn(&run_regex_equivalence.step);
+    verify.dependOn(&run_regex_equivalence.step);
+
+    const regex_bench_module = b.createModule(.{ .root_source_file = b.path("bench/regex.zig"), .target = target, .optimize = optimize });
+    regex_bench_module.addImport("kron", module);
+    const regex_bench = b.addExecutable(.{ .name = "kron-regex-bench", .root_module = regex_bench_module });
+    const run_regex_bench = b.addRunArtifact(regex_bench);
+    if (b.args) |args| run_regex_bench.addArgs(args);
+    b.step("bench-regex", "Measure bounded business regexes and complete synchronous JSON output").dependOn(&run_regex_bench.step);
+    const regex_bench_tests = b.addTest(.{ .name = "kron-regex-bench-tests", .root_module = regex_bench_module });
+    const run_regex_bench_tests = b.addRunArtifact(regex_bench_tests);
+    const regex_compare_tests = b.addSystemCommand(&.{ "python3", "bench/regex_compare.py", "--self-test" });
+    const regex_bench_step = b.step("test-regex-bench", "Verify regex workload decisions and reject invalid comparison evidence");
+    regex_bench_step.dependOn(&run_regex_bench_tests.step);
+    regex_bench_step.dependOn(&regex_compare_tests.step);
+    verify.dependOn(regex_bench_step);
+
     const bench_module = b.createModule(.{ .root_source_file = b.path("bench/main.zig"), .target = target, .optimize = optimize });
     bench_module.addImport("kron", module);
     const bench = b.addExecutable(.{ .name = "kron-bench", .root_module = bench_module });

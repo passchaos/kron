@@ -31,3 +31,5 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 `test-regex-differential`使用独立Python bytes `re.search`生成可复现语料，以hex传递任意字节，覆盖原短ASCII语料、全部256种字节、换行/CR/控制字符、转义、字符类、空分支与nullable量词。Python的`$`还允许匹配末尾LF之前的位置，因此oracle仅将字符类外未转义的`$`转换为Python绝对末尾`\Z`，其他解析和匹配由Python完成。随机oracle输入不超过6字节，原ASCII语料不超过12字节，避免oracle自身回溯负载；8KiB长输入与超限在单独资源测试中验证。driver同时核对明确编译错误和输入超限，每轮用错误expect/非法hex/无expect/空语料等负向自检证明能够拒绝伪通过。
 
 `test-regex-fuzz`增加8192项正则变异/任意字节编译与4096项predicate parser变异，成功编译后覆盖Pattern副本、输入配置覆盖以及多regex共享状态预算；诊断offset必须留在原spec范围内。它与差分共同进入`verify-local`，属于有界可复现campaign，尚不能替代持续sanitizer fuzz或所有业务正则的性能资格。实现分为`pipeline/regex.zig`的编译与匹配、`pipeline/predicate.zig`的字段规则与配置语法。复现记录见`bench/evidence/2026-11-01-regex-boundaries/`。
+
+匹配热路径使用两个64位活跃状态位图。编译期在四种BOL/EOL条件下展开epsilon与断言循环，输入首位置使用独立initial状态；每个后续位置只检查实际消费字节的活跃状态，输入与状态预算保持。固定编译存储与配置初始化成本增加，具体资源、八类业务负载、完整同步JSON对照和`test-regex-equivalence --fuzz=1M`入口见[正则匹配工作量](regex-performance.md)。

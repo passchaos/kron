@@ -14,6 +14,10 @@ import tarfile
 
 
 MODES = ("sync", "memory", "mmap", "spsc_memory", "spsc_mmap")
+GENERATED_ROOT_PATTERNS = (".zig-cache", "zig-out", "__pycache__", "*.pyc")
+# These are the generated benchmark outputs excluded by the repository's
+# .gitignore. A local directory fetch otherwise includes its ignored files.
+GENERATED_BENCH_PATTERNS = ("artifacts", "kron-ref-*", "kron-bench-*", "kron-crc-*", "reference-*")
 
 
 def main():
@@ -50,7 +54,8 @@ def main():
                 source = root / relative
                 destination = stage / relative
                 if source.is_dir():
-                    shutil.copytree(source, destination, ignore=shutil.ignore_patterns(".zig-cache", "zig-out", "__pycache__", "*.pyc"))
+                    excluded = GENERATED_ROOT_PATTERNS + (GENERATED_BENCH_PATTERNS if relative == "bench" else ())
+                    shutil.copytree(source, destination, ignore=shutil.ignore_patterns(*excluded))
                 else:
                     shutil.copy2(source, destination)
             global_cache = folder / "global-cache"
@@ -68,6 +73,8 @@ def main():
             package = unpacked / package_hash
             assert (package / "src/root.zig").is_file(), "missing module in fetched package"
             assert not list(package.rglob(".zig-cache")) and not list(package.rglob("zig-out")), "generated output entered package"
+            for pattern in GENERATED_BENCH_PATTERNS:
+                assert not list((package / "bench").rglob(pattern)), "generated benchmark output entered package"
             fixture = folder / "consumer"
             shutil.copytree(root / "tests/package_consumer", fixture)
             consumer_manifest = fixture / "build.zig.zon"

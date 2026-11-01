@@ -42,6 +42,7 @@ zig build test-runtime-crash -Doptimize=ReleaseSafe -j1
 zig build test-platform-host -Doptimize=ReleaseSafe -j1
 zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1
 zig build test-regex-differential test-regex-fuzz -Doptimize=ReleaseSafe -j1
+zig build test-regex-equivalence -Doptimize=ReleaseSafe --fuzz=1M -j1
 zig build run-basic
 zig build run-async-memory
 zig build run-std-log
@@ -82,6 +83,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [字段捕获](docs/capture.md)：静态命名字段、动态key与context路径的契约和对照测量。
 - [压缩归档](docs/compressed-archive.md)：标准zlib block，kroncat只读查看与follow。
 - [字段与正则过滤](docs/predicates.md)：接受前固定决策，固定状态NFA不回溯。
+- [正则匹配工作量](docs/regex-performance.md)：配置期展开断言与空转移、位图活跃状态、业务输入对照和覆盖率引导fuzz。
 - [全局采样](docs/sampling.md)：精确预算、配置更新相位与专门路径的实测边界。
 - [资格化TSC时钟](docs/tsc-clock.md)：显式选择、硬件/校准检查，失败回退到原生时钟。
 - [性能回归](docs/performance-regression.md)：固定输入、多次重复和子进程 affinity，噪声过高时报告 inconclusive。

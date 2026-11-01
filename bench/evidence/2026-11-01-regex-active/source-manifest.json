@@ -1,0 +1,16 @@
+{
+  "baseline_commit": "2106543",
+  "hashes": {
+    "src-before.tar.gz": "fb81b244c051b6f8dd245965d65a0b0b2e453c2d784e323170f3f04768efff92",
+    "src-after.tar.gz": "56a5f8cad180ad74fdafff92b8013d1012e282640269948f8f14e46f0463d5fe",
+    "regex-before.zig": "083d2a6615f2d5cbc2d0b69e5e326d47af978535fe697d6ca65d496155551708",
+    "regex-after.zig": "501b64b9dd6ce3bb487dde64956816d523b3f54ffce3178f2024a83cffc6d03a",
+    "regex-active-list.zig": "21f6d9d428af2084f8d2c2b148a5081e75b3d17fc4183ec16a3a19933e3ee336",
+    "regex-epsilon-only.zig": "fba6c254c6f4a90fccc4cdb1e14410160a5aae09cf76229e46f0796432bbedd2",
+    "resources.zig": "aedba53047dafa983da1108c38c341cbd94fba648d1c5c8385c44d0625c93125",
+    "bench/regex.zig": "7483848b0e68f320917a4df434928737fda98db0fbe6f382314f4ccda498e110",
+    "bench/regex_compare.py": "08417444beb763756b423a42f3e85179f42fe063f779484878eb2d8ed5e1956c"
+  },
+  "benchmark_build": "zig build-exe -O ReleaseFast --dep kron -Mroot=bench/regex.zig -O ReleaseFast -Mkron=SNAPSHOT/src/root.zig -femit-bin=OUTPUT",
+  "scope": "Only production difference is src/pipeline/regex.zig; benchmark input/output code identical"
+}

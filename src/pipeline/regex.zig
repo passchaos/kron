@@ -14,6 +14,8 @@ pub const State = struct {
     out2: u8 = no_state,
     byte: u8 = 0,
     set: [32]u8 = @splat(0),
+    // Reachable consuming/ACCEPT states with BOL false, indexed by EOL.
+    closure: [2][2]u64 = @splat(@splat(0)),
 };
 
 /// Byte-oriented regular expressions, compiled as a Thompson NFA. Search
@@ -23,61 +25,49 @@ pub const Regex = struct {
     start: u8,
     minimum_state: u8,
     state_count: u8,
+    // First position permits BOL; empty input permits EOL as well.
+    initial: [2][2]u64,
 
     pub fn matches(self: Regex, states: []const State, input: []const u8) MatchError!bool {
         if (input.len > max_regex_input_bytes) return error.InputTooLong;
-        var active: [max_regex_states]bool = @splat(false);
-        var next: [max_regex_states]bool = @splat(false);
+        var active = self.initial[@intFromBool(input.len == 0)];
+        const accept_index = @as(usize, self.minimum_state) + self.state_count - 1;
+        const accept_word = accept_index >> 6;
+        const accept_mask = @as(u64, 1) << @as(u6, @truncate(accept_index));
         for (0..input.len + 1) |position| {
-            active[self.start] = true;
-            self.closure(states, &active, position, input.len);
-            for (self.minimum_state..@as(usize, self.minimum_state) + self.state_count) |index| if (active[index] and states[index].op == .accept) return true;
+            // Search starts at every position. Only the initial closure can
+            // pass BOL; EOL passes strictly at input.len, including final LF.
+            if (position != 0) merge(&active, states[self.start].closure[@intFromBool(position == input.len)]);
+            if (active[accept_word] & accept_mask != 0) return true;
             if (position == input.len) break;
-            @memset(&next, false);
-            for (self.minimum_state..@as(usize, self.minimum_state) + self.state_count) |index| {
-                if (!active[index]) continue;
-                const state = states[index];
-                const consumes = switch (state.op) {
-                    .byte => state.byte == input[position],
-                    .any => input[position] != '\n',
-                    .class => state.set[input[position] >> 3] & (@as(u8, 1) << @as(u3, @truncate(input[position]))) != 0,
-                    else => false,
-                };
-                if (consumes) next[state.out] = true;
+            var next: [2]u64 = @splat(0);
+            const byte = input[position];
+            const at_end = @intFromBool(position + 1 == input.len);
+            for (0..2) |word| {
+                var pending = active[word];
+                while (pending != 0) {
+                    const bit: u6 = @intCast(@ctz(pending));
+                    pending &= pending - 1;
+                    const state = states[word * 64 + bit];
+                    const consumes = switch (state.op) {
+                        .byte => state.byte == byte,
+                        .any => byte != '\n',
+                        .class => state.set[byte >> 3] & (@as(u8, 1) << @as(u3, @truncate(byte))) != 0,
+                        // Compilation expands all epsilon/assertion cycles;
+                        // ACCEPT was checked above. No other op is active.
+                        else => unreachable,
+                    };
+                    if (consumes) merge(&next, states[state.out].closure[at_end]);
+                }
             }
             active = next;
         }
         return false;
     }
 
-    fn closure(self: Regex, states: []const State, active: *[max_regex_states]bool, position: usize, length: usize) void {
-        var queue: [max_regex_states]u8 = undefined;
-        var count: usize = 0;
-        var cursor: usize = 0;
-        var visited: [max_regex_states]bool = @splat(false);
-        for (self.minimum_state..@as(usize, self.minimum_state) + self.state_count) |index| if (active[index]) {
-            queue[count] = @intCast(index);
-            count += 1;
-            visited[index] = true;
-        };
-        while (cursor < count) : (cursor += 1) {
-            const index = queue[cursor];
-            const state = states[index];
-            const follows = switch (state.op) {
-                .split, .jump => true,
-                .bol => position == 0,
-                .eol => position == length,
-                else => false,
-            };
-            if (!follows) continue;
-            for ([_]u8{ state.out, if (state.op == .split) state.out2 else no_state }) |out| {
-                if (out == no_state or visited[out]) continue;
-                visited[out] = true;
-                active[out] = true;
-                queue[count] = out;
-                count += 1;
-            }
-        }
+    fn merge(destination: *[2]u64, source: [2]u64) void {
+        destination[0] |= source[0];
+        destination[1] |= source[1];
     }
 };
 
@@ -123,7 +113,56 @@ pub const Compiler = struct {
         if (self.index != self.input.len) return error.InvalidRegex;
         const accept = try self.add(.{ .op = .accept });
         self.patch(fragment, accept);
-        return .{ .start = fragment.start, .minimum_state = @intCast(minimum), .state_count = @intCast(self.count.* - minimum) };
+        const initial = self.prepareClosures(minimum, fragment.start);
+        return .{ .start = fragment.start, .minimum_state = @intCast(minimum), .state_count = @intCast(self.count.* - minimum), .initial = initial };
+    }
+
+    /// Four monotone fixed points cover BOL/EOL truth values. Assertions
+    /// are expanded only for contexts where they hold. The graph is fully
+    /// patched, and each context converges within its 128-state budget.
+    fn prepareClosures(self: *Compiler, minimum: usize, start: u8) [2][2]u64 {
+        var initial: [2][2]u64 = undefined;
+        var closure: [max_regex_states][2]u64 = undefined;
+        const states = self.states[minimum..self.count.*];
+        for (0..4) |context| {
+            const bol = context & 2 != 0;
+            const eol = context & 1 != 0;
+            for (states, minimum..) |state, index| {
+                closure[index] = @splat(0);
+                switch (state.op) {
+                    .byte, .any, .class, .accept => closure[index][index >> 6] = @as(u64, 1) << @as(u6, @truncate(index)),
+                    else => {},
+                }
+            }
+            var changed = true;
+            while (changed) {
+                changed = false;
+                for (states, minimum..) |state, index| {
+                    const follows = switch (state.op) {
+                        .jump, .split => true,
+                        .bol => bol,
+                        .eol => eol,
+                        else => false,
+                    };
+                    if (!follows) continue;
+                    var reachable = closure[state.out];
+                    if (state.op == .split) {
+                        reachable[0] |= closure[state.out2][0];
+                        reachable[1] |= closure[state.out2][1];
+                    }
+                    if (reachable[0] != closure[index][0] or reachable[1] != closure[index][1]) {
+                        closure[index] = reachable;
+                        changed = true;
+                    }
+                }
+            }
+            if (bol) {
+                initial[@intFromBool(eol)] = closure[start];
+            } else {
+                for (states, minimum..) |*state, index| state.closure[@intFromBool(eol)] = closure[index];
+            }
+        }
+        return initial;
     }
 
     fn alternate(self: *Compiler) CompileError!Fragment {
@@ -396,4 +435,25 @@ test "regex rejects unsupported syntax instead of silently matching literals" {
     try std.testing.expect(try pattern.matches(&limit));
     const nesting = "(" ** 32 ++ "a" ++ ")" ** 32;
     try std.testing.expect(try (try Pattern.init(nesting)).matches("a"));
+}
+
+test "closure words span full state budget and nullable assertion cycles" {
+    const empty_branches = try Pattern.init("|" ** 63);
+    try std.testing.expectEqual(max_regex_states, empty_branches.state_count);
+    try std.testing.expect(try empty_branches.matches(""));
+    try std.testing.expect(try empty_branches.matches("\x00\xff\n"));
+    const chain = try Pattern.init("a" ** 127);
+    try std.testing.expect(try chain.matches("a" ** 127));
+    try std.testing.expect(!try chain.matches("a" ** 126));
+    for ([_][]const u8{ "(^)*a", "($)+", "((^|$)*)*", "^((a?)*)*b$" }) |bytes| {
+        const pattern = try Pattern.init(bytes);
+        for (pattern.states[0..pattern.state_count]) |state| {
+            for (state.closure) |reachable| for (0..max_regex_states) |index| {
+                if (reachable[index >> 6] & (@as(u64, 1) << @as(u6, @truncate(index))) == 0) continue;
+                try std.testing.expect(index < pattern.state_count);
+                const op = pattern.states[index].op;
+                try std.testing.expect(op == .byte or op == .any or op == .class or op == .accept);
+            };
+        }
+    }
 }

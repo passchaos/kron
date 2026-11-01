@@ -77,6 +77,8 @@ zig build test-package-distribution -Doptimize=ReleaseSafe -j1
 
 `test-package-distribution` 按库 `build.zig.zon` 的 `.paths` 构造无生成缓存的源码目录，使用 Zig 0.16 的 `zig fetch` 生成内容寻址源码归档，再安全解包到独立目录。新消费项目仅依赖解包后的源码，实际运行同样五种模式。这样可以发现开发目录中存在、发布包中遗漏的模块。该门禁只使用本地临时目录，不发布包，也不访问网络。
 
+本地目录fetch不会自动排除开发工作区的ignored文件。暂存检查按仓库的生成产物规则排除benchmark的`artifacts/`、可执行文件副本和缓存，并在解包后核对这些产物没有进入源码包；benchmark源码、可复现脚本和证据报告继续包含。曾发现约3.8GB本地测量产物使fetch在30秒超时，原始失败保留在`bench/evidence/2026-11-01-regex-active/platform-package.log`。
+
 2026-10-31 的 ReleaseSafe 源码包验收五种模式全部通过；具体包哈希、二进制 SHA256、输出 SHA256 和各模式计数见 [distribution.json](../bench/evidence/2026-10-31-package-consumer/distribution.json)。工作区依赖及单线程消费也已通过。证据中的包哈希对应测试时的源码快照，文档或源码修改后应重新运行门禁生成新快照。
 
 消费应用也可自行运行：

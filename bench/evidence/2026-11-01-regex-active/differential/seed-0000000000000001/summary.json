@@ -1,0 +1,53 @@
+{
+  "seed": 1,
+  "cases": 20234,
+  "corpus_sha256": "9ddbfd133cb01d551bc05a047fda40b48e80ee0ae6f02d563f3bd907a85414c0",
+  "patterns": 2180,
+  "comparisons": 20188,
+  "compile_errors": 45,
+  "match_errors": 1,
+  "driver_returncode": 0,
+  "negative_checks": [
+    {
+      "name": "wrong match",
+      "returncode": 1,
+      "error": "RegexDifferentialMismatch"
+    },
+    {
+      "name": "wrong compile error",
+      "returncode": 1,
+      "error": "RegexDifferentialMismatch"
+    },
+    {
+      "name": "unexpected compile success",
+      "returncode": 1,
+      "error": "RegexDifferentialMismatch"
+    },
+    {
+      "name": "missing match error",
+      "returncode": 1,
+      "error": "RegexDifferentialMismatch"
+    },
+    {
+      "name": "malformed hex",
+      "returncode": 1,
+      "error": "InvalidCorpus"
+    },
+    {
+      "name": "missing expectation",
+      "returncode": 1,
+      "error": "InvalidCorpus"
+    },
+    {
+      "name": "ambiguous expectation",
+      "returncode": 1,
+      "error": "InvalidCorpus"
+    },
+    {
+      "name": "empty corpus",
+      "returncode": 1,
+      "error": "InvalidCaseCount"
+    }
+  ],
+  "oracle": "Python re.search on bytes; unescaped $ maps to absolute-end \\Z"
+}
