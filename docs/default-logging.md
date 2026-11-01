@@ -4,6 +4,8 @@ kron 已可作为固定 Zig 0.16、Linux 单机应用的默认日志实现。结
 
 推荐先使用 `kron.Logging`，选择普通共享异步 Memory队列、portable文件后端和text/JSON输出。它统一管理全部配置输出与底层Runtime，覆盖通常的单机应用使用方式。最小程序见 [quick_start.zig](../examples/quick_start.zig)，后台文件日志见 [file_logging.zig](../examples/file_logging.zig)，全部参数与线程/context生命周期见 [详细使用指南](usage.md)。默认 `.{}` 使用stderr同步日志，服务在各route显式设置 `.mode=.asynchronous`。
 
+常规服务以shared Memory/Mmap为主要路径，普通scoped logger即可供多producer使用，通常不需要SPSC或thread attachment。SPSC保留为固定OS线程的高级可选能力：每线程队列会增加空间与Mmap准备成本，任务迁移受限，当前p99.9也没有一般优势；只有应用实测确认收益时才采用。Foundation的Memory与单Mmap同样是共享队列，不提供SPSC模式。
+
 参数按应用需求配置：
 
 | 需求 | 建议 |

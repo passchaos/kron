@@ -30,3 +30,5 @@ Mmap使用同一选项，只将queue配置替换为journal文件配置。预算�
 SPSC满队列等待现在使用本队列的进程内space epoch。其他队列的完成不会推进该epoch；本队列tombstone/已确认窗口完成后推进，并在已有等待者时唤醒它。只有一位合法SPSC owner登记等待，登记后重新检查worker错误/closing；seq_cst的epoch/登记顺序使并发通知要么唤醒已登记者，要么改变futex检查的expected值。worker退出/错误和shutdown对所有稳定channel通知，即使其本队列没有写出进展。共享producer与control的原global progress协议保持，服务预算与FIFO不变。
 
 独立诊断各12项前后核对242.4万条JSON，SPSC每试验本队列written未变化的wait返回从832–1137降为0；该观测包含立即返回，不能直接解释为真实睡眠次数或完整速度。正式400项文件/PMU/百万条检查核对8440万条JSON。Memory inline SPSC P4长sampled调用p99.9中位366.312→340.708µs（−6.99%），两侧CV/spread通过且区间不重叠；p50/p99与Mmap尾部仍未取得一般资格，极端等待仍约340µs。短流程P1吞吐负向中位约10%与较大波动保留，百万条P1 batch未重现该负向、中位+2.26%但区间重叠。不扩大队列/file budget或增加分配次数，每Journal进程内control增64字节。本队列回收、sleep前shutdown、epoch回绕与不同队列worker失败的真实并发回归见`bench/evidence/2026-11-01-queue-progress/`，不据此更新Foundation跨库排名。
+
+全局进度等待者登记的后续实验已否决：SPSC全局wake调用约414–425→4–8、共享约减少一半，但200项完整流程与80项更长的shared独立复测（共4428万JSON）未证明共享路径整体收益。Memory batch复测中位P1/P4为−1.02%/−2.91%，区间重叠；其他吞吐和尾部组互有正负。生产继续使用原通知协议，源码、全部慢值和决策见 [否决记录](../bench/evidence/2026-11-02-global-progress/README.md)。常规应用优先shared Memory/Mmap；SPSC作为高级可选和退化控制保留。

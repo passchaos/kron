@@ -42,7 +42,7 @@ pub fn main(init: std.process.Init) !void {
 | sync | 小工具、单线程、较低日志频率 | 调用线程完成编码与交付 |
 | shared Memory | 常规后台日志 | 有界共享队列；进程异常退出会丢失尚未交付记录 |
 | shared Mmap | 需要进程崩溃恢复 | 恢复完整 commit，允许至少一次重放 |
-| SPSC Memory/Mmap | 固定 OS 线程且已测到共享竞争 | 显式 attach/detach；预分配每线程队列和普通共享队列 |
+| SPSC Memory/Mmap | 高级可选：固定线程且应用已验证收益 | 显式 attach/detach；预分配每线程队列和普通共享队列 |
 
 `flush()` 确认 required 输出 written，`flushDurable()` 请求适用输出与 journal 的 durable 协议，`shutdown()` 关闭入场并排空。accepted、written 与 durable 的含义不同；Mmap commit 不等于断电保证。详细协议见 [异步存储](docs/async-storage.md)、[生命周期](docs/lifecycle.md) 和 [文件可靠性](docs/file-reliability.md)。
 

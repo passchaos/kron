@@ -267,7 +267,7 @@ scope 规则覆盖默认阈值，子scope采用最具体匹配；setLevel仅改�
 
 环境变量由应用显式采用：`kron.environment.merge(.{ .environment = kron.environment.fromMap(init.environ_map) })` 的 filter_spec 可放入各route.filter；日志调用不读取环境或配置文件。
 
-固定 OS 线程使用 SPSC：
+常规多producer使用scoped走共享队列，不需要附着线程。SPSC是固定OS线程的高级选项，仅在应用确认收益后使用：
 
 ```zig
 const log = try logging.attachThread("worker");

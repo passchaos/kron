@@ -24,8 +24,7 @@ pub fn main(init: std.process.Init) !void {
                         .action = .mask,
                     },
                 },
-                .mode = .spsc,
-                .max_threads = 2,
+                .mode = .asynchronous,
                 .overflow = .block,
                 .format = .json,
                 .timestamp = .{
@@ -69,8 +68,7 @@ pub fn main(init: std.process.Init) !void {
     });
     defer logging.destroy();
     {
-        const log = try logging.attachThread("http");
-        defer log.detach() catch {};
+        const log = logging.scoped("http");
         for (0..4) |request| {
             _ = try log.tryLogfAt(@src(), .info, "request {d} completed", .{@as(u32, @intCast(request))}, .{
                 .request = @as(u32, @intCast(request)),
