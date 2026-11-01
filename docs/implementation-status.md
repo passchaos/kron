@@ -13,13 +13,15 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
-当前源码基于58a9a9b，增加owner内部借用、单输出小Frame和多输出循环拆分。ReleaseSafe完整门禁151/151步骤成功、638项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；ReleaseFast管理/独立输出/capture/route策略61/61，另验证lazy provider修改caller时仍保留本次scope/trace快照。非Linux对象编译不替代设备运行。精确源码和验证见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)。
+当前源码在7480598之后保留native八位十进制分块与冷buffered输出。ReleaseSafe完整验证151步骤成功、639项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；数字模块Debug/Safe/Fast与generic CPU各6项、encoder重点52项通过，AArch64另完成编译。140项真实文件核对4214万JSON，shared Memory/Mmap P1/P4的完整用户态指令稳定减少3.43%–3.47%；完整速度与尾部保持inconclusive。精确源码、正负版本、风险复测与验证见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。非Linux对象编译不替代设备运行。
 
-当前Logging与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。完整阶段和资格见 [当前前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
+owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍绑定当时源码，见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)；当前完整门禁继续保留lazy provider修改caller时的scope/trace快照和多输出所有权边界。
+
+最近一次同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。最新数字输出优化不推导该比较的新排名，完整阶段和资格见 [前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
 
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 
-当前shared profile与filter reader优化又完成244项、6420.4万条JSON核对。TLS scope决策缓存、uniform原子镜像和冷热拆分均未证明完整速度/尾部收益，全部候选撤回；当前src恢复2fd7f75，Logging/outputs Fast 43/43与源码分发五模式通过。完整源码/CPU工作量/慢值见 [shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)，后续优先消费者wire解析/数字输出。
+shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS scope决策缓存、uniform原子镜像和冷热拆分均未证明完整速度/尾部收益，全部候选撤回；实验结束时src恢复2fd7f75，Logging/outputs Fast 43/43与源码分发五模式通过。完整源码/CPU工作量/慢值见 [shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)，随后转向并保留上面的数字输出优化。
 
 独立outputs接口的基线验证与当时4%~7%成本绑定58a9a9b，见 [独立输出报告](../bench/evidence/2026-11-02-independent-outputs/README.md)；源码路径和结构整理的早期门禁见 [整理报告](../bench/evidence/2026-11-02-reorganization/README.md)。系统local的八组队列/事件组合和六时区独立oracle继续通过，见 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。历史快照不替代当前源码资格。
 

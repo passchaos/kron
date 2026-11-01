@@ -1,12 +1,14 @@
 # 十进制记录输出与完整字符串转义
 
-完整text/JSON/logfmt输出不需要数字的base、width、precision或alignment选项。现在这部分使用专用十进制writer：64位以内的绝对值用native-width的digit-pair循环，i128/u128的较小值复用该路径，宽值以10^19分块后分别生成十进制数字。非leading块补齐19位，包括全零块；最多两次宽值分块，避免逐两位进行宽除法。负号由安全的无符号绝对值处理，包括i128最小值。
+完整text/JSON/logfmt输出不需要数字的base、width、precision或alignment选项。现在这部分使用专用十进制writer：小整数保留原native digit-pair循环，大u64拆成最多两个10^8尾段，每段用u32生成固定八位；i128/u128的较小值复用native路径，宽值以10^19分块后分别生成十进制数字。非leading块补齐19位，包括全零块；最多两次宽值分块，避免逐两位进行宽除法。负号由安全的无符号绝对值处理，包括i128最小值。
 
-64位以内数字在当前Writer还剩至少21字节时，计算精确位数并直接写入现有buffer；只发布实际位数，不调用drain/rebase。小buffer、无buffer的流式Writer和大于u64的宽值继续在最多40字节栈缓冲区生成并执行一次writeAll，不经过通用对齐。独立native helper避免扩大递归value渲染的内联代码；固定powers表为160字节。JSON超出±(2^53−1)的整数仍写成十进制字符串；float、NaN/Inf政策、deferred格式中的base/width/precision保持原通用formatter。该优化不改变捕获表示、journal CRC、schema、accepted/written/durable边界或文件buffer预算。
+64位以内数字在当前Writer还剩至少21字节时，计算精确位数并直接写入现有buffer；只发布实际位数，不调用drain/rebase。小buffer、无buffer的流式Writer和大于u64的宽值继续在最多40字节栈缓冲区生成并执行一次writeAll，不经过通用对齐。独立native大数helper和冷buffered函数将更多寄存器/temporary frame留在实际需要它们的路径，普通小数字不承担该frame；固定powers表为160字节。JSON超出±(2^53−1)的整数仍写成十进制字符串；float、NaN/Inf政策、deferred格式中的base/width/precision保持原通用formatter。该优化不改变捕获表示、journal CRC、schema、accepted/written/durable边界或文件buffer预算。
 
 已完整提供的字符串直接调用同模块的QuotedWriter.consume，避免先绕过无buffer Writer的drain vtable。deferred消息仍通过流式QuotedWriter处理跨参数的UTF-8片段；完整字符串和流式字符串使用同一个consume/byte状态机，保留畸形UTF-8、控制符、换行与JSON key的可逆表示。
 
 Foundation DefaultFormatter的顺序数字生成和直接复制是参考方向。本轮保留原流式Writer接口和每次输出的字节前缀行为，没有引入全事件两遍长度统计、完整消息scratch或依赖上游代码。数字生成集中在decimal.zig，转义保留在escaping.zig，记录布局和安全树验证仍由common.zig负责。
+
+最新基线7480598后的八位分块/冷buffered优化完成140项实际文件、4214万JSON核对。shared Memory/Mmap P1/P4的完整用户态指令分别稳定减少约3.43%–3.47%，四组中位区间不重叠；native primitive五类指令减少约9%–10%，日志字段组合/full-u64/signed/wide周期也有局部资格。正式batch吞吐中位正向，但所有速度比区间重叠，sampled Mmap P1初轮−6%未在独立20项复测重现；不声明一般吞吐/尾部胜出。当前Safe151步骤、639项通过/1能力skip，整数/短写和native/generic/aarch64编译边界均保留。最新源码、全部正负数据与资格见 [八位分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)；下文历史数字仍绑定各自源码。
 
 ## 正确性验证
 

@@ -13,6 +13,41 @@ pub fn write(writer: *std.Io.Writer, value: anytype) std.Io.Writer.Error!void {
     return writeMagnitude(u128, writer, magnitude, negative);
 }
 
+fn digitsChunked(buffer: []u8, end: usize, value: u64, minimum: usize) usize {
+    var remaining = value;
+    var start = end;
+    // At most two native-width divisions produce fixed eight-digit tails.
+    // Each tail and the leading chunk use cheaper 32-bit digit-pair steps.
+    const base = 100_000_000;
+    while (remaining >= base) : (remaining /= base) {
+        var tail: u32 = @intCast(remaining % base);
+        inline for (0..4) |_| {
+            start -= 2;
+            buffer[start..][0..2].* = std.fmt.digits2(@intCast(tail % 100));
+            tail /= 100;
+        }
+    }
+    var head: u32 = @intCast(remaining);
+    while (head >= 100) : (head /= 100) {
+        start -= 2;
+        buffer[start..][0..2].* = std.fmt.digits2(@intCast(head % 100));
+    }
+    if (head < 10) {
+        start -= 1;
+        buffer[start] = '0' + @as(u8, @intCast(head));
+    } else {
+        start -= 2;
+        buffer[start..][0..2].* = std.fmt.digits2(@intCast(head));
+    }
+    const width = end - start;
+    if (width < minimum) {
+        const padded = end - minimum;
+        @memset(buffer[padded..start], '0');
+        start = padded;
+    }
+    return start;
+}
+
 fn digits(buffer: []u8, end: usize, value: u64, minimum: usize) usize {
     var remaining = value;
     var start = end;
@@ -38,13 +73,19 @@ fn digits(buffer: []u8, end: usize, value: u64, minimum: usize) usize {
 
 fn writeMagnitude(comptime T: type, writer: *std.Io.Writer, magnitude: T, negative: bool) std.Io.Writer.Error!void {
     if (T == u64 and writer.buffer.len - writer.end >= 21) {
-        writeNative(writer, magnitude, negative);
+        if (magnitude >= 100_000_000) writeLargeNative(writer, magnitude, negative) else writeNative(writer, magnitude, negative);
         return;
     }
+    return writeBuffered(T, writer, magnitude, negative);
+}
+
+// Streaming, short buffers and wide integers keep their bounded temporary
+// frame out of ordinary direct native output.
+noinline fn writeBuffered(comptime T: type, writer: *std.Io.Writer, magnitude: T, negative: bool) std.Io.Writer.Error!void {
     var buffer: [if (T == u64) 21 else 40]u8 = undefined;
     var start = buffer.len;
     if (T == u64) {
-        start = digits(&buffer, start, magnitude, 1);
+        start = if (magnitude >= 100_000_000) digitsChunked(&buffer, start, magnitude, 1) else digits(&buffer, start, magnitude, 1);
     } else {
         // Divide wide integers in 19-digit chunks. Every chunk then uses the
         // native-width digit-pair loop; at most two wide divisions are needed.
@@ -54,9 +95,9 @@ fn writeMagnitude(comptime T: type, writer: *std.Io.Writer, magnitude: T, negati
         while (remaining > std.math.maxInt(u64)) {
             const tail: u64 = @intCast(remaining % base);
             remaining /= base;
-            start = digits(&buffer, start, tail, 19);
+            start = digitsChunked(&buffer, start, tail, 19);
         }
-        start = digits(&buffer, start, @intCast(remaining), 1);
+        start = digitsChunked(&buffer, start, @intCast(remaining), 1);
     }
     if (negative) {
         start -= 1;
@@ -73,6 +114,17 @@ noinline fn writeNative(writer: *std.Io.Writer, magnitude: u64, negative: bool) 
     const length = nativeDigits(magnitude) + @intFromBool(negative);
     const destination = writer.buffer[writer.end..][0..length];
     const start = digits(destination, length, magnitude, 1);
+    std.debug.assert(start == @intFromBool(negative));
+    if (negative) destination[0] = '-';
+    writer.end += length;
+}
+
+noinline fn writeLargeNative(writer: *std.Io.Writer, magnitude: u64, negative: bool) void {
+    // The additional chunk registers belong only to large values. Keep the
+    // original small-value renderer's frame and digit-pair loop unchanged.
+    const length = nativeDigits(magnitude) + @intFromBool(negative);
+    const destination = writer.buffer[writer.end..][0..length];
+    const start = digitsChunked(destination, length, magnitude, 1);
     std.debug.assert(start == @intFromBool(negative));
     if (negative) destination[0] = '-';
     writer.end += length;
@@ -190,6 +242,20 @@ test "direct native output preserves binary decimal boundaries and existing writ
     try write(&writer, @as(i64, std.math.minInt(i64)));
     try std.testing.expectEqualStrings("prefix:-9223372036854775808", writer.buffered());
     for (bytes[writer.end..]) |byte| try std.testing.expectEqual(@as(u8, 0xcc), byte);
+}
+
+test "decimal eight-digit tails retain interior zeros and leading widths" {
+    const base: u128 = 100_000_000;
+    for ([_]u128{ 1, 9, 99, 100, 1844, 99999999 }) |head| {
+        for ([_]u128{ 0, 1, 9, 10, 99, 100, 9999, 10000, 99999999 }) |middle| {
+            for ([_]u128{ 0, 1, 9, 10, 99999999 }) |tail| {
+                const number = head * base * base + middle * base + tail;
+                try expectSame(number);
+                try expectSame(-@as(i128, @intCast(number)));
+                if (std.math.cast(u64, number)) |native| try expectSame(native);
+            }
+        }
+    }
 }
 
 test "direct digits preserve buffered writer partial flushes and physical failure prefixes" {

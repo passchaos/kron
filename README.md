@@ -88,6 +88,8 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 当前能力可用于固定 Zig 0.16 的 Linux 单机项目，选择 bounded Memory/portable 起步，并按应用处理过载与关闭错误。Windows、macOS、Android、iOS 有实现和交叉编译/部分链接证据，仍需实际设备运行资格；包版本为 0.1.0。
 
-完整流程比较包括字段捕获、系统时钟、编码、实际输出、written flush、关闭和清理。当前Logging入口与Foundation真实spdlog/Rust tracing前端完成200项试验、2020万条输出核对：JSON中位吞吐对spdlog组合多数领先，与tracing公共JSON组合互有胜负；原生build_tracing文本单列。全部跨库速度比仍受波动限制，SPSC的p99.9和Mmap初始化仍有差距。精确源码、配置和详细数字见 [当前前端对照](bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
+完整流程比较包括字段捕获、系统时钟、编码、实际输出、written flush、关闭和清理。最近一次同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog/Rust tracing前端完成200项试验、2020万条输出核对：JSON中位吞吐对spdlog组合多数领先，与tracing公共JSON组合互有胜负；原生build_tracing文本单列。全部跨库速度比仍受波动限制，SPSC的p99.9和Mmap初始化仍有差距。精确源码、配置和详细数字见 [前端对照](bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。
+
+当前数字输出优化完成140项真实文件、4214万条JSON核对，shared Memory/Mmap P1/P4完整用户态指令稳定减少3.43%–3.47%；完整吞吐/尾延迟仍未取得一般资格，未据此更新跨库排名。最新源码、验证与所有正负结果见 [数字输出证据](bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。
 
 原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](docs/history/readme-before-reorganization.md)。完整目标的剩余工作由 [当前验收状态](docs/implementation-status.md) 跟踪。

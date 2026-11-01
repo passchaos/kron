@@ -47,6 +47,8 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 ## 批次合并后的Memory/Mmap优先级
 
+从当前consumer decimal采样推进的八位分块与冷buffered输出已保留：large native值按10^8尾段生成u32 digit pairs，small保留原loop，把宽值/流式buffer frame拆冷。三版各50项primitive保留前两版的small/record负向；最终五类指令减少约9%–10%。140项完整shared文件核对4214万JSON，Memory/Mmap P1/P4用户态指令稳定减少3.43%–3.47%，公开整数/短写与完整Safe151步骤639项通过。batch吞吐中位正向但区间重叠，sampled Mmap P1−6%未在独立20项复测重现，完整尾部不作一般承诺。精确源码/全部慢值见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)；不把局部结果加到历史Foundation排名。
+
 当前生产`2fd7f75`的shared managed完整profile核对400.4万JSON，P4 begin/submitSafeDestination仍为主要producer自占采样；filter与configuration reader登记后的publication读取处有集中样本。后续TLS scope复制缓存、无scope规则的uniform原子镜像及冷/热拆分实际完成120项PMU、80项未插桩流程，共另核对6020万JSON。filter reader RMW减少并未取得整体收益：TLS指令约+0.76%–0.78%，最终shared吞吐正负混合、区间全部重叠，尾部没有优势，候选全部撤回。后续优先从consumer wire/数字输出继续，避免只凭原子操作数推广同一机制。源码、完整数据和限制见 [当前shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)。
 
 当前已将原四个64条服务量子内的就绪记录合并为最多256条窗口。240项完整文件试验核对2424万条物理JSON，portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组未资格。独立io_uring P4 Memory两组中位提升14.2%/23.6%，共享Memory的调用p99也出现可重复负向。单对trace的pwritev1581→833、futex9184→4533只证明本次诊断操作数下降。源码、全部慢值、确认与恢复门禁见 [就绪批次合并](coalesced-delivery.md) 和 [完整证据](../bench/evidence/2026-11-01-coalesced-delivery/README.md)。
