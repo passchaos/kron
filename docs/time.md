@@ -70,6 +70,14 @@ try logging.shutdown();
 
 `zig build run-local-time -Doptimize=ReleaseSafe` 运行完整程序。Linux消费应用通过 `b.dependency("kron", .{ .target=target, .optimize=optimize, .@"system-local-time"=true })` 开启libc链接，也可在应用模块显式 `.link_libc=true`。直接编译时加 `-lc`。默认Linux包不为固定模式增加libc依赖；未链接时local初始化返回 `LocalTimeUnavailable`。Apple/Android沿用系统libc，Windows通过原生API转换。
 
+同时输出到文件和标准输出的完整例子见 [file_stdout_local_time.zig](../examples/file_stdout_local_time.zig)：
+
+```sh
+zig build run-file-stdout-local-time -Doptimize=ReleaseSafe
+```
+
+一个Logging owner异步写出三条记录：`kron-file-stdout-local-time.jsonl`追加JSON Lines，stdout输出可读text，两者继承同一 `.timestamp=.{ .zone=.local }`。两个目标都采用required交付，shutdown确认written；该确认不等同durable。示例构建自动链接本地时间所需的系统库。
+
 每个route有自己的Formatter。缓存key包含事件Unix整秒和模式；同秒保留年月日时分秒与偏移，每条只更新小数部分，跨秒、回拨或模式/固定偏移变化刷新。local的系统转换直接提供日期，不再额外做一次Gregorian转换。使用事件timestamp而不是消费时的当前时间，积压和恢复记录保持原始instant。
 
 异步Memory/Mmap的shared/SPSC与inline/schema交付都在消费者侧转换。同步模式及显式 `fallback_sync` 在调用线程交付，因此同样会在该线程格式化；local缓存不改变这一契约。两个相同格式和时间身份的route继续复用本条编码结果。

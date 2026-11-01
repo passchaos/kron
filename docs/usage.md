@@ -147,6 +147,15 @@ pub fn main(init: std.process.Init) !void {
 
 文件选项沿用 `FileSink.Options`：`path` 必填，`dir=null`、`buffer_bytes=64 KiB`、`backend=.auto`、`queue_depth=4`、`append=true`。指南显式选 portable；Linux 可选 `.linux_uring`，其写出与 durable 完成契约见 [文件可靠性](file-reliability.md)。auto 的后端选择不应被当成某次基准已经使用 io_uring 的证明。
 
+`text` 将时间和级别直接放在行首，侧重阅读；`logfmt` 将所有内容统一为 `key=value`，并用 `attr.` 区分业务字段与元数据。下面省略session、sequence等公共字段：
+
+```text
+text:   2026-11-01T23:00:00+08:00 info scope="http" message="completed" "status"=200
+logfmt: timestamp_ns=1793545200000000000 timestamp="2026-11-01T23:00:00+08:00" severity=info scope="http" message="completed" attr.status=200
+```
+
+logfmt保留原始timestamp_ns并额外提供route/config/trace等元数据，其嵌套array/group是一个带引号的值；需要对象、数组及类型信息的结构化采集优先选JSON。文件＋stdout本地时间示例见 [file_stdout_local_time.zig](../examples/file_stdout_local_time.zig)，采用文件JSON与stdout text。
+
 ## 消息、字段与返回结果
 
 `info/debug/warn/err/fatal/trace` 和 `log(level, message, fields)` 接收字面或动态消息。`logf/tryLogf` 另接收格式串与参数：
@@ -592,6 +601,7 @@ try logging.shutdownUntil(kron.Deadline.after(io, 5 * std.time.ns_per_s));
 | `zig build run-file-logging` | 共享异步 Memory、JSON 文件、脱敏与 reload |
 | `zig build run-async-memory` | stdout 的共享 Memory 日志 |
 | `zig build run-local-time` | 系统本地时间、消费者格式化与同秒缓存 |
+| `zig build run-file-stdout-local-time` | 同时写JSON文件与stdout文本，两个输出都使用系统本地时间 |
 | `zig build run-structured` | owned/borrowed context、嵌套、bytes/secret、trace/source、lazy、可读日期 |
 | `zig build run-threaded` | 双线程 SPSC、attach/detach、join 后关闭 |
 | `zig build run-prepared` | Mmap/SPSC 预注册与 durable |

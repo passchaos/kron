@@ -484,11 +484,16 @@ pub fn build(b: *std.Build) void {
         verify.dependOn(&exe.step);
     }
 
-    const local_example_module = b.createModule(.{ .root_source_file = b.path("examples/local_time.zig"), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
-    local_example_module.addImport("kron", module);
-    const local_example = b.addExecutable(.{ .name = "kron-local-time-example", .root_module = local_example_module });
-    b.step("run-local-time", "Run consumer-formatted system local timestamps").dependOn(&b.addRunArtifact(local_example).step);
-    verify.dependOn(&local_example.step);
+    inline for (.{
+        .{ "local-time", "examples/local_time.zig" },
+        .{ "file-stdout-local-time", "examples/file_stdout_local_time.zig" },
+    }) |example| {
+        const local_example_module = b.createModule(.{ .root_source_file = b.path(example[1]), .target = target, .optimize = optimize, .link_libc = target.result.os.tag != .windows });
+        local_example_module.addImport("kron", module);
+        const local_example = b.addExecutable(.{ .name = "kron-" ++ example[0] ++ "-example", .root_module = local_example_module });
+        b.step("run-" ++ example[0], "Run the " ++ example[0] ++ " example with system local timestamps").dependOn(&b.addRunArtifact(local_example).step);
+        verify.dependOn(&local_example.step);
+    }
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);

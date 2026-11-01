@@ -62,6 +62,7 @@ zig build run-quick-start
 zig build run-file-logging
 zig build run-structured
 zig build run-local-time
+zig build run-file-stdout-local-time
 zig build run-threaded
 zig build run-rolling
 zig build run-basic
