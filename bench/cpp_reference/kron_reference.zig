@@ -1,6 +1,7 @@
 //! The same logical event/attributes as reference.cpp, using public kron APIs.
 const std = @import("std");
 const kron = @import("kron");
+const BackendKind = @TypeOf(@as(kron.FileSink.Options, .{ .path = "" }).backend);
 const Options = struct {
     output: []const u8 = "",
     events: usize = 10000,
@@ -12,6 +13,7 @@ const Options = struct {
     storage: []const u8 = "mmap",
     schema: bool = false,
     consumer_batches: usize = 4,
+    backend: BackendKind = .portable,
 };
 
 const Gate = struct {
@@ -111,7 +113,7 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const allocator = init.gpa;
     const lifecycle_start = std.Io.Clock.awake.now(io);
-    const file = try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = .portable, .append = false });
+    const file = try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = options.backend, .append = false });
     var file_live = true;
     defer if (file_live) file.deinit();
     const journal_path = try std.fmt.allocPrint(allocator, "{s}.journal", .{options.output});
@@ -173,6 +175,7 @@ pub fn main(init: std.process.Init) !void {
     const health = runtime.health();
     const artifact_bytes = file.writtenBytes();
     const written_bytes = artifact_bytes - before_bytes;
+    const backend_selected = file.selectedBackend();
     var accepted: u64 = 0;
     for (workers[0..options.producers]) |worker| {
         if (worker.failure) |err| return err;
@@ -204,6 +207,8 @@ pub fn main(init: std.process.Init) !void {
         .storage = options.storage,
         .prepared_schema = options.schema,
         .consumer_batches_per_queue = options.consumer_batches,
+        .backend_requested = @tagName(options.backend),
+        .backend_selected = @tagName(backend_selected),
         .metadata = "full",
         .events = options.events,
         .producers = options.producers,
@@ -247,6 +252,20 @@ pub fn main(init: std.process.Init) !void {
     try output.interface.flush();
 }
 
+test "reference backend selection is explicit and retains portable default and bounded collector budget" {
+    const testing = std.testing;
+    const default = try parse(&.{"--output=fixture.jsonl"});
+    try testing.expectEqual(BackendKind.portable, default.backend);
+    for (std.enums.values(BackendKind)) |kind| {
+        const argument = try std.fmt.allocPrint(testing.allocator, "--backend={s}", .{@tagName(kind)});
+        defer testing.allocator.free(argument);
+        try testing.expectEqual(kind, (try parse(&.{ "--output=fixture.jsonl", argument })).backend);
+    }
+    try testing.expectError(error.InvalidBackend, parse(&.{ "--output=fixture.jsonl", "--backend=imaginary" }));
+    try testing.expectError(error.InvalidBudget, parse(&.{ "--output=fixture.jsonl", "--consumer-batches=0" }));
+    try testing.expectError(error.InvalidBudget, parse(&.{ "--output=fixture.jsonl", "--consumer-batches=5" }));
+}
+
 fn parse(arguments: []const []const u8) !Options {
     var result: Options = .{};
     for (arguments) |argument| {
@@ -266,6 +285,8 @@ fn parse(arguments: []const []const u8) !Options {
         } else if (std.mem.eql(u8, key, "--consumer-batches")) {
             result.consumer_batches = try std.fmt.parseInt(usize, value, 10);
             if (result.consumer_batches == 0 or result.consumer_batches > 4) return error.InvalidBudget;
+        } else if (std.mem.eql(u8, key, "--backend")) {
+            result.backend = std.meta.stringToEnum(BackendKind, value) orelse return error.InvalidBackend;
         } else {
             const count = try std.fmt.parseInt(usize, value, 10);
             if (std.mem.eql(u8, key, "--events")) {

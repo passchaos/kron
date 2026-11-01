@@ -171,6 +171,21 @@ reported as unsupported; this is not a passing io_uring execution result.
 
 ## Reproduce a backend comparison
 
+当前完整JSON文件流程已用同一ReleaseFast可执行文件比较portable和Linux io_uring，Memory/Mmap、shared/SPSC、P1/P4分别以五次batch和sampled重复运行，共160试验、1616万条物理记录逐条验证。该负载中io_uring的包含关闭吞吐中位低约17%–19%；8个batch组中6个满足两侧10%CV/spread门限，另2个仍inconclusive。当前每checked batch完成required flush后才回收slot，I/O重叠窗口有限；不能推导所有存储设备或更大批次仍有相同结果。完整源码、实际后端身份与原值见[当前io_uring对照](../bench/evidence/2026-11-01-uring-current/README.md)。
+
+完整workflow独立入口：
+
+```sh
+zig build-exe -O ReleaseFast --dep kron \
+  -Mroot=bench/cpp_reference/kron_reference.zig \
+  -O ReleaseFast -Mkron=src/root.zig -femit-bin=/tmp/kron-file-reference
+python3 bench/cpp_reference/compare_backends.py \
+  --binary /tmp/kron-file-reference --output-dir /path/to/new-report \
+  --events 100000 --warmup 1000 --repeats 5
+```
+
+该入口固定consumer budget4、queue slots256、payload512与file buffer64KiB，逐条核对真实文件，报告backend_requested和backend_selected，显式io_uring不可用或失败不会当作portable成功。下方`bench/compare_backends.py`是独立的通用benchmark入口，较早pilot保持其原源码身份。
+
 Use a file sink, one format, identical records and policy, the same final
 completion boundary, and equal batch/depth/journal budgets. Keep the executable,
 machine, and CPU affinity constant. This helper alternates backend order across

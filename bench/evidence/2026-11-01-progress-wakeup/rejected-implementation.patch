@@ -1,0 +1,211 @@
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 3e44dd8..ccb4b38 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -37,6 +37,7 @@ const Clock = @import("../platform/clock.zig").Clock;
+ const control_module = @import("control.zig");
+ pub const Deadline = control_module.Deadline;
+ const admission_protocol = @import("admission.zig");
++const progress_signal = @import("progress.zig");
+ const closing_bit = admission_protocol.closing_bit;
+ const cut_bit = admission_protocol.cut_bit;
+ const count_mask = admission_protocol.count_mask;
+@@ -89,6 +90,7 @@ pub const Runtime = struct {
+     configuration_epoch: Atomic(u32) = .init(0),
+     wake_epoch: Atomic(u32) = .init(0),
+     progress_epoch: Atomic(u32) = .init(0),
++    progress_waiters: Atomic(usize) = .init(0),
+     worker_alive: Atomic(bool) = .init(false),
+     worker_sleeping: Atomic(bool) = .init(false),
+     worker_id: Atomic(std.Thread.Id) = .init(0),
+@@ -663,7 +665,7 @@ pub const Runtime = struct {
+                                     _ = counters.rejected_closing.fetchAdd(1, .monotonic);
+                                     return .rejected_closing;
+                                 }
+-                                self.io.futexWaitUncancelable(u32, &self.progress_epoch.raw, progress);
++                                self.waitProgress(progress);
+                                 continue;
+                             },
+                         }
+@@ -758,8 +760,11 @@ pub const Runtime = struct {
+     }
+ 
+     fn notifyProgress(self: *Runtime) void {
+-        _ = self.progress_epoch.fetchAdd(1, .release);
+-        self.io.futexWake(u32, &self.progress_epoch.raw, std.math.maxInt(u32));
++        progress_signal.notify(&self.progress_epoch, &self.progress_waiters, self.io);
++    }
++
++    fn waitProgress(self: *Runtime, observed: u32) void {
++        progress_signal.wait(&self.progress_epoch, &self.progress_waiters, self.io, observed);
+     }
+ 
+     fn workerError(self: *Runtime) ?anyerror {
+@@ -1053,7 +1058,7 @@ pub const Runtime = struct {
+                 const progress = self.progress_epoch.load(.acquire);
+                 if (self.workerError()) |err| return err;
+                 if (journal.writtenTarget() >= target) break;
+-                self.io.futexWaitUncancelable(u32, &self.progress_epoch.raw, progress);
++                self.waitProgress(progress);
+             }
+         }
+     }
+diff --git a/tests/runtime_integration.zig b/tests/runtime_integration.zig
+index 5566e1f..bf6481f 100644
+--- a/tests/runtime_integration.zig
++++ b/tests/runtime_integration.zig
+@@ -249,6 +249,67 @@ const FutexObserver = struct {
+     }
+ };
+ 
++test "external runtime: idle batch progress avoids waking unregistered waiters in Memory and Mmap" {
++    try linuxOnly();
++    const WakeObserver = struct {
++        target: std.atomic.Value(usize) = .init(0),
++        wakes: std.atomic.Value(usize) = .init(0),
++        var current: std.atomic.Value(?*@This()) = .init(null);
++        fn wake(userdata: ?*anyopaque, ptr: *const u32, count: u32) void {
++            if (current.load(.acquire)) |self| {
++                if (@intFromPtr(ptr) == self.target.load(.acquire)) _ = self.wakes.fetchAdd(1, .monotonic);
++            }
++            testing.io.vtable.futexWake(userdata, ptr, count);
++        }
++    };
++    inline for (.{ .asynchronous, .low_latency }) |submission| {
++        inline for (.{ false, true }) |persistent| {
++            var tmp = testing.tmpDir(.{});
++            defer tmp.cleanup();
++            var path_buffer: [128]u8 = undefined;
++            var bytes: [4096]u8 = undefined;
++            var memory = kron.MemorySink.initBuffer(&bytes);
++            var observer: WakeObserver = .{};
++            WakeObserver.current.store(&observer, .release);
++            defer WakeObserver.current.store(null, .release);
++            var vtable = testing.io.vtable.*;
++            vtable.futexWake = WakeObserver.wake;
++            const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
++            const runtime = try kron.Runtime.create(testing.allocator, io, .{
++                .submission = submission,
++                .journal = if (persistent) .{ .path = try journalPath(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 512 } else null,
++                .memory_queue = if (persistent) null else .{ .capacity = 4, .max_record_bytes = 512 },
++                .max_thread_channels = if (submission == .low_latency) 1 else 0,
++                .thread_channel_capacity = 4,
++                .idle = .sleep,
++                .routes = &.{.{ .name = "memory", .sink = memory.sink(), .recovery_identity = "progress-output" }},
++            });
++            defer runtime.destroy();
++            observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
++            const log = if (submission == .low_latency) try runtime.attachThread(.{ .scope = "progress" }) else runtime.scoped("progress");
++            defer if (submission == .low_latency) log.detach() catch {};
++            try testing.expectEqual(kron.EmitResult.accepted, try log.tryEmit(.info, "one complete batch", .{}));
++            // Observe completed writes without registering a progress waiter.
++            // Taking the existing delivery lock then waits for the whole
++            // batch notification to finish, so an old unconditional wake
++            // cannot slip past the assertion merely because of scheduling.
++            const deadline = std.Io.Clock.awake.now(testing.io).nanoseconds + 5 * std.time.ns_per_s;
++            while (runtime.health().written == 0) {
++                if (std.Io.Clock.awake.now(testing.io).nanoseconds >= deadline) return error.Timeout;
++                std.atomic.spinLoopHint();
++            }
++            runtime.delivery_mutex.lockUncancelable(io);
++            const wakes = observer.wakes.load(.monotonic);
++            const records = memory.records;
++            runtime.delivery_mutex.unlock(io);
++            try testing.expectEqual(@as(usize, 0), wakes);
++            try testing.expectEqual(@as(usize, 1), records);
++            try runtime.flush(.written);
++            try testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
++        }
++    }
++}
++
+ const Shutdown = struct {
+     runtime: *kron.Runtime,
+     failure: ?anyerror = null,
+@@ -397,6 +458,86 @@ test "external runtime: Memory and Mmap SPSC full wait wakes on shutdown" {
+     }
+ }
+ 
++test "external runtime: worker failure wakes a full SPSC producer in Memory and Mmap" {
++    try linuxOnly();
++    const FailingSink = struct {
++        entered: std.Io.Event = .unset,
++        proceed: std.Io.Event = .unset,
++        fn write(raw: *anyopaque, _: []const u8) anyerror!void {
++            const self: *@This() = @ptrCast(@alignCast(raw));
++            self.entered.set(testing.io);
++            self.proceed.waitUncancelable(testing.io);
++            return error.InjectedWriteFailure;
++        }
++        fn flush(_: *anyopaque) anyerror!void {}
++        fn sink(self: *@This()) kron.Sink {
++            return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush }, .recovery_identity = "blocked-producer-failure" };
++        }
++    };
++    const Blocked = struct {
++        runtime: *kron.Runtime,
++        failure: ?anyerror = null,
++        accepted: usize = 0,
++        done: std.Io.Event = .unset,
++        fn run(self: *@This()) void {
++            defer self.done.set(testing.io);
++            self.emit() catch |err| {
++                self.failure = err;
++            };
++        }
++        fn emit(self: *@This()) !void {
++            const log = try self.runtime.attachThread(.{ .scope = "blocked.failure" });
++            defer log.detach() catch {};
++            for (0..3) |index| {
++                if (try log.tryEmit(.info, "pending", .{ .index = index }) != .accepted) return error.UnexpectedOutcome;
++                self.accepted += 1;
++            }
++        }
++    };
++    inline for (.{ false, true }) |persistent| {
++        var tmp = testing.tmpDir(.{});
++        defer tmp.cleanup();
++        var path_buffer: [128]u8 = undefined;
++        var sink: FailingSink = .{};
++        var observer: FutexObserver = .{};
++        FutexObserver.current.store(&observer, .release);
++        defer FutexObserver.current.store(null, .release);
++        var vtable = testing.io.vtable.*;
++        vtable.futexWaitUncancelable = FutexObserver.observe;
++        const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
++        const runtime = try kron.Runtime.create(testing.allocator, io, .{
++            .submission = .low_latency,
++            .journal = if (persistent) .{ .path = try journalPath(&tmp, &path_buffer), .capacity = 2, .max_record_bytes = 512 } else null,
++            .memory_queue = if (persistent) null else .{ .capacity = 2, .max_record_bytes = 512 },
++            .max_thread_channels = 1,
++            .thread_channel_capacity = 2,
++            .idle = .sleep,
++            .routes = &.{.{ .name = "output", .sink = sink.sink() }},
++        });
++        defer runtime.destroy();
++        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
++        var producer: Blocked = .{ .runtime = runtime };
++        const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
++        defer {
++            sink.proceed.set(testing.io);
++            thread.join();
++        }
++        try wait(&sink.entered);
++        try wait(&observer.entered);
++        try testing.expect(!producer.done.isSet());
++        sink.proceed.set(testing.io);
++        try wait(&producer.done);
++        const failure = producer.failure orelse return error.ExpectedWorkerFailure;
++        try testing.expectEqual(error.InjectedWriteFailure, failure);
++        try testing.expectEqual(@as(usize, 2), producer.accepted);
++        try testing.expectError(error.InjectedWriteFailure, runtime.flush(.written));
++        try testing.expectEqual(@as(u64, 2), runtime.health().accepted);
++        try testing.expectEqual(@as(u64, 0), runtime.health().written);
++        try testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
++        try testing.expectEqual(@as(usize, 0), runtime.progress_waiters.load(.seq_cst));
++    }
++}
++
+ test "external runtime: closing waits for an admitted event and rejects a later logger call" {
+     var bytes: [4096]u8 = undefined;
+     var memory = kron.MemorySink.initBuffer(&bytes);

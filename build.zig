@@ -295,8 +295,15 @@ pub fn build(b: *std.Build) void {
     b.step("test-regression", "Verify controlled performance regression accounting").dependOn(&regression_tests.step);
     verify.dependOn(&regression_tests.step);
     const cpp_reference_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_reference.py" });
-    b.step("test-cpp-reference-report", "Reject partial output, metadata mismatches and incomplete workflow benchmark reports").dependOn(&cpp_reference_report_tests.step);
-    verify.dependOn(&cpp_reference_report_tests.step);
+    const cpp_reference_report = b.step("test-cpp-reference-report", "Reject incomplete workflow output, backend fallback and changed workload budgets");
+    cpp_reference_report.dependOn(&cpp_reference_report_tests.step);
+    const cpp_backend_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_backend_comparison.py" });
+    cpp_reference_report.dependOn(&cpp_backend_report_tests.step);
+    const cpp_reference_module = b.createModule(.{ .root_source_file = b.path("bench/cpp_reference/kron_reference.zig"), .target = target, .optimize = optimize });
+    cpp_reference_module.addImport("kron", module);
+    const cpp_reference_tests = b.addTest(.{ .name = "kron-reference-options", .root_module = cpp_reference_module });
+    cpp_reference_report.dependOn(&b.addRunArtifact(cpp_reference_tests).step);
+    verify.dependOn(cpp_reference_report);
 
     const local_reuse = b.step("check-local-reuse", "Check Vort checksum interoperability with persistent kron formats");
     if (b.option([]const u8, "vort-path", "Path to a local Vort checkout for optional interoperability checks")) |vort_path| {

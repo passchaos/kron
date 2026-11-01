@@ -6,6 +6,10 @@
 
 ## 当前单机门禁
 
+当前完整文件portable/io_uring同二进制对照已完成160/160试验、1616万条物理JSON逐条核对：Memory/Mmap、shared/SPSC、P1/P4分别运行五次sampled/batch，所有显式io_uring实际选择linux_uring，accepted=written且pending/drop=0。io_uring中位吞吐在此负载低约17%–19%，8个batch组中6个两侧CV/spread通过、2个inconclusive，全部slow trials保存。当前checked batch确认边界限制I/O重叠，不能推广为所有负载的后端结论；文件后端报告会拒绝fallback/预算变化/不完整输出。Safe定向8/8步骤、14/14 Zig测试及Python负向校验通过，Memory/Mmap真实worker错误唤醒回归Debug/Fast也通过。生产源码保持`c4b7f34`，新增可复现入口及结果见[io_uring完整对照](../bench/evidence/2026-11-01-uring-current/README.md)。
+
+条件progress wake候选未推广：登记waiter后条件futex唤醒的并发窗口测试通过，160项日志全部正确，但多个共享队列吞吐负向中位和bootstrap重叠未证实收益。饱和追踪总futex数量未下降，说明该负载仍有真实waiters；生产恢复原来通知。保留Memory/Mmap满SPSC队列等待者在worker写失败时被唤醒、返回原错误、两条accepted记录仍pending的实际回归。候选源码、1616万条原始结果与拒绝依据见`bench/evidence/2026-11-01-progress-wakeup/`。
+
 Linux/Android冷Mmap发布省去全文件fsync之前的重复msync，保留文件/父目录fsync；其他平台映射flush和显式strict durable原协议保持。Linux6.8内核与ext4同步源码确认覆盖范围，文件/目录发布失败回归验证初始化失败与锁释放、schema目录失败仍unready且不占reservation。真实子QEMU/ext4 schema ACK17/31与inline ACK3强杀恢复通过。160次Memory/Mmap完整文件对照核对1616万条，全部accepted=written、pending/drop=0；调用追踪msync为5→0、fsync仍10、fallocate仍5。初始化/吞吐全部inconclusive，共享Mmap负向启动中位与SPSC正向中位、全部慢值保留，不宣称稳定性能或跨库优势。最终Safe综合89/89步骤、532/532测试和九目标ReleaseSafe实际对象通过。证据见[Mmap发布](mmap-publication.md)及`bench/evidence/2026-11-01-mmap-publication/`。
 
 按用户最新要求，当前源码`182fc9e`默认budget4仅Memory/Mmap同轮比较Foundation真实spdlog前端＋Rust后台与kron：120/120试验、1212万条物理JSON完整核对，accepted=written且pending/drop=0。Memory P1/P4包含关闭中位M条/s：Foundation1.932/1.990、kron shared2.136/2.063、SPSC2.151/2.106；Mmap为Foundation1.789/2.097、shared2.107/1.741、SPSC2.157/1.911。Memory中位领先、Mmap P4仍落后，Foundation全部吞吐组波动超门限，不宣称两种模式稳定超越。Mmap SPSC P4初始化中位368ms、完整生命周期446ms，对Foundation13ms/62ms，原始慢值与尾分位均保留。完整源码、机器、库、格式/完成边界和逐项报告见[当前Memory/Mmap对照](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。

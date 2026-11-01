@@ -17,6 +17,7 @@
 - 进程崩溃后恢复完整提交但尚未写出的记录，不依赖 crash handler 排空普通内存队列。
 - 明确区分 `accepted`、`written` 和 `durable`；抵抗断电需要同步持久化确认。
 - Linux 提供可选 io_uring 批量写入后端，并保留普通批量写入后端。
+- 当前完整Memory/Mmap文件对照中，io_uring中位低于portable约17%–19%；实际后端验证、完成边界和负载限制见[io_uring对照](bench/evidence/2026-11-01-uring-current/README.md)。
 - 支持环境变量、运行时 API 和配置热加载；常用 filter 不在每条日志上解析配置或读取环境变量。
 - 内存、journal 空间、线程 channel 和在途 I/O 均有明确预算。
 

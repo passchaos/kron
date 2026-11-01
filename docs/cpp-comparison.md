@@ -1,5 +1,7 @@
 # C++ 和 Foundation Logging 性能对照
 
+文件后端可独立测量：`bench/cpp_reference/kron_reference.zig`新增`--backend=portable|linux_uring|auto`及实际后端报告，默认portable。`bench/cpp_reference/compare_backends.py`以同一程序比较两种后端，Memory/Mmap分开逐条核对完整文件。当前160项数据的io_uring中位慢约17%–19%，具体负载与资格见[io_uring证据](../bench/evidence/2026-11-01-uring-current/README.md)。此后端实验未运行Foundation，不用于更新其跨库排名。
+
 最新按Memory/Mmap范围的同轮比较使用源码`182fc9e`默认consumer budget4，只运行Foundation/kron：120项完整文件试验、1212万条JSON全部核对。Memory下kron中位领先，Mmap单producer中位领先、四producer仍落后，波动与初始化/尾部限制见[当前Memory/Mmap证据](../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。没有把更早对照或可选budget1与当前默认结果混合。
 
 当前源码`4447fe6`的Foundation/独立spdlog/kron同轮对照已完成140项试验、1414万条JSON核对。当前中位结果与资格在[完整工作流比较](cpp-full-workflow.md)页首和[当前源码证据](../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)；Foundation使用其真实spdlog前端和Rust后台，不是独立spdlog替代实现。当前kron仍未全面超过该组合。

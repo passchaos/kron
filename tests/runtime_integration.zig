@@ -397,6 +397,85 @@ test "external runtime: Memory and Mmap SPSC full wait wakes on shutdown" {
     }
 }
 
+test "external runtime: worker failure wakes a full SPSC producer in Memory and Mmap" {
+    try linuxOnly();
+    const FailingSink = struct {
+        entered: std.Io.Event = .unset,
+        proceed: std.Io.Event = .unset,
+        fn write(raw: *anyopaque, _: []const u8) anyerror!void {
+            const self: *@This() = @ptrCast(@alignCast(raw));
+            self.entered.set(testing.io);
+            self.proceed.waitUncancelable(testing.io);
+            return error.InjectedWriteFailure;
+        }
+        fn flush(_: *anyopaque) anyerror!void {}
+        fn sink(self: *@This()) kron.Sink {
+            return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush }, .recovery_identity = "blocked-producer-failure" };
+        }
+    };
+    const Blocked = struct {
+        runtime: *kron.Runtime,
+        failure: ?anyerror = null,
+        accepted: usize = 0,
+        done: std.Io.Event = .unset,
+        fn run(self: *@This()) void {
+            defer self.done.set(testing.io);
+            self.emit() catch |err| {
+                self.failure = err;
+            };
+        }
+        fn emit(self: *@This()) !void {
+            const log = try self.runtime.attachThread(.{ .scope = "blocked.failure" });
+            defer log.detach() catch {};
+            for (0..3) |index| {
+                if (try log.tryEmit(.info, "pending", .{ .index = index }) != .accepted) return error.UnexpectedOutcome;
+                self.accepted += 1;
+            }
+        }
+    };
+    inline for (.{ false, true }) |persistent| {
+        var tmp = testing.tmpDir(.{});
+        defer tmp.cleanup();
+        var path_buffer: [128]u8 = undefined;
+        var sink: FailingSink = .{};
+        var observer: FutexObserver = .{};
+        FutexObserver.current.store(&observer, .release);
+        defer FutexObserver.current.store(null, .release);
+        var vtable = testing.io.vtable.*;
+        vtable.futexWaitUncancelable = FutexObserver.observe;
+        const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &vtable };
+        const runtime = try kron.Runtime.create(testing.allocator, io, .{
+            .submission = .low_latency,
+            .journal = if (persistent) .{ .path = try journalPath(&tmp, &path_buffer), .capacity = 2, .max_record_bytes = 512 } else null,
+            .memory_queue = if (persistent) null else .{ .capacity = 2, .max_record_bytes = 512 },
+            .max_thread_channels = 1,
+            .thread_channel_capacity = 2,
+            .idle = .sleep,
+            .routes = &.{.{ .name = "output", .sink = sink.sink() }},
+        });
+        defer runtime.destroy();
+        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
+        var producer: Blocked = .{ .runtime = runtime };
+        const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
+        defer {
+            sink.proceed.set(testing.io);
+            thread.join();
+        }
+        try wait(&sink.entered);
+        try wait(&observer.entered);
+        try testing.expect(!producer.done.isSet());
+        sink.proceed.set(testing.io);
+        try wait(&producer.done);
+        const failure = producer.failure orelse return error.ExpectedWorkerFailure;
+        try testing.expectEqual(error.InjectedWriteFailure, failure);
+        try testing.expectEqual(@as(usize, 2), producer.accepted);
+        try testing.expectError(error.InjectedWriteFailure, runtime.flush(.written));
+        try testing.expectEqual(@as(u64, 2), runtime.health().accepted);
+        try testing.expectEqual(@as(u64, 0), runtime.health().written);
+        try testing.expectEqual(@as(usize, 2), runtime.health().journal_pending);
+    }
+}
+
 test "external runtime: closing waits for an admitted event and rejects a later logger call" {
     var bytes: [4096]u8 = undefined;
     var memory = kron.MemorySink.initBuffer(&bytes);
