@@ -60,6 +60,11 @@ pub const SingleProducerControl = struct {
     consumer_written: Atomic(u64) align(64) = .init(0),
     consumer_free_position: Atomic(u64) align(64) = .init(0),
     cached_producer_limit: u64 align(64) = 0,
+    /// Process-local runtime space notification. One SPSC producer may wait;
+    /// every epoch change precedes its conditional futex wake. It is separate
+    /// from mapped written/free watermarks and never certifies record output.
+    space_epoch: Atomic(u32) align(64) = .init(0),
+    space_waiting: Atomic(bool) = .init(false),
 
     pub fn owner(self: *const SingleProducerControl) std.Thread.Id {
         return self.owner_id.load(.acquire);

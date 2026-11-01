@@ -6,11 +6,13 @@
 
 ## 当前单机门禁
 
+SPSC本队列space通知源码已通过完整ReleaseSafe **93/93步骤、552/552 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**；相关Debug/Safe/Fast各25项及外部Memory/Mmap SPSC shutdown/worker错误各2项通过。真实wait前关闭、epoch回绕、own abort回收与不同队列worker错误广播不丢唤醒，共享producer/control保持原global协议。正式400项完整文件/PMU/百万条对照核对8440万条JSON，另24项诊断核对242.4万条；Memory inline SPSC P4长sampled p99.9中位366.312→340.708µs（−6.99%），CV/spread通过且置信区间不重叠。普通吞吐、p50/p99和Mmap多数未资格，短Memory P1约−10%负向中位保留且长P1 batch未重现；每Journal进程内对象增64字节，不增加分配次数或队列/file backing。源码/binary/格式/故障与全部慢值见`bench/evidence/2026-11-01-queue-progress/qualification.json`，Foundation跨库排名仍以此前同轮e8bd353为准，其他平台设备运行资格仍未取得。
+
 跨队列64条轮次交付候选已实验并否决：真实四队列Memory/Mmap×inline/schema、稀疏tracking容量、peek/flush/durable/late reclaim损坏与原peer服务位置在Debug/Safe/Fast定向各26/26通过；440项完整文件/PMU/现有单量子控制核对5244万条JSON。p99.9中位降低但p50/p99明显负向，多数组吞吐负向且所有完整性能资格仍inconclusive；四组指令中位增加0.58%–0.71%，新增调度/跨来源确认与栈空间未取得整体收益。生产src精确恢复`714c470/e8bd353`，现有调度/API与549项综合资格保持。完整候选/失败/原始慢值/控制和否决理由见`bench/evidence/2026-11-01-cross-queue-delivery/qualification.json`；不改变已归档Foundation同轮排名。
 
 用户要求的最新Foundation＋spdlog详细对照已完成：源码`e8bd353`与冻结Foundation真实C++spdlog前端/Rust release后台共200项同轮试验、2020万条JSON逐条核对，Memory/Mmap共享/SPSC、P1/P4、inline/schema、sampled/batch全部完整，kron实际portable、accepted=written且pending/drop=0。普通inline SPSC完整吞吐中位高于Foundation四组8.67%/3.21%/23.09%/12.58%，shared Memory P4仍低4.41%；各关闭吞吐跨库组因spread超门限保持inconclusive。schema多数配置较慢，SPSC p99.9和Mmap init/lifecycle仍差；Foundation Memory806ms/234ms关闭慢值完整保留。源码/Git/归档/binary/输出/完成边界审计和所有CV/spread/bootstrap见`bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/qualification.json`及[详细报告](../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。没有更新为业界最快或稳定全面超越资格。
 
-当前admission View转移源码通过完整ReleaseSafe门禁 **93/93步骤、549/549 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，含独立五模式/单线程/源码分发包、Linux宿主资格、配置/deadline/错误/旧新wire矩阵和12个实际随机SIGKILL恢复场景。最终源码、binary、归档、正式5437万条测量与负向限制绑定于`bench/evidence/2026-11-01-admission-view/qualification.json`；跨库同轮排名和其他平台设备运行仍需单独验证。
+此前admission View转移源码通过完整ReleaseSafe门禁 **93/93步骤、549/549 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，含独立五模式/单线程/源码分发包、Linux宿主资格、配置/deadline/错误/旧新wire矩阵和12个实际随机SIGKILL恢复场景。最终源码、binary、归档、正式5437万条测量与负向限制绑定于`bench/evidence/2026-11-01-admission-view/qualification.json`；跨库同轮排名和其他平台设备运行仍需单独验证。
 
 普通共享admission已复用begin取得的已验证配置View，end释放reader；accepted journal record继续commit前独立retain pending pin，SPSC/control/deadline沿用原协议。三个新的实际runtime测试锁定Memory/Mmap的reader/pin差额、并发replacement旧lease在reserve前和worker ack后仍受admission保护，以及filtered/sampled/capture/sync错误准确释放；旧filter-overlay和SPSC缓存回归保持，相关Debug/Safe/Fast各15/15通过。正式320项完整文件、40项PMU和独立10项百万条复查核对5437万条JSON，shared schema Mmap P1长流程中位1.746M→1.829M条/s（+4.79%）、CV/spread通过且中位区间不重叠；多数P4/其他组未资格，PMU shared Memory P4负向中位3.36%且区间不重叠，所有慢值与尾分位保留。首对测试退出重叠的另10项长流程独立保存，不计入正式资格。源码/归档/binary和完整限制见`bench/evidence/2026-11-01-admission-view/`；没有新增heap、queue/file预算或跨库排名。
 

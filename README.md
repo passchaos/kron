@@ -78,6 +78,7 @@ zig-out/bin/kroncat --json --where 'request_id == "abc"' app.kron
 - [路由过滤性能](docs/route-filter-performance.md)：配置期派生level掩码，保留scope覆盖和旧版本决策。
 - [异步存储选择](docs/async-storage.md)：普通内存异步与mmap异步，共同接口、明确恢复区别。
 - [消费者服务预算](docs/consumer-scheduling.md)：Memory/Mmap共享与SPSC队列的有界轮询，默认四个64条服务量子，可按负载选择一到四个。
+- [SPSC空间通知](docs/consumer-scheduling.md)：满队列producer等待本队列进度，保留全局关闭/worker错误通知和原服务顺序。
 - [文件可靠性](docs/file-reliability.md)：部分写入、轮转、显式durable和恢复边界。
 - [Mmap冷发布](docs/mmap-publication.md)：Linux全文件同步覆盖映射脏页，减少重复发布操作并保留schema就绪与故障边界。
 - [嵌套字段](docs/structured-values.md)：显式array/group，固定遍历预算和递归脱敏。
@@ -118,6 +119,8 @@ Windows/Linux/macOS/Android/iOS 的实现、构建与运行验证边界见 [平�
 后续schema融合以 `366adc3` 为基线完成最终240项完整文件与40项完整PMU对照，另20项百万条P1复查，共5630万条物理JSON核对。Prepared Memory P4共享/SPSC吞吐中位提升6.35%/8.03%，通过本轮重复性门限且中位区间不重叠；schema用户态指令减少约1.8%–1.9%。Mmap多数组与调用尾部仍inconclusive，P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠，原慢值保留。最终完整ReleaseSafe门禁93/93步骤、545/545测试与九目标编译通过。原始候选、否决的指针版本、中断捕获、额外消费者栈和最终资格边界见[schema完整对照](bench/evidence/2026-11-01-consumer-post-coalescing/README.md)；不据此宣布新的跨库排名。
 
 共享admission进一步直接持有已验证的配置View，结束时释放reader，accepted记录保留独立pin。正式370项完整文件/PMU/百万条复查核对5437万条JSON；shared schema Mmap单producer长流程中位提升4.79%，重复性通过且置信区间不重叠。其他路径没有一般收益资格，PMU shared Memory四producer负向中位3.36%也保留。被否决的文件缓冲callback候选及admission数据分别归档；当前结果和并发lease验证见[admission View对照](bench/evidence/2026-11-01-admission-view/README.md)，新的跨库结果见本节最新同轮报告。
+
+SPSC满队列现在等待本队列的进程内space epoch，避免由其他队列进度触发重复等待；原队列服务顺序、CRC/配置引用与确认边界保持。正式400项完整文件/PMU/百万条对照核对8440万条JSON，Memory inline SPSC四producer长sampled p99.9中位366.312→340.708µs（−6.99%），通过本轮重复性门限且中位区间不重叠；普通吞吐、p50/p99与Mmap尾部多数未资格。每Journal对象增加64字节、队列/file预算和分配次数不增。原短流程P1负向与所有慢值保留，诊断计数和并发唤醒证据见[队列进度报告](bench/evidence/2026-11-01-queue-progress/README.md)；这不是新的Foundation同轮排名。
 
 ## 实施顺序
 

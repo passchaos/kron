@@ -1,0 +1,127 @@
+{
+  "before": {
+    "async-memory": {
+      "trials": 3,
+      "wait_calls": [
+        2906,
+        2741,
+        2695
+      ],
+      "unchanged_written_returns": [
+        16,
+        4,
+        6
+      ],
+      "wait_calls_median": 2741,
+      "unchanged_median": 6
+    },
+    "async-mmap": {
+      "trials": 3,
+      "wait_calls": [
+        3010,
+        2796,
+        2879
+      ],
+      "unchanged_written_returns": [
+        6,
+        11,
+        20
+      ],
+      "wait_calls_median": 2879,
+      "unchanged_median": 11
+    },
+    "spsc-memory": {
+      "trials": 3,
+      "wait_calls": [
+        1526,
+        1220,
+        1435
+      ],
+      "unchanged_written_returns": [
+        1137,
+        832,
+        1046
+      ],
+      "wait_calls_median": 1435,
+      "unchanged_median": 1046
+    },
+    "spsc-mmap": {
+      "trials": 3,
+      "wait_calls": [
+        1448,
+        1441,
+        1369
+      ],
+      "unchanged_written_returns": [
+        1060,
+        1053,
+        982
+      ],
+      "wait_calls_median": 1441,
+      "unchanged_median": 1053
+    }
+  },
+  "after": {
+    "async-memory": {
+      "trials": 3,
+      "wait_calls": [
+        2865,
+        2902,
+        2847
+      ],
+      "unchanged_written_returns": [
+        12,
+        4,
+        18
+      ],
+      "wait_calls_median": 2865,
+      "unchanged_median": 12
+    },
+    "async-mmap": {
+      "trials": 3,
+      "wait_calls": [
+        2371,
+        2088,
+        2914
+      ],
+      "unchanged_written_returns": [
+        10,
+        11,
+        35
+      ],
+      "wait_calls_median": 2371,
+      "unchanged_median": 11
+    },
+    "spsc-memory": {
+      "trials": 3,
+      "wait_calls": [
+        388,
+        388,
+        388
+      ],
+      "unchanged_written_returns": [
+        0,
+        0,
+        0
+      ],
+      "wait_calls_median": 388,
+      "unchanged_median": 0
+    },
+    "spsc-mmap": {
+      "trials": 3,
+      "wait_calls": [
+        388,
+        388,
+        388
+      ],
+      "unchanged_written_returns": [
+        0,
+        0,
+        0
+      ],
+      "wait_calls_median": 388,
+      "unchanged_median": 0
+    }
+  },
+  "scope": "instrumented wait call counts including warmup; before/after separate captures, not wall-time qualification; unchanged target includes immediate/spurious returns"
+}

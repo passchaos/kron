@@ -1,0 +1,23 @@
+1/22 root.test_0...OK
+2/22 encoder.root.test_0...OK
+3/22 time.root.test_0...OK
+4/22 journal.journal.test_0...OK
+5/22 core.runtime.test_0...OK
+6/22 config.routes.test_0...OK
+7/22 sink.rolling_file.test_0...OK
+8/22 journal.spsc.test_0...OK
+9/22 core.diagnostics.test.record does not invoke hooks and dispatch supplies one coalesced snapshot outside locks...OK
+10/22 core.runtime_coalesced_tests.test.coalesced service window flushes all 255 queued records before reclaim without allocation...OK
+11/22 core.runtime_coalesced_tests.test.coalesced checked window rejects later corruption before any earlier record reaches a sink...OK
+12/22 core.runtime_coalesced_tests.test.coalesced old and new routes keep all record pins when final flush or durable barrier fails...OK
+13/22 core.runtime_coalesced_tests.test.coalesced flush failure retains every slot and pin of a retired configuration...OK
+14/22 core.runtime_coalesced_tests.test.coalesced late corruption acknowledges only its successful prefix and retains old configuration...OK
+15/22 core.runtime_tests.test_0...OK
+16/22 core.runtime_delivery_tests.test.Memory and Mmap consumer quantum bounds shared and SPSC peer service...OK
+17/22 core.runtime_delivery_tests.test.consumer quantum rejects unbounded or zero budgets before allocation...OK
+18/22 core.delivery_batch.test.coalesced service budget charges short windows and bounds every allowed quantum...OK
+19/22 encoder.wire_json.test_0...OK
+20/22 core.runtime_admission_view_tests.test.shared admission retains its checked view without a pending pin conversion...OK
+21/22 core.runtime_admission_view_tests.test.shared admission old view preserves retired lease before reserve and after worker acknowledgement...OK
+22/22 core.runtime_admission_view_tests.test.shared admission view unwinds filtered sampled capture failure and sync delivery failure...OK
+All 22 tests passed.

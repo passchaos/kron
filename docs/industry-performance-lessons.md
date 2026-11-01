@@ -65,4 +65,6 @@ fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象
 
 跨队列64条轮次合并窗口已实际验证并否决。完整440项/5244万条JSON显示p99.9降低与p99/p50显著升高并存，吞吐与单量子控制均未取得整体资格，用户态指令增加0.58%–0.71%；候选的调度/跨来源确认成本及更大transitive stack不推广。生产恢复同轮对照的`e8bd353`逻辑；源码、真实FIFO/故障/服务预算门禁与全量分布保留在`bench/evidence/2026-11-01-cross-queue-delivery/`。后续应针对满队列等待者与progress_epoch的跨队列唤醒进行有界诊断；保留worker错误、shutdown和reservation gap的正确唤醒，避免从表面批次大小推导整体低尾延迟。
 
+随后对SPSC满队列等待加入本队列space通知，保持原调度和global control等待。前后各12项诊断发现本队列written未变化的futex返回降为0，但这个计数本身不作为wall-time资格。正式400项完整文件/PMU/百万条对照核对8440万条日志，Memory inline SPSC P4长sampled p99.9中位下降6.99%、局部重复性及区间不重叠成立；p50/p99、Mmap和普通吞吐大多仍inconclusive。没有省略CRC/pin/barrier或提前回收，worker错误/关闭对所有队列通知；登记与epoch的SC握手锁定wait前事件边界，每Journal增加64字节进程内control。保持这项有限收益后，仍需继续降低约340µs的极端等待和明确其他负载资格。原短流程P1负向、全量分布和真实并发测试见`bench/evidence/2026-11-01-queue-progress/`。
+
 参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。

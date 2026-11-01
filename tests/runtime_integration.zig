@@ -369,7 +369,7 @@ test "external runtime: Memory and Mmap SPSC full wait wakes on shutdown" {
             .routes = &.{.{ .name = "memory", .sink = memory.sink(), .recovery_identity = "full-channel-output" }},
         });
         defer runtime.destroy();
-        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
+        observer.target.store(@intFromPtr(&runtime.thread_registry.?.getJournal(0).single.space_epoch.raw), .release);
         var producer: Blocked = .{ .runtime = runtime };
         const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
         var shutdown_thread: ?std.Thread = null;
@@ -454,7 +454,7 @@ test "external runtime: worker failure wakes a full SPSC producer in Memory and 
             .routes = &.{.{ .name = "output", .sink = sink.sink() }},
         });
         defer runtime.destroy();
-        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
+        observer.target.store(@intFromPtr(&runtime.thread_registry.?.getJournal(0).single.space_epoch.raw), .release);
         var producer: Blocked = .{ .runtime = runtime };
         const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
         defer {

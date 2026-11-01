@@ -1,0 +1,138 @@
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 5780186..9a3e63d 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -639,7 +639,7 @@ pub const Runtime = struct {
+         } else null;
+         if (destination) |journal| {
+             while (true) {
+-                const progress = self.progress_epoch.load(.acquire);
++                const progress = if (producer_token != null) journal.single.space_epoch.load(.seq_cst) else self.progress_epoch.load(.acquire);
+                 const attempt = if (binding) |prepared|
+                     (if (producer_token) |token| journal.reserveSingleProducerWithSchema(token, prepared.reference) else journal.reserveWithSchema(prepared.reference))
+                 else
+@@ -663,12 +663,19 @@ pub const Runtime = struct {
+                                 return self.submitSync(fallback, snapshot);
+                             },
+                             .block => {
++                                // One owner may wait on an SPSC queue. Register
++                                // before checking terminal state; a concurrent
++                                // notification either wakes us or changes the
++                                // observed epoch, making futex wait return.
++                                if (producer_token != null) journal.single.space_waiting.store(true, .seq_cst);
++                                defer if (producer_token != null) journal.single.space_waiting.store(false, .seq_cst);
+                                 if (self.workerError()) |failure| return failure;
+                                 if (self.state.load(.acquire) != .running) {
+                                     _ = counters.rejected_closing.fetchAdd(1, .monotonic);
+                                     return .rejected_closing;
+                                 }
+-                                self.io.futexWaitUncancelable(u32, &self.progress_epoch.raw, progress);
++                                const epoch = if (producer_token != null) &journal.single.space_epoch.raw else &self.progress_epoch.raw;
++                                self.io.futexWaitUncancelable(u32, epoch, progress);
+                                 continue;
+                             },
+                         }
+@@ -767,6 +774,21 @@ pub const Runtime = struct {
+         self.io.futexWake(u32, &self.progress_epoch.raw, std.math.maxInt(u32));
+     }
+ 
++    fn notifyJournalProgress(self: *Runtime, journal: *Journal) void {
++        self.notifyProgress();
++        if (journal.producer_mode == .single) self.notifySpace(journal);
++    }
++
++    fn notifySpace(self: *Runtime, journal: *Journal) void {
++        _ = journal.single.space_epoch.fetchAdd(1, .seq_cst);
++        if (journal.single.space_waiting.load(.seq_cst)) self.io.futexWake(u32, &journal.single.space_epoch.raw, 1);
++    }
++
++    fn notifyAllProgress(self: *Runtime) void {
++        self.notifyProgress();
++        if (self.thread_registry) |registry| for (registry.activeJournals()) |journal| self.notifySpace(journal);
++    }
++
+     fn workerError(self: *Runtime) ?anyerror {
+         const code = self.worker_error.load(.acquire);
+         return if (code == 0) null else @errorFromInt(code);
+@@ -778,7 +800,7 @@ pub const Runtime = struct {
+         defer {
+             self.worker_id.store(0, .release);
+             self.worker_alive.store(false, .release);
+-            self.notifyProgress();
++            self.notifyAllProgress();
+         }
+         while (true) {
+             const observed = self.wake_epoch.load(.seq_cst);
+@@ -837,7 +859,7 @@ pub const Runtime = struct {
+                 records[0] = record;
+                 break :blk records[0..1];
+             };
+-            if (journal.pending() != before) self.notifyProgress();
++            if (journal.pending() != before) self.notifyJournalProgress(journal);
+             if (batch.len == 0) return worked;
+             budget.consume(batch.len);
+             worked = true;
+@@ -903,7 +925,7 @@ pub const Runtime = struct {
+                 written_counts.acknowledged(&self.countersFor(channel).written);
+             }
+             written_counts.flush();
+-            self.notifyProgress();
++            self.notifyJournalProgress(journal);
+         }
+         return worked;
+     }
+@@ -1189,7 +1211,7 @@ pub const Runtime = struct {
+         _ = self.state.cmpxchgStrong(.running, .closing, .release, .monotonic);
+         self.wakeAdmissions();
+         self.notify();
+-        self.notifyProgress();
++        self.notifyAllProgress();
+     }
+ 
+     pub fn currentConfiguration(self: *Runtime) ConfigurationVersion {
+@@ -1330,6 +1352,7 @@ pub const Runtime = struct {
+ };
+ 
+ test {
++    _ = @import("runtime_queue_progress_tests.zig");
+     _ = @import("runtime_coalesced_tests.zig");
+     _ = @import("runtime_tests.zig");
+     _ = @import("runtime_delivery_tests.zig");
+diff --git a/src/journal/journal.zig b/src/journal/journal.zig
+index dfd2bb6..c9b1194 100644
+--- a/src/journal/journal.zig
++++ b/src/journal/journal.zig
+@@ -60,6 +60,11 @@ pub const SingleProducerControl = struct {
+     consumer_written: Atomic(u64) align(64) = .init(0),
+     consumer_free_position: Atomic(u64) align(64) = .init(0),
+     cached_producer_limit: u64 align(64) = 0,
++    /// Process-local runtime space notification. One SPSC producer may wait;
++    /// every epoch change precedes its conditional futex wake. It is separate
++    /// from mapped written/free watermarks and never certifies record output.
++    space_epoch: Atomic(u32) align(64) = .init(0),
++    space_waiting: Atomic(bool) = .init(false),
+ 
+     pub fn owner(self: *const SingleProducerControl) std.Thread.Id {
+         return self.owner_id.load(.acquire);
+diff --git a/tests/runtime_integration.zig b/tests/runtime_integration.zig
+index 65ab600..203e040 100644
+--- a/tests/runtime_integration.zig
++++ b/tests/runtime_integration.zig
+@@ -369,7 +369,7 @@ test "external runtime: Memory and Mmap SPSC full wait wakes on shutdown" {
+             .routes = &.{.{ .name = "memory", .sink = memory.sink(), .recovery_identity = "full-channel-output" }},
+         });
+         defer runtime.destroy();
+-        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
++        observer.target.store(@intFromPtr(&runtime.thread_registry.?.getJournal(0).single.space_epoch.raw), .release);
+         var producer: Blocked = .{ .runtime = runtime };
+         const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
+         var shutdown_thread: ?std.Thread = null;
+@@ -454,7 +454,7 @@ test "external runtime: worker failure wakes a full SPSC producer in Memory and
+             .routes = &.{.{ .name = "output", .sink = sink.sink() }},
+         });
+         defer runtime.destroy();
+-        observer.target.store(@intFromPtr(&runtime.progress_epoch.raw), .release);
++        observer.target.store(@intFromPtr(&runtime.thread_registry.?.getJournal(0).single.space_epoch.raw), .release);
+         var producer: Blocked = .{ .runtime = runtime };
+         const thread = try std.Thread.spawn(.{}, Blocked.run, .{&producer});
+         defer {
