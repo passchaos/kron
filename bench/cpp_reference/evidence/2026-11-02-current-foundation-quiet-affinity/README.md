@@ -41,6 +41,8 @@ CRC、journal reserve/validate、measure+encode的双遍历合计占显著比例
 
 又对native PCLMUL CRC与generic x86_64表CRC做5次batch对照：native P1/P4中位1.639M/1.582M，generic表路径1.395M/1.339M，PCLMUL仍快约15%。E-core上也不应改用表CRC或增加运行时表回退；原始结果在`ecore-profile/crc-comparison.json`。
 
+还尝试把CRC状态直接嵌入编码writer，逐字段更新以避免完成后第二遍CRC：E-core 5次batch中P1中位1.653M→1.487M（−10%），P4 1.563M→1.548M（−1%）。原因是`Crc32.update`只在≥64字节块启用PCLMUL，逐字段小slice退化为表状态机，抵消了省去的post-pass。候选已恢复post-pass CRC；原始结果在`ecore-profile/crc-encode-fusion.json`。
+
 ## 复现
 
 ```sh
