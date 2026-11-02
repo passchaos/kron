@@ -39,6 +39,8 @@ CRC、journal reserve/validate、measure+encode的双遍历合计占显著比例
 
 另在相同E-core上对`consumer_idle=sleep|spin`做5次batch对照：Memory P1中位1.670M→1.691M（+1.2%），P4 1.590M→1.584M（−0.4%）。spin没有改变整体量级，说明当前差距主要不是consumer唤醒策略；原始结果在`ecore-profile/idle-comparison.json`。
 
+又对native PCLMUL CRC与generic x86_64表CRC做5次batch对照：native P1/P4中位1.639M/1.582M，generic表路径1.395M/1.339M，PCLMUL仍快约15%。E-core上也不应改用表CRC或增加运行时表回退；原始结果在`ecore-profile/crc-comparison.json`。
+
 ## 复现
 
 ```sh
