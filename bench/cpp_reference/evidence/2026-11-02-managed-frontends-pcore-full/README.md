@@ -28,6 +28,10 @@
 
 只有少数组（kron async Memory P4、tracing Memory P4、SPSC Mmap P4等）达到局部spread门限；配对比较仍因另一侧或比值spread保持inconclusive。
 
+## 原生tracing文本控制
+
+`native/`为40项Foundation原生build_tracing文本控制，4,040,000条，单列不参与JSON排名：Memory P1 batch/sampled 1.676M/1.608M，P4 2.637M/2.852M；Mmap P1 0.930M/0.861M，P4 2.271M/2.162M。该窗口同样受宿主负载影响，部分组inconclusive。
+
 ## 结论
 
 - P-core窗口受宿主负载影响明显，不能用中位表替代稳定性资格。
