@@ -42,6 +42,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-redaction-paths", "Verify empty and configured redaction capture paths").dependOn(&run_redaction.step);
     test_step.dependOn(&run_redaction.step);
 
+    const submission_snapshot_module = b.createModule(.{ .root_source_file = b.path("tests/submission_snapshot.zig"), .target = target, .optimize = optimize });
+    submission_snapshot_module.addImport("kron", module);
+    const submission_snapshot_tests = b.addTest(.{ .name = "kron-submission-snapshot", .root_module = submission_snapshot_module });
+    const run_submission_snapshot = b.addRunArtifact(submission_snapshot_tests);
+    b.step("test-submission-snapshot", "Verify caller event immutability, accepted snapshots and nested redaction lifetimes").dependOn(&run_submission_snapshot.step);
+    test_step.dependOn(&run_submission_snapshot.step);
+
     const async_storage_module = b.createModule(.{ .root_source_file = b.path("tests/async_storage.zig"), .target = target, .optimize = optimize });
     async_storage_module.addImport("kron", module);
     const async_storage_tests = b.addTest(.{ .name = "kron-async-storage", .root_module = async_storage_module });

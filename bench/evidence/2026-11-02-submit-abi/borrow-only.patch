@@ -1,0 +1,53 @@
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 675dfbb..3c55042 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -603,8 +603,8 @@ pub const Runtime = struct {
+         };
+         const context: SubmissionContext = .{ .admission = admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding, .encoded_size = measured, .tree_validated = measured != null };
+         if (snapshot.redactor.rule_count != 0)
+-            return @import("runtime_redaction.zig").submit(self, &snapshot.redactor, original, context, submitSafeDestination);
+-        return self.submitSafeDestination(original, context);
++            return @import("runtime_redaction.zig").submit(self, &snapshot.redactor, &original, &context, submitSafeDestination);
++        return self.submitSafeDestination(&original, &context);
+     }
+ 
+     const SubmissionContext = struct {
+@@ -617,14 +617,14 @@ pub const Runtime = struct {
+         tree_validated: bool = false,
+     };
+ 
+-    fn submitSafeDestination(self: *Runtime, original: Event, context: SubmissionContext) !EmitResult {
++    fn submitSafeDestination(self: *Runtime, original: *const Event, context: *const SubmissionContext) !EmitResult {
+         const admission = context.admission;
+         const snapshot = context.snapshot;
+         const destination = context.destination;
+         const producer_token = context.producer_token;
+         const binding = context.binding;
+         const counters = self.countersFor(original.channel);
+-        var event = original;
++        var event = original.*;
+         // Never trust a caller-supplied provenance hint. Only the admission
+         // measurement in this call can authorize the internal delivery path.
+         event.tree_validated = context.tree_validated;
+diff --git a/src/core/runtime_redaction.zig b/src/core/runtime_redaction.zig
+index fee6ff5..5cadbee 100644
+--- a/src/core/runtime_redaction.zig
++++ b/src/core/runtime_redaction.zig
+@@ -5,13 +5,13 @@ const Event = @import("event.zig").Event;
+ const EmitResult = @import("logger.zig").EmitResult;
+ const Redactor = @import("../pipeline/redact.zig").Redactor;
+ 
+-pub noinline fn submit(owner: anytype, redactor: *const Redactor, original: Event, context: anytype, comptime callback: anytype) !EmitResult {
++pub noinline fn submit(owner: anytype, redactor: *const Redactor, original: *const Event, context: anytype, comptime callback: anytype) !EmitResult {
+     var fields: [field.max_value_nodes]field.Field = undefined;
+     var values: [field.max_value_nodes]field.Value = undefined;
+     var arguments: [field.max_value_nodes]field.Field = undefined;
+     var argument_values: [field.max_value_nodes]field.Value = undefined;
+-    var event = original;
++    var event = original.*;
+     event.fields = try redactor.applyDeep(original.fields, &fields, &values);
+     event.format_args = try redactor.applyArgumentsDeep(original.format_args, &arguments, &argument_values);
+-    return callback(owner, event, context);
++    return callback(owner, &event, context);
+ }

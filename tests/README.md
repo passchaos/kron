@@ -29,3 +29,5 @@
 临时文件与缓存使用 `.zig-cache` 或由fixture拥有的临时目录，保留失败现场时记录其身份。冻结历史结果位于 `bench/evidence` 与 `power_loss/evidence`，不会被当前测试路径整理改变。
 
 `independent_outputs.zig`（`zig build test-outputs`）验证Logging.outputs独立mode/queue/overflow、逐route采样与队列前脱敏、partial success、64输出、thread/prepared回滚与deadline关闭。`test_managed_outputs_compare.py`校验完整流程基准的JSON oracle，拒绝漏项、重复、截断与工作负载改变。
+
+`submission_snapshot.zig`（`zig build test-submission-snapshot`）验证public submit对调用者Event/各层borrowed backing的不可变性、accepted前队列快照、public Binding的canonical查找与非法引用拒绝边界，以及sync/full fallback内嵌套sink回调的redaction scratch生命周期。该step纳入test与verify-local，不通过公开私有measurement proof来验证。

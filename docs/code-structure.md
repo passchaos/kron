@@ -47,6 +47,8 @@ Logging管理独立pipeline资源；scoped返回组合logger，handle按各输�
 
 Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关闭共享同一owner与私有gate。代码拆分优先稳定职责，例如初始化、配置、脱敏、交付和codec；不通过把每个私有方法公开来缩短文件。TSC也保留资格化与回退的一致状态机，后续拆分应保持单独验证能力。
 
+Runtime提交保留公共按值Event和binding校验，内部只携带schema Ref并借用本次SubmissionContext。一份私有Event在本次同步调用内设置metadata、编码或fallback；redaction模块持有自己的scratch/Event直到callback完成。调用者Event和其descriptor不由内部写入，动态字节仍在accepted前复制到队列；不导出可复用的测量证明。
+
 route_selection保存不可变level/filter与predicate presence掩码，Runtime只遍历已选中的predicate routes。JSON member前缀的可写ASCII路径与cold转义/short writer fallback由escaping模块拥有，普通与融合encoder共用它；公共整数格式和wire协议继续由原模块负责。
 
 ## 测试与构建位置

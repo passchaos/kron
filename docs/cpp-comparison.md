@@ -4,6 +4,8 @@
 
 性能验收目标是同时超过 Foundation/logging + spdlog 和 Foundation/logging + tracing。`analyze.py` 对新的公共 full JSON 报告生成 `foundation_qualification`：按 repetition 配对，不混合 Memory/Mmap、producer 数、batch/sampled 或 CPU 拓扑；至少5轮、两侧与配对比值 spread 均≤10%、95%配对bootstrap区间不跨1才判断该组领先。written flush/close、初始化、完整生命周期与调用 p99/p99.9 独立判定。缺少任一前端或任一选定组的配对不能宣告同时超过；关闭吞吐全部领先也只证明这次选定负载，其他性能轴仍需自己的证据。历史报告保留原统计结果，不批量重写。
 
+最新Runtime内部提交借用源码的同轮双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing16组全部不确定，未全面超越。局部栈/指令减少、public caller snapshot与prepared回归和所有正负见[提交报告](../bench/evidence/2026-11-02-submit-abi/README.md)。未确认差距不能被当作已经超过。
+
 最新JSON member/cold fallback与predicate mask源码的双拓扑320项矩阵核对3232万JSON：E-core对tracing12组、对spdlog10组peer领先；P-core对tracing2组、对spdlog1组kron局部领先，其余不确定，完整目标未达到。应用400项独立模型核对与全部负向复测另列，见[JSON member报告](../bench/evidence/2026-11-02-json-member-direct/README.md)。
 
 最新保留CRC四lane直接合并的双拓扑同轮320项对照核对3232万JSON：E-core对tracing14组peer领先、对spdlog5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定。E-core目标未达到、P-core整体inconclusive，未全面超过两个前端；完整阶段、原始数据与复现见[当前CRC报告](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
