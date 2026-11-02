@@ -311,3 +311,32 @@ test "managed logging std log binding cleanup cannot unbind another owner" {
     try std.testing.expect(std.mem.indexOf(u8, first_writer.buffered(), "first 1") != null);
     try std.testing.expect(std.mem.indexOf(u8, second_writer.buffered(), "second 2") != null);
 }
+
+test "managed logging accepts memory-only CRC opt-out" {
+    inline for (.{ .asynchronous, .spsc }) |mode| {
+        var bytes: [4096]u8 = undefined;
+        var writer = std.Io.Writer.fixed(&bytes);
+        const logging = try Logging.create(std.testing.allocator, std.testing.io, .{ .outputs = &.{.{
+            .target = .{ .writer = &writer },
+            .mode = mode,
+            .max_threads = 1,
+            .format = .json,
+            .queue = .{ .memory = .{ .capacity = 8, .max_record_bytes = 512, .verify_crc = false } },
+        }} });
+        var live = true;
+        defer if (live) logging.destroy();
+        const base = if (mode == .spsc) try logging.attachThread("fast") else logging.scoped("fast");
+        var attached = mode == .spsc;
+        defer if (attached) base.detach() catch {};
+        _ = try base.tryEmit(.info, "fast", .{});
+        if (mode == .spsc) {
+            try base.detach();
+            attached = false;
+        }
+        try logging.flush();
+        try logging.shutdown();
+        live = false;
+        logging.destroy();
+        try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "fast") != null);
+    }
+}

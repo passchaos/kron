@@ -21,6 +21,7 @@
 - 新增测试：
   - memory journal在`verify_crc=false`下即使checksum字段被破坏也能交付记录；
   - 可恢复journal对`verify_crc=false`返回`CrcRequiredForRecovery`；
+  - managed Logging async/SPSC memory在`verify_crc=false`下完成emit/flush/shutdown；
   - 默认CRC corruption测试继续通过。
 - ReleaseSafe完整门禁151/151步骤、644/645项通过（1项系统local能力skip），见本目录`full-safe.log`。
 
