@@ -1,0 +1,36 @@
+[
+  {
+    "target": "x86_64-windows-gnu",
+    "command": [
+      "zig",
+      "build-obj",
+      "src/platform_check.zig",
+      "-O",
+      "ReleaseSafe",
+      "-target",
+      "x86_64-windows-gnu",
+      "-mcpu",
+      "x86_64+pclmul+sse2+avx",
+      "-lc",
+      "-femit-bin=.zig-cache/crc-pure/avx-x86_64-windows-gnu.o"
+    ],
+    "exit_code": 0
+  },
+  {
+    "target": "x86_64-macos",
+    "command": [
+      "zig",
+      "build-obj",
+      "src/platform_check.zig",
+      "-O",
+      "ReleaseSafe",
+      "-target",
+      "x86_64-macos",
+      "-mcpu",
+      "x86_64+pclmul+sse2+avx",
+      "-lc",
+      "-femit-bin=.zig-cache/crc-pure/avx-x86_64-macos.o"
+    ],
+    "exit_code": 0
+  }
+]

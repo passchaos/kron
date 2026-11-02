@@ -1,0 +1,8 @@
+{
+  "scope": "read-only source and x86 instruction constraints; no benchmark claim",
+  "pure": "PCLMUL only accesses declared SIMD registers; no memory/flags/MXCSR side effects. +x binds old a to new a. Nonvolatile arithmetic is legal.",
+  "vex": "=x output with x inputs permits output alias; single instruction needs no earlyclobber. AT&T immediate0x10,b,a,out equals a.low64*b.high64, same as original legacy immediate0x10,b,a.",
+  "features": "128-bit VEX PCLMUL needs AVX and PCLMUL; outer x86_64/PCLMUL/SSE2 gate plus inner avx condition suffices. No 256-bit/EVEX instructions used. Native Zig feature detection checks XCR0 SSE/YMM support.",
+  "abi": "No hand-written vzeroupper; inline addition without all YMM clobbers could damage caller live upper lanes. No new stack/heap contract introduced.",
+  "required_fixes": []
+}

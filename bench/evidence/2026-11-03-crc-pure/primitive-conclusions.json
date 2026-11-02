@@ -1,0 +1,195 @@
+{
+  "status": "diagnostic_only_full_workflow_pending",
+  "captures": [
+    {
+      "capture": "primitive-ecore",
+      "raw_samples": 3750,
+      "all_checksums_equal": true,
+      "variants": {
+        "pure": {
+          "assessments": {
+            "inconclusive": 40,
+            "peer_leads": 3,
+            "kron_leads": 7
+          },
+          "geometric_mean_ratio_for_affected_lengths": 1.0003341288271508,
+          "negative_groups": [
+            {
+              "length": 0,
+              "schema": true,
+              "ratio": 0.9996720543452798
+            },
+            {
+              "length": 20,
+              "schema": false,
+              "ratio": 0.9917653258387493
+            },
+            {
+              "length": 21,
+              "schema": true,
+              "ratio": 0.9787823583111144
+            }
+          ]
+        },
+        "vex": {
+          "assessments": {
+            "inconclusive": 33,
+            "kron_leads": 16,
+            "peer_leads": 1
+          },
+          "geometric_mean_ratio_for_affected_lengths": 1.015788380046618,
+          "negative_groups": [
+            {
+              "length": 76,
+              "schema": false,
+              "ratio": 0.9875500269648889
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "primitive-pcore",
+      "raw_samples": 3750,
+      "all_checksums_equal": true,
+      "variants": {
+        "pure": {
+          "assessments": {
+            "inconclusive": 43,
+            "peer_leads": 7
+          },
+          "geometric_mean_ratio_for_affected_lengths": 0.9998705229847048,
+          "negative_groups": [
+            {
+              "length": 76,
+              "schema": false,
+              "ratio": 0.9992770892121767
+            },
+            {
+              "length": 80,
+              "schema": false,
+              "ratio": 0.9898781933814811
+            },
+            {
+              "length": 81,
+              "schema": false,
+              "ratio": 0.9938218705781534
+            },
+            {
+              "length": 81,
+              "schema": true,
+              "ratio": 0.998229788626246
+            },
+            {
+              "length": 127,
+              "schema": false,
+              "ratio": 0.9962064561821202
+            },
+            {
+              "length": 255,
+              "schema": true,
+              "ratio": 0.9958770772883145
+            },
+            {
+              "length": 511,
+              "schema": false,
+              "ratio": 0.9961577939486784
+            }
+          ]
+        },
+        "vex": {
+          "assessments": {
+            "kron_leads": 3,
+            "inconclusive": 43,
+            "peer_leads": 4
+          },
+          "geometric_mean_ratio_for_affected_lengths": 0.9997020260156682,
+          "negative_groups": [
+            {
+              "length": 128,
+              "schema": false,
+              "ratio": 0.9936266158933762
+            },
+            {
+              "length": 511,
+              "schema": false,
+              "ratio": 0.9970971489527358
+            },
+            {
+              "length": 16384,
+              "schema": false,
+              "ratio": 0.9934454766377692
+            },
+            {
+              "length": 16384,
+              "schema": true,
+              "ratio": 0.9917297883086688
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "primitive-ecore-repeat",
+      "raw_samples": 3750,
+      "all_checksums_equal": true,
+      "variants": {
+        "pure": {
+          "assessments": {
+            "inconclusive": 38,
+            "kron_leads": 8,
+            "peer_leads": 4
+          },
+          "geometric_mean_ratio_for_affected_lengths": 1.0006426904889307,
+          "negative_groups": [
+            {
+              "length": 65,
+              "schema": true,
+              "ratio": 0.998132571205872
+            },
+            {
+              "length": 129,
+              "schema": false,
+              "ratio": 0.998227412543663
+            },
+            {
+              "length": 511,
+              "schema": false,
+              "ratio": 0.9676223982640467
+            },
+            {
+              "length": 511,
+              "schema": true,
+              "ratio": 0.9722287075280124
+            }
+          ]
+        },
+        "vex": {
+          "assessments": {
+            "inconclusive": 47,
+            "peer_leads": 3
+          },
+          "geometric_mean_ratio_for_affected_lengths": 1.011229807868458,
+          "negative_groups": [
+            {
+              "length": 43,
+              "schema": false,
+              "ratio": 0.9466590753409424
+            },
+            {
+              "length": 43,
+              "schema": true,
+              "ratio": 0.9465572252754935
+            },
+            {
+              "length": 63,
+              "schema": true,
+              "ratio": 0.9707554206020289
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "assessment": "Pure legacy assembly produces identical native update code; VEX reduces copies and improves some E-core groups, with short-length negatives, P-core mixed/no qualified overall gain. No generic CRC speed claim."
+}

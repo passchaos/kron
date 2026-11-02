@@ -1,0 +1,53 @@
+{
+  "scope": "Read-only static audit of full managed Logger binaries, no performance inference",
+  "source_provenance_verified": true,
+  "owning_function": "platform.crc32.Crc32.update",
+  "before": {
+    "size_bytes": 1444,
+    "static_instructions": 320,
+    "legacy_pclmul": 20,
+    "vex_pclmul": 0,
+    "simd_moves": 20,
+    "simd_register_copies": 9,
+    "simd_loads": 11
+  },
+  "candidate": {
+    "size_bytes": 1412,
+    "static_instructions": 310,
+    "legacy_pclmul": 0,
+    "vex_pclmul": 20,
+    "simd_moves": 10,
+    "simd_register_copies": 0,
+    "simd_loads": 10
+  },
+  "both": {
+    "explicit_stack_memory": false,
+    "simd_spills": false,
+    "internal_call": false,
+    "vzeroupper": false,
+    "saved_registers": [
+      "rbp",
+      "rbx"
+    ]
+  },
+  "unchanged_owning_function_machine_code": [
+    "submitSafeDestination",
+    "drainJournal",
+    "peekChecked",
+    "validateSlot",
+    "slotChecksum"
+  ],
+  "default_crc_checks_retained": {
+    "producer_commit": [
+      "0x10fcff8",
+      "0x10fd00a",
+      "0x10fd01a"
+    ],
+    "checked_consumer_peek": "0x111cbf1 plus batch validateSlot",
+    "checked_reclaim": "0x111d7e6 releaseAfter -> peekChecked",
+    "consumer_crc_and_compare": [
+      "0x1082041",
+      "0x1082055"
+    ]
+  }
+}

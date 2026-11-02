@@ -18,6 +18,7 @@
 
 | 证据 | 范围与边界 |
 | --- | --- |
+| [CRC纯汇编/VEX实验](evidence/2026-11-03-crc-pure/README.md) | 保留AVX三操作数更新；PMU instructions约−0.7%，400项版本对照/7640万JSON和完整151步骤gate；当前Foundation双拓扑仍未达目标，全部负向/复测保留 |
 | [私有typed capture实验](evidence/2026-11-03-typed-capture/README.md) | 候选撤回；默认PMU instructions约−8.1%，完整E-core吞吐重复负向；metadata别名与clock修改deferred参数回归保留，无新的Foundation排名 |
 | [e8bd353 Foundation 详细对照](cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md) | 200 项同轮完整 Memory/Mmap；真实 spdlog 前端＋Rust 后台；中位、资源、尾部与噪声 |
 | [当前kron与raw spdlog缩减同轮抽查](cpp_reference/evidence/2026-11-02-current-managed-frontends/README.md) | bc908cc；60项/606万JSON，Memory P4 batch比值3.499达到重复性门限；raw spdlog非Foundation前端，不更新排名 |

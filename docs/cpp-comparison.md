@@ -4,13 +4,15 @@
 
 性能验收目标是同时超过 Foundation/logging + spdlog 和 Foundation/logging + tracing。`analyze.py` 对新的公共 full JSON 报告生成 `foundation_qualification`：按 repetition 配对，不混合 Memory/Mmap、producer 数、batch/sampled 或 CPU 拓扑；至少5轮、两侧与配对比值 spread 均≤10%、95%配对bootstrap区间不跨1才判断该组领先。written flush/close、初始化、完整生命周期与调用 p99/p99.9 独立判定。缺少任一前端或任一选定组的配对不能宣告同时超过；关闭吞吐全部领先也只证明这次选定负载，其他性能轴仍需自己的证据。历史报告保留原统计结果，不批量重写。
 
-最新Runtime内部提交借用源码的同轮双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing16组全部不确定，未全面超越。局部栈/指令减少、public caller snapshot与prepared回归和所有正负见[提交报告](../bench/evidence/2026-11-02-submit-abi/README.md)。未确认差距不能被当作已经超过。
+当前CRC VEX源码双拓扑320项同轮核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先/7组不确定，对tracing10组peer领先/6组不确定；P-core对spdlog5组kron领先/11组不确定，对tracing5组kron领先/1组peer领先/10组不确定。两个窗口均为`target_not_met_in_selected_cases`，P-core对tracing的SPSC Memory P1 batch约0.928×取得局部负向资格。默认CRC、所有三个校验点和完整输出保持。CRC局部少指令不能推导排名，所有阶段、尾部、负向和资格见[当前CRC报告](../bench/evidence/2026-11-03-crc-pure/README.md)、[E-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-ecore/README.md)与[P-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-pcore/README.md)。
 
-最新JSON member/cold fallback与predicate mask源码的双拓扑320项矩阵核对3232万JSON：E-core对tracing12组、对spdlog10组peer领先；P-core对tracing2组、对spdlog1组kron局部领先，其余不确定，完整目标未达到。应用400项独立模型核对与全部负向复测另列，见[JSON member报告](../bench/evidence/2026-11-02-json-member-direct/README.md)。
+此前Runtime内部提交借用源码的同轮双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing16组全部不确定，未全面超越。局部栈/指令减少、public caller snapshot与prepared回归和所有正负见[提交报告](../bench/evidence/2026-11-02-submit-abi/README.md)。未确认差距不能被当作已经超过。
 
-最新保留CRC四lane直接合并的双拓扑同轮320项对照核对3232万JSON：E-core对tracing14组peer领先、对spdlog5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定。E-core目标未达到、P-core整体inconclusive，未全面超过两个前端；完整阶段、原始数据与复现见[当前CRC报告](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
+此前JSON member/cold fallback与predicate mask源码的双拓扑320项矩阵核对3232万JSON：E-core对tracing12组、对spdlog10组peer领先；P-core对tracing2组、对spdlog1组kron局部领先，其余不确定，完整目标未达到。应用400项独立模型核对与全部负向复测另列，见[JSON member报告](../bench/evidence/2026-11-02-json-member-direct/README.md)。
 
-最新双拓扑320项对照绑定已撤回的CRC候选：E-core对tracing 12组peer领先、对spdlog 9组peer领先/3组kron领先；P-core大多不确定，没有证明同时超过两个前端。CRC其他长度的负向成本使候选全部撤回，详见[完整正负实验](../bench/evidence/2026-11-02-prefixed-crc/README.md)。这些结果保留自己的源码身份，不是恢复后生产源码的新排名。
+此前保留CRC四lane直接合并的双拓扑同轮320项对照核对3232万JSON：E-core对tracing14组peer领先、对spdlog5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定。E-core目标未达到、P-core整体inconclusive，未全面超过两个前端；完整阶段、原始数据与复现见[当前CRC报告](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
+
+此前双拓扑320项对照绑定已撤回的CRC候选：E-core对tracing 12组peer领先、对spdlog 9组peer领先/3组kron领先；P-core大多不确定，没有证明同时超过两个前端。CRC其他长度的负向成本使候选全部撤回，详见[完整正负实验](../bench/evidence/2026-11-02-prefixed-crc/README.md)。这些结果保留自己的源码身份，不是恢复后生产源码的新排名。
 
 优化前后二进制可以用 `compare_versions.py --before BEFORE --after AFTER --output-dir FRESH --affinity CPU_LIST` 比较相同的 public managed 文件流程，`--schema both`覆盖v1/v2，`--perf cpu_core|cpu_atom`另外记录完整子进程PMU。每轮完整JSON独立核对，失败现场保留，成功后清理测试日志；统计比值大于1表示after更快。基准与资格测试纳入 `zig build test-cpp-reference-report`。
 

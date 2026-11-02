@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+当前AVX目标的CRC使用128位三操作数PCLMUL，legacy/non-x86 fallback保留；实际Logger更新函数少9次SIMD寄存器复制、无新spill/call，default CRC与三个校验点不变。400项版本对照核对7640万JSON，完整PMU四组instructions约减少0.7%，吞吐/周期/尾部仍正负或不确定，短PMU负向及百万条复测全部保留。Safe/分发/真实SIGKILL/九目标gate151/151步骤、631/632测试通过（1默认local能力skip，六时区专项实际执行）。最终Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先，对tracing10组peer领先；P-core对spdlog5组kron领先、对tracing5组kron领先/1组peer领先，其余不确定，目标仍未达到。精确源码、默认校验审查和限制见[CRC VEX报告](../bench/evidence/2026-11-03-crc-pure/README.md)。
+
 私有typed capture候选已撤回：EmptyContext命名scalar层省略重复树检查，完整PMU四组instructions约减少8.1%，但双拓扑默认流程没有取得稳定吞吐领先，E-core复测出现六组局部负向。metadata别名审查、真实constructor测试、全部候选源与负向数据见[typed capture报告](../bench/evidence/2026-11-03-typed-capture/README.md)。生产仍使用原Logger/Runtime接口；保留公共shared/SPSC deferred参数被clock改坏后错误分类、无reservation和admission释放的回归。总体目标仍未达到。
 
 当前Runtime内部只携带已校验Binding的schema Ref和借用Context，一份私有Event同步完成metadata设置与编码；公开Event/Binding按值快照、clock之后的树校验、canonical解析和CRC保持。调用栈局部reservation下降，默认40项PMU四组instructions约减少0.7%，完整吞吐仍大多不确定。新增public snapshot4项覆盖caller metadata/backing不变、accepted后源覆写、forged/foreign binding与嵌套redaction；完整Safe/分发/九目标门禁151/151步骤、630/631测试通过（1默认local skip，专项实际执行）。最终两个Foundation前端双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing全部不确定，没有全面超越。源码、全部候选/负向与当前资格见[提交ABI实验](../bench/evidence/2026-11-02-submit-abi/README.md)。

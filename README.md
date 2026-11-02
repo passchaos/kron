@@ -4,9 +4,11 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 性能验收目标是超过 **Foundation/logging + spdlog** 和 **Foundation/logging + tracing**，在相同完整输出与完成边界下验证吞吐、生命周期和尾延迟；P-core/E-core分别测量。当前尚未全面达到，逐组结果与资格见 [前端对照](docs/cpp-comparison.md)。
 
-最新Runtime内部提交减少Binding/Event复制，保持公开快照和校验；完整门禁151步骤成功。默认PMU四组instructions约减少0.7%，同源码双拓扑Foundation对照核对3232万JSON，P-core对spdlog4组/对tracing2组局部领先，E-core仍未达到目标。所有候选、慢值与快照回归见[提交报告](bench/evidence/2026-11-02-submit-abi/README.md)。
+当前CRC在AVX目标使用三操作数PCLMUL，实际更新函数少9次寄存器复制、完整PMU指令约减少0.7%；默认CRC、三个校验点和恢复保持。完整Safe/分发/SIGKILL/九目标门禁151步骤成功。最新双拓扑Foundation对照核对3232万JSON：P-core对spdlog5组、对tracing5组局部领先，但E-core仍有差距、P-core也有1组对tracing落后，目标未达到；全部负向与复测见[CRC报告](bench/evidence/2026-11-03-crc-pure/README.md)。typed capture候选因完整吞吐回退已撤回，边界回归与[证据](bench/evidence/2026-11-03-typed-capture/README.md)保留。
 
-最新源码保留JSON属性前缀直接输出与predicate route位图；完整门禁149步骤通过。最终文件PMU四组指令约减少3.0%，周期和完整吞吐仍有正负；400项应用试验核对480万请求、221万完整日志。双拓扑320项Foundation对照仍未全面超过两个组合，所有负向和复测见 [当前JSON报告](bench/evidence/2026-11-02-json-member-direct/README.md)。
+此前Runtime内部提交减少Binding/Event复制，保持公开快照和校验；完整门禁151步骤成功。默认PMU四组instructions约减少0.7%，同源码双拓扑Foundation对照核对3232万JSON，P-core对spdlog4组/对tracing2组局部领先，E-core仍未达到目标。所有候选、慢值与快照回归见[提交报告](bench/evidence/2026-11-02-submit-abi/README.md)。
+
+此前源码保留JSON属性前缀直接输出与predicate route位图；完整门禁149步骤通过。最终文件PMU四组指令约减少3.0%，周期和完整吞吐仍有正负；400项应用试验核对480万请求、221万完整日志。双拓扑320项Foundation对照仍未全面超过两个组合，所有负向和复测见 [当前JSON报告](bench/evidence/2026-11-02-json-member-direct/README.md)。
 
 当前保留IEEE CRC四lane并行合并，完整ReleaseSafe/分发/SIGKILL/九目标对象门禁通过；双拓扑同轮Foundation对照核对3232万条JSON，P-core对tracing6组、对spdlog3组局部领先，其余不确定，E-core仍有明显差距。原始负向、CRC长流程复测和验收边界见 [CRC报告](bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
 

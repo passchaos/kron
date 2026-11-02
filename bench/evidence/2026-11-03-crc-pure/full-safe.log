@@ -1,0 +1,296 @@
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 0.123s
+
+OK
+single-threaded: real JSON file, selected fields, redaction, reload, durable flush, shutdown, no allocations, unavailable timed/async paths passed
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.007s
+
+OK
+random SIGKILL seed=20261031 shared schema=False: ACK=2299 written=2299 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261032 shared schema=True: ACK=4313 written=4312 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261033 spsc schema=False: ACK=4417 written=4417 recovered=0 overlap=0 partial=0
+random SIGKILL seed=20261034 spsc schema=True: ACK=1175 written=1174 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261035 shared schema=False: ACK=2622 written=2621 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261036 shared schema=True: ACK=1583 written=1582 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261037 spsc schema=False: ACK=3243 written=3242 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261038 spsc schema=True: ACK=5901 written=5900 recovered=1 overlap=0 partial=0
+random SIGKILL seed=20261039 shared schema=False: ACK=3807 written=3807 recovered=1 overlap=1 partial=0
+random SIGKILL seed=20261040 shared schema=True: ACK=4834 written=4832 recovered=2 overlap=0 partial=0
+random SIGKILL seed=20261041 spsc schema=False: ACK=5363 written=5362 recovered=2 overlap=1 partial=0
+random SIGKILL seed=20261042 spsc schema=True: ACK=3895 written=3894 recovered=2 overlap=1 partial=0
+Random-time process-crash campaign passed: 12 cases, all ACKs covered by complete output or recovery
+SIGKILL reserved: recovered 0 committed events (expected payload v4)
+SIGKILL committed: recovered 3 committed events (expected payload v4)
+SIGKILL gap: recovered 3 committed events (expected payload v4)
+SIGKILL schema-committed: recovered 3 committed events (expected payload v5)
+SIGKILL schema-gap: recovered 3 committed events (expected payload v5)
+SIGKILL hot-routes: recovered 3 committed events (expected payload v4)
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.013s
+
+OK
+verify-local
++- verify
+   +- run test kron-fuzz-smoke w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1272 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1250 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1139 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1117 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/c3bcbb8857af38072d9631dbc327db6e/kron-fuzz-smoke --cache-dir=./.zig-cache --seed=0xe99d09b3 --listen=-
+
+SIGKILL memory: accepted=3 written=0; pending events lost, 0 prior outputs preserved
+drain memory: accepted=written=3, pending=0, configured password masking verified
+SIGKILL memory: accepted=3 written=0; pending events lost, 3 prior outputs preserved
+SIGKILL mmap: recovered 3 accepted/unwritten events; 0 prior outputs preserved
+drain mmap: accepted=written=3, pending=0, configured password masking verified
+SIGKILL mmap: recovered 3 accepted/unwritten events; 3 prior outputs preserved
+Asynchronous storage SIGKILL/drain comparison passed (process crash; no power-loss claim)
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.103s
+
+OK
+Zig package consumer sync: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Independent single-threaded consumer: one OS thread verified through /proc; async modes rejected before file creation
+regex differential passed: 20234 exact outcomes
+regex differential seed=0x6b726f6e72656778, patterns=2199, comparisons=20188, compile_errors=45, match_errors=1, negative_checks=8 passed
+Independent time oracle passed: 4166 nanosecond/offset timestamps, 5845 civil dates; sha256=55e96071bb0b9209918a7ec0378bb037595d7bed712ca0b9ccd9a4854535eeec
+verify-local
++- verify
+   +- test
+      +- run test kron-compression w
+incompressible pilot: raw=65536 compressed=65646 ratio=1.0017
+compressed archive pilot: raw=27520 compressed=2650 ratio=0.0963 wall_ns=422347 cpu_ns=421258
+failed command: ./.zig-cache/o/b72fe52ede2738dd3cfea589d17ffa23/kron-compression --cache-dir=./.zig-cache --seed=0xe99d09b3 --listen=-
+
+System local oracle: 6 zones × 5 modes, 372 complete timestamps; DST/half-hour/quarter-hour/rollback/future, changed-zone recovery rejection and historical offset checked
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+OK
+Zig package consumer sync: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer mmap: 2 written, pending=0, journal_files=1, source snapshots and redaction verified
+Zig package consumer spsc_memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer spsc_mmap: 2 written, pending=0, journal_files=2, source snapshots and redaction verified
+PASS bare_pointer.zig: kron cannot capture
+PASS array_by_value.zig: kron cannot capture
+PASS duplicate_tuple.zig: DuplicateKey
+PASS format_wrong_type.zig: ArgumentTypeMismatch
+PASS format_missing_argument.zig: TooFewArguments
+PASS format_custom_formatter.zig: explicit preencoded
+PASS configuration_snapshot_access.zig: no field named 'configuration'
+PASS runtime_filter_access.zig: no field named 'filter'
+PASS adapter_unsupported_member.zig: cannot capture selected member
+PASS adapter_byte_array.zig: cannot capture selected member
+PASS adapter_implicit_nested.zig: cannot capture selected member
+PASS adapter_duplicate_selection.zig: duplicate selected member
+PASS adapter_missing_member.zig: has no selected member
+PASS adapter_input_by_value.zig: input must be a pointer
+PASS adapter_tuple.zig: requires named struct members
+PASS adapter_selection_budget.zig: 64 selected-field budget
+PASS adapter_duplicate_key.zig: duplicate output key
+Native Zig platform qualification linux: 5 runtime modes, inline/schema journal reopen, rolling retention and explicit durability verified
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.026s
+
+OK
+seed=42 schema=False: written=78 pending=1 wraps=4 epoch thresholds=56,79
+seed=43 schema=True: written=68 pending=3 wraps=4 epoch thresholds=56,69
+seed=44 schema=False: written=116 pending=5 wraps=7 epoch thresholds=80,117
+seed=45 schema=True: written=98 pending=4 wraps=6 epoch thresholds=72,101
+seed=46 schema=False: written=73 pending=4 wraps=4 epoch thresholds=16,75
+seed=47 schema=True: written=109 pending=1 wraps=6 epoch thresholds=64,110
+seed=48 schema=False: written=104 pending=2 wraps=6 epoch thresholds=80,106
+seed=49 schema=True: written=72 pending=3 wraps=4 epoch thresholds=40,73
+seed=50 schema=False: written=127 pending=7 wraps=7 epoch thresholds=48,130
+seed=51 schema=True: written=95 pending=7 wraps=5 epoch thresholds=80,100
+Seeded exact-boundary process recovery campaign passed; no arbitrary-crash-point or power-loss claim
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.445s
+
+OK
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.003s
+
+OK
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK
+Zig package consumer sync: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer mmap: 2 written, pending=0, journal_files=1, source snapshots and redaction verified
+Zig package consumer spsc_memory: 2 written, pending=0, journal_files=0, source snapshots and redaction verified
+Zig package consumer spsc_mmap: 2 written, pending=0, journal_files=2, source snapshots and redaction verified
+Build Summary: 151/151 steps succeeded; 631/632 tests passed (1 skipped)
+verify-local success
++- verify success
+   +- test success
+   |  +- run test 441 pass, 1 skip (442 total) 1s MaxRSS:28M
+   |  |  +- compile test ReleaseSafe native success 37s MaxRSS:1G
+   |  +- run test kron-adapter 5 pass (5 total) 68ms MaxRSS:7M
+   |  |  +- compile test kron-adapter ReleaseSafe native success 18s MaxRSS:687M
+   |  +- run test kron-redaction-paths 3 pass (3 total) 19ms MaxRSS:8M
+   |  |  +- compile test kron-redaction-paths ReleaseSafe native success 18s MaxRSS:693M
+   |  +- run test kron-submission-snapshot 4 pass (4 total) 18ms MaxRSS:9M
+   |  |  +- compile test kron-submission-snapshot ReleaseSafe native success 20s MaxRSS:738M
+   |  +- run test kron-async-storage 7 pass (7 total) 37ms MaxRSS:8M
+   |  |  +- compile test kron-async-storage ReleaseSafe native success 20s MaxRSS:766M
+   |  +- run test kron-file-delivery-failures 6 pass (6 total) 99ms MaxRSS:8M
+   |  |  +- compile test kron-file-delivery-failures ReleaseSafe native success 19s MaxRSS:699M
+   |  +- run test kron-capture-integration 8 pass (8 total) 15ms MaxRSS:9M
+   |  |  +- compile test kron-capture-integration ReleaseSafe native success 20s MaxRSS:746M
+   |  +- run test kron-integration 13 pass (13 total) 506ms MaxRSS:9M
+   |  |  +- compile test kron-integration ReleaseSafe native success 19s MaxRSS:717M
+   |  +- run test kron-time 5 pass (5 total) 87ms MaxRSS:7M
+   |  |  +- compile test kron-time ReleaseSafe native success 20s MaxRSS:771M
+   |  +- run python3 success 52ms
+   |  |  +- compile exe kron-time-oracle ReleaseSafe native success 11s MaxRSS:514M
+   |  +- run test kron-local-time 2 pass (2 total) 72ms MaxRSS:7M
+   |  |  +- compile test kron-local-time ReleaseSafe native success 18s MaxRSS:683M
+   |  +- run python3 success 189ms
+   |  |  +- compile exe kron-local-time-oracle ReleaseSafe native success 17s MaxRSS:682M
+   |  +- run test kron-configurations 12 pass (12 total) 72ms MaxRSS:8M
+   |  |  +- compile test kron-configurations ReleaseSafe native success 20s MaxRSS:777M
+   |  +- run test kron-transactions 8 pass (8 total) 27ms MaxRSS:9M
+   |  |  +- compile test kron-transactions ReleaseSafe native success 19s MaxRSS:712M
+   |  +- run test kron-independent-outputs 16 pass (16 total) 110ms MaxRSS:52M
+   |  |  +- compile test kron-independent-outputs ReleaseSafe native success 21s MaxRSS:799M
+   |  +- run test kron-route-policies 11 pass (11 total) 57ms MaxRSS:10M
+   |  |  +- compile test kron-route-policies ReleaseSafe native success 22s MaxRSS:803M
+   |  +- run test kron-route-filters 1 pass (1 total) 36ms MaxRSS:9M
+   |  |  +- compile test kron-route-filters ReleaseSafe native success 18s MaxRSS:664M
+   |  +- run test kron-predicates 8 pass (8 total) 85ms MaxRSS:8M
+   |  |  +- compile test kron-predicates ReleaseSafe native success 19s MaxRSS:657M
+   |  +- run test kron-tsc-qualification 3 pass (3 total) 53ms MaxRSS:9M
+   |  |  +- compile test kron-tsc-qualification ReleaseSafe native cached 8ms MaxRSS:40M
+   |  +- run test kron-compression 10 pass (10 total) 9ms MaxRSS:8M
+   |  |  +- compile test kron-compression ReleaseSafe native success 12s MaxRSS:542M
+   |  +- run test kron-deadline 11 pass (11 total) 122ms MaxRSS:7M
+   |  |  +- compile test kron-deadline ReleaseSafe native success 17s MaxRSS:681M
+   |  +- run test kron-query 23 pass (23 total) 213ms MaxRSS:36M
+   |     +- compile test kron-query ReleaseSafe native success 18s MaxRSS:705M
+   +- run python3 success 84ms
+   |  +- compile exe kron-crash-writer ReleaseSafe native success 17s MaxRSS:660M
+   |  +- compile exe kroncat ReleaseSafe native success 13s MaxRSS:560M
+   +- run python3 success 70ms
+   |  +- compile exe kron-async-crash-writer ReleaseSafe native success 17s MaxRSS:660M
+   |  +- compile exe kroncat ReleaseSafe native (reused)
+   +- run python3 success 212ms
+   |  +- compile exe kron-recovery-campaign-writer ReleaseSafe native success 18s MaxRSS:684M
+   |  +- compile exe kroncat ReleaseSafe native (reused)
+   +- test-runtime-crash success
+   |  +- run python3 success 1s
+   |  |  +- compile exe kron-runtime-crash-writer ReleaseSafe native success 18s MaxRSS:675M
+   |  |  +- compile exe kroncat ReleaseSafe native (reused)
+   |  +- run python3 success 47ms
+   +- run python3 success 22s
+   +- run python3 success 18s
+   +- run python3 success 203ms
+   +- run python3 success 3s
+   +- run test kron-fuzz-smoke 7 pass (7 total) 667ms MaxRSS:5M
+   |  +- compile test kron-fuzz-smoke ReleaseSafe native success 15s MaxRSS:625M
+   +- run exe kron-single-threaded success 17ms
+   |  +- compile exe kron-single-threaded ReleaseSafe native success 16s MaxRSS:692M
+   +- run python3 success 174ms
+   +- run python3 success 149ms
+   +- test-cpp-reference-report success
+   |  +- run python3 success 51ms
+   |  +- run python3 success 490ms
+   |  +- run python3 success 50ms
+   |  +- run python3 success 74ms
+   |  +- run test kron-reference-options 1 pass (1 total) 2ms MaxRSS:11M
+   |     +- compile test kron-reference-options ReleaseSafe native success 11s MaxRSS:523M
+   +- run python3 success 522ms
+   |  +- compile exe kron-regex-differential ReleaseSafe native success 12s MaxRSS:516M
+   +- run test kron-regex-fuzz 2 pass (2 total) 59ms MaxRSS:6M
+   |  +- compile test kron-regex-fuzz ReleaseSafe native success 11s MaxRSS:519M
+   +- run test kron-regex-equivalence 3 pass (3 total) 58ms MaxRSS:10M
+   |  +- compile test kron-regex-equivalence ReleaseSafe native success 12s MaxRSS:529M
+   +- test-regex-bench success
+   |  +- run test kron-regex-bench-tests 1 pass (1 total) 10ms MaxRSS:9M
+   |  |  +- compile test kron-regex-bench-tests ReleaseSafe native success 17s MaxRSS:664M
+   |  +- run python3 success 50ms
+   +- run test kron-bench-tests 10 pass (10 total) 2ms MaxRSS:10M
+   |  +- compile test kron-bench-tests ReleaseSafe native success 12s MaxRSS:553M
+   +- test-application-bench success
+   |  +- run test kron-application-bench-tests 3 pass (3 total) 2ms MaxRSS:5M
+   |  |  +- compile test kron-application-bench-tests ReleaseSafe native success 11s MaxRSS:520M
+   |  +- run python3 success 59ms
+   +- run test kron-dispatch-tests 3 pass (3 total) 2ms MaxRSS:6M
+   |  +- compile test kron-dispatch-tests ReleaseSafe native success 11s MaxRSS:515M
+   +- run test kron-snapshot-tests 1 pass (1 total) 2ms MaxRSS:10M
+   |  +- compile test kron-snapshot-tests ReleaseSafe native success 11s MaxRSS:514M
+   +- run test kron-sampling-bench-tests 1 pass (1 total) 2ms MaxRSS:10M
+   |  +- compile test kron-sampling-bench-tests ReleaseSafe native success 11s MaxRSS:515M
+   +- run test kron-encoding-bench-tests 1 pass (1 total) 2ms MaxRSS:10M
+   |  +- compile test kron-encoding-bench-tests ReleaseSafe native success 12s MaxRSS:543M
+   +- run test kron-capture-bench-tests 1 pass (1 total) 7ms MaxRSS:10M
+   |  +- compile test kron-capture-bench-tests ReleaseSafe native success 18s MaxRSS:671M
+   +- compile exe kron-quick-start ReleaseSafe native success 18s MaxRSS:699M
+   |  +- options cached
+   +- compile exe kron-file-logging ReleaseSafe native success 17s MaxRSS:670M
+   |  +- options cached
+   +- compile exe kron-structured ReleaseSafe native success 18s MaxRSS:645M
+   |  +- options cached
+   +- compile exe kron-threaded ReleaseSafe native success 18s MaxRSS:662M
+   |  +- options cached
+   +- compile exe kron-rolling ReleaseSafe native success 18s MaxRSS:603M
+   |  +- options cached
+   +- compile exe kron-basic ReleaseSafe native success 17s MaxRSS:668M
+   |  +- options cached
+   +- compile exe kron-readable-time ReleaseSafe native success 17s MaxRSS:688M
+   |  +- options cached
+   +- compile exe kron-async-memory ReleaseSafe native success 17s MaxRSS:690M
+   |  +- options cached
+   +- compile exe kron-std-log ReleaseSafe native success 18s MaxRSS:619M
+   |  +- options cached
+   +- compile exe kron-prepared ReleaseSafe native success 18s MaxRSS:698M
+   |  +- options cached
+   +- compile exe kron-hot-configuration ReleaseSafe native success 17s MaxRSS:667M
+   |  +- options cached
+   +- compile exe kron-configuration-sources ReleaseSafe native success 16s MaxRSS:651M
+   |  +- options cached
+   +- compile exe kron-predicates ReleaseSafe native success 17s MaxRSS:673M
+   |  +- options cached
+   +- compile exe kron-tsc-clock ReleaseSafe native success 16s MaxRSS:633M
+   |  +- options cached
+   +- compile exe kron-local-time-example ReleaseSafe native success 18s MaxRSS:697M
+   |  +- options cached
+   +- compile exe kron-file-stdout-local-time-example ReleaseSafe native success 19s MaxRSS:689M
+   |  +- options cached
+   +- compile exe kron-mmap-example ReleaseSafe native success 18s MaxRSS:703M
+   |  +- options cached
+   +- compile exe kron-source-location-example ReleaseSafe native success 18s MaxRSS:695M
+   |  +- options cached
+   +- compile exe kron-route-policies-example ReleaseSafe native success 18s MaxRSS:697M
+      +- options cached
+test-package-distribution success
++- run python3 success 36s
+check-platforms success
++- compile obj kron-x86_64-linux-musl ReleaseSafe x86_64-linux-musl success 20s MaxRSS:729M
++- compile obj kron-aarch64-linux-musl ReleaseSafe aarch64-linux-musl success 21s MaxRSS:878M
++- compile obj kron-x86_64-windows-gnu ReleaseSafe x86_64-windows-gnu success 18s MaxRSS:688M
++- compile obj kron-aarch64-macos-none ReleaseSafe aarch64-macos success 19s MaxRSS:801M
++- compile obj kron-x86_64-macos-none ReleaseSafe x86_64-macos success 19s MaxRSS:696M
++- compile obj kron-aarch64-linux-android ReleaseSafe aarch64-linux-android success 22s MaxRSS:885M
++- compile obj kron-x86_64-linux-android ReleaseSafe x86_64-linux-android success 20s MaxRSS:720M
++- compile obj kron-aarch64-ios-none ReleaseSafe aarch64-ios success 19s MaxRSS:792M
++- compile obj kron-aarch64-ios-simulator ReleaseSafe aarch64-ios-simulator success 19s MaxRSS:802M
+
