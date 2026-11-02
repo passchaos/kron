@@ -1,0 +1,120 @@
+{
+  "status": "candidate_withdrawn",
+  "baseline": "58596c9",
+  "performance_target": "exceed Foundation/logging + spdlog and Foundation/logging + tracing in equivalent complete workflows",
+  "production_retained": false,
+  "reason": "Instructions declined but final workflow showed repeated E-core regressions and no qualified throughput leads. Metadata snapshot fix produced identical executable/data sections. P-core qualifications remained inconclusive.",
+  "completed_version_comparisons": [
+    {
+      "directory": "ecore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "inconclusive": 12,
+        "peer_leads": 4
+      }
+    },
+    {
+      "directory": "final-ecore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "peer_leads": 3,
+        "inconclusive": 13
+      }
+    },
+    {
+      "directory": "final-pcore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "inconclusive": 16
+      }
+    },
+    {
+      "directory": "final-prepared-pmu",
+      "trials": 80,
+      "physical_records_verified": 8080000,
+      "written_close_assessments": {
+        "peer_leads": 2,
+        "inconclusive": 6
+      }
+    },
+    {
+      "directory": "first-ecore-pmu",
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "written_close_assessments": {
+        "inconclusive": 4
+      }
+    },
+    {
+      "directory": "inline-ecore-pmu",
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "written_close_assessments": {
+        "inconclusive": 2,
+        "peer_leads": 2
+      }
+    },
+    {
+      "directory": "meta-ecore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "peer_leads": 6,
+        "inconclusive": 10
+      }
+    },
+    {
+      "directory": "pcore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "inconclusive": 15,
+        "peer_leads": 1
+      }
+    },
+    {
+      "directory": "postclock-ecore-pmu",
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "written_close_assessments": {
+        "inconclusive": 4
+      }
+    },
+    {
+      "directory": "prepared-ecore-pmu",
+      "trials": 80,
+      "physical_records_verified": 8080000,
+      "written_close_assessments": {
+        "peer_leads": 2,
+        "inconclusive": 6
+      }
+    },
+    {
+      "directory": "shared-final-ecore-pmu",
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "written_close_assessments": {
+        "peer_leads": 3,
+        "inconclusive": 1
+      }
+    },
+    {
+      "directory": "meta-pcore-workflow",
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "written_close_assessments": {
+        "inconclusive": 15,
+        "peer_leads": 1
+      }
+    }
+  ],
+  "total_completed_trials": 1280,
+  "total_physical_records_verified": 129280000,
+  "candidate_correctness": "five constructor tests + six public tests; original and private-Meta candidates tested in Debug, ReleaseSafe, ReleaseFast. New regression for public deferred argument mutation retained in baseline test suite.",
+  "foundation_comparison_for_candidate": "not_run: candidate rejected before new ranking",
+  "full_production_gate_for_candidate": "not_run: candidate not retained; prior baseline gate identity remains 58596c9",
+  "remaining": "retained public argument regression gate; isolated CRC follow-up"
+}

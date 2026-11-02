@@ -1,0 +1,436 @@
+diff --git a/src/core/codec.zig b/src/core/codec.zig
+index a774dab..96a4635 100644
+--- a/src/core/codec.zig
++++ b/src/core/codec.zig
+@@ -47,7 +47,18 @@ pub fn encodedSize(event: Event) EncodeError!usize {
+ /// reuses the result for the accepted write; public encode keeps level-first
+ /// error ordering.
+ pub fn measure(event: Event) EncodeError!usize {
+-    var visitor: SizeVisitor = .{ .total = header_size };
++    var visitor: SizeVisitor = .{};
++    observeMetadata(event, &visitor);
++    var validator: field.ValueValidator = .{};
++    try validator.fieldsWith(event.fields, &visitor);
++    try validator.argumentsWith(event.format_args, &visitor);
++    return visitor.result();
++}
++
++/// Observe only node-independent header/string lengths. This supplies no
++/// validation proof; public codecs still validate the complete borrowed tree.
++pub fn observeMetadata(event: Event, visitor: *SizeVisitor) void {
++    visitor.add(header_size);
+     visitor.blob(event.scope.len, false);
+     visitor.blob(event.message.len, false);
+     if (event.trace_id != null) visitor.add(16);
+@@ -58,10 +69,6 @@ pub fn measure(event: Event) EncodeError!usize {
+         visitor.blob(source.fn_name.len, true);
+         visitor.add(8);
+     }
+-    var validator: field.ValueValidator = .{};
+-    try validator.fieldsWith(event.fields, &visitor);
+-    try validator.argumentsWith(event.format_args, &visitor);
+-    return visitor.result();
+ }
+ 
+ /// Wire size of the value tag and payload, excluding an attribute key.
+diff --git a/src/core/logger.zig b/src/core/logger.zig
+index 7309360..ca64a93 100644
+--- a/src/core/logger.zig
++++ b/src/core/logger.zig
+@@ -5,6 +5,7 @@ const std = @import("std");
+ const contexts = @import("context.zig");
+ const fields = @import("field.zig");
+ const deferred_format = @import("../submit/format.zig");
++const typed_capture = @import("runtime_capture.zig");
+ pub const Level = @import("level.zig").Level;
+ pub const Event = @import("event.zig").Event;
+ pub const TraceContext = @import("../telemetry/trace_context.zig").TraceContext;
+@@ -323,6 +324,30 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
+ 
+         fn captureAndSubmit(self: *const Self, admission: SubmissionAdmission, source: ?std.builtin.SourceLocation, level: Level, message: []const u8, input: anytype, message_template: bool, format_args: []const Field) anyerror!EmitResult {
+             const Input = @TypeOf(input);
++            const supported_owner = comptime @hasDecl(Owner, "captureTyped") and
++                (!@hasDecl(Owner, "supportsTypedCapture") or Owner.supportsTypedCapture);
++            if (comptime Context == contexts.EmptyContext and supported_owner and typed_capture.supports(Input)) {
++                if (!@hasDecl(Owner, "canCaptureTyped") or self.owner.canCaptureTyped()) {
++                    const result = self.owner.captureTyped(admission, .{
++                        .level = level,
++                        .scope = self.scope,
++                        .message = message,
++                        .message_template = message_template,
++                        .source = source,
++                        .trace_context = self.trace_context,
++                        .route_mask = admission.route_mask,
++                        .config_generation = admission.config_generation,
++                    }, input, format_args, self.owner);
++                    return switch (result) {
++                        .result => |outcome| outcome,
++                        .capture_error => |failure| blk: {
++                            self.owner.captureFailed(failure);
++                            break :blk failure;
++                        },
++                        .submit_error => |failure| failure,
++                    };
++                }
++            }
+             const capacity = comptime if (Context == contexts.EmptyContext) switch (@typeInfo(Input)) {
+                 .@"struct" => |input_info| @min(input_info.fields.len, contexts.max_fields),
+                 else => contexts.max_fields,
+diff --git a/src/core/prepared.zig b/src/core/prepared.zig
+index b6a032b..1bf6b80 100644
+--- a/src/core/prepared.zig
++++ b/src/core/prepared.zig
+@@ -5,6 +5,7 @@ const std = @import("std");
+ const logger = @import("logger.zig");
+ const journal = @import("../journal/journal.zig");
+ const schema = @import("../journal/schema.zig");
++const capture = @import("runtime_capture.zig");
+ 
+ pub const Binding = struct {
+     owner: *anyopaque,
+@@ -17,6 +18,8 @@ pub fn Owner(comptime R: type) type {
+     return struct {
+         const Self = @This();
+         pub const value_owner = true;
++        pub const supportsTypedCapture = @hasDecl(R, "captureTypedWithSchema") and
++            (if (@hasDecl(R, "supportsTypedCapture")) R.supportsTypedCapture else true);
+         runtime: *R,
+         binding: Binding,
+ 
+@@ -40,6 +43,15 @@ pub fn Owner(comptime R: type) type {
+             return self.runtime.submitWithSchema(admission, event, self.binding);
+         }
+ 
++        pub fn canCaptureTyped(self: Self) bool {
++            if (comptime @hasDecl(R, "canCaptureTyped")) return self.runtime.canCaptureTyped();
++            return true;
++        }
++
++        pub fn captureTyped(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, clock_reader: anytype) capture.Outcome {
++            return self.runtime.captureTypedWithSchema(admission, meta, input, args, self.binding, clock_reader);
++        }
++
+         pub fn captureFailed(self: Self, err: anyerror) void {
+             self.runtime.captureFailed(err);
+         }
+@@ -54,6 +66,8 @@ pub fn ThreadOwner(comptime Base: type) type {
+     return struct {
+         const Self = @This();
+         pub const value_owner = true;
++        pub const supportsTypedCapture = @hasDecl(Base, "captureTypedWithSchema") and
++            (if (@hasDecl(Base, "supportsTypedCapture")) Base.supportsTypedCapture else true);
+         base: Base,
+         binding: Binding,
+ 
+@@ -77,6 +91,15 @@ pub fn ThreadOwner(comptime Base: type) type {
+             return self.base.submitWithSchema(admission, event, self.binding);
+         }
+ 
++        pub fn canCaptureTyped(self: Self) bool {
++            if (comptime @hasDecl(Base, "canCaptureTyped")) return self.base.canCaptureTyped();
++            return true;
++        }
++
++        pub fn captureTyped(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, clock_reader: anytype) capture.Outcome {
++            return self.base.captureTypedWithSchema(admission, meta, input, args, self.binding, clock_reader);
++        }
++
+         pub fn captureFailed(self: Self, err: anyerror) void {
+             self.base.captureFailed(err);
+         }
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 3a1fb26..955e228 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -37,6 +37,8 @@ const Clock = @import("../platform/clock.zig").Clock;
+ const control_module = @import("control.zig");
+ pub const Deadline = control_module.Deadline;
+ const admission_protocol = @import("admission.zig");
++const typed_capture = @import("runtime_capture.zig");
++const SizeVisitor = @import("wire_size.zig").SizeVisitor;
+ const closing_bit = admission_protocol.closing_bit;
+ const cut_bit = admission_protocol.cut_bit;
+ const count_mask = admission_protocol.count_mask;
+@@ -585,6 +587,107 @@ pub const Runtime = struct {
+         return self.submitDestination(admission, original, journal, token, binding.reference);
+     }
+ 
++    // These typed entries own construction of private scalar descriptors. They
++    // accept no Event, measured length or caller-defined validation credential.
++    pub fn captureTyped(self: *Runtime, admission: Admission, meta: typed_capture.Meta, input: anytype, arguments: []const Field, clock_reader: anytype) typed_capture.Outcome {
++        const context: TypedContext(false, false) = .{ .runtime = self, .admission = admission };
++        return typed_capture.capture(context, meta, input, arguments, clock_reader, consumeTyped);
++    }
++
++    pub fn captureTypedWithSchema(self: *Runtime, admission: Admission, meta: typed_capture.Meta, input: anytype, arguments: []const Field, binding: SchemaBinding, clock_reader: anytype) typed_capture.Outcome {
++        const context: TypedContext(false, true) = .{ .runtime = self, .admission = admission, .binding = BindingIdentity.init(binding) };
++        return typed_capture.capture(context, meta, input, arguments, clock_reader, consumeTyped);
++    }
++
++    pub fn captureThreadTyped(self: *Runtime, thread: thread_module.ThreadOwner(Runtime), admission: Admission, meta: typed_capture.Meta, input: anytype, arguments: []const Field, binding: ?SchemaBinding, clock_reader: anytype) typed_capture.Outcome {
++        if (binding) |prepared| {
++            const context: TypedContext(true, true) = .{ .runtime = self, .admission = admission, .thread = thread, .binding = BindingIdentity.init(prepared) };
++            return typed_capture.capture(context, meta, input, arguments, clock_reader, consumeTyped);
++        }
++        const context: TypedContext(true, false) = .{ .runtime = self, .admission = admission, .thread = thread };
++        return typed_capture.capture(context, meta, input, arguments, clock_reader, consumeTyped);
++    }
++
++    const BindingIdentity = struct {
++        owner: *anyopaque,
++        journal: *Journal,
++        reference: schema_module.Ref,
++
++        fn init(binding: SchemaBinding) BindingIdentity {
++            return .{ .owner = binding.owner, .journal = binding.journal, .reference = binding.reference };
++        }
++    };
++
++    fn TypedContext(comptime threaded: bool, comptime prepared: bool) type {
++        return struct {
++            pub const is_threaded = threaded;
++            pub const is_prepared = prepared;
++            runtime: *Runtime,
++            admission: Admission,
++            thread: if (threaded) thread_module.ThreadOwner(Runtime) else void = if (threaded) undefined else {},
++            binding: if (prepared) BindingIdentity else void = if (prepared) undefined else {},
++        };
++    }
++
++    const TypedArgumentSize = struct {
++        pub const Error = error{};
++        size: *SizeVisitor,
++        validator: *const @import("field.zig").ValueValidator,
++        referenced: bool,
++
++        pub fn onField(self: *@This(), entry: Field) Error!void {
++            if (!self.referenced or self.validator.depth != 0) try self.size.onField(entry);
++        }
++        pub fn onValue(self: *@This(), value: @import("field.zig").Value) Error!void {
++            try self.size.onValue(value);
++        }
++    };
++
++    fn consumeTyped(typed: anytype, captured: *typed_capture.Captured) !EmitResult {
++        const self = typed.runtime;
++        const Context = @TypeOf(typed);
++        const event = &captured.event;
++        var destination = self.journal;
++        var producer_token: ?JournalModule.SingleProducerToken = null;
++        if (comptime Context.is_threaded) {
++            // Thread validation and scope/channel selection stay after clock,
++            // at the original ThreadOwner.submit boundary.
++            const target = try typed.thread.captureTarget();
++            if (target.owner != self) return error.InvalidChannel;
++            event.scope = target.scope;
++            event.channel = target.channel;
++            destination = target.journal;
++            producer_token = target.producer_token;
++        }
++        const binding: ?schema_module.Ref = if (Context.is_prepared) blk: {
++            if (typed.binding.owner != @as(*anyopaque, @ptrCast(self)) or typed.binding.journal != destination) return error.InvalidSchemaBinding;
++            break :blk typed.binding.reference;
++        } else null;
++        if (producer_token == null and event.channel != 0) return error.InvalidChannel;
++        if (producer_token != null and (event.channel == 0 or event.channel > (if (self.thread_registry) |registry| registry.channelCount() else 0))) return error.InvalidChannel;
++        const snapshot = try self.admittedSnapshot(typed.admission);
++        var validator: @import("field.zig").ValueValidator = .{ .nodes = event.fields.len };
++        const measured: ?usize = if (snapshot.redactor.rule_count == 0) blk: {
++            var size: SizeVisitor = .{ .total = captured.value_bytes };
++            if (binding == null) {
++                size.add(@intCast(captured.keys_bytes));
++                codec.observeMetadata(event.*, &size);
++            }
++            var visitor: TypedArgumentSize = .{ .size = &size, .validator = &validator, .referenced = binding != null };
++            try validator.argumentsWith(event.format_args, &visitor);
++            // Prepared sizes keep their original late shape/level/TooLarge
++            // boundary. Inline errors still precede all predicates/reservations.
++            break :blk if (binding != null) @intCast(size.total) else try size.result();
++        } else blk: {
++            try validator.arguments(event.format_args);
++            break :blk null;
++        };
++        const context: SubmissionContext = .{ .admission = typed.admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding, .encoded_size = measured, .tree_validated = measured != null };
++        if (snapshot.redactor.rule_count != 0)
++            return @import("runtime_redaction.zig").submit(self, &snapshot.redactor, event, &context, submitSafeDestination);
++        return self.submitSafeDestination(event, &context);
++    }
++
+     fn submitDestination(self: *Runtime, admission: Admission, original: Event, destination: ?*Journal, producer_token: ?JournalModule.SingleProducerToken, binding: ?schema_module.Ref) !EmitResult {
+         if (producer_token == null and original.channel != 0) return error.InvalidChannel;
+         if (producer_token != null and (original.channel == 0 or original.channel > (if (self.thread_registry) |registry| registry.channelCount() else 0))) return error.InvalidChannel;
+@@ -1400,4 +1503,5 @@ test {
+     _ = @import("tests/runtime_coalesced.zig");
+     _ = @import("tests/runtime.zig");
+     _ = @import("tests/runtime_delivery.zig");
++    _ = @import("runtime_capture.zig");
+ }
+diff --git a/src/core/static_owner.zig b/src/core/static_owner.zig
+index 480b684..1b1ec10 100644
+--- a/src/core/static_owner.zig
++++ b/src/core/static_owner.zig
+@@ -3,11 +3,14 @@
+ //! same runtime; the backend does not become a second logging implementation.
+ const std = @import("std");
+ const logger = @import("logger.zig");
++const capture = @import("runtime_capture.zig");
+ 
+ pub fn StaticClockOwner(comptime Base: type, comptime ClockProvider: type) type {
+     return struct {
+         const Self = @This();
+         pub const value_owner = true;
++        pub const supportsTypedCapture = @hasDecl(Base, "captureTyped") and
++            (if (@hasDecl(Base, "supportsTypedCapture")) Base.supportsTypedCapture else true);
+         base: logger.Logger(Base, .trace).OwnerStorage,
+         scope: []const u8 = "default",
+ 
+@@ -27,6 +30,15 @@ pub fn StaticClockOwner(comptime Base: type, comptime ClockProvider: type) type
+             return self.base.submit(admission, event);
+         }
+ 
++        pub fn canCaptureTyped(self: Self) bool {
++            if (comptime @hasDecl(Base, "canCaptureTyped")) return self.base.canCaptureTyped();
++            return true;
++        }
++
++        pub fn captureTyped(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, clock_reader: anytype) capture.Outcome {
++            return self.base.captureTyped(admission, meta, input, args, clock_reader);
++        }
++
+         pub inline fn nowNs(self: Self) i64 {
+             const io = if (comptime @hasField(Base, "io")) self.base.io else self.base.registry.io;
+             return ClockProvider.realNow(io);
+@@ -61,6 +73,8 @@ pub fn InstanceClockOwner(comptime Base: type) type {
+     return struct {
+         const Self = @This();
+         pub const value_owner = true;
++        pub const supportsTypedCapture = @hasDecl(Base, "captureTyped") and
++            (if (@hasDecl(Base, "supportsTypedCapture")) Base.supportsTypedCapture else true);
+         base: logger.Logger(Base, .trace).OwnerStorage,
+         clock: @import("../platform/clock.zig").Clock,
+         scope: []const u8 = "default",
+@@ -81,6 +95,15 @@ pub fn InstanceClockOwner(comptime Base: type) type {
+             return self.base.submit(admission, event);
+         }
+ 
++        pub fn canCaptureTyped(self: Self) bool {
++            if (comptime @hasDecl(Base, "canCaptureTyped")) return self.base.canCaptureTyped();
++            return true;
++        }
++
++        pub fn captureTyped(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, clock_reader: anytype) capture.Outcome {
++            return self.base.captureTyped(admission, meta, input, args, clock_reader);
++        }
++
+         pub fn nowNs(self: Self) i64 {
+             const io = if (comptime @hasField(Base, "io")) self.base.io else self.base.registry.io;
+             return self.clock.realNow(io);
+diff --git a/src/core/thread_registry.zig b/src/core/thread_registry.zig
+index ad6b0e3..c9cad56 100644
+--- a/src/core/thread_registry.zig
++++ b/src/core/thread_registry.zig
+@@ -6,6 +6,8 @@ const logger = @import("logger.zig");
+ const spsc = @import("../journal/spsc.zig");
+ const journal_module = @import("../journal/journal.zig");
+ const cache_module = @import("../config/cache.zig");
++const capture = @import("runtime_capture.zig");
++const prepared = @import("prepared.zig");
+ pub const Journal = journal_module.Journal;
+ pub const ProducerToken = spsc.ProducerToken;
+ pub const max_scope_bytes = 128;
+@@ -253,6 +255,8 @@ pub fn ThreadOwner(comptime R: type) type {
+     return struct {
+         const Self = @This();
+         pub const value_owner = true;
++        pub const supportsTypedCapture = @hasDecl(R, "captureThreadTyped") and
++            (if (@hasDecl(R, "supportsTypedCapture")) R.supportsTypedCapture else true);
+         registry: *Registry(R),
+         control_index: usize,
+         producer_token: ProducerToken,
+@@ -371,6 +375,33 @@ pub fn ThreadOwner(comptime R: type) type {
+             return self.registry.owner.submitToJournalWithSchema(admission, event, control.channel.journal, self.producer_token, binding);
+         }
+ 
++        /// Resolve only the channel ownership metadata. Typed capture calls
++        /// this at the same post-clock boundary as ordinary submit validation.
++        pub fn captureTarget(self: Self) anyerror!struct {
++            scope: []const u8,
++            channel: u32,
++            journal: *Journal,
++            producer_token: journal_module.SingleProducerToken,
++            owner: *R,
++        } {
++            const control = try self.validate();
++            return .{
++                .scope = control.scope(),
++                .channel = @intCast(self.control_index + 1),
++                .journal = control.channel.journal,
++                .producer_token = self.producer_token,
++                .owner = self.registry.owner,
++            };
++        }
++
++        pub fn captureTyped(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, clock_reader: anytype) capture.Outcome {
++            return self.registry.owner.captureThreadTyped(self, admission, meta, input, args, null, clock_reader);
++        }
++
++        pub fn captureTypedWithSchema(self: Self, admission: logger.Admission, meta: capture.Meta, input: anytype, args: []const logger.Field, binding: prepared.Binding, clock_reader: anytype) capture.Outcome {
++            return self.registry.owner.captureThreadTyped(self, admission, meta, input, args, binding, clock_reader);
++        }
++
+         pub fn nowNs(self: Self) i64 {
+             return self.registry.owner.nowNs();
+         }
+diff --git a/src/logging/handle.zig b/src/logging/handle.zig
+index b2607c5..364e62e 100644
+--- a/src/logging/handle.zig
++++ b/src/logging/handle.zig
+@@ -4,6 +4,7 @@ const logging = @import("root.zig");
+ const Runtime = @import("../core/runtime.zig").Runtime;
+ const core = @import("../core/logger.zig");
+ const threads = @import("../core/thread_registry.zig");
++const capture = @import("../core/runtime_capture.zig");
+ pub const ThreadLogger = core.Logger(threads.ThreadOwner(Runtime), .trace);
+ pub const Token = struct { slot: usize, generation: usize, thread: std.Thread.Id };
+ pub const Outcome = union(enum) { result: core.EmitResult, err: anyerror };
+@@ -37,6 +38,7 @@ fn publish(frame: *const Frame) void {
+ }
+ pub const Owner = struct {
+     pub const value_owner = true;
++    pub const supportsTypedCapture = true;
+     pub const AdmissionType = struct {
+         route_mask: u64 = 1,
+         config_generation: u64 = 0,
+@@ -162,6 +164,32 @@ pub const Owner = struct {
+     pub fn nowNs(self: *const Owner) i64 {
+         return self.logging.pipelines[0].runtime.nowNs();
+     }
++    pub fn canCaptureTyped(self: *const Owner) bool {
++        // Site bindings are borrowed and ordinary submit reads them after
++        // the clock. Keep that path instead of freezing a binding early.
++        return self.logging.pipelines.len == 1 and self.site == null;
++    }
++    pub fn captureTyped(self: *const Owner, admission: AdmissionType, meta: capture.Meta, input: anytype, args: []const core.Field, clock_reader: anytype) capture.Outcome {
++        std.debug.assert(self.canCaptureTyped());
++        const frame = admission.frame.?;
++        const pipeline = self.logging.pipelines[0];
++        const outcome = if (self.threadHandle(0)) |thread|
++            pipeline.runtime.captureThreadTyped(thread.owner, frame.admission, meta, input, args, null, clock_reader)
++        else
++            pipeline.runtime.captureTyped(frame.admission, meta, input, args, clock_reader);
++        return switch (outcome) {
++            .capture_error => outcome,
++            .submit_error => |err| blk: {
++                frame.outcome = .{ .err = err };
++                pipeline.runtime.reportError(err);
++                break :blk if (pipeline.delivery == .required) outcome else .{ .result = .filtered };
++            },
++            .result => |result| blk: {
++                frame.outcome = .{ .result = result };
++                break :blk outcome;
++            },
++        };
++    }
+     fn submitOne(self: *const Owner, i: usize, admission: core.Admission, event: core.Event) !core.EmitResult {
+         const binding = if (self.site) |site| site.bindings[i] else null;
+         if (self.threadHandle(i)) |thread| return if (binding) |schema| thread.owner.submitWithSchema(admission, event, schema) else thread.owner.submit(admission, event);

@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+私有typed capture候选已撤回：EmptyContext命名scalar层省略重复树检查，完整PMU四组instructions约减少8.1%，但双拓扑默认流程没有取得稳定吞吐领先，E-core复测出现六组局部负向。metadata别名审查、真实constructor测试、全部候选源与负向数据见[typed capture报告](../bench/evidence/2026-11-03-typed-capture/README.md)。生产仍使用原Logger/Runtime接口；保留公共shared/SPSC deferred参数被clock改坏后错误分类、无reservation和admission释放的回归。总体目标仍未达到。
+
 当前Runtime内部只携带已校验Binding的schema Ref和借用Context，一份私有Event同步完成metadata设置与编码；公开Event/Binding按值快照、clock之后的树校验、canonical解析和CRC保持。调用栈局部reservation下降，默认40项PMU四组instructions约减少0.7%，完整吞吐仍大多不确定。新增public snapshot4项覆盖caller metadata/backing不变、accepted后源覆写、forged/foreign binding与嵌套redaction；完整Safe/分发/九目标门禁151/151步骤、630/631测试通过（1默认local skip，专项实际执行）。最终两个Foundation前端双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing全部不确定，没有全面超越。源码、全部候选/负向与当前资格见[提交ABI实验](../bench/evidence/2026-11-02-submit-abi/README.md)。
 
 紧凑整数inline v6候选完成旧v4四份真实fixture、v5定义/引用字节、11种corpus、混合Runtime恢复和tag/canonical错误验证，但320项完整file/PMU核对3232万JSON后仍有指令/周期/吞吐负向；分阶段默认v4候选也增加默认成本，全部生产改动撤回。当前仍为inline v4/reference v5，未新增v6 API/选项/读取资格。保留旧writer生成的六份真实fixture和metadata/完整值域/nested/deferred/reference hash回归；Safe/Debug筛选各16项、codec Fast52项通过，详细源码、所有正负和撤回见[紧凑wire实验](../bench/evidence/2026-11-02-native-wire/README.md)。

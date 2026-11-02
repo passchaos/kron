@@ -306,3 +306,68 @@ test "capture: invalid nested cycles nodes depth and sibling keys fail before ti
     try testing.expectEqual(@as(usize, 1), clock.calls);
     try testing.expectEqual(@as(usize, 1), memory.records);
 }
+
+test "capture: deferred arguments changed by clock fail as submission errors and release admissions" {
+    const MutatingClock = struct {
+        array: *[1]kron.Value,
+        group: *[2]kron.Field,
+        duplicate: bool,
+        mutate: bool = true,
+        calls: usize = 0,
+
+        fn real(raw: ?*anyopaque, _: std.Io) i64 {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            self.calls += 1;
+            if (self.mutate) {
+                if (self.duplicate) self.group[1].key = self.group[0].key else self.array[0] = .{ .array = self.array };
+            }
+            return 123;
+        }
+    };
+    inline for (.{ .asynchronous, .low_latency }) |submission| inline for (.{ false, true }) |duplicate| {
+        var values = [_]kron.Value{.{ .unsigned = 7 }};
+        var group = [_]kron.Field{ kron.kv("first", @as(u64, 1)), kron.kv("second", @as(u64, 2)) };
+        var clock: MutatingClock = .{ .array = &values, .group = &group, .duplicate = duplicate };
+        var bytes: [8192]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+            .submission = submission,
+            .memory_queue = .{ .capacity = 4, .max_record_bytes = 1024 },
+            .max_thread_channels = if (submission == .low_latency) 1 else 0,
+            .thread_channel_capacity = 4,
+            .routes = &.{.{ .name = "output", .sink = memory.sink() }},
+            .clock = .{ .context = &clock, .real_now = MutatingClock.real },
+        });
+        defer runtime.destroy();
+        const log = if (submission == .low_latency) try runtime.attachThread(.{ .scope = "arguments" }) else runtime.scoped("arguments");
+        defer if (submission == .low_latency) log.detach() catch {};
+        const journal = if (submission == .low_latency) runtime.thread_registry.?.getJournal(0) else runtime.journal.?;
+        const target = journal.reservationTarget();
+        const argument = if (duplicate) kron.group(&group) else kron.array(&values);
+        try kron.fields.validateValue(kron.fields.fromAny(argument));
+        try testing.expectError(if (duplicate) error.DuplicateKey else error.CyclicValue,
+            log.tryLogf(.info, "{any}", .{argument}, .{ .scalar = @as(u64, 42) }));
+        try testing.expectEqual(@as(usize, 1), clock.calls);
+        try testing.expectEqual(target, journal.reservationTarget());
+        try testing.expectEqual(@as(u64, 0), runtime.health().capture_errors);
+        try testing.expectEqual(@as(u64, 0), runtime.health().accepted);
+        try testing.expectEqual(@as(u64, 0), runtime.activeAdmissions());
+        try testing.expectEqual(@as(usize, 0), memory.records);
+
+        values[0] = .{ .unsigned = 7 };
+        group[1].key = "second";
+        clock.mutate = false;
+        try testing.expectEqual(kron.EmitResult.accepted, try log.tryLogf(.info, "{any}", .{argument}, .{ .scalar = @as(u64, 42) }));
+        try runtime.flush(.written);
+        try testing.expectEqual(@as(usize, 2), clock.calls);
+        try testing.expectEqual(@as(u64, 0), runtime.health().capture_errors);
+        try testing.expectEqual(@as(u64, 1), runtime.health().accepted);
+        try testing.expectEqual(@as(u64, 1), runtime.health().written);
+        try testing.expectEqual(@as(u64, 0), runtime.activeAdmissions());
+        try testing.expectEqual(@as(usize, 1), memory.records);
+        const decoded = try parse(memory.written());
+        defer decoded.deinit();
+        try testing.expectEqualStrings(if (duplicate) "{\"first\":1,\"second\":2}" else "[7]", decoded.value.object.get("message").?.string);
+        try testing.expectEqual(@as(i64, 42), decoded.value.object.get("attributes").?.object.get("scalar").?.integer);
+    };
+}

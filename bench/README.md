@@ -18,6 +18,7 @@
 
 | 证据 | 范围与边界 |
 | --- | --- |
+| [私有typed capture实验](evidence/2026-11-03-typed-capture/README.md) | 候选撤回；默认PMU instructions约−8.1%，完整E-core吞吐重复负向；metadata别名与clock修改deferred参数回归保留，无新的Foundation排名 |
 | [e8bd353 Foundation 详细对照](cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md) | 200 项同轮完整 Memory/Mmap；真实 spdlog 前端＋Rust 后台；中位、资源、尾部与噪声 |
 | [当前kron与raw spdlog缩减同轮抽查](cpp_reference/evidence/2026-11-02-current-managed-frontends/README.md) | bc908cc；60项/606万JSON，Memory P4 batch比值3.499达到重复性门限；raw spdlog非Foundation前端，不更新排名 |
 | [当前kron与Foundation缩减同轮抽查](cpp_reference/evidence/2026-11-02-current-foundation-spotcheck/README.md) | bc908cc；80项/808万JSON，Memory P1 batch比值1.125达到两侧门限；其余组inconclusive，不替代200项矩阵 |
