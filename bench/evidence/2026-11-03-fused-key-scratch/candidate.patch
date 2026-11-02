@@ -1,0 +1,190 @@
+--- /home/passchaos/project-z/kron/.zig-cache/fused-key-scratch/before/src/encoder/wire_json.zig	2026-11-03 06:52:31.586061185 +0800
++++ /home/passchaos/project-z/kron/.zig-cache/fused-key-scratch/candidate/src/encoder/wire_json.zig	2026-11-03 06:54:36.286954353 +0800
+@@ -15,11 +15,26 @@
+ pub const Error = schema_codec.DecodeError || std.Io.Writer.Error || error{Fallback};
+ pub const Format = enum { json, text, logfmt };
+ 
++/// A key-only view over the original Field backing and stride. Only the first
++/// `index` keys are initialized; Value bytes remain caller-owned scratch and
++/// must never be read, copied or initialized while recording top-level keys.
++const KeyScratch = struct {
++    entries: []field.Field,
++
++    inline fn append(self: KeyScratch, index: usize, key: []const u8) error{DuplicateKey}!void {
++        for (self.entries[0..index]) |*entry| {
++            if (@import("builtin").is_test) field.TestingAudit.compared_keys += 1;
++            if (std.mem.eql(u8, entry.key, key)) return error.DuplicateKey;
++        }
++        self.entries[index].key = key;
++    }
++};
++
+ fn Context(comptime referenced: bool) type {
+     return struct {
+         input: *codec.WireInput,
+         count: usize,
+-        keys: if (referenced) schema_codec.schema.FieldIterator else []field.Field,
++        keys: if (referenced) schema_codec.schema.FieldIterator else KeyScratch,
+         failure: ?Error = null,
+     };
+ }
+@@ -66,10 +81,7 @@
+     for (0..ctx.count) |index| {
+         const metadata = if (referenced) (try ctx.keys.next()) orelse return error.SchemaMismatch else {};
+         const key = if (referenced) metadata.key else try ctx.input.blob();
+-        if (!referenced) {
+-            try field.checkUnique(ctx.keys[0..index], key);
+-            ctx.keys[index] = .{ .key = key, .value = .null_value };
+-        }
++        if (!referenced) try ctx.keys.append(index, key);
+         var receiver: ValueWriter(format, referenced) = .{ .writer = writer, .key = key, .index = index, .kind_mask = if (referenced) metadata.kind_mask else 0 };
+         try ctx.input.valueWith(&receiver);
+     }
+@@ -128,7 +140,7 @@
+     var time_bytes: [time.rfc3339.max_length]u8 = undefined;
+     const readable = if (formatter) |cache| cache.format(.{ .nanoseconds = event.timestamp_ns }, &time_bytes) catch return error.WriteFailed else null;
+     var writer = std.Io.Writer.fixed(output);
+-    var context: Context(referenced) = .{ .input = &input, .count = header.field_count, .keys = if (referenced) definition.fields() else key_scratch };
++    var context: Context(referenced) = .{ .input = &input, .count = header.field_count, .keys = if (referenced) definition.fields() else .{ .entries = key_scratch[0..header.field_count] } };
+     const result = switch (format) {
+         .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+         .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+@@ -269,6 +281,138 @@
+     }
+ }
+ 
++fn expectPoisonValues(entries: []const field.Field) !void {
++    // Inspect only initialized poison bytes, never interpret the invalid union
++    // tag as a Value. A successful codec.decode later initializes whole Fields.
++    for (entries) |*entry| try std.testing.expect(std.mem.allEqual(u8, std.mem.asBytes(&entry.value), 0xa5));
++}
++
++test "fused key scratch retains poisoned values and exact comparison order for byte keys" {
++    const long_first: [257]u8 = @splat('a');
++    var long_last = long_first;
++    long_last[256] = 'b';
++    var all_bytes: [256]u8 = undefined;
++    for (&all_bytes, 0..) |*byte, index| byte.* = @intCast(index);
++    const keys = [_][]const u8{ "", &long_first, &all_bytes, &long_last, "\xff\x00" };
++    var entries: [5]field.Field = undefined;
++    @memset(std.mem.sliceAsBytes(&entries), 0xa5);
++    const scratch: KeyScratch = .{ .entries = &entries };
++    const before = field.TestingAudit.compared_keys;
++    for (keys, 0..) |key, index| try scratch.append(index, key);
++    try std.testing.expectEqual(before + 10, field.TestingAudit.compared_keys);
++    for (&entries, keys) |*entry, key| try std.testing.expectEqualSlices(u8, key, entry.key);
++    try expectPoisonValues(&entries);
++    for (keys[0..4], 0..) |key, index| {
++        const prior = field.TestingAudit.compared_keys;
++        const saved_key = entries[4].key;
++        try std.testing.expectError(error.DuplicateKey, scratch.append(4, key));
++        try std.testing.expectEqual(prior + index + 1, field.TestingAudit.compared_keys);
++        try std.testing.expectEqualSlices(u8, saved_key, entries[4].key);
++        try expectPoisonValues(&entries);
++    }
++}
++
++test "fused key scratch preserves values on success duplicate invalid value and decode reuse" {
++    const Event = @import("../core/event.zig").Event;
++    const event: Event = .{ .level = .info, .scope = "scratch", .message = "value", .timestamp_ns = 0, .fields = &.{ field.kv("a", true), field.kv("b", false), field.kv("c", true) } };
++    var payload_bytes: [512]u8 = undefined;
++    const payload = try codec.encode(event, &payload_bytes);
++    const header = try codec.readHeader(payload, codec.version);
++    var parser: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes };
++    _ = try parser.blob();
++    _ = try parser.blob();
++    _ = try parser.blob();
++    _ = try parser.value();
++    const second_key = try parser.blob();
++    const second_offset = @intFromPtr(second_key.ptr) - @intFromPtr(payload.ptr);
++    var changed: [512]u8 = undefined;
++    var output: [2048]u8 = undefined;
++    var scratch: [5]field.Field = undefined;
++    inline for (std.enums.values(Format)) |format| {
++        @memset(std.mem.sliceAsBytes(&scratch), 0xa5);
++        const before = field.TestingAudit.compared_keys;
++        _ = try render(format, payload, header, &output, &scratch, null);
++        try std.testing.expectEqual(before + 3, field.TestingAudit.compared_keys);
++        for (scratch[0..3], event.fields) |*entry, original| try std.testing.expectEqualSlices(u8, original.key, entry.key);
++        try expectPoisonValues(&scratch);
++        const decoded = try codec.decode(payload, &scratch);
++        var reencoded: [512]u8 = undefined;
++        try std.testing.expectEqualSlices(u8, payload, try codec.encode(decoded, &reencoded));
++
++        @memcpy(changed[0..payload.len], payload);
++        changed[second_offset] = 'a';
++        @memset(std.mem.sliceAsBytes(&scratch), 0xa5);
++        const duplicate_before = field.TestingAudit.compared_keys;
++        try std.testing.expectError(error.DuplicateKey, render(format, changed[0..payload.len], header, &output, &scratch, null));
++        try std.testing.expectEqual(duplicate_before + 1, field.TestingAudit.compared_keys);
++        try std.testing.expectEqualStrings("a", scratch[0].key);
++        try std.testing.expect(std.mem.allEqual(u8, std.mem.asBytes(&scratch[1].key), 0xa5));
++        try expectPoisonValues(&scratch);
++        _ = try codec.decode(payload, &scratch);
++        try std.testing.expect(!scratch[1].value.boolean);
++
++        @memcpy(changed[0..payload.len], payload);
++        changed[payload.len - 1] = 2;
++        @memset(std.mem.sliceAsBytes(&scratch), 0xa5);
++        const invalid_before = field.TestingAudit.compared_keys;
++        try std.testing.expectError(error.InvalidValue, render(format, changed[0..payload.len], header, &output, &scratch, null));
++        try std.testing.expectEqual(invalid_before + 3, field.TestingAudit.compared_keys);
++        try expectPoisonValues(&scratch);
++        _ = try codec.decode(payload, &scratch);
++        try std.testing.expect(scratch[2].value.boolean);
++    }
++    var deferred = event;
++    deferred.message_template = true;
++    const fallback = try codec.encode(deferred, &changed);
++    const fallback_header = try codec.readHeader(fallback, codec.version);
++    @memset(std.mem.sliceAsBytes(&scratch), 0xa5);
++    try std.testing.expectError(error.Fallback, render(.json, fallback, fallback_header, &output, &scratch, null));
++    try std.testing.expect(std.mem.allEqual(u8, std.mem.sliceAsBytes(&scratch), 0xa5));
++    const decoded = try codec.decode(fallback, &scratch);
++    try std.testing.expect(decoded.message_template and decoded.fields[0].value.boolean);
++}
++
++test "fused key scratch keeps sixty four top level keys separate from exact nested arena budgets" {
++    const Event = @import("../core/event.zig").Event;
++    var names: [64][2]u8 = undefined;
++    var entries: [64]field.Field = undefined;
++    for (&entries, &names, 0..) |*entry, *name, index| {
++        name.* = .{ @intCast(index), 'k' };
++        entry.* = field.kv(name, true);
++    }
++    entries[63].value = field.fromAny(field.group(&.{field.kv("inner", field.array(&.{ .null_value, .{ .boolean = true } }))}));
++    const event: Event = .{ .level = .info, .scope = "arena", .message = "nested", .timestamp_ns = 0, .fields = &entries };
++    var payload_bytes: [2048]u8 = undefined;
++    const payload = try codec.encode(event, &payload_bytes);
++    const header = try codec.readHeader(payload, codec.version);
++    // One Field for the group and two Values for its array. The byte budget
++    // and alignment are the original DescriptorArena contract, not key packing.
++    const nested_bytes = comptime std.mem.alignForward(usize, @sizeOf(field.Field), @alignOf(field.Value)) + 2 * @sizeOf(field.Value);
++    const needed = 64 + (nested_bytes + @sizeOf(field.Field) - 1) / @sizeOf(field.Field);
++    var backing: [needed + 1]field.Field = undefined;
++    var decoded_scratch: [needed]field.Field = undefined;
++    var output: [8192]u8 = undefined;
++    const decoded = try codec.decode(payload, &decoded_scratch);
++    var expected_bytes: [8192]u8 = undefined;
++    var expected = std.Io.Writer.fixed(&expected_bytes);
++    try common.encodeWithTime(.json, decoded, null, &expected);
++    @memset(std.mem.sliceAsBytes(&backing), 0xa5);
++    const before = field.TestingAudit.compared_keys;
++    const actual = try render(.json, payload, header, &output, backing[0..needed], null);
++    try std.testing.expectEqual(before + 64 * 63 / 2, field.TestingAudit.compared_keys);
++    try std.testing.expectEqualSlices(u8, expected.buffered(), actual);
++    for (backing[0..64], &entries) |*entry, original| try std.testing.expectEqualSlices(u8, original.key, entry.key);
++    try expectPoisonValues(backing[0..64]);
++    try std.testing.expect(std.mem.allEqual(u8, std.mem.sliceAsBytes(backing[needed..]), 0xa5));
++    for ([_]usize{ 63, 64, needed - 1 }) |capacity| {
++        @memset(std.mem.sliceAsBytes(&backing), 0xa5);
++        try std.testing.expectError(error.TooManyFields, render(.json, payload, header, &output, backing[0..capacity], null));
++        try std.testing.expectError(error.TooManyFields, codec.decode(payload, decoded_scratch[0..capacity]));
++        try expectPoisonValues(backing[0..@min(capacity, 64)]);
++        try std.testing.expect(std.mem.allEqual(u8, std.mem.sliceAsBytes(backing[capacity..]), 0xa5));
++    }
++}
++
+ test {
+     _ = @import("wire_reference_tests.zig");
+ }

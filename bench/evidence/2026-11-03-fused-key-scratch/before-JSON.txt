@@ -1,0 +1,3029 @@
+
+.zig-cache/fused-key-scratch/before-reference:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000112cd20 <encoder.common.encodeJsonWithAttributes__anon_39908>:
+ 112cd20:	push   rbp
+ 112cd21:	mov    rbp,rsp
+ 112cd24:	push   r15
+ 112cd26:	push   r14
+ 112cd28:	push   r13
+ 112cd2a:	push   r12
+ 112cd2c:	push   rbx
+ 112cd2d:	sub    rsp,0x2d8
+ 112cd34:	mov    QWORD PTR [rbp-0x100],r8
+ 112cd3b:	mov    r14,rcx
+ 112cd3e:	mov    QWORD PTR [rbp-0x2f8],rdx
+ 112cd45:	mov    QWORD PTR [rbp-0x40],rsi
+ 112cd49:	movzx  eax,BYTE PTR [rdi+0xb0]
+ 112cd50:	mov    BYTE PTR [rbp-0xa9],al
+ 112cd56:	movzx  eax,BYTE PTR [rdi+0xbe]
+ 112cd5d:	mov    BYTE PTR [rbp-0xa8],al
+ 112cd63:	movzx  eax,BYTE PTR [rdi+0xbf]
+ 112cd6a:	mov    BYTE PTR [rbp-0xa7],al
+ 112cd70:	movzx  eax,BYTE PTR [rdi+0xc0]
+ 112cd77:	mov    BYTE PTR [rbp-0xa6],al
+ 112cd7d:	movzx  eax,BYTE PTR [rdi+0xc1]
+ 112cd84:	mov    BYTE PTR [rbp-0xa5],al
+ 112cd8a:	movzx  eax,BYTE PTR [rdi+0xc2]
+ 112cd91:	mov    BYTE PTR [rbp-0xa4],al
+ 112cd97:	movzx  eax,BYTE PTR [rdi+0xc3]
+ 112cd9e:	mov    BYTE PTR [rbp-0xa3],al
+ 112cda4:	movzx  eax,BYTE PTR [rdi+0xc4]
+ 112cdab:	mov    BYTE PTR [rbp-0xa2],al
+ 112cdb1:	movzx  eax,BYTE PTR [rdi+0xc5]
+ 112cdb8:	mov    BYTE PTR [rbp-0xa1],al
+ 112cdbe:	movzx  eax,BYTE PTR [rdi+0xc6]
+ 112cdc5:	mov    BYTE PTR [rbp-0xa0],al
+ 112cdcb:	movzx  eax,BYTE PTR [rdi+0xc7]
+ 112cdd2:	mov    BYTE PTR [rbp-0x9f],al
+ 112cdd8:	movzx  eax,BYTE PTR [rdi+0xc8]
+ 112cddf:	mov    BYTE PTR [rbp-0x9e],al
+ 112cde5:	movzx  eax,BYTE PTR [rdi+0xc9]
+ 112cdec:	mov    BYTE PTR [rbp-0x9d],al
+ 112cdf2:	movzx  eax,BYTE PTR [rdi+0xca]
+ 112cdf9:	mov    BYTE PTR [rbp-0x9c],al
+ 112cdff:	movzx  eax,BYTE PTR [rdi+0xcb]
+ 112ce06:	mov    BYTE PTR [rbp-0x9b],al
+ 112ce0c:	movzx  eax,BYTE PTR [rdi+0xcc]
+ 112ce13:	mov    BYTE PTR [rbp-0x9a],al
+ 112ce19:	mov    rax,QWORD PTR [rdi]
+ 112ce1c:	mov    QWORD PTR [rbp-0x150],rax
+ 112ce23:	mov    rax,QWORD PTR [rdi+0x8]
+ 112ce27:	mov    QWORD PTR [rbp-0x148],rax
+ 112ce2e:	mov    rax,QWORD PTR [rdi+0x40]
+ 112ce32:	mov    QWORD PTR [rbp-0x48],rax
+ 112ce36:	mov    rax,QWORD PTR [rdi+0x48]
+ 112ce3a:	mov    QWORD PTR [rbp-0x78],rax
+ 112ce3e:	mov    rax,QWORD PTR [rdi+0x50]
+ 112ce42:	mov    QWORD PTR [rbp-0xf8],rax
+ 112ce49:	mov    rax,QWORD PTR [rdi+0x58]
+ 112ce4d:	mov    QWORD PTR [rbp-0xd8],rax
+ 112ce54:	mov    rax,QWORD PTR [rdi+0x70]
+ 112ce58:	mov    QWORD PTR [rbp-0x98],rax
+ 112ce5f:	mov    rax,QWORD PTR [rdi+0x78]
+ 112ce63:	mov    QWORD PTR [rbp-0x2f0],rax
+ 112ce6a:	mov    rax,QWORD PTR [rdi+0x80]
+ 112ce71:	mov    QWORD PTR [rbp-0x2e8],rax
+ 112ce78:	mov    rax,QWORD PTR [rdi+0x88]
+ 112ce7f:	mov    QWORD PTR [rbp-0x2e0],rax
+ 112ce86:	mov    rax,QWORD PTR [rdi+0x90]
+ 112ce8d:	mov    QWORD PTR [rbp-0x2d8],rax
+ 112ce94:	mov    rax,QWORD PTR [rdi+0x98]
+ 112ce9b:	mov    QWORD PTR [rbp-0x2d0],rax
+ 112cea2:	mov    rax,QWORD PTR [rdi+0xa0]
+ 112cea9:	mov    QWORD PTR [rbp-0x2c8],rax
+ 112ceb0:	mov    eax,DWORD PTR [rdi+0xa8]
+ 112ceb6:	mov    QWORD PTR [rbp-0x2c0],rax
+ 112cebd:	mov    eax,DWORD PTR [rdi+0xac]
+ 112cec3:	mov    QWORD PTR [rbp-0x2b8],rax
+ 112ceca:	mov    eax,DWORD PTR [rdi+0xb8]
+ 112ced0:	mov    QWORD PTR [rbp-0xe8],rax
+ 112ced7:	movzx  eax,BYTE PTR [rdi+0xbc]
+ 112cede:	mov    DWORD PTR [rbp-0x130],eax
+ 112cee4:	mov    rax,QWORD PTR [rdi+0xcf]
+ 112ceeb:	mov    QWORD PTR [rbp-0xf0],rax
+ 112cef2:	movzx  eax,BYTE PTR [rdi+0xd8]
+ 112cef9:	mov    QWORD PTR [rbp-0x128],rax
+ 112cf00:	xor    ebx,ebx
+ 112cf02:	lea    r15,[rbp-0x2b0]
+ 112cf09:	lea    r13,[rbp-0x70]
+ 112cf0d:	movzx  eax,BYTE PTR [rdi+0xcd]
+ 112cf14:	mov    BYTE PTR [rbp-0x99],al
+ 112cf1a:	movzx  eax,BYTE PTR [rdi+0xce]
+ 112cf21:	mov    BYTE PTR [rbp-0x138],al
+ 112cf27:	mov    QWORD PTR [rbp-0x140],rdi
+ 112cf2e:	movzx  eax,BYTE PTR [rdi+0xd7]
+ 112cf35:	mov    BYTE PTR [rbp-0xaa],al
+ 112cf3b:	mov    QWORD PTR [rbp-0x38],rcx
+ 112cf3f:	nop
+ 112cf40:	lea    rsi,[rbx+0x1074470]
+ 112cf47:	mov    r12d,0x10
+ 112cf4d:	sub    r12,rbx
+ 112cf50:	mov    rdi,QWORD PTR [r14+0x18]
+ 112cf54:	lea    rax,[rdi+r12*1]
+ 112cf58:	cmp    rax,QWORD PTR [r14+0x10]
+ 112cf5c:	ja     112cf79 <encoder.common.encodeJsonWithAttributes__anon_39908+0x259>
+ 112cf5e:	add    rdi,QWORD PTR [r14+0x8]
+ 112cf62:	mov    rdx,r12
+ 112cf65:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112cf6a:	add    QWORD PTR [r14+0x18],r12
+ 112cf6e:	add    rbx,r12
+ 112cf71:	cmp    rbx,0x10
+ 112cf75:	jb     112cf40 <encoder.common.encodeJsonWithAttributes__anon_39908+0x220>
+ 112cf77:	jmp    112cfc7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a7>
+ 112cf79:	mov    rax,QWORD PTR [r14]
+ 112cf7c:	mov    rax,QWORD PTR [rax]
+ 112cf7f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112cf83:	mov    QWORD PTR [rbp-0x68],r12
+ 112cf87:	mov    ecx,0x1
+ 112cf8c:	mov    r8d,0x1
+ 112cf92:	mov    rdi,r15
+ 112cf95:	mov    rsi,r14
+ 112cf98:	mov    rdx,r13
+ 112cf9b:	call   rax
+ 112cf9d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112cfa5:	test   r12w,r12w
+ 112cfa9:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112cfaf:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112cfb6:	mov    r14,QWORD PTR [rbp-0x38]
+ 112cfba:	add    rbx,r12
+ 112cfbd:	cmp    rbx,0x10
+ 112cfc1:	jb     112cf40 <encoder.common.encodeJsonWithAttributes__anon_39908+0x220>
+ 112cfc7:	movabs rax,0x3fffffffffffff
+ 112cfd1:	movabs rcx,0x20000000000000
+ 112cfdb:	mov    r15,QWORD PTR [rbp-0x48]
+ 112cfdf:	lea    rbx,[r15+rcx*1]
+ 112cfe3:	dec    rbx
+ 112cfe6:	cmp    rbx,rax
+ 112cfe9:	jb     112d065 <encoder.common.encodeJsonWithAttributes__anon_39908+0x345>
+ 112cfeb:	lea    r13,[rbp-0x120]
+ 112cff2:	lea    rdi,[rbp-0x2b0]
+ 112cff9:	lea    rdx,[rbp-0x70]
+ 112cffd:	mov    rax,QWORD PTR [r14+0x18]
+ 112d001:	cmp    QWORD PTR [r14+0x10],rax
+ 112d005:	jne    112d059 <encoder.common.encodeJsonWithAttributes__anon_39908+0x339>
+ 112d007:	mov    rax,QWORD PTR [r14]
+ 112d00a:	mov    rax,QWORD PTR [rax]
+ 112d00d:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d014:	mov    QWORD PTR [rbp-0x70],r13
+ 112d018:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d020:	mov    ecx,0x1
+ 112d025:	mov    r8d,0x1
+ 112d02b:	mov    rsi,r14
+ 112d02e:	call   rax
+ 112d030:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d038:	test   r12w,r12w
+ 112d03c:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d042:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d04a:	lea    rdi,[rbp-0x2b0]
+ 112d051:	lea    rdx,[rbp-0x70]
+ 112d055:	je     112cffd <encoder.common.encodeJsonWithAttributes__anon_39908+0x2dd>
+ 112d057:	jmp    112d065 <encoder.common.encodeJsonWithAttributes__anon_39908+0x345>
+ 112d059:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d05d:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d061:	inc    QWORD PTR [r14+0x18]
+ 112d065:	mov    rsi,r15
+ 112d068:	neg    rsi
+ 112d06b:	cmovs  rsi,r15
+ 112d06f:	mov    rax,QWORD PTR [r14+0x10]
+ 112d073:	sub    rax,QWORD PTR [r14+0x18]
+ 112d077:	shr    r15,0x3f
+ 112d07b:	mov    rdi,r14
+ 112d07e:	mov    edx,r15d
+ 112d081:	cmp    rax,0x15
+ 112d085:	jb     112d097 <encoder.common.encodeJsonWithAttributes__anon_39908+0x377>
+ 112d087:	cmp    rsi,0x5f5e0ff
+ 112d08e:	jbe    112d0a1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x381>
+ 112d090:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112d095:	jmp    112d0a6 <encoder.common.encodeJsonWithAttributes__anon_39908+0x386>
+ 112d097:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112d09c:	mov    r12d,eax
+ 112d09f:	jmp    112d0a9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x389>
+ 112d0a1:	call   1105ae0 <encoder.decimal.writeNative>
+ 112d0a6:	xor    r12d,r12d
+ 112d0a9:	movabs rax,0x3fffffffffffff
+ 112d0b3:	cmp    rbx,rax
+ 112d0b6:	setb   al
+ 112d0b9:	test   r12w,r12w
+ 112d0bd:	setne  cl
+ 112d0c0:	or     cl,al
+ 112d0c2:	jne    112d138 <encoder.common.encodeJsonWithAttributes__anon_39908+0x418>
+ 112d0c4:	lea    rbx,[rbp-0x120]
+ 112d0cb:	lea    r15,[rbp-0x2b0]
+ 112d0d2:	lea    r13,[rbp-0x70]
+ 112d0d6:	mov    rax,QWORD PTR [r14+0x18]
+ 112d0da:	cmp    QWORD PTR [r14+0x10],rax
+ 112d0de:	jne    112d129 <encoder.common.encodeJsonWithAttributes__anon_39908+0x409>
+ 112d0e0:	mov    rax,QWORD PTR [r14]
+ 112d0e3:	mov    rax,QWORD PTR [rax]
+ 112d0e6:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d0ed:	mov    QWORD PTR [rbp-0x70],rbx
+ 112d0f1:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d0f9:	mov    ecx,0x1
+ 112d0fe:	mov    r8d,0x1
+ 112d104:	mov    rdi,r15
+ 112d107:	mov    rsi,r14
+ 112d10a:	mov    rdx,r13
+ 112d10d:	call   rax
+ 112d10f:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d117:	test   r12w,r12w
+ 112d11b:	jne    112d138 <encoder.common.encodeJsonWithAttributes__anon_39908+0x418>
+ 112d11d:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d125:	je     112d0d6 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3b6>
+ 112d127:	jmp    112d135 <encoder.common.encodeJsonWithAttributes__anon_39908+0x415>
+ 112d129:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d12d:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d131:	inc    QWORD PTR [r14+0x18]
+ 112d135:	xor    r12d,r12d
+ 112d138:	test   r12w,r12w
+ 112d13c:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d142:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112d147:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d14b:	je     112d205 <encoder.common.encodeJsonWithAttributes__anon_39908+0x4e5>
+ 112d151:	xor    ebx,ebx
+ 112d153:	lea    r15,[rbp-0x2b0]
+ 112d15a:	lea    r13,[rbp-0x70]
+ 112d15e:	xchg   ax,ax
+ 112d160:	lea    rsi,[rbx+0x1074491]
+ 112d167:	mov    r12d,0xd
+ 112d16d:	sub    r12,rbx
+ 112d170:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d174:	lea    rax,[rdi+r12*1]
+ 112d178:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d17c:	ja     112d199 <encoder.common.encodeJsonWithAttributes__anon_39908+0x479>
+ 112d17e:	add    rdi,QWORD PTR [r14+0x8]
+ 112d182:	mov    rdx,r12
+ 112d185:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d18a:	add    QWORD PTR [r14+0x18],r12
+ 112d18e:	add    rbx,r12
+ 112d191:	cmp    rbx,0xd
+ 112d195:	jb     112d160 <encoder.common.encodeJsonWithAttributes__anon_39908+0x440>
+ 112d197:	jmp    112d1e7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x4c7>
+ 112d199:	mov    rax,QWORD PTR [r14]
+ 112d19c:	mov    rax,QWORD PTR [rax]
+ 112d19f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d1a3:	mov    QWORD PTR [rbp-0x68],r12
+ 112d1a7:	mov    ecx,0x1
+ 112d1ac:	mov    r8d,0x1
+ 112d1b2:	mov    rdi,r15
+ 112d1b5:	mov    rsi,r14
+ 112d1b8:	mov    rdx,r13
+ 112d1bb:	call   rax
+ 112d1bd:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d1c5:	test   r12w,r12w
+ 112d1c9:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d1cf:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d1d6:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d1da:	add    rbx,r12
+ 112d1dd:	cmp    rbx,0xd
+ 112d1e1:	jb     112d160 <encoder.common.encodeJsonWithAttributes__anon_39908+0x440>
+ 112d1e7:	mov    rdi,r14
+ 112d1ea:	mov    rsi,QWORD PTR [rbp-0x40]
+ 112d1ee:	mov    rdx,QWORD PTR [rbp-0x2f8]
+ 112d1f5:	xor    ecx,ecx
+ 112d1f7:	call   11084d0 <encoder.escaping.quoted>
+ 112d1fc:	test   ax,ax
+ 112d1ff:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112d205:	mov    r12d,0x13
+ 112d20b:	mov    eax,DWORD PTR [rbp-0x130]
+ 112d211:	jmp    QWORD PTR [rax*8+0x100f068]
+ 112d218:	mov    eax,0x1075dc4
+ 112d21d:	mov    QWORD PTR [rbp-0x40],rax
+ 112d221:	test   r12,r12
+ 112d224:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d22a:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d22f:	mov    r12d,0x11
+ 112d235:	mov    eax,0x1075d52
+ 112d23a:	mov    QWORD PTR [rbp-0x40],rax
+ 112d23e:	test   r12,r12
+ 112d241:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d243:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d248:	mov    r12d,0x12
+ 112d24e:	mov    eax,0x1075d64
+ 112d253:	mov    QWORD PTR [rbp-0x40],rax
+ 112d257:	test   r12,r12
+ 112d25a:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d25c:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d261:	mov    r12d,0x12
+ 112d267:	mov    eax,0x1075d77
+ 112d26c:	mov    QWORD PTR [rbp-0x40],rax
+ 112d270:	test   r12,r12
+ 112d273:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d275:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d27a:	mov    eax,0x1075d9e
+ 112d27f:	mov    QWORD PTR [rbp-0x40],rax
+ 112d283:	test   r12,r12
+ 112d286:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d288:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d28d:	mov    eax,0x1075d8a
+ 112d292:	mov    QWORD PTR [rbp-0x40],rax
+ 112d296:	test   r12,r12
+ 112d299:	jne    112d2b8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x598>
+ 112d29b:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d2a0:	mov    r12d,0x11
+ 112d2a6:	mov    eax,0x1075db2
+ 112d2ab:	mov    QWORD PTR [rbp-0x40],rax
+ 112d2af:	test   r12,r12
+ 112d2b2:	je     112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d2b8:	xor    r15d,r15d
+ 112d2bb:	lea    r13,[rbp-0x2b0]
+ 112d2c2:	lea    rbx,[rbp-0x70]
+ 112d2c6:	mov    QWORD PTR [rbp-0x48],r12
+ 112d2ca:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d2ce:	xchg   ax,ax
+ 112d2d0:	mov    rax,QWORD PTR [rbp-0x40]
+ 112d2d4:	lea    rsi,[rax+r15*1]
+ 112d2d8:	sub    r12,r15
+ 112d2db:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d2df:	lea    rax,[rdi+r12*1]
+ 112d2e3:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d2e7:	ja     112d307 <encoder.common.encodeJsonWithAttributes__anon_39908+0x5e7>
+ 112d2e9:	add    rdi,QWORD PTR [r14+0x8]
+ 112d2ed:	mov    rdx,r12
+ 112d2f0:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d2f5:	add    QWORD PTR [r14+0x18],r12
+ 112d2f9:	add    r15,r12
+ 112d2fc:	mov    r12,QWORD PTR [rbp-0x48]
+ 112d300:	cmp    r15,r12
+ 112d303:	jb     112d2d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x5b0>
+ 112d305:	jmp    112d350 <encoder.common.encodeJsonWithAttributes__anon_39908+0x630>
+ 112d307:	mov    rax,QWORD PTR [r14]
+ 112d30a:	mov    rax,QWORD PTR [rax]
+ 112d30d:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d311:	mov    QWORD PTR [rbp-0x68],r12
+ 112d315:	mov    ecx,0x1
+ 112d31a:	mov    r8d,0x1
+ 112d320:	mov    rdi,r13
+ 112d323:	mov    rsi,r14
+ 112d326:	mov    rdx,rbx
+ 112d329:	call   rax
+ 112d32b:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d333:	test   r12w,r12w
+ 112d337:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d33d:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d344:	add    r15,r12
+ 112d347:	mov    r12,QWORD PTR [rbp-0x48]
+ 112d34b:	cmp    r15,r12
+ 112d34e:	jb     112d2d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x5b0>
+ 112d350:	xor    ebx,ebx
+ 112d352:	lea    r15,[rbp-0x2b0]
+ 112d359:	lea    r13,[rbp-0x70]
+ 112d35d:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d361:	data16 data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112d370:	lea    rsi,[rbx+0x10744f4]
+ 112d377:	mov    r12d,0x9
+ 112d37d:	sub    r12,rbx
+ 112d380:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d384:	lea    rax,[rdi+r12*1]
+ 112d388:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d38c:	ja     112d3a9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x689>
+ 112d38e:	add    rdi,QWORD PTR [r14+0x8]
+ 112d392:	mov    rdx,r12
+ 112d395:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d39a:	add    QWORD PTR [r14+0x18],r12
+ 112d39e:	add    rbx,r12
+ 112d3a1:	cmp    rbx,0x9
+ 112d3a5:	jb     112d370 <encoder.common.encodeJsonWithAttributes__anon_39908+0x650>
+ 112d3a7:	jmp    112d3f7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x6d7>
+ 112d3a9:	mov    rax,QWORD PTR [r14]
+ 112d3ac:	mov    rax,QWORD PTR [rax]
+ 112d3af:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d3b3:	mov    QWORD PTR [rbp-0x68],r12
+ 112d3b7:	mov    ecx,0x1
+ 112d3bc:	mov    r8d,0x1
+ 112d3c2:	mov    rdi,r15
+ 112d3c5:	mov    rsi,r14
+ 112d3c8:	mov    rdx,r13
+ 112d3cb:	call   rax
+ 112d3cd:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d3d5:	test   r12w,r12w
+ 112d3d9:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d3df:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d3e6:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d3ea:	add    rbx,r12
+ 112d3ed:	cmp    rbx,0x9
+ 112d3f1:	jb     112d370 <encoder.common.encodeJsonWithAttributes__anon_39908+0x650>
+ 112d3f7:	mov    rdi,r14
+ 112d3fa:	mov    rsi,QWORD PTR [rbp-0x150]
+ 112d401:	mov    rdx,QWORD PTR [rbp-0x148]
+ 112d408:	xor    ecx,ecx
+ 112d40a:	call   11084d0 <encoder.escaping.quoted>
+ 112d40f:	test   ax,ax
+ 112d412:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112d418:	xor    ebx,ebx
+ 112d41a:	lea    r15,[rbp-0x2b0]
+ 112d421:	lea    r13,[rbp-0x70]
+ 112d425:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112d430:	lea    rsi,[rbx+0x1074525]
+ 112d437:	mov    r12d,0xb
+ 112d43d:	sub    r12,rbx
+ 112d440:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d444:	lea    rax,[rdi+r12*1]
+ 112d448:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d44c:	ja     112d469 <encoder.common.encodeJsonWithAttributes__anon_39908+0x749>
+ 112d44e:	add    rdi,QWORD PTR [r14+0x8]
+ 112d452:	mov    rdx,r12
+ 112d455:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d45a:	add    QWORD PTR [r14+0x18],r12
+ 112d45e:	add    rbx,r12
+ 112d461:	cmp    rbx,0xb
+ 112d465:	jb     112d430 <encoder.common.encodeJsonWithAttributes__anon_39908+0x710>
+ 112d467:	jmp    112d4b7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x797>
+ 112d469:	mov    rax,QWORD PTR [r14]
+ 112d46c:	mov    rax,QWORD PTR [rax]
+ 112d46f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d473:	mov    QWORD PTR [rbp-0x68],r12
+ 112d477:	mov    ecx,0x1
+ 112d47c:	mov    r8d,0x1
+ 112d482:	mov    rdi,r15
+ 112d485:	mov    rsi,r14
+ 112d488:	mov    rdx,r13
+ 112d48b:	call   rax
+ 112d48d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d495:	test   r12w,r12w
+ 112d499:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d49f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d4a6:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d4aa:	add    rbx,r12
+ 112d4ad:	cmp    rbx,0xb
+ 112d4b1:	jb     112d430 <encoder.common.encodeJsonWithAttributes__anon_39908+0x710>
+ 112d4b7:	mov    rdi,r14
+ 112d4ba:	mov    rsi,QWORD PTR [rbp-0x140]
+ 112d4c1:	xor    edx,edx
+ 112d4c3:	call   1105f40 <encoder.common.message>
+ 112d4c8:	test   ax,ax
+ 112d4cb:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112d4d1:	xor    r13d,r13d
+ 112d4d4:	lea    rbx,[rbp-0x2b0]
+ 112d4db:	lea    r15,[rbp-0x70]
+ 112d4df:	nop
+ 112d4e0:	lea    rsi,[r13+0x10744c2]
+ 112d4e7:	mov    r12d,0xb
+ 112d4ed:	sub    r12,r13
+ 112d4f0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d4f4:	lea    rax,[rdi+r12*1]
+ 112d4f8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d4fc:	ja     112d519 <encoder.common.encodeJsonWithAttributes__anon_39908+0x7f9>
+ 112d4fe:	add    rdi,QWORD PTR [r14+0x8]
+ 112d502:	mov    rdx,r12
+ 112d505:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d50a:	add    QWORD PTR [r14+0x18],r12
+ 112d50e:	add    r13,r12
+ 112d511:	cmp    r13,0xb
+ 112d515:	jb     112d4e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x7c0>
+ 112d517:	jmp    112d567 <encoder.common.encodeJsonWithAttributes__anon_39908+0x847>
+ 112d519:	mov    rax,QWORD PTR [r14]
+ 112d51c:	mov    rax,QWORD PTR [rax]
+ 112d51f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d523:	mov    QWORD PTR [rbp-0x68],r12
+ 112d527:	mov    ecx,0x1
+ 112d52c:	mov    r8d,0x1
+ 112d532:	mov    rdi,rbx
+ 112d535:	mov    rsi,r14
+ 112d538:	mov    rdx,r15
+ 112d53b:	call   rax
+ 112d53d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d545:	test   r12w,r12w
+ 112d549:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d54f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d556:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d55a:	add    r13,r12
+ 112d55d:	cmp    r13,0xb
+ 112d561:	jb     112d4e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x7c0>
+ 112d567:	movabs rax,0x20000000000000
+ 112d571:	mov    rbx,QWORD PTR [rbp-0x78]
+ 112d575:	cmp    rbx,rax
+ 112d578:	jb     112d5f3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x8d3>
+ 112d57a:	lea    r13,[rbp-0x120]
+ 112d581:	lea    rbx,[rbp-0x2b0]
+ 112d588:	lea    r15,[rbp-0x70]
+ 112d58c:	mov    rax,QWORD PTR [r14+0x18]
+ 112d590:	cmp    QWORD PTR [r14+0x10],rax
+ 112d594:	jne    112d5e3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x8c3>
+ 112d596:	mov    rax,QWORD PTR [r14]
+ 112d599:	mov    rax,QWORD PTR [rax]
+ 112d59c:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d5a3:	mov    QWORD PTR [rbp-0x70],r13
+ 112d5a7:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d5af:	mov    ecx,0x1
+ 112d5b4:	mov    r8d,0x1
+ 112d5ba:	mov    rdi,rbx
+ 112d5bd:	mov    rsi,r14
+ 112d5c0:	mov    rdx,r15
+ 112d5c3:	call   rax
+ 112d5c5:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d5cd:	test   r12w,r12w
+ 112d5d1:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d5d7:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d5df:	je     112d58c <encoder.common.encodeJsonWithAttributes__anon_39908+0x86c>
+ 112d5e1:	jmp    112d5ef <encoder.common.encodeJsonWithAttributes__anon_39908+0x8cf>
+ 112d5e3:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d5e7:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d5eb:	inc    QWORD PTR [r14+0x18]
+ 112d5ef:	mov    rbx,QWORD PTR [rbp-0x78]
+ 112d5f3:	mov    rax,QWORD PTR [r14+0x10]
+ 112d5f7:	sub    rax,QWORD PTR [r14+0x18]
+ 112d5fb:	cmp    rax,0x15
+ 112d5ff:	jb     112d620 <encoder.common.encodeJsonWithAttributes__anon_39908+0x900>
+ 112d601:	cmp    rbx,0x5f5e0ff
+ 112d608:	jbe    112d6ca <encoder.common.encodeJsonWithAttributes__anon_39908+0x9aa>
+ 112d60e:	xor    r12d,r12d
+ 112d611:	mov    rdi,r14
+ 112d614:	mov    rsi,rbx
+ 112d617:	xor    edx,edx
+ 112d619:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112d61e:	jmp    112d630 <encoder.common.encodeJsonWithAttributes__anon_39908+0x910>
+ 112d620:	mov    rdi,r14
+ 112d623:	mov    rsi,rbx
+ 112d626:	xor    edx,edx
+ 112d628:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112d62d:	mov    r12d,eax
+ 112d630:	movabs rax,0x20000000000000
+ 112d63a:	cmp    rbx,rax
+ 112d63d:	setb   al
+ 112d640:	test   r12w,r12w
+ 112d644:	setne  cl
+ 112d647:	or     cl,al
+ 112d649:	jne    112d6bf <encoder.common.encodeJsonWithAttributes__anon_39908+0x99f>
+ 112d64b:	lea    r13,[rbp-0x120]
+ 112d652:	lea    rbx,[rbp-0x2b0]
+ 112d659:	lea    r15,[rbp-0x70]
+ 112d65d:	mov    rax,QWORD PTR [r14+0x18]
+ 112d661:	cmp    QWORD PTR [r14+0x10],rax
+ 112d665:	jne    112d6b0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x990>
+ 112d667:	mov    rax,QWORD PTR [r14]
+ 112d66a:	mov    rax,QWORD PTR [rax]
+ 112d66d:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d674:	mov    QWORD PTR [rbp-0x70],r13
+ 112d678:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d680:	mov    ecx,0x1
+ 112d685:	mov    r8d,0x1
+ 112d68b:	mov    rdi,rbx
+ 112d68e:	mov    rsi,r14
+ 112d691:	mov    rdx,r15
+ 112d694:	call   rax
+ 112d696:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d69e:	test   r12w,r12w
+ 112d6a2:	jne    112d6bf <encoder.common.encodeJsonWithAttributes__anon_39908+0x99f>
+ 112d6a4:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d6ac:	je     112d65d <encoder.common.encodeJsonWithAttributes__anon_39908+0x93d>
+ 112d6ae:	jmp    112d6bc <encoder.common.encodeJsonWithAttributes__anon_39908+0x99c>
+ 112d6b0:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d6b4:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d6b8:	inc    QWORD PTR [r14+0x18]
+ 112d6bc:	xor    r12d,r12d
+ 112d6bf:	test   r12w,r12w
+ 112d6c3:	je     112d6d7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x9b7>
+ 112d6c5:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d6ca:	mov    rdi,r14
+ 112d6cd:	mov    rsi,rbx
+ 112d6d0:	xor    edx,edx
+ 112d6d2:	call   1105ae0 <encoder.decimal.writeNative>
+ 112d6d7:	xor    r13d,r13d
+ 112d6da:	lea    rbx,[rbp-0x2b0]
+ 112d6e1:	lea    r15,[rbp-0x70]
+ 112d6e5:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d6e9:	nop    DWORD PTR [rax+0x0]
+ 112d6f0:	lea    rsi,[r13+0x10744d9]
+ 112d6f7:	mov    r12d,0xb
+ 112d6fd:	sub    r12,r13
+ 112d700:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d704:	lea    rax,[rdi+r12*1]
+ 112d708:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d70c:	ja     112d729 <encoder.common.encodeJsonWithAttributes__anon_39908+0xa09>
+ 112d70e:	add    rdi,QWORD PTR [r14+0x8]
+ 112d712:	mov    rdx,r12
+ 112d715:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d71a:	add    QWORD PTR [r14+0x18],r12
+ 112d71e:	add    r13,r12
+ 112d721:	cmp    r13,0xb
+ 112d725:	jb     112d6f0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x9d0>
+ 112d727:	jmp    112d777 <encoder.common.encodeJsonWithAttributes__anon_39908+0xa57>
+ 112d729:	mov    rax,QWORD PTR [r14]
+ 112d72c:	mov    rax,QWORD PTR [rax]
+ 112d72f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d733:	mov    QWORD PTR [rbp-0x68],r12
+ 112d737:	mov    ecx,0x1
+ 112d73c:	mov    r8d,0x1
+ 112d742:	mov    rdi,rbx
+ 112d745:	mov    rsi,r14
+ 112d748:	mov    rdx,r15
+ 112d74b:	call   rax
+ 112d74d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d755:	test   r12w,r12w
+ 112d759:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d75f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d766:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d76a:	add    r13,r12
+ 112d76d:	cmp    r13,0xb
+ 112d771:	jb     112d6f0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x9d0>
+ 112d777:	mov    rax,QWORD PTR [r14+0x10]
+ 112d77b:	sub    rax,QWORD PTR [r14+0x18]
+ 112d77f:	cmp    rax,0x15
+ 112d783:	jb     112d7a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xa80>
+ 112d785:	mov    rsi,QWORD PTR [rbp-0xe8]
+ 112d78c:	mov    rdi,r14
+ 112d78f:	xor    edx,edx
+ 112d791:	cmp    esi,0x5f5e100
+ 112d797:	jb     112d7bb <encoder.common.encodeJsonWithAttributes__anon_39908+0xa9b>
+ 112d799:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112d79e:	jmp    112d7c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xaa0>
+ 112d7a0:	mov    rdi,r14
+ 112d7a3:	mov    rsi,QWORD PTR [rbp-0xe8]
+ 112d7aa:	xor    edx,edx
+ 112d7ac:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112d7b1:	test   ax,ax
+ 112d7b4:	je     112d7c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xaa0>
+ 112d7b6:	jmp    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112d7bb:	call   1105ae0 <encoder.decimal.writeNative>
+ 112d7c0:	xor    r13d,r13d
+ 112d7c3:	lea    rbx,[rbp-0x2b0]
+ 112d7ca:	lea    r15,[rbp-0x70]
+ 112d7ce:	xchg   ax,ax
+ 112d7d0:	lea    rsi,[r13+0x1074531]
+ 112d7d7:	mov    r12d,0xc
+ 112d7dd:	sub    r12,r13
+ 112d7e0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d7e4:	lea    rax,[rdi+r12*1]
+ 112d7e8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d7ec:	ja     112d809 <encoder.common.encodeJsonWithAttributes__anon_39908+0xae9>
+ 112d7ee:	add    rdi,QWORD PTR [r14+0x8]
+ 112d7f2:	mov    rdx,r12
+ 112d7f5:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112d7fa:	add    QWORD PTR [r14+0x18],r12
+ 112d7fe:	add    r13,r12
+ 112d801:	cmp    r13,0xc
+ 112d805:	jb     112d7d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xab0>
+ 112d807:	jmp    112d857 <encoder.common.encodeJsonWithAttributes__anon_39908+0xb37>
+ 112d809:	mov    rax,QWORD PTR [r14]
+ 112d80c:	mov    rax,QWORD PTR [rax]
+ 112d80f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112d813:	mov    QWORD PTR [rbp-0x68],r12
+ 112d817:	mov    ecx,0x1
+ 112d81c:	mov    r8d,0x1
+ 112d822:	mov    rdi,rbx
+ 112d825:	mov    rsi,r14
+ 112d828:	mov    rdx,r15
+ 112d82b:	call   rax
+ 112d82d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d835:	test   r12w,r12w
+ 112d839:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d83f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112d846:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d84a:	add    r13,r12
+ 112d84d:	cmp    r13,0xc
+ 112d851:	jb     112d7d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xab0>
+ 112d857:	movabs rax,0x20000000000000
+ 112d861:	mov    rbx,QWORD PTR [rbp-0xf8]
+ 112d868:	cmp    rbx,rax
+ 112d86b:	jb     112d8e9 <encoder.common.encodeJsonWithAttributes__anon_39908+0xbc9>
+ 112d86d:	lea    r13,[rbp-0x120]
+ 112d874:	lea    rbx,[rbp-0x2b0]
+ 112d87b:	lea    r15,[rbp-0x70]
+ 112d87f:	mov    rax,QWORD PTR [r14+0x18]
+ 112d883:	cmp    QWORD PTR [r14+0x10],rax
+ 112d887:	jne    112d8d6 <encoder.common.encodeJsonWithAttributes__anon_39908+0xbb6>
+ 112d889:	mov    rax,QWORD PTR [r14]
+ 112d88c:	mov    rax,QWORD PTR [rax]
+ 112d88f:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d896:	mov    QWORD PTR [rbp-0x70],r13
+ 112d89a:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d8a2:	mov    ecx,0x1
+ 112d8a7:	mov    r8d,0x1
+ 112d8ad:	mov    rdi,rbx
+ 112d8b0:	mov    rsi,r14
+ 112d8b3:	mov    rdx,r15
+ 112d8b6:	call   rax
+ 112d8b8:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d8c0:	test   r12w,r12w
+ 112d8c4:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d8ca:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d8d2:	je     112d87f <encoder.common.encodeJsonWithAttributes__anon_39908+0xb5f>
+ 112d8d4:	jmp    112d8e2 <encoder.common.encodeJsonWithAttributes__anon_39908+0xbc2>
+ 112d8d6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d8da:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d8de:	inc    QWORD PTR [r14+0x18]
+ 112d8e2:	mov    rbx,QWORD PTR [rbp-0xf8]
+ 112d8e9:	mov    rax,QWORD PTR [r14+0x10]
+ 112d8ed:	sub    rax,QWORD PTR [r14+0x18]
+ 112d8f1:	cmp    rax,0x15
+ 112d8f5:	jb     112d916 <encoder.common.encodeJsonWithAttributes__anon_39908+0xbf6>
+ 112d8f7:	cmp    rbx,0x5f5e0ff
+ 112d8fe:	jbe    112d9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xca0>
+ 112d904:	xor    r12d,r12d
+ 112d907:	mov    rdi,r14
+ 112d90a:	mov    rsi,rbx
+ 112d90d:	xor    edx,edx
+ 112d90f:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112d914:	jmp    112d926 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc06>
+ 112d916:	mov    rdi,r14
+ 112d919:	mov    rsi,rbx
+ 112d91c:	xor    edx,edx
+ 112d91e:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112d923:	mov    r12d,eax
+ 112d926:	movabs rax,0x20000000000000
+ 112d930:	cmp    rbx,rax
+ 112d933:	setb   al
+ 112d936:	test   r12w,r12w
+ 112d93a:	setne  cl
+ 112d93d:	or     cl,al
+ 112d93f:	jne    112d9b5 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc95>
+ 112d941:	lea    r13,[rbp-0x120]
+ 112d948:	lea    rbx,[rbp-0x2b0]
+ 112d94f:	lea    r15,[rbp-0x70]
+ 112d953:	mov    rax,QWORD PTR [r14+0x18]
+ 112d957:	cmp    QWORD PTR [r14+0x10],rax
+ 112d95b:	jne    112d9a6 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc86>
+ 112d95d:	mov    rax,QWORD PTR [r14]
+ 112d960:	mov    rax,QWORD PTR [rax]
+ 112d963:	mov    BYTE PTR [rbp-0x120],0x22
+ 112d96a:	mov    QWORD PTR [rbp-0x70],r13
+ 112d96e:	mov    QWORD PTR [rbp-0x68],0x1
+ 112d976:	mov    ecx,0x1
+ 112d97b:	mov    r8d,0x1
+ 112d981:	mov    rdi,rbx
+ 112d984:	mov    rsi,r14
+ 112d987:	mov    rdx,r15
+ 112d98a:	call   rax
+ 112d98c:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112d994:	test   r12w,r12w
+ 112d998:	jne    112d9b5 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc95>
+ 112d99a:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112d9a2:	je     112d953 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc33>
+ 112d9a4:	jmp    112d9b2 <encoder.common.encodeJsonWithAttributes__anon_39908+0xc92>
+ 112d9a6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112d9aa:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112d9ae:	inc    QWORD PTR [r14+0x18]
+ 112d9b2:	xor    r12d,r12d
+ 112d9b5:	test   r12w,r12w
+ 112d9b9:	je     112d9cd <encoder.common.encodeJsonWithAttributes__anon_39908+0xcad>
+ 112d9bb:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112d9c0:	mov    rdi,r14
+ 112d9c3:	mov    rsi,rbx
+ 112d9c6:	xor    edx,edx
+ 112d9c8:	call   1105ae0 <encoder.decimal.writeNative>
+ 112d9cd:	xor    r13d,r13d
+ 112d9d0:	lea    rbx,[rbp-0x2b0]
+ 112d9d7:	lea    r15,[rbp-0x70]
+ 112d9db:	mov    r14,QWORD PTR [rbp-0x38]
+ 112d9df:	nop
+ 112d9e0:	lea    rsi,[r13+0x10744e5]
+ 112d9e7:	mov    r12d,0xe
+ 112d9ed:	sub    r12,r13
+ 112d9f0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112d9f4:	lea    rax,[rdi+r12*1]
+ 112d9f8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112d9fc:	ja     112da19 <encoder.common.encodeJsonWithAttributes__anon_39908+0xcf9>
+ 112d9fe:	add    rdi,QWORD PTR [r14+0x8]
+ 112da02:	mov    rdx,r12
+ 112da05:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112da0a:	add    QWORD PTR [r14+0x18],r12
+ 112da0e:	add    r13,r12
+ 112da11:	cmp    r13,0xe
+ 112da15:	jb     112d9e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xcc0>
+ 112da17:	jmp    112da67 <encoder.common.encodeJsonWithAttributes__anon_39908+0xd47>
+ 112da19:	mov    rax,QWORD PTR [r14]
+ 112da1c:	mov    rax,QWORD PTR [rax]
+ 112da1f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112da23:	mov    QWORD PTR [rbp-0x68],r12
+ 112da27:	mov    ecx,0x1
+ 112da2c:	mov    r8d,0x1
+ 112da32:	mov    rdi,rbx
+ 112da35:	mov    rsi,r14
+ 112da38:	mov    rdx,r15
+ 112da3b:	call   rax
+ 112da3d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112da45:	test   r12w,r12w
+ 112da49:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112da4f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112da56:	mov    r14,QWORD PTR [rbp-0x38]
+ 112da5a:	add    r13,r12
+ 112da5d:	cmp    r13,0xe
+ 112da61:	jb     112d9e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xcc0>
+ 112da67:	movabs rax,0x20000000000000
+ 112da71:	mov    rbx,QWORD PTR [rbp-0xd8]
+ 112da78:	cmp    rbx,rax
+ 112da7b:	jb     112daf9 <encoder.common.encodeJsonWithAttributes__anon_39908+0xdd9>
+ 112da7d:	lea    r13,[rbp-0x120]
+ 112da84:	lea    rbx,[rbp-0x2b0]
+ 112da8b:	lea    r15,[rbp-0x70]
+ 112da8f:	mov    rax,QWORD PTR [r14+0x18]
+ 112da93:	cmp    QWORD PTR [r14+0x10],rax
+ 112da97:	jne    112dae6 <encoder.common.encodeJsonWithAttributes__anon_39908+0xdc6>
+ 112da99:	mov    rax,QWORD PTR [r14]
+ 112da9c:	mov    rax,QWORD PTR [rax]
+ 112da9f:	mov    BYTE PTR [rbp-0x120],0x22
+ 112daa6:	mov    QWORD PTR [rbp-0x70],r13
+ 112daaa:	mov    QWORD PTR [rbp-0x68],0x1
+ 112dab2:	mov    ecx,0x1
+ 112dab7:	mov    r8d,0x1
+ 112dabd:	mov    rdi,rbx
+ 112dac0:	mov    rsi,r14
+ 112dac3:	mov    rdx,r15
+ 112dac6:	call   rax
+ 112dac8:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112dad0:	test   r12w,r12w
+ 112dad4:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112dada:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112dae2:	je     112da8f <encoder.common.encodeJsonWithAttributes__anon_39908+0xd6f>
+ 112dae4:	jmp    112daf2 <encoder.common.encodeJsonWithAttributes__anon_39908+0xdd2>
+ 112dae6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112daea:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112daee:	inc    QWORD PTR [r14+0x18]
+ 112daf2:	mov    rbx,QWORD PTR [rbp-0xd8]
+ 112daf9:	mov    rax,QWORD PTR [r14+0x10]
+ 112dafd:	sub    rax,QWORD PTR [r14+0x18]
+ 112db01:	cmp    rax,0x15
+ 112db05:	jb     112db26 <encoder.common.encodeJsonWithAttributes__anon_39908+0xe06>
+ 112db07:	cmp    rbx,0x5f5e0ff
+ 112db0e:	jbe    112dbd0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xeb0>
+ 112db14:	xor    r12d,r12d
+ 112db17:	mov    rdi,r14
+ 112db1a:	mov    rsi,rbx
+ 112db1d:	xor    edx,edx
+ 112db1f:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112db24:	jmp    112db36 <encoder.common.encodeJsonWithAttributes__anon_39908+0xe16>
+ 112db26:	mov    rdi,r14
+ 112db29:	mov    rsi,rbx
+ 112db2c:	xor    edx,edx
+ 112db2e:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112db33:	mov    r12d,eax
+ 112db36:	movabs rax,0x20000000000000
+ 112db40:	cmp    rbx,rax
+ 112db43:	setb   al
+ 112db46:	test   r12w,r12w
+ 112db4a:	setne  cl
+ 112db4d:	or     cl,al
+ 112db4f:	jne    112dbc5 <encoder.common.encodeJsonWithAttributes__anon_39908+0xea5>
+ 112db51:	lea    r13,[rbp-0x120]
+ 112db58:	lea    rbx,[rbp-0x2b0]
+ 112db5f:	lea    r15,[rbp-0x70]
+ 112db63:	mov    rax,QWORD PTR [r14+0x18]
+ 112db67:	cmp    QWORD PTR [r14+0x10],rax
+ 112db6b:	jne    112dbb6 <encoder.common.encodeJsonWithAttributes__anon_39908+0xe96>
+ 112db6d:	mov    rax,QWORD PTR [r14]
+ 112db70:	mov    rax,QWORD PTR [rax]
+ 112db73:	mov    BYTE PTR [rbp-0x120],0x22
+ 112db7a:	mov    QWORD PTR [rbp-0x70],r13
+ 112db7e:	mov    QWORD PTR [rbp-0x68],0x1
+ 112db86:	mov    ecx,0x1
+ 112db8b:	mov    r8d,0x1
+ 112db91:	mov    rdi,rbx
+ 112db94:	mov    rsi,r14
+ 112db97:	mov    rdx,r15
+ 112db9a:	call   rax
+ 112db9c:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112dba4:	test   r12w,r12w
+ 112dba8:	jne    112dbc5 <encoder.common.encodeJsonWithAttributes__anon_39908+0xea5>
+ 112dbaa:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112dbb2:	je     112db63 <encoder.common.encodeJsonWithAttributes__anon_39908+0xe43>
+ 112dbb4:	jmp    112dbc2 <encoder.common.encodeJsonWithAttributes__anon_39908+0xea2>
+ 112dbb6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112dbba:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112dbbe:	inc    QWORD PTR [r14+0x18]
+ 112dbc2:	xor    r12d,r12d
+ 112dbc5:	test   r12w,r12w
+ 112dbc9:	je     112dbdd <encoder.common.encodeJsonWithAttributes__anon_39908+0xebd>
+ 112dbcb:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112dbd0:	mov    rdi,r14
+ 112dbd3:	mov    rsi,rbx
+ 112dbd6:	xor    edx,edx
+ 112dbd8:	call   1105ae0 <encoder.decimal.writeNative>
+ 112dbdd:	xor    r13d,r13d
+ 112dbe0:	lea    rbx,[rbp-0x2b0]
+ 112dbe7:	lea    r15,[rbp-0x70]
+ 112dbeb:	mov    r14,QWORD PTR [rbp-0x38]
+ 112dbef:	nop
+ 112dbf0:	lea    rsi,[r13+0x10744ac]
+ 112dbf7:	mov    r12d,0x15
+ 112dbfd:	sub    r12,r13
+ 112dc00:	mov    rdi,QWORD PTR [r14+0x18]
+ 112dc04:	lea    rax,[rdi+r12*1]
+ 112dc08:	cmp    rax,QWORD PTR [r14+0x10]
+ 112dc0c:	ja     112dc29 <encoder.common.encodeJsonWithAttributes__anon_39908+0xf09>
+ 112dc0e:	add    rdi,QWORD PTR [r14+0x8]
+ 112dc12:	mov    rdx,r12
+ 112dc15:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112dc1a:	add    QWORD PTR [r14+0x18],r12
+ 112dc1e:	add    r13,r12
+ 112dc21:	cmp    r13,0x15
+ 112dc25:	jb     112dbf0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xed0>
+ 112dc27:	jmp    112dc77 <encoder.common.encodeJsonWithAttributes__anon_39908+0xf57>
+ 112dc29:	mov    rax,QWORD PTR [r14]
+ 112dc2c:	mov    rax,QWORD PTR [rax]
+ 112dc2f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112dc33:	mov    QWORD PTR [rbp-0x68],r12
+ 112dc37:	mov    ecx,0x1
+ 112dc3c:	mov    r8d,0x1
+ 112dc42:	mov    rdi,rbx
+ 112dc45:	mov    rsi,r14
+ 112dc48:	mov    rdx,r15
+ 112dc4b:	call   rax
+ 112dc4d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112dc55:	test   r12w,r12w
+ 112dc59:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112dc5f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112dc66:	mov    r14,QWORD PTR [rbp-0x38]
+ 112dc6a:	add    r13,r12
+ 112dc6d:	cmp    r13,0x15
+ 112dc71:	jb     112dbf0 <encoder.common.encodeJsonWithAttributes__anon_39908+0xed0>
+ 112dc77:	movabs rax,0x20000000000000
+ 112dc81:	mov    rbx,QWORD PTR [rbp-0x98]
+ 112dc88:	cmp    rbx,rax
+ 112dc8b:	jb     112dd09 <encoder.common.encodeJsonWithAttributes__anon_39908+0xfe9>
+ 112dc8d:	lea    r13,[rbp-0x120]
+ 112dc94:	lea    rbx,[rbp-0x2b0]
+ 112dc9b:	lea    r15,[rbp-0x70]
+ 112dc9f:	mov    rax,QWORD PTR [r14+0x18]
+ 112dca3:	cmp    QWORD PTR [r14+0x10],rax
+ 112dca7:	jne    112dcf6 <encoder.common.encodeJsonWithAttributes__anon_39908+0xfd6>
+ 112dca9:	mov    rax,QWORD PTR [r14]
+ 112dcac:	mov    rax,QWORD PTR [rax]
+ 112dcaf:	mov    BYTE PTR [rbp-0x120],0x22
+ 112dcb6:	mov    QWORD PTR [rbp-0x70],r13
+ 112dcba:	mov    QWORD PTR [rbp-0x68],0x1
+ 112dcc2:	mov    ecx,0x1
+ 112dcc7:	mov    r8d,0x1
+ 112dccd:	mov    rdi,rbx
+ 112dcd0:	mov    rsi,r14
+ 112dcd3:	mov    rdx,r15
+ 112dcd6:	call   rax
+ 112dcd8:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112dce0:	test   r12w,r12w
+ 112dce4:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112dcea:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112dcf2:	je     112dc9f <encoder.common.encodeJsonWithAttributes__anon_39908+0xf7f>
+ 112dcf4:	jmp    112dd02 <encoder.common.encodeJsonWithAttributes__anon_39908+0xfe2>
+ 112dcf6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112dcfa:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112dcfe:	inc    QWORD PTR [r14+0x18]
+ 112dd02:	mov    rbx,QWORD PTR [rbp-0x98]
+ 112dd09:	mov    rax,QWORD PTR [r14+0x10]
+ 112dd0d:	sub    rax,QWORD PTR [r14+0x18]
+ 112dd11:	cmp    rax,0x15
+ 112dd15:	jb     112dd36 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1016>
+ 112dd17:	cmp    rbx,0x5f5e0ff
+ 112dd1e:	jbe    112dde0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10c0>
+ 112dd24:	xor    r12d,r12d
+ 112dd27:	mov    rdi,r14
+ 112dd2a:	mov    rsi,rbx
+ 112dd2d:	xor    edx,edx
+ 112dd2f:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112dd34:	jmp    112dd46 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1026>
+ 112dd36:	mov    rdi,r14
+ 112dd39:	mov    rsi,rbx
+ 112dd3c:	xor    edx,edx
+ 112dd3e:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112dd43:	mov    r12d,eax
+ 112dd46:	movabs rax,0x20000000000000
+ 112dd50:	cmp    rbx,rax
+ 112dd53:	setb   al
+ 112dd56:	test   r12w,r12w
+ 112dd5a:	setne  cl
+ 112dd5d:	or     cl,al
+ 112dd5f:	jne    112ddd5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10b5>
+ 112dd61:	lea    r13,[rbp-0x120]
+ 112dd68:	lea    rbx,[rbp-0x2b0]
+ 112dd6f:	lea    r15,[rbp-0x70]
+ 112dd73:	mov    rax,QWORD PTR [r14+0x18]
+ 112dd77:	cmp    QWORD PTR [r14+0x10],rax
+ 112dd7b:	jne    112ddc6 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10a6>
+ 112dd7d:	mov    rax,QWORD PTR [r14]
+ 112dd80:	mov    rax,QWORD PTR [rax]
+ 112dd83:	mov    BYTE PTR [rbp-0x120],0x22
+ 112dd8a:	mov    QWORD PTR [rbp-0x70],r13
+ 112dd8e:	mov    QWORD PTR [rbp-0x68],0x1
+ 112dd96:	mov    ecx,0x1
+ 112dd9b:	mov    r8d,0x1
+ 112dda1:	mov    rdi,rbx
+ 112dda4:	mov    rsi,r14
+ 112dda7:	mov    rdx,r15
+ 112ddaa:	call   rax
+ 112ddac:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112ddb4:	test   r12w,r12w
+ 112ddb8:	jne    112ddd5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10b5>
+ 112ddba:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112ddc2:	je     112dd73 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1053>
+ 112ddc4:	jmp    112ddd2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10b2>
+ 112ddc6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112ddca:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112ddce:	inc    QWORD PTR [r14+0x18]
+ 112ddd2:	xor    r12d,r12d
+ 112ddd5:	test   r12w,r12w
+ 112ddd9:	je     112dded <encoder.common.encodeJsonWithAttributes__anon_39908+0x10cd>
+ 112dddb:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112dde0:	mov    rdi,r14
+ 112dde3:	mov    rsi,rbx
+ 112dde6:	xor    edx,edx
+ 112dde8:	call   1105ae0 <encoder.decimal.writeNative>
+ 112dded:	xor    r13d,r13d
+ 112ddf0:	lea    rbx,[rbp-0x2b0]
+ 112ddf7:	lea    r15,[rbp-0x70]
+ 112ddfb:	mov    r14,QWORD PTR [rbp-0x38]
+ 112ddff:	nop
+ 112de00:	lea    rsi,[r13+0x1074481]
+ 112de07:	mov    r12,r13
+ 112de0a:	xor    r12,0xf
+ 112de0e:	mov    rdi,QWORD PTR [r14+0x18]
+ 112de12:	lea    rax,[rdi+r12*1]
+ 112de16:	cmp    rax,QWORD PTR [r14+0x10]
+ 112de1a:	ja     112de37 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1117>
+ 112de1c:	add    rdi,QWORD PTR [r14+0x8]
+ 112de20:	mov    rdx,r12
+ 112de23:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112de28:	add    QWORD PTR [r14+0x18],r12
+ 112de2c:	add    r13,r12
+ 112de2f:	cmp    r13,0xf
+ 112de33:	jb     112de00 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10e0>
+ 112de35:	jmp    112de85 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1165>
+ 112de37:	mov    rax,QWORD PTR [r14]
+ 112de3a:	mov    rax,QWORD PTR [rax]
+ 112de3d:	mov    QWORD PTR [rbp-0x70],rsi
+ 112de41:	mov    QWORD PTR [rbp-0x68],r12
+ 112de45:	mov    ecx,0x1
+ 112de4a:	mov    r8d,0x1
+ 112de50:	mov    rdi,rbx
+ 112de53:	mov    rsi,r14
+ 112de56:	mov    rdx,r15
+ 112de59:	call   rax
+ 112de5b:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112de63:	test   r12w,r12w
+ 112de67:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112de6d:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112de74:	mov    r14,QWORD PTR [rbp-0x38]
+ 112de78:	add    r13,r12
+ 112de7b:	cmp    r13,0xf
+ 112de7f:	jb     112de00 <encoder.common.encodeJsonWithAttributes__anon_39908+0x10e0>
+ 112de85:	mov    rax,QWORD PTR [r14+0x10]
+ 112de89:	sub    rax,QWORD PTR [r14+0x18]
+ 112de8d:	mov    rdi,r14
+ 112de90:	cmp    rax,0x15
+ 112de94:	jb     112dea6 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1186>
+ 112de96:	mov    rsi,QWORD PTR [rbp-0x128]
+ 112de9d:	xor    edx,edx
+ 112de9f:	call   1105ae0 <encoder.decimal.writeNative>
+ 112dea4:	jmp    112debd <encoder.common.encodeJsonWithAttributes__anon_39908+0x119d>
+ 112dea6:	mov    rsi,QWORD PTR [rbp-0x128]
+ 112dead:	xor    edx,edx
+ 112deaf:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112deb4:	test   ax,ax
+ 112deb7:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112debd:	cmp    BYTE PTR [rbp-0x138],0x0
+ 112dec4:	je     112e15c <encoder.common.encodeJsonWithAttributes__anon_39908+0x143c>
+ 112deca:	xor    r13d,r13d
+ 112decd:	lea    rbx,[rbp-0x2b0]
+ 112ded4:	lea    r15,[rbp-0x70]
+ 112ded8:	nop    DWORD PTR [rax+rax*1+0x0]
+ 112dee0:	lea    rsi,[r13+0x1075de8]
+ 112dee7:	mov    r12d,0xd
+ 112deed:	sub    r12,r13
+ 112def0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112def4:	lea    rax,[rdi+r12*1]
+ 112def8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112defc:	ja     112df19 <encoder.common.encodeJsonWithAttributes__anon_39908+0x11f9>
+ 112defe:	add    rdi,QWORD PTR [r14+0x8]
+ 112df02:	mov    rdx,r12
+ 112df05:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112df0a:	add    QWORD PTR [r14+0x18],r12
+ 112df0e:	add    r13,r12
+ 112df11:	cmp    r13,0xd
+ 112df15:	jb     112dee0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x11c0>
+ 112df17:	jmp    112df67 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1247>
+ 112df19:	mov    rax,QWORD PTR [r14]
+ 112df1c:	mov    rax,QWORD PTR [rax]
+ 112df1f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112df23:	mov    QWORD PTR [rbp-0x68],r12
+ 112df27:	mov    ecx,0x1
+ 112df2c:	mov    r8d,0x1
+ 112df32:	mov    rdi,rbx
+ 112df35:	mov    rsi,r14
+ 112df38:	mov    rdx,r15
+ 112df3b:	call   rax
+ 112df3d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112df45:	test   r12w,r12w
+ 112df49:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112df4f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112df56:	mov    r14,QWORD PTR [rbp-0x38]
+ 112df5a:	add    r13,r12
+ 112df5d:	cmp    r13,0xd
+ 112df61:	jb     112dee0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x11c0>
+ 112df67:	movzx  esi,BYTE PTR [rbp-0xa8]
+ 112df6e:	mov    rdi,r14
+ 112df71:	call   1102bf0 <encoder.escaping.hexByte>
+ 112df76:	test   ax,ax
+ 112df79:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112df7f:	movzx  esi,BYTE PTR [rbp-0xa7]
+ 112df86:	mov    rdi,r14
+ 112df89:	call   1102bf0 <encoder.escaping.hexByte>
+ 112df8e:	test   ax,ax
+ 112df91:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112df97:	movzx  esi,BYTE PTR [rbp-0xa6]
+ 112df9e:	mov    rdi,r14
+ 112dfa1:	call   1102bf0 <encoder.escaping.hexByte>
+ 112dfa6:	test   ax,ax
+ 112dfa9:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112dfaf:	movzx  esi,BYTE PTR [rbp-0xa5]
+ 112dfb6:	mov    rdi,r14
+ 112dfb9:	call   1102bf0 <encoder.escaping.hexByte>
+ 112dfbe:	test   ax,ax
+ 112dfc1:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112dfc7:	movzx  esi,BYTE PTR [rbp-0xa4]
+ 112dfce:	mov    rdi,r14
+ 112dfd1:	call   1102bf0 <encoder.escaping.hexByte>
+ 112dfd6:	test   ax,ax
+ 112dfd9:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112dfdf:	movzx  esi,BYTE PTR [rbp-0xa3]
+ 112dfe6:	mov    rdi,r14
+ 112dfe9:	call   1102bf0 <encoder.escaping.hexByte>
+ 112dfee:	test   ax,ax
+ 112dff1:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112dff7:	movzx  esi,BYTE PTR [rbp-0xa2]
+ 112dffe:	mov    rdi,r14
+ 112e001:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e006:	test   ax,ax
+ 112e009:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e00f:	movzx  esi,BYTE PTR [rbp-0xa1]
+ 112e016:	mov    rdi,r14
+ 112e019:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e01e:	test   ax,ax
+ 112e021:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e027:	movzx  esi,BYTE PTR [rbp-0xa0]
+ 112e02e:	mov    rdi,r14
+ 112e031:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e036:	test   ax,ax
+ 112e039:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e03f:	movzx  esi,BYTE PTR [rbp-0x9f]
+ 112e046:	mov    rdi,r14
+ 112e049:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e04e:	test   ax,ax
+ 112e051:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e057:	movzx  esi,BYTE PTR [rbp-0x9e]
+ 112e05e:	mov    rdi,r14
+ 112e061:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e066:	test   ax,ax
+ 112e069:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e06f:	movzx  esi,BYTE PTR [rbp-0x9d]
+ 112e076:	mov    rdi,r14
+ 112e079:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e07e:	test   ax,ax
+ 112e081:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e087:	movzx  esi,BYTE PTR [rbp-0x9c]
+ 112e08e:	mov    rdi,r14
+ 112e091:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e096:	test   ax,ax
+ 112e099:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e09f:	movzx  esi,BYTE PTR [rbp-0x9b]
+ 112e0a6:	mov    rdi,r14
+ 112e0a9:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e0ae:	test   ax,ax
+ 112e0b1:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e0b7:	movzx  esi,BYTE PTR [rbp-0x9a]
+ 112e0be:	mov    rdi,r14
+ 112e0c1:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e0c6:	test   ax,ax
+ 112e0c9:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e0cf:	movzx  esi,BYTE PTR [rbp-0x99]
+ 112e0d6:	mov    rdi,r14
+ 112e0d9:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e0de:	test   ax,ax
+ 112e0e1:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e0e7:	lea    r13,[rbp-0x120]
+ 112e0ee:	lea    rbx,[rbp-0x2b0]
+ 112e0f5:	lea    r15,[rbp-0x70]
+ 112e0f9:	mov    rax,QWORD PTR [r14+0x18]
+ 112e0fd:	cmp    QWORD PTR [r14+0x10],rax
+ 112e101:	jne    112e150 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1430>
+ 112e103:	mov    rax,QWORD PTR [r14]
+ 112e106:	mov    rax,QWORD PTR [rax]
+ 112e109:	mov    BYTE PTR [rbp-0x120],0x22
+ 112e110:	mov    QWORD PTR [rbp-0x70],r13
+ 112e114:	mov    QWORD PTR [rbp-0x68],0x1
+ 112e11c:	mov    ecx,0x1
+ 112e121:	mov    r8d,0x1
+ 112e127:	mov    rdi,rbx
+ 112e12a:	mov    rsi,r14
+ 112e12d:	mov    rdx,r15
+ 112e130:	call   rax
+ 112e132:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e13a:	test   r12w,r12w
+ 112e13e:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e144:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112e14c:	je     112e0f9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x13d9>
+ 112e14e:	jmp    112e15c <encoder.common.encodeJsonWithAttributes__anon_39908+0x143c>
+ 112e150:	mov    rcx,QWORD PTR [r14+0x8]
+ 112e154:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112e158:	inc    QWORD PTR [r14+0x18]
+ 112e15c:	cmp    BYTE PTR [rbp-0xaa],0x0
+ 112e163:	je     112e381 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1661>
+ 112e169:	mov    rax,QWORD PTR [rbp-0xf0]
+ 112e170:	mov    r13d,eax
+ 112e173:	shr    r13d,0x8
+ 112e177:	mov    ecx,eax
+ 112e179:	shr    ecx,0x10
+ 112e17c:	mov    DWORD PTR [rbp-0x40],ecx
+ 112e17f:	mov    ecx,eax
+ 112e181:	shr    ecx,0x18
+ 112e184:	mov    DWORD PTR [rbp-0x48],ecx
+ 112e187:	mov    rcx,rax
+ 112e18a:	shr    rcx,0x20
+ 112e18e:	mov    QWORD PTR [rbp-0x78],rcx
+ 112e192:	mov    rcx,rax
+ 112e195:	shr    rcx,0x28
+ 112e199:	mov    QWORD PTR [rbp-0xf8],rcx
+ 112e1a0:	mov    rcx,rax
+ 112e1a3:	shr    rcx,0x30
+ 112e1a7:	mov    QWORD PTR [rbp-0xd8],rcx
+ 112e1ae:	shr    rax,0x38
+ 112e1b2:	mov    QWORD PTR [rbp-0x98],rax
+ 112e1b9:	xor    ebx,ebx
+ 112e1bb:	lea    r15,[rbp-0x2b0]
+ 112e1c2:	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112e1d0:	lea    rsi,[rbx+0x1075ddb]
+ 112e1d7:	mov    r12d,0xc
+ 112e1dd:	sub    r12,rbx
+ 112e1e0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e1e4:	lea    rax,[rdi+r12*1]
+ 112e1e8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e1ec:	ja     112e209 <encoder.common.encodeJsonWithAttributes__anon_39908+0x14e9>
+ 112e1ee:	add    rdi,QWORD PTR [r14+0x8]
+ 112e1f2:	mov    rdx,r12
+ 112e1f5:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e1fa:	add    QWORD PTR [r14+0x18],r12
+ 112e1fe:	add    rbx,r12
+ 112e201:	cmp    rbx,0xc
+ 112e205:	jb     112e1d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x14b0>
+ 112e207:	jmp    112e258 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1538>
+ 112e209:	mov    rax,QWORD PTR [r14]
+ 112e20c:	mov    rax,QWORD PTR [rax]
+ 112e20f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e213:	mov    QWORD PTR [rbp-0x68],r12
+ 112e217:	mov    ecx,0x1
+ 112e21c:	mov    r8d,0x1
+ 112e222:	mov    rdi,r15
+ 112e225:	mov    rsi,r14
+ 112e228:	lea    rdx,[rbp-0x70]
+ 112e22c:	call   rax
+ 112e22e:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e236:	test   r12w,r12w
+ 112e23a:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e240:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e247:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e24b:	add    rbx,r12
+ 112e24e:	cmp    rbx,0xc
+ 112e252:	jb     112e1d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x14b0>
+ 112e258:	movzx  esi,BYTE PTR [rbp-0xf0]
+ 112e25f:	mov    rdi,r14
+ 112e262:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e267:	test   ax,ax
+ 112e26a:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e270:	movzx  esi,r13b
+ 112e274:	mov    rdi,r14
+ 112e277:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e27c:	test   ax,ax
+ 112e27f:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e285:	movzx  esi,BYTE PTR [rbp-0x40]
+ 112e289:	mov    rdi,r14
+ 112e28c:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e291:	test   ax,ax
+ 112e294:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e29a:	movzx  esi,BYTE PTR [rbp-0x48]
+ 112e29e:	mov    rdi,r14
+ 112e2a1:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e2a6:	test   ax,ax
+ 112e2a9:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e2af:	movzx  esi,BYTE PTR [rbp-0x78]
+ 112e2b3:	mov    rdi,r14
+ 112e2b6:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e2bb:	test   ax,ax
+ 112e2be:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e2c4:	movzx  esi,BYTE PTR [rbp-0xf8]
+ 112e2cb:	mov    rdi,r14
+ 112e2ce:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e2d3:	test   ax,ax
+ 112e2d6:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e2dc:	movzx  esi,BYTE PTR [rbp-0xd8]
+ 112e2e3:	mov    rdi,r14
+ 112e2e6:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e2eb:	test   ax,ax
+ 112e2ee:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e2f4:	movzx  esi,BYTE PTR [rbp-0x98]
+ 112e2fb:	mov    rdi,r14
+ 112e2fe:	call   1102bf0 <encoder.escaping.hexByte>
+ 112e303:	test   ax,ax
+ 112e306:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e30c:	lea    r13,[rbp-0x120]
+ 112e313:	lea    rbx,[rbp-0x2b0]
+ 112e31a:	lea    r15,[rbp-0x70]
+ 112e31e:	mov    rax,QWORD PTR [r14+0x18]
+ 112e322:	cmp    QWORD PTR [r14+0x10],rax
+ 112e326:	jne    112e375 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1655>
+ 112e328:	mov    rax,QWORD PTR [r14]
+ 112e32b:	mov    rax,QWORD PTR [rax]
+ 112e32e:	mov    BYTE PTR [rbp-0x120],0x22
+ 112e335:	mov    QWORD PTR [rbp-0x70],r13
+ 112e339:	mov    QWORD PTR [rbp-0x68],0x1
+ 112e341:	mov    ecx,0x1
+ 112e346:	mov    r8d,0x1
+ 112e34c:	mov    rdi,rbx
+ 112e34f:	mov    rsi,r14
+ 112e352:	mov    rdx,r15
+ 112e355:	call   rax
+ 112e357:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e35f:	test   r12w,r12w
+ 112e363:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e369:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112e371:	je     112e31e <encoder.common.encodeJsonWithAttributes__anon_39908+0x15fe>
+ 112e373:	jmp    112e381 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1661>
+ 112e375:	mov    rcx,QWORD PTR [r14+0x8]
+ 112e379:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112e37d:	inc    QWORD PTR [r14+0x18]
+ 112e381:	cmp    BYTE PTR [rbp-0xa9],0x0
+ 112e388:	je     112e802 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ae2>
+ 112e38e:	xor    r13d,r13d
+ 112e391:	lea    rbx,[rbp-0x2b0]
+ 112e398:	lea    r15,[rbp-0x70]
+ 112e39c:	nop    DWORD PTR [rax+0x0]
+ 112e3a0:	lea    rsi,[r13+0x1074507]
+ 112e3a7:	mov    r12d,0x14
+ 112e3ad:	sub    r12,r13
+ 112e3b0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e3b4:	lea    rax,[rdi+r12*1]
+ 112e3b8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e3bc:	ja     112e3d9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x16b9>
+ 112e3be:	add    rdi,QWORD PTR [r14+0x8]
+ 112e3c2:	mov    rdx,r12
+ 112e3c5:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e3ca:	add    QWORD PTR [r14+0x18],r12
+ 112e3ce:	add    r13,r12
+ 112e3d1:	cmp    r13,0x14
+ 112e3d5:	jb     112e3a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1680>
+ 112e3d7:	jmp    112e427 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1707>
+ 112e3d9:	mov    rax,QWORD PTR [r14]
+ 112e3dc:	mov    rax,QWORD PTR [rax]
+ 112e3df:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e3e3:	mov    QWORD PTR [rbp-0x68],r12
+ 112e3e7:	mov    ecx,0x1
+ 112e3ec:	mov    r8d,0x1
+ 112e3f2:	mov    rdi,rbx
+ 112e3f5:	mov    rsi,r14
+ 112e3f8:	mov    rdx,r15
+ 112e3fb:	call   rax
+ 112e3fd:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e405:	test   r12w,r12w
+ 112e409:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e40f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e416:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e41a:	add    r13,r12
+ 112e41d:	cmp    r13,0x14
+ 112e421:	jb     112e3a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1680>
+ 112e427:	mov    rdi,r14
+ 112e42a:	mov    rsi,QWORD PTR [rbp-0x2f0]
+ 112e431:	mov    rdx,QWORD PTR [rbp-0x2e8]
+ 112e438:	xor    ecx,ecx
+ 112e43a:	call   11084d0 <encoder.escaping.quoted>
+ 112e43f:	test   ax,ax
+ 112e442:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e448:	xor    r13d,r13d
+ 112e44b:	lea    rbx,[rbp-0x2b0]
+ 112e452:	lea    r15,[rbp-0x70]
+ 112e456:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112e460:	lea    rsi,[r13+0x107451c]
+ 112e467:	mov    r12d,0x8
+ 112e46d:	sub    r12,r13
+ 112e470:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e474:	lea    rax,[rdi+r12*1]
+ 112e478:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e47c:	ja     112e499 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1779>
+ 112e47e:	add    rdi,QWORD PTR [r14+0x8]
+ 112e482:	mov    rdx,r12
+ 112e485:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e48a:	add    QWORD PTR [r14+0x18],r12
+ 112e48e:	add    r13,r12
+ 112e491:	cmp    r13,0x8
+ 112e495:	jb     112e460 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1740>
+ 112e497:	jmp    112e4e7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x17c7>
+ 112e499:	mov    rax,QWORD PTR [r14]
+ 112e49c:	mov    rax,QWORD PTR [rax]
+ 112e49f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e4a3:	mov    QWORD PTR [rbp-0x68],r12
+ 112e4a7:	mov    ecx,0x1
+ 112e4ac:	mov    r8d,0x1
+ 112e4b2:	mov    rdi,rbx
+ 112e4b5:	mov    rsi,r14
+ 112e4b8:	mov    rdx,r15
+ 112e4bb:	call   rax
+ 112e4bd:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e4c5:	test   r12w,r12w
+ 112e4c9:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e4cf:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e4d6:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e4da:	add    r13,r12
+ 112e4dd:	cmp    r13,0x8
+ 112e4e1:	jb     112e460 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1740>
+ 112e4e7:	mov    rdi,r14
+ 112e4ea:	mov    rsi,QWORD PTR [rbp-0x2e0]
+ 112e4f1:	mov    rdx,QWORD PTR [rbp-0x2d8]
+ 112e4f8:	xor    ecx,ecx
+ 112e4fa:	call   11084d0 <encoder.escaping.quoted>
+ 112e4ff:	test   ax,ax
+ 112e502:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e508:	xor    r13d,r13d
+ 112e50b:	lea    rbx,[rbp-0x2b0]
+ 112e512:	lea    r15,[rbp-0x70]
+ 112e516:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112e520:	lea    rsi,[r13+0x107449f]
+ 112e527:	mov    r12d,0xc
+ 112e52d:	sub    r12,r13
+ 112e530:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e534:	lea    rax,[rdi+r12*1]
+ 112e538:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e53c:	ja     112e559 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1839>
+ 112e53e:	add    rdi,QWORD PTR [r14+0x8]
+ 112e542:	mov    rdx,r12
+ 112e545:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e54a:	add    QWORD PTR [r14+0x18],r12
+ 112e54e:	add    r13,r12
+ 112e551:	cmp    r13,0xc
+ 112e555:	jb     112e520 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1800>
+ 112e557:	jmp    112e5a7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1887>
+ 112e559:	mov    rax,QWORD PTR [r14]
+ 112e55c:	mov    rax,QWORD PTR [rax]
+ 112e55f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e563:	mov    QWORD PTR [rbp-0x68],r12
+ 112e567:	mov    ecx,0x1
+ 112e56c:	mov    r8d,0x1
+ 112e572:	mov    rdi,rbx
+ 112e575:	mov    rsi,r14
+ 112e578:	mov    rdx,r15
+ 112e57b:	call   rax
+ 112e57d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e585:	test   r12w,r12w
+ 112e589:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e58f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e596:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e59a:	add    r13,r12
+ 112e59d:	cmp    r13,0xc
+ 112e5a1:	jb     112e520 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1800>
+ 112e5a7:	mov    rdi,r14
+ 112e5aa:	mov    rsi,QWORD PTR [rbp-0x2d0]
+ 112e5b1:	mov    rdx,QWORD PTR [rbp-0x2c8]
+ 112e5b8:	xor    ecx,ecx
+ 112e5ba:	call   11084d0 <encoder.escaping.quoted>
+ 112e5bf:	test   ax,ax
+ 112e5c2:	jne    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e5c8:	xor    r13d,r13d
+ 112e5cb:	lea    rbx,[rbp-0x2b0]
+ 112e5d2:	lea    r15,[rbp-0x70]
+ 112e5d6:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112e5e0:	lea    rsi,[r13+0x10744fe]
+ 112e5e7:	mov    r12d,0x8
+ 112e5ed:	sub    r12,r13
+ 112e5f0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e5f4:	lea    rax,[rdi+r12*1]
+ 112e5f8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e5fc:	ja     112e619 <encoder.common.encodeJsonWithAttributes__anon_39908+0x18f9>
+ 112e5fe:	add    rdi,QWORD PTR [r14+0x8]
+ 112e602:	mov    rdx,r12
+ 112e605:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e60a:	add    QWORD PTR [r14+0x18],r12
+ 112e60e:	add    r13,r12
+ 112e611:	cmp    r13,0x8
+ 112e615:	jb     112e5e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x18c0>
+ 112e617:	jmp    112e667 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1947>
+ 112e619:	mov    rax,QWORD PTR [r14]
+ 112e61c:	mov    rax,QWORD PTR [rax]
+ 112e61f:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e623:	mov    QWORD PTR [rbp-0x68],r12
+ 112e627:	mov    ecx,0x1
+ 112e62c:	mov    r8d,0x1
+ 112e632:	mov    rdi,rbx
+ 112e635:	mov    rsi,r14
+ 112e638:	mov    rdx,r15
+ 112e63b:	call   rax
+ 112e63d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e645:	test   r12w,r12w
+ 112e649:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e64f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e656:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e65a:	add    r13,r12
+ 112e65d:	cmp    r13,0x8
+ 112e661:	jb     112e5e0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x18c0>
+ 112e667:	mov    rax,QWORD PTR [r14+0x10]
+ 112e66b:	sub    rax,QWORD PTR [r14+0x18]
+ 112e66f:	cmp    rax,0x15
+ 112e673:	jb     112e690 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1970>
+ 112e675:	mov    rsi,QWORD PTR [rbp-0x2c0]
+ 112e67c:	mov    rdi,r14
+ 112e67f:	xor    edx,edx
+ 112e681:	cmp    esi,0x5f5e100
+ 112e687:	jb     112e6ab <encoder.common.encodeJsonWithAttributes__anon_39908+0x198b>
+ 112e689:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112e68e:	jmp    112e6b0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1990>
+ 112e690:	mov    rdi,r14
+ 112e693:	mov    rsi,QWORD PTR [rbp-0x2c0]
+ 112e69a:	xor    edx,edx
+ 112e69c:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112e6a1:	test   ax,ax
+ 112e6a4:	je     112e6b0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1990>
+ 112e6a6:	jmp    112e786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a66>
+ 112e6ab:	call   1105ae0 <encoder.decimal.writeNative>
+ 112e6b0:	xor    r13d,r13d
+ 112e6b3:	lea    rbx,[rbp-0x2b0]
+ 112e6ba:	lea    r15,[rbp-0x70]
+ 112e6be:	xchg   ax,ax
+ 112e6c0:	lea    rsi,[r13+0x10744ce]
+ 112e6c7:	mov    r12d,0xa
+ 112e6cd:	sub    r12,r13
+ 112e6d0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e6d4:	lea    rax,[rdi+r12*1]
+ 112e6d8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e6dc:	ja     112e6f9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x19d9>
+ 112e6de:	add    rdi,QWORD PTR [r14+0x8]
+ 112e6e2:	mov    rdx,r12
+ 112e6e5:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e6ea:	add    QWORD PTR [r14+0x18],r12
+ 112e6ee:	add    r13,r12
+ 112e6f1:	cmp    r13,0xa
+ 112e6f5:	jb     112e6c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x19a0>
+ 112e6f7:	jmp    112e747 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a27>
+ 112e6f9:	mov    rax,QWORD PTR [r14]
+ 112e6fc:	mov    rax,QWORD PTR [rax]
+ 112e6ff:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e703:	mov    QWORD PTR [rbp-0x68],r12
+ 112e707:	mov    ecx,0x1
+ 112e70c:	mov    r8d,0x1
+ 112e712:	mov    rdi,rbx
+ 112e715:	mov    rsi,r14
+ 112e718:	mov    rdx,r15
+ 112e71b:	call   rax
+ 112e71d:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e725:	test   r12w,r12w
+ 112e729:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e72f:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e736:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e73a:	add    r13,r12
+ 112e73d:	cmp    r13,0xa
+ 112e741:	jb     112e6c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x19a0>
+ 112e747:	mov    rax,QWORD PTR [r14+0x10]
+ 112e74b:	sub    rax,QWORD PTR [r14+0x18]
+ 112e74f:	cmp    rax,0x15
+ 112e753:	jb     112e770 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a50>
+ 112e755:	mov    rsi,QWORD PTR [rbp-0x2b8]
+ 112e75c:	mov    rdi,r14
+ 112e75f:	xor    edx,edx
+ 112e761:	cmp    esi,0x5f5e100
+ 112e767:	jb     112e78e <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a6e>
+ 112e769:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112e76e:	jmp    112e793 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a73>
+ 112e770:	mov    rdi,r14
+ 112e773:	mov    rsi,QWORD PTR [rbp-0x2b8]
+ 112e77a:	xor    edx,edx
+ 112e77c:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112e781:	test   ax,ax
+ 112e784:	je     112e793 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a73>
+ 112e786:	mov    r12d,eax
+ 112e789:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e78e:	call   1105ae0 <encoder.decimal.writeNative>
+ 112e793:	lea    rbx,[rbp-0x2b0]
+ 112e79a:	lea    r15,[rbp-0x70]
+ 112e79e:	mov    rax,QWORD PTR [r14+0x18]
+ 112e7a2:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e7a6:	jb     112e7f6 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ad6>
+ 112e7a8:	mov    rax,QWORD PTR [r14]
+ 112e7ab:	mov    rax,QWORD PTR [rax]
+ 112e7ae:	mov    QWORD PTR [rbp-0x70],0x10721cb
+ 112e7b6:	mov    QWORD PTR [rbp-0x68],0x1
+ 112e7be:	mov    ecx,0x1
+ 112e7c3:	mov    r8d,0x1
+ 112e7c9:	mov    rdi,rbx
+ 112e7cc:	mov    rsi,r14
+ 112e7cf:	mov    rdx,r15
+ 112e7d2:	call   rax
+ 112e7d4:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e7dc:	test   r12w,r12w
+ 112e7e0:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e7e6:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112e7ee:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e7f2:	je     112e79e <encoder.common.encodeJsonWithAttributes__anon_39908+0x1a7e>
+ 112e7f4:	jmp    112e802 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ae2>
+ 112e7f6:	mov    rcx,QWORD PTR [r14+0x8]
+ 112e7fa:	mov    BYTE PTR [rcx+rax*1],0x7d
+ 112e7fe:	inc    QWORD PTR [r14+0x18]
+ 112e802:	xor    r13d,r13d
+ 112e805:	lea    rbx,[rbp-0x2b0]
+ 112e80c:	lea    r15,[rbp-0x70]
+ 112e810:	lea    rsi,[r13+0x10721cd]
+ 112e817:	mov    r12,r13
+ 112e81a:	xor    r12,0xf
+ 112e81e:	mov    rdi,QWORD PTR [r14+0x18]
+ 112e822:	lea    rax,[rdi+r12*1]
+ 112e826:	cmp    rax,QWORD PTR [r14+0x10]
+ 112e82a:	ja     112e847 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1b27>
+ 112e82c:	add    rdi,QWORD PTR [r14+0x8]
+ 112e830:	mov    rdx,r12
+ 112e833:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112e838:	add    QWORD PTR [r14+0x18],r12
+ 112e83c:	add    r13,r12
+ 112e83f:	cmp    r13,0xf
+ 112e843:	jb     112e810 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1af0>
+ 112e845:	jmp    112e895 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1b75>
+ 112e847:	mov    rax,QWORD PTR [r14]
+ 112e84a:	mov    rax,QWORD PTR [rax]
+ 112e84d:	mov    QWORD PTR [rbp-0x70],rsi
+ 112e851:	mov    QWORD PTR [rbp-0x68],r12
+ 112e855:	mov    ecx,0x1
+ 112e85a:	mov    r8d,0x1
+ 112e860:	mov    rdi,rbx
+ 112e863:	mov    rsi,r14
+ 112e866:	mov    rdx,r15
+ 112e869:	call   rax
+ 112e86b:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 112e873:	test   r12w,r12w
+ 112e877:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 112e87d:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 112e884:	mov    r14,QWORD PTR [rbp-0x38]
+ 112e888:	add    r13,r12
+ 112e88b:	cmp    r13,0xf
+ 112e88f:	jb     112e810 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1af0>
+ 112e895:	mov    rax,QWORD PTR [rbp-0x100]
+ 112e89c:	mov    rax,QWORD PTR [rax+0x8]
+ 112e8a0:	mov    QWORD PTR [rbp-0xf8],rax
+ 112e8a7:	test   rax,rax
+ 112e8aa:	je     113001e <encoder.common.encodeJsonWithAttributes__anon_39908+0x32fe>
+ 112e8b0:	movzx  eax,BYTE PTR [rip+0xfffffffffff2f859]        # 105e110 <__anon_11009+0x20>
+ 112e8b7:	and    al,0x3
+ 112e8b9:	mov    BYTE PTR [rbp-0xd8],al
+ 112e8bf:	mov    QWORD PTR [rbp-0x40],0x0
+ 112e8c7:	mov    rax,QWORD PTR [rbp-0x100]
+ 112e8ce:	mov    rax,QWORD PTR [rax]
+ 112e8d1:	mov    rcx,QWORD PTR [rax+0x8]
+ 112e8d5:	mov    rsi,QWORD PTR [rax+0x10]
+ 112e8d9:	mov    rdx,rcx
+ 112e8dc:	mov    r15w,0x98
+ 112e8e1:	sub    rdx,rsi
+ 112e8e4:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112e8ea:	cmp    rdx,0x4
+ 112e8ee:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112e8f4:	mov    r12,QWORD PTR [rax]
+ 112e8f7:	lea    rdx,[rsi+0x4]
+ 112e8fb:	mov    QWORD PTR [rax+0x10],rdx
+ 112e8ff:	mov    r13d,DWORD PTR [r12+rsi*1]
+ 112e903:	sub    rcx,rdx
+ 112e906:	cmp    rcx,r13
+ 112e909:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112e90f:	add    r12,rdx
+ 112e912:	add    rdx,r13
+ 112e915:	mov    QWORD PTR [rax+0x10],rdx
+ 112e919:	mov    rax,QWORD PTR [rbp-0x100]
+ 112e920:	mov    rax,QWORD PTR [rax+0x10]
+ 112e924:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112e929:	je     112ead0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1db0>
+ 112e92f:	test   r13,r13
+ 112e932:	mov    rcx,r12
+ 112e935:	mov    edx,0x1
+ 112e93a:	cmove  rcx,rdx
+ 112e93e:	lea    rdx,[r13-0x1]
+ 112e942:	mov    QWORD PTR [rbp-0x78],rdx
+ 112e946:	shr    rdx,0x5
+ 112e94a:	mov    QWORD PTR [rbp-0x48],rdx
+ 112e94e:	lea    rdi,[r13-0x4]
+ 112e952:	mov    r8d,r13d
+ 112e955:	shr    r8d,1
+ 112e958:	mov    r9d,r8d
+ 112e95b:	and    r9d,0xc
+ 112e95f:	mov    r10,rdi
+ 112e962:	sub    r10,r9
+ 112e965:	xor    r11d,r11d
+ 112e968:	jmp    112e9cd <encoder.common.encodeJsonWithAttributes__anon_39908+0x1cad>
+ 112e96a:	vmovd  xmm0,DWORD PTR [rcx+0x4]
+ 112e96f:	vmovq  xmm1,QWORD PTR [rcx+0x8]
+ 112e974:	movzx  edx,BYTE PTR [r12]
+ 112e979:	vmovd  xmm2,edx
+ 112e97d:	vpinsrb xmm2,xmm2,BYTE PTR [rcx+0x1],0x1
+ 112e984:	vpinsrb xmm2,xmm2,BYTE PTR [rcx+0x2],0x2
+ 112e98b:	vpinsrb xmm2,xmm2,BYTE PTR [rcx+0x3],0x3
+ 112e992:	vpunpckldq xmm0,xmm2,xmm0
+ 112e996:	vpunpcklqdq xmm0,xmm0,xmm1
+ 112e99a:	vpxor  xmm0,xmm0,XMMWORD PTR [rsi]
+ 112e99e:	vmovdqu xmm1,XMMWORD PTR [rsi+r13*1-0x10]
+ 112e9a5:	vpxor  xmm1,xmm1,XMMWORD PTR [r12+r13*1-0x10]
+ 112e9ac:	vpor   xmm0,xmm0,xmm1
+ 112e9b0:	vptest xmm0,xmm0
+ 112e9b5:	je     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112e9bb:	nop    DWORD PTR [rax+rax*1+0x0]
+ 112e9c0:	inc    r11
+ 112e9c3:	cmp    r11,QWORD PTR [rbp-0x40]
+ 112e9c7:	je     112ead0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1db0>
+ 112e9cd:	lea    rdx,[r11+r11*2]
+ 112e9d1:	shl    rdx,0x4
+ 112e9d5:	mov    rsi,QWORD PTR [rax+rdx*1+0x20]
+ 112e9da:	mov    rdx,QWORD PTR [rax+rdx*1+0x28]
+ 112e9df:	test   rdx,rdx
+ 112e9e2:	mov    rbx,rsi
+ 112e9e5:	mov    r15d,0x1
+ 112e9eb:	cmove  rbx,r15
+ 112e9ef:	cmp    rdx,r13
+ 112e9f2:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112e9f4:	mov    r15w,0x69
+ 112e9f9:	test   rdx,rdx
+ 112e9fc:	je     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112ea02:	cmp    rbx,rcx
+ 112ea05:	je     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112ea0b:	cmp    r13d,0x10
+ 112ea0f:	ja     112ea40 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1d20>
+ 112ea11:	cmp    r13d,0x4
+ 112ea15:	jae    112ea8c <encoder.common.encodeJsonWithAttributes__anon_39908+0x1d6c>
+ 112ea17:	movzx  edx,BYTE PTR [rsi]
+ 112ea1a:	cmp    dl,BYTE PTR [rcx]
+ 112ea1c:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea1e:	mov    rbx,QWORD PTR [rbp-0x78]
+ 112ea22:	movzx  edx,BYTE PTR [rcx+rbx*1]
+ 112ea26:	cmp    BYTE PTR [rsi+rbx*1],dl
+ 112ea29:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea2b:	movzx  edx,BYTE PTR [rcx+r8*1]
+ 112ea30:	cmp    BYTE PTR [rsi+r8*1],dl
+ 112ea34:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea36:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112ea3b:	nop    DWORD PTR [rax+rax*1+0x0]
+ 112ea40:	cmp    r13d,0x21
+ 112ea44:	jb     112e96a <encoder.common.encodeJsonWithAttributes__anon_39908+0x1c4a>
+ 112ea4a:	xor    esi,esi
+ 112ea4c:	mov    rdx,QWORD PTR [rbp-0x48]
+ 112ea50:	vmovdqu ymm0,YMMWORD PTR [rbx+rsi*1]
+ 112ea55:	vpxor  ymm0,ymm0,YMMWORD PTR [rcx+rsi*1]
+ 112ea5a:	vptest ymm0,ymm0
+ 112ea5f:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea65:	add    rsi,0x20
+ 112ea69:	dec    rdx
+ 112ea6c:	jne    112ea50 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1d30>
+ 112ea6e:	vmovdqu ymm0,YMMWORD PTR [rbx+r13*1-0x20]
+ 112ea75:	vpxor  ymm0,ymm0,YMMWORD PTR [rcx+r13*1-0x20]
+ 112ea7c:	vptest ymm0,ymm0
+ 112ea81:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea87:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112ea8c:	mov    edx,DWORD PTR [r12]
+ 112ea90:	cmp    edx,DWORD PTR [rsi]
+ 112ea92:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112ea98:	mov    edx,DWORD PTR [rsi+rdi*1]
+ 112ea9b:	cmp    DWORD PTR [r12+rdi*1],edx
+ 112ea9f:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112eaa5:	mov    edx,DWORD PTR [rsi+r9*1]
+ 112eaa9:	cmp    DWORD PTR [r12+r9*1],edx
+ 112eaad:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112eab3:	mov    edx,DWORD PTR [rsi+r10*1]
+ 112eab7:	cmp    DWORD PTR [r12+r10*1],edx
+ 112eabb:	jne    112e9c0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ca0>
+ 112eac1:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eac6:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112ead0:	mov    rcx,QWORD PTR [rbp-0x40]
+ 112ead4:	lea    rcx,[rcx+rcx*2]
+ 112ead8:	shl    rcx,0x4
+ 112eadc:	mov    QWORD PTR [rax+rcx*1+0x20],r12
+ 112eae1:	mov    QWORD PTR [rax+rcx*1+0x28],r13
+ 112eae6:	vpxor  xmm0,xmm0,xmm0
+ 112eaea:	vmovdqu YMMWORD PTR [rax+rcx*1],ymm0
+ 112eaef:	mov    rax,QWORD PTR [rbp-0x100]
+ 112eaf6:	mov    rdi,QWORD PTR [rax]
+ 112eaf9:	mov    rdx,QWORD PTR [rdi+0x20]
+ 112eafd:	mov    r15w,0x9f
+ 112eb02:	cmp    rdx,0x100
+ 112eb09:	je     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eb0f:	lea    rax,[rdx+0x1]
+ 112eb13:	mov    QWORD PTR [rdi+0x20],rax
+ 112eb17:	mov    rcx,QWORD PTR [rdi+0x8]
+ 112eb1b:	mov    rax,QWORD PTR [rdi+0x10]
+ 112eb1f:	cmp    rcx,rax
+ 112eb22:	jbe    11300d2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33b2>
+ 112eb28:	mov    rbx,QWORD PTR [rdi]
+ 112eb2b:	lea    r8,[rax+0x1]
+ 112eb2f:	mov    QWORD PTR [rdi+0x10],r8
+ 112eb33:	movzx  esi,BYTE PTR [rbx+rax*1]
+ 112eb37:	mov    r15w,0x9c
+ 112eb3c:	cmp    esi,0xa
+ 112eb3f:	ja     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eb45:	cmp    BYTE PTR [rdi+0x30],0x0
+ 112eb49:	mov    esi,esi
+ 112eb4b:	je     112ed20 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2000>
+ 112eb51:	jmp    QWORD PTR [rsi*8+0x100f0f8]
+ 112eb58:	mov    rsi,QWORD PTR [rdi+0x28]
+ 112eb5c:	cmp    rsi,0x8
+ 112eb60:	je     11300fa <encoder.common.encodeJsonWithAttributes__anon_39908+0x33da>
+ 112eb66:	sub    rcx,r8
+ 112eb69:	mov    r15w,0x98
+ 112eb6e:	cmp    rcx,0x4
+ 112eb72:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eb78:	lea    rcx,[rax+0x5]
+ 112eb7c:	mov    QWORD PTR [rdi+0x10],rcx
+ 112eb80:	mov    ecx,DWORD PTR [rbx+rax*1+0x1]
+ 112eb84:	mov    eax,0xff
+ 112eb89:	sub    eax,edx
+ 112eb8b:	mov    r15w,0x9f
+ 112eb90:	mov    QWORD PTR [rbp-0x98],rcx
+ 112eb97:	cmp    eax,ecx
+ 112eb99:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eb9f:	lea    rax,[rsi+0x1]
+ 112eba3:	mov    QWORD PTR [rdi+0x28],rax
+ 112eba7:	mov    rax,QWORD PTR [rdi+0x18]
+ 112ebab:	test   rax,rax
+ 112ebae:	je     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112ebb4:	mov    BYTE PTR [rbp-0x2b0],0x0
+ 112ebbb:	xor    ecx,ecx
+ 112ebbd:	test   cl,cl
+ 112ebbf:	jne    11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112ebc5:	mov    rdx,QWORD PTR [rax+0x8]
+ 112ebc9:	mov    rcx,QWORD PTR [rax+0x10]
+ 112ebcd:	add    rcx,0xf
+ 112ebd1:	and    rcx,0xfffffffffffffff0
+ 112ebd5:	sub    rdx,rcx
+ 112ebd8:	mov    r8,QWORD PTR [rbp-0x98]
+ 112ebdf:	jb     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112ebe5:	mov    r9,r8
+ 112ebe8:	shl    r9,0x5
+ 112ebec:	cmp    r9,rdx
+ 112ebef:	ja     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112ebf5:	mov    QWORD PTR [rbp-0xf0],r12
+ 112ebfc:	mov    rdx,QWORD PTR [rax]
+ 112ebff:	add    rdx,rcx
+ 112ec02:	mov    QWORD PTR [rbp-0x48],rdx
+ 112ec06:	add    rcx,r9
+ 112ec09:	mov    QWORD PTR [rax+0x10],rcx
+ 112ec0d:	test   r8,r8
+ 112ec10:	je     112ec70 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1f50>
+ 112ec12:	xor    ebx,ebx
+ 112ec14:	mov    QWORD PTR [rbp-0x78],rdi
+ 112ec18:	nop    DWORD PTR [rax+rax*1+0x0]
+ 112ec20:	mov    r12,r9
+ 112ec23:	vpxor  xmm0,xmm0,xmm0
+ 112ec27:	vmovdqu YMMWORD PTR [rbp-0x2b0],ymm0
+ 112ec2f:	lea    rsi,[rbp-0x2b0]
+ 112ec36:	vzeroupper
+ 112ec39:	call   1125d60 <core.codec.WireInput.valueWith__anon_39675>
+ 112ec3e:	test   ax,ax
+ 112ec41:	jne    1130106 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e6>
+ 112ec47:	vmovdqu ymm0,YMMWORD PTR [rbp-0x2b0]
+ 112ec4f:	vmovdqu YMMWORD PTR [rbp-0x120],ymm0
+ 112ec57:	mov    rax,QWORD PTR [rbp-0x48]
+ 112ec5b:	vmovdqu YMMWORD PTR [rax+rbx*1],ymm0
+ 112ec60:	add    rbx,0x20
+ 112ec64:	mov    r9,r12
+ 112ec67:	cmp    r12,rbx
+ 112ec6a:	mov    rdi,QWORD PTR [rbp-0x78]
+ 112ec6e:	jne    112ec20 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1f00>
+ 112ec70:	mov    rbx,rdi
+ 112ec73:	xor    ecx,ecx
+ 112ec75:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112ec7a:	setne  cl
+ 112ec7d:	mov    rdi,r14
+ 112ec80:	mov    rsi,QWORD PTR [rbp-0xf0]
+ 112ec87:	mov    rdx,r13
+ 112ec8a:	vzeroupper
+ 112ec8d:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112ec92:	test   ax,ax
+ 112ec95:	jne    112ffde <encoder.common.encodeJsonWithAttributes__anon_39908+0x32be>
+ 112ec9b:	mov    r13,QWORD PTR [rbp-0x98]
+ 112eca2:	mov    rax,QWORD PTR [r14+0x18]
+ 112eca6:	cmp    QWORD PTR [r14+0x10],rax
+ 112ecaa:	jne    112fa0c <encoder.common.encodeJsonWithAttributes__anon_39908+0x2cec>
+ 112ecb0:	mov    rax,QWORD PTR [r14]
+ 112ecb3:	mov    rax,QWORD PTR [rax]
+ 112ecb6:	mov    BYTE PTR [rbp-0xd0],0x5b
+ 112ecbd:	lea    rcx,[rbp-0xd0]
+ 112ecc4:	mov    QWORD PTR [rbp-0x90],rcx
+ 112eccb:	mov    QWORD PTR [rbp-0x88],0x1
+ 112ecd6:	mov    ecx,0x1
+ 112ecdb:	mov    r8d,0x1
+ 112ece1:	lea    rdi,[rbp-0x2b0]
+ 112ece8:	mov    rsi,r14
+ 112eceb:	lea    rdx,[rbp-0x90]
+ 112ecf2:	call   rax
+ 112ecf4:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112ecfc:	test   r15w,r15w
+ 112ed00:	jne    113000b <encoder.common.encodeJsonWithAttributes__anon_39908+0x32eb>
+ 112ed06:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112ed0e:	mov    r13,QWORD PTR [rbp-0x98]
+ 112ed15:	mov    r14,QWORD PTR [rbp-0x38]
+ 112ed19:	je     112eca2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1f82>
+ 112ed1b:	jmp    112fa18 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2cf8>
+ 112ed20:	jmp    QWORD PTR [rsi*8+0x100f0a0]
+ 112ed27:	xor    ecx,ecx
+ 112ed29:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112ed2e:	setne  cl
+ 112ed31:	mov    rdi,r14
+ 112ed34:	mov    rsi,r12
+ 112ed37:	mov    rdx,r13
+ 112ed3a:	vzeroupper
+ 112ed3d:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112ed42:	test   ax,ax
+ 112ed45:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112ed4b:	xor    r12d,r12d
+ 112ed4e:	xchg   ax,ax
+ 112ed50:	lea    rsi,[r12+0x1072fb8]
+ 112ed58:	mov    ebx,0x4
+ 112ed5d:	sub    rbx,r12
+ 112ed60:	mov    rdi,QWORD PTR [r14+0x18]
+ 112ed64:	lea    rax,[rdi+rbx*1]
+ 112ed68:	cmp    rax,QWORD PTR [r14+0x10]
+ 112ed6c:	ja     112ed8c <encoder.common.encodeJsonWithAttributes__anon_39908+0x206c>
+ 112ed6e:	add    rdi,QWORD PTR [r14+0x8]
+ 112ed72:	mov    rdx,rbx
+ 112ed75:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112ed7a:	add    QWORD PTR [r14+0x18],rbx
+ 112ed7e:	add    r12,rbx
+ 112ed81:	cmp    r12,0x4
+ 112ed85:	jb     112ed50 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2030>
+ 112ed87:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112ed8c:	mov    rax,QWORD PTR [r14]
+ 112ed8f:	mov    rax,QWORD PTR [rax]
+ 112ed92:	mov    QWORD PTR [rbp-0x90],rsi
+ 112ed99:	mov    QWORD PTR [rbp-0x88],rbx
+ 112eda0:	mov    ecx,0x1
+ 112eda5:	mov    r8d,0x1
+ 112edab:	lea    rdi,[rbp-0x2b0]
+ 112edb2:	mov    rsi,r14
+ 112edb5:	lea    rdx,[rbp-0x90]
+ 112edbc:	call   rax
+ 112edbe:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112edc6:	test   r15w,r15w
+ 112edca:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112edd0:	mov    rbx,QWORD PTR [rbp-0x2b0]
+ 112edd7:	add    r12,rbx
+ 112edda:	cmp    r12,0x4
+ 112edde:	jb     112ed50 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2030>
+ 112ede4:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112ede9:	sub    rcx,r8
+ 112edec:	mov    r15w,0x98
+ 112edf1:	cmp    rcx,0x10
+ 112edf5:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112edfb:	lea    rcx,[rax+0x11]
+ 112edff:	mov    QWORD PTR [rdi+0x10],rcx
+ 112ee03:	mov    rcx,QWORD PTR [rbx+rax*1+0x1]
+ 112ee08:	mov    QWORD PTR [rbp-0x48],rcx
+ 112ee0c:	mov    rbx,QWORD PTR [rbx+rax*1+0x9]
+ 112ee11:	xor    ecx,ecx
+ 112ee13:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112ee18:	setne  cl
+ 112ee1b:	mov    rdi,r14
+ 112ee1e:	mov    rsi,r12
+ 112ee21:	mov    rdx,r13
+ 112ee24:	vzeroupper
+ 112ee27:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112ee2c:	test   ax,ax
+ 112ee2f:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112ee35:	mov    rsi,QWORD PTR [rbp-0x48]
+ 112ee39:	mov    r13,rsi
+ 112ee3c:	movabs rax,0x1fffffffffffff
+ 112ee46:	add    r13,rax
+ 112ee49:	mov    r12,rbx
+ 112ee4c:	adc    r12,0x0
+ 112ee50:	movabs rax,0x3ffffffffffffe
+ 112ee5a:	cmp    rax,r13
+ 112ee5d:	mov    eax,0x0
+ 112ee62:	sbb    rax,r12
+ 112ee65:	jae    112f675 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2955>
+ 112ee6b:	mov    rax,QWORD PTR [r14+0x18]
+ 112ee6f:	cmp    QWORD PTR [r14+0x10],rax
+ 112ee73:	jne    112f669 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2949>
+ 112ee79:	mov    rax,QWORD PTR [r14]
+ 112ee7c:	mov    rax,QWORD PTR [rax]
+ 112ee7f:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112ee86:	lea    rcx,[rbp-0xd0]
+ 112ee8d:	mov    QWORD PTR [rbp-0x90],rcx
+ 112ee94:	mov    QWORD PTR [rbp-0x88],0x1
+ 112ee9f:	mov    ecx,0x1
+ 112eea4:	mov    r8d,0x1
+ 112eeaa:	lea    rdi,[rbp-0x2b0]
+ 112eeb1:	mov    rsi,r14
+ 112eeb4:	lea    rdx,[rbp-0x90]
+ 112eebb:	call   rax
+ 112eebd:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112eec5:	test   r15w,r15w
+ 112eec9:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eecf:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112eed7:	mov    rsi,QWORD PTR [rbp-0x48]
+ 112eedb:	mov    r14,QWORD PTR [rbp-0x38]
+ 112eedf:	je     112ee6b <encoder.common.encodeJsonWithAttributes__anon_39908+0x214b>
+ 112eee1:	jmp    112f675 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2955>
+ 112eee6:	sub    rcx,r8
+ 112eee9:	mov    r15w,0x98
+ 112eeee:	cmp    rcx,0x10
+ 112eef2:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112eef8:	lea    rcx,[rax+0x11]
+ 112eefc:	mov    QWORD PTR [rdi+0x10],rcx
+ 112ef00:	mov    rcx,QWORD PTR [rbx+rax*1+0x1]
+ 112ef05:	mov    QWORD PTR [rbp-0x48],rcx
+ 112ef09:	mov    rbx,QWORD PTR [rbx+rax*1+0x9]
+ 112ef0e:	xor    ecx,ecx
+ 112ef10:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112ef15:	setne  cl
+ 112ef18:	mov    rdi,r14
+ 112ef1b:	mov    rsi,r12
+ 112ef1e:	mov    rdx,r13
+ 112ef21:	vzeroupper
+ 112ef24:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112ef29:	test   ax,ax
+ 112ef2c:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112ef32:	mov    rsi,QWORD PTR [rbp-0x48]
+ 112ef36:	mov    r12,rsi
+ 112ef39:	shr    r12,0x35
+ 112ef3d:	mov    rax,r12
+ 112ef40:	or     rax,rbx
+ 112ef43:	je     112f6f8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x29d8>
+ 112ef49:	mov    rax,QWORD PTR [r14+0x18]
+ 112ef4d:	cmp    QWORD PTR [r14+0x10],rax
+ 112ef51:	jne    112f6d5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x29b5>
+ 112ef57:	mov    r13,rsi
+ 112ef5a:	mov    rax,QWORD PTR [r14]
+ 112ef5d:	mov    rax,QWORD PTR [rax]
+ 112ef60:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112ef67:	lea    rcx,[rbp-0xd0]
+ 112ef6e:	mov    QWORD PTR [rbp-0x90],rcx
+ 112ef75:	mov    QWORD PTR [rbp-0x88],0x1
+ 112ef80:	mov    ecx,0x1
+ 112ef85:	mov    r8d,0x1
+ 112ef8b:	lea    rdi,[rbp-0x2b0]
+ 112ef92:	mov    rsi,r14
+ 112ef95:	lea    rdx,[rbp-0x90]
+ 112ef9c:	call   rax
+ 112ef9e:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112efa6:	test   r15w,r15w
+ 112efaa:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112efb0:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112efb8:	mov    rsi,r13
+ 112efbb:	mov    r14,QWORD PTR [rbp-0x38]
+ 112efbf:	je     112ef49 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2229>
+ 112efc1:	jmp    112f6e1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x29c1>
+ 112efc6:	sub    rcx,r8
+ 112efc9:	mov    r15w,0x98
+ 112efce:	cmp    rcx,0x8
+ 112efd2:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112efd8:	lea    rcx,[rax+0x9]
+ 112efdc:	mov    QWORD PTR [rdi+0x10],rcx
+ 112efe0:	vmovq  xmm0,QWORD PTR [rbx+rax*1+0x1]
+ 112efe6:	vmovq  QWORD PTR [rbp-0x48],xmm0
+ 112efeb:	xor    ecx,ecx
+ 112efed:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112eff2:	setne  cl
+ 112eff5:	mov    rdi,r14
+ 112eff8:	mov    rsi,r12
+ 112effb:	mov    rdx,r13
+ 112effe:	vzeroupper
+ 112f001:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f006:	test   ax,ax
+ 112f009:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f00f:	vmovq  xmm0,QWORD PTR [rbp-0x48]
+ 112f014:	vmovq  rax,xmm0
+ 112f019:	shr    rax,0x34
+ 112f01d:	and    eax,0x7ff
+ 112f022:	cmp    eax,0x7ff
+ 112f027:	jae    112f5c3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x28a3>
+ 112f02d:	mov    BYTE PTR [rbp-0x30],0x0
+ 112f031:	movzx  eax,BYTE PTR [rbp-0xd8]
+ 112f038:	mov    BYTE PTR [rbp-0xda],al
+ 112f03e:	vmovdqu xmm1,XMMWORD PTR [rip+0xfffffffffff2f0aa]        # 105e0f0 <__anon_11009>
+ 112f046:	vmovdqa XMMWORD PTR [rbp-0xd0],xmm1
+ 112f04e:	xor    eax,eax
+ 112f050:	test   al,al
+ 112f052:	sete   BYTE PTR [rbp-0xc0]
+ 112f059:	mov    edx,0x15b
+ 112f05e:	lea    rdi,[rbp-0x90]
+ 112f065:	lea    rsi,[rbp-0x2b0]
+ 112f06c:	lea    rcx,[rbp-0xd0]
+ 112f073:	call   1092d20 <fmt.float.render__anon_11232>
+ 112f078:	movzx  eax,WORD PTR [rbp-0x80]
+ 112f07c:	test   ax,ax
+ 112f07f:	jne    112fff3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32d3>
+ 112f085:	mov    rcx,QWORD PTR [rbp-0x88]
+ 112f08c:	test   ax,ax
+ 112f08f:	jne    1130001 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32e1>
+ 112f095:	mov    rsi,QWORD PTR [rbp-0x90]
+ 112f09c:	movzx  r8d,BYTE PTR [rbp-0xd8]
+ 112f0a4:	mov    rdi,r14
+ 112f0a7:	mov    rdx,rcx
+ 112f0aa:	mov    r9d,0x20
+ 112f0b0:	call   1092870 <Io.Writer.alignBuffer>
+ 112f0b5:	jmp    112f244 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2524>
+ 112f0ba:	mov    r15w,0x98
+ 112f0bf:	cmp    rcx,r8
+ 112f0c2:	jbe    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f0c8:	lea    rcx,[rax+0x2]
+ 112f0cc:	mov    QWORD PTR [rdi+0x10],rcx
+ 112f0d0:	movzx  ebx,BYTE PTR [rbx+rax*1+0x1]
+ 112f0d5:	cmp    bl,0x1
+ 112f0d8:	ja     11300f3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33d3>
+ 112f0de:	xor    ecx,ecx
+ 112f0e0:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112f0e5:	setne  cl
+ 112f0e8:	mov    rdi,r14
+ 112f0eb:	mov    rsi,r12
+ 112f0ee:	mov    rdx,r13
+ 112f0f1:	vzeroupper
+ 112f0f4:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f0f9:	test   ax,ax
+ 112f0fc:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f102:	xor    r12d,r12d
+ 112f105:	cmp    bl,0x1
+ 112f108:	sete   r12b
+ 112f10c:	mov    r15d,0x107353e
+ 112f112:	mov    eax,0x107346e
+ 112f117:	cmove  r15,rax
+ 112f11b:	xor    r12,0x5
+ 112f11f:	xor    r13d,r13d
+ 112f122:	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112f130:	lea    rsi,[r15+r13*1]
+ 112f134:	mov    rbx,r12
+ 112f137:	sub    rbx,r13
+ 112f13a:	mov    rdi,QWORD PTR [r14+0x18]
+ 112f13e:	lea    rax,[rdi+rbx*1]
+ 112f142:	cmp    rax,QWORD PTR [r14+0x10]
+ 112f146:	ja     112f165 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2445>
+ 112f148:	add    rdi,QWORD PTR [r14+0x8]
+ 112f14c:	mov    rdx,rbx
+ 112f14f:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112f154:	add    QWORD PTR [r14+0x18],rbx
+ 112f158:	add    r13,rbx
+ 112f15b:	cmp    r13,r12
+ 112f15e:	jb     112f130 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2410>
+ 112f160:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112f165:	mov    QWORD PTR [rbp-0x48],r15
+ 112f169:	mov    rax,QWORD PTR [r14]
+ 112f16c:	mov    rax,QWORD PTR [rax]
+ 112f16f:	mov    QWORD PTR [rbp-0x90],rsi
+ 112f176:	mov    QWORD PTR [rbp-0x88],rbx
+ 112f17d:	mov    ecx,0x1
+ 112f182:	mov    r8d,0x1
+ 112f188:	lea    rdi,[rbp-0x2b0]
+ 112f18f:	mov    rsi,r14
+ 112f192:	lea    rdx,[rbp-0x90]
+ 112f199:	call   rax
+ 112f19b:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f1a3:	test   r15w,r15w
+ 112f1a7:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f1ad:	mov    rbx,QWORD PTR [rbp-0x2b0]
+ 112f1b4:	mov    r15,QWORD PTR [rbp-0x48]
+ 112f1b8:	add    r13,rbx
+ 112f1bb:	cmp    r13,r12
+ 112f1be:	jb     112f130 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2410>
+ 112f1c4:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112f1c9:	mov    rdx,rcx
+ 112f1cc:	sub    rdx,r8
+ 112f1cf:	cmp    rdx,0x4
+ 112f1d3:	jb     11300d2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33b2>
+ 112f1d9:	lea    rdx,[rax+0x5]
+ 112f1dd:	mov    QWORD PTR [rdi+0x10],rdx
+ 112f1e1:	mov    eax,DWORD PTR [rbx+rax*1+0x1]
+ 112f1e5:	sub    rcx,rdx
+ 112f1e8:	mov    r15w,0x98
+ 112f1ed:	cmp    rcx,rax
+ 112f1f0:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f1f6:	mov    QWORD PTR [rbp-0x48],rax
+ 112f1fa:	mov    QWORD PTR [rbp-0x98],rdx
+ 112f201:	add    rax,rdx
+ 112f204:	mov    QWORD PTR [rdi+0x10],rax
+ 112f208:	xor    ecx,ecx
+ 112f20a:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112f20f:	setne  cl
+ 112f212:	mov    rdi,r14
+ 112f215:	mov    rsi,r12
+ 112f218:	mov    rdx,r13
+ 112f21b:	vzeroupper
+ 112f21e:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f223:	test   ax,ax
+ 112f226:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f22c:	add    rbx,QWORD PTR [rbp-0x98]
+ 112f233:	mov    rdi,r14
+ 112f236:	mov    rsi,rbx
+ 112f239:	mov    rdx,QWORD PTR [rbp-0x48]
+ 112f23d:	xor    ecx,ecx
+ 112f23f:	call   11084d0 <encoder.escaping.quoted>
+ 112f244:	mov    r15d,eax
+ 112f247:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112f24c:	sub    rcx,r8
+ 112f24f:	mov    r15w,0x98
+ 112f254:	cmp    rcx,0x8
+ 112f258:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f25e:	lea    rcx,[rax+0x9]
+ 112f262:	mov    QWORD PTR [rdi+0x10],rcx
+ 112f266:	mov    rbx,QWORD PTR [rbx+rax*1+0x1]
+ 112f26b:	xor    ecx,ecx
+ 112f26d:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112f272:	setne  cl
+ 112f275:	mov    rdi,r14
+ 112f278:	mov    rsi,r12
+ 112f27b:	mov    rdx,r13
+ 112f27e:	vzeroupper
+ 112f281:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f286:	test   ax,ax
+ 112f289:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f28f:	movabs rax,0x20000000000000
+ 112f299:	lea    r12,[rax+rbx*1]
+ 112f29d:	dec    r12
+ 112f2a0:	movabs rax,0x3fffffffffffff
+ 112f2aa:	cmp    r12,rax
+ 112f2ad:	jb     112f735 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a15>
+ 112f2b3:	mov    rax,QWORD PTR [r14+0x18]
+ 112f2b7:	cmp    QWORD PTR [r14+0x10],rax
+ 112f2bb:	jne    112f729 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a09>
+ 112f2c1:	mov    rax,QWORD PTR [r14]
+ 112f2c4:	mov    rax,QWORD PTR [rax]
+ 112f2c7:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112f2ce:	lea    rcx,[rbp-0xd0]
+ 112f2d5:	mov    QWORD PTR [rbp-0x90],rcx
+ 112f2dc:	mov    QWORD PTR [rbp-0x88],0x1
+ 112f2e7:	mov    ecx,0x1
+ 112f2ec:	mov    r8d,0x1
+ 112f2f2:	lea    rdi,[rbp-0x2b0]
+ 112f2f9:	mov    rsi,r14
+ 112f2fc:	lea    rdx,[rbp-0x90]
+ 112f303:	call   rax
+ 112f305:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f30d:	test   r15w,r15w
+ 112f311:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f317:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112f31f:	mov    r14,QWORD PTR [rbp-0x38]
+ 112f323:	je     112f2b3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2593>
+ 112f325:	jmp    112f735 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a15>
+ 112f32a:	mov    rdx,rcx
+ 112f32d:	sub    rdx,r8
+ 112f330:	cmp    rdx,0x4
+ 112f334:	jb     11300d2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33b2>
+ 112f33a:	lea    rdx,[rax+0x5]
+ 112f33e:	mov    QWORD PTR [rdi+0x10],rdx
+ 112f342:	mov    eax,DWORD PTR [rbx+rax*1+0x1]
+ 112f346:	sub    rcx,rdx
+ 112f349:	mov    r15w,0x98
+ 112f34e:	cmp    rcx,rax
+ 112f351:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f357:	mov    QWORD PTR [rbp-0x48],rax
+ 112f35b:	mov    QWORD PTR [rbp-0x98],rdx
+ 112f362:	add    rax,rdx
+ 112f365:	mov    QWORD PTR [rdi+0x10],rax
+ 112f369:	xor    ecx,ecx
+ 112f36b:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112f370:	setne  cl
+ 112f373:	mov    rdi,r14
+ 112f376:	mov    rsi,r12
+ 112f379:	mov    rdx,r13
+ 112f37c:	vzeroupper
+ 112f37f:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f384:	test   ax,ax
+ 112f387:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f38d:	add    rbx,QWORD PTR [rbp-0x98]
+ 112f394:	xor    r12d,r12d
+ 112f397:	mov    r13,QWORD PTR [rbp-0x48]
+ 112f39b:	nop    DWORD PTR [rax+rax*1+0x0]
+ 112f3a0:	lea    rsi,[r12+0x1074447]
+ 112f3a8:	mov    r15d,0x5
+ 112f3ae:	sub    r15,r12
+ 112f3b1:	mov    rdi,QWORD PTR [r14+0x18]
+ 112f3b5:	lea    rax,[rdi+r15*1]
+ 112f3b9:	cmp    rax,QWORD PTR [r14+0x10]
+ 112f3bd:	ja     112f3da <encoder.common.encodeJsonWithAttributes__anon_39908+0x26ba>
+ 112f3bf:	add    rdi,QWORD PTR [r14+0x8]
+ 112f3c3:	mov    rdx,r15
+ 112f3c6:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112f3cb:	add    QWORD PTR [r14+0x18],r15
+ 112f3cf:	add    r12,r15
+ 112f3d2:	cmp    r12,0x5
+ 112f3d6:	jb     112f3a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2680>
+ 112f3d8:	jmp    112f432 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2712>
+ 112f3da:	mov    rax,QWORD PTR [r14]
+ 112f3dd:	mov    rax,QWORD PTR [rax]
+ 112f3e0:	mov    QWORD PTR [rbp-0x90],rsi
+ 112f3e7:	mov    QWORD PTR [rbp-0x88],r15
+ 112f3ee:	mov    ecx,0x1
+ 112f3f3:	mov    r8d,0x1
+ 112f3f9:	lea    rdi,[rbp-0x2b0]
+ 112f400:	mov    rsi,r14
+ 112f403:	lea    rdx,[rbp-0x90]
+ 112f40a:	call   rax
+ 112f40c:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f414:	test   r15w,r15w
+ 112f418:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f41e:	mov    r15,QWORD PTR [rbp-0x2b0]
+ 112f425:	add    r12,r15
+ 112f428:	cmp    r12,0x5
+ 112f42c:	jb     112f3a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2680>
+ 112f432:	test   r13,r13
+ 112f435:	je     112f45e <encoder.common.encodeJsonWithAttributes__anon_39908+0x273e>
+ 112f437:	xor    r12d,r12d
+ 112f43a:	nop    WORD PTR [rax+rax*1+0x0]
+ 112f440:	movzx  esi,BYTE PTR [rbx+r12*1]
+ 112f445:	mov    rdi,r14
+ 112f448:	call   1102bf0 <encoder.escaping.hexByte>
+ 112f44d:	test   ax,ax
+ 112f450:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f456:	inc    r12
+ 112f459:	cmp    r13,r12
+ 112f45c:	jne    112f440 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2720>
+ 112f45e:	mov    rax,QWORD PTR [r14+0x18]
+ 112f462:	cmp    QWORD PTR [r14+0x10],rax
+ 112f466:	jne    112f5af <encoder.common.encodeJsonWithAttributes__anon_39908+0x288f>
+ 112f46c:	mov    rax,QWORD PTR [r14]
+ 112f46f:	mov    rax,QWORD PTR [rax]
+ 112f472:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112f479:	lea    rcx,[rbp-0xd0]
+ 112f480:	mov    QWORD PTR [rbp-0x90],rcx
+ 112f487:	mov    QWORD PTR [rbp-0x88],0x1
+ 112f492:	mov    ecx,0x1
+ 112f497:	mov    r8d,0x1
+ 112f49d:	lea    rdi,[rbp-0x2b0]
+ 112f4a4:	mov    rsi,r14
+ 112f4a7:	lea    rdx,[rbp-0x90]
+ 112f4ae:	call   rax
+ 112f4b0:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f4b8:	test   r15w,r15w
+ 112f4bc:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112f4c2:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112f4ca:	je     112f45e <encoder.common.encodeJsonWithAttributes__anon_39908+0x273e>
+ 112f4cc:	jmp    112fdee <encoder.common.encodeJsonWithAttributes__anon_39908+0x30ce>
+ 112f4d1:	sub    rcx,r8
+ 112f4d4:	mov    r15w,0x98
+ 112f4d9:	cmp    rcx,0x8
+ 112f4dd:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f4e3:	lea    rcx,[rax+0x9]
+ 112f4e7:	mov    QWORD PTR [rdi+0x10],rcx
+ 112f4eb:	mov    rbx,QWORD PTR [rbx+rax*1+0x1]
+ 112f4f0:	xor    ecx,ecx
+ 112f4f2:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112f4f7:	setne  cl
+ 112f4fa:	mov    rdi,r14
+ 112f4fd:	mov    rsi,r12
+ 112f500:	mov    rdx,r13
+ 112f503:	vzeroupper
+ 112f506:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112f50b:	test   ax,ax
+ 112f50e:	jne    1130101 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33e1>
+ 112f514:	movabs rax,0x20000000000000
+ 112f51e:	lea    r12,[rax+rbx*1]
+ 112f522:	dec    r12
+ 112f525:	movabs rax,0x3fffffffffffff
+ 112f52f:	cmp    r12,rax
+ 112f532:	jb     112f786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a66>
+ 112f538:	mov    rax,QWORD PTR [r14+0x18]
+ 112f53c:	cmp    QWORD PTR [r14+0x10],rax
+ 112f540:	jne    112f77a <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a5a>
+ 112f546:	mov    rax,QWORD PTR [r14]
+ 112f549:	mov    rax,QWORD PTR [rax]
+ 112f54c:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112f553:	lea    rcx,[rbp-0xd0]
+ 112f55a:	mov    QWORD PTR [rbp-0x90],rcx
+ 112f561:	mov    QWORD PTR [rbp-0x88],0x1
+ 112f56c:	mov    ecx,0x1
+ 112f571:	mov    r8d,0x1
+ 112f577:	lea    rdi,[rbp-0x2b0]
+ 112f57e:	mov    rsi,r14
+ 112f581:	lea    rdx,[rbp-0x90]
+ 112f588:	call   rax
+ 112f58a:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f592:	test   r15w,r15w
+ 112f596:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f59c:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112f5a4:	mov    r14,QWORD PTR [rbp-0x38]
+ 112f5a8:	je     112f538 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2818>
+ 112f5aa:	jmp    112f786 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a66>
+ 112f5af:	mov    rcx,QWORD PTR [r14+0x8]
+ 112f5b3:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112f5b7:	inc    QWORD PTR [r14+0x18]
+ 112f5bb:	xor    r15d,r15d
+ 112f5be:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112f5c3:	xor    r12d,r12d
+ 112f5c6:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112f5d0:	lea    rsi,[r12+0x1072fb8]
+ 112f5d8:	mov    ebx,0x4
+ 112f5dd:	sub    rbx,r12
+ 112f5e0:	mov    rdi,QWORD PTR [r14+0x18]
+ 112f5e4:	lea    rax,[rdi+rbx*1]
+ 112f5e8:	cmp    rax,QWORD PTR [r14+0x10]
+ 112f5ec:	ja     112f60c <encoder.common.encodeJsonWithAttributes__anon_39908+0x28ec>
+ 112f5ee:	add    rdi,QWORD PTR [r14+0x8]
+ 112f5f2:	mov    rdx,rbx
+ 112f5f5:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 112f5fa:	add    QWORD PTR [r14+0x18],rbx
+ 112f5fe:	add    r12,rbx
+ 112f601:	cmp    r12,0x4
+ 112f605:	jb     112f5d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x28b0>
+ 112f607:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112f60c:	mov    rax,QWORD PTR [r14]
+ 112f60f:	mov    rax,QWORD PTR [rax]
+ 112f612:	mov    QWORD PTR [rbp-0x90],rsi
+ 112f619:	mov    QWORD PTR [rbp-0x88],rbx
+ 112f620:	mov    ecx,0x1
+ 112f625:	mov    r8d,0x1
+ 112f62b:	lea    rdi,[rbp-0x2b0]
+ 112f632:	mov    rsi,r14
+ 112f635:	lea    rdx,[rbp-0x90]
+ 112f63c:	call   rax
+ 112f63e:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112f646:	test   r15w,r15w
+ 112f64a:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f650:	mov    rbx,QWORD PTR [rbp-0x2b0]
+ 112f657:	add    r12,rbx
+ 112f65a:	cmp    r12,0x4
+ 112f65e:	jb     112f5d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x28b0>
+ 112f664:	jmp    112fdfb <encoder.common.encodeJsonWithAttributes__anon_39908+0x30db>
+ 112f669:	mov    rcx,QWORD PTR [r14+0x8]
+ 112f66d:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112f671:	inc    QWORD PTR [r14+0x18]
+ 112f675:	mov    rax,rbx
+ 112f678:	sar    rax,0x3f
+ 112f67c:	mov    rdx,rbx
+ 112f67f:	xor    rdx,rax
+ 112f682:	xor    rsi,rax
+ 112f685:	sub    rsi,rax
+ 112f688:	sbb    rdx,rax
+ 112f68b:	je     112f6a0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2980>
+ 112f68d:	shr    rbx,0x3f
+ 112f691:	mov    rdi,r14
+ 112f694:	mov    ecx,ebx
+ 112f696:	call   1105370 <encoder.decimal.writeBuffered__anon_34679>
+ 112f69b:	jmp    112fb97 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e77>
+ 112f6a0:	mov    rax,QWORD PTR [r14+0x10]
+ 112f6a4:	sub    rax,QWORD PTR [r14+0x18]
+ 112f6a8:	shr    rbx,0x3f
+ 112f6ac:	mov    rdi,r14
+ 112f6af:	mov    edx,ebx
+ 112f6b1:	cmp    rax,0x15
+ 112f6b5:	jb     112fb92 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e72>
+ 112f6bb:	cmp    rsi,0x5f5e0ff
+ 112f6c2:	jbe    112ffd1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32b1>
+ 112f6c8:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112f6cd:	xor    r15d,r15d
+ 112f6d0:	jmp    112fb9a <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e7a>
+ 112f6d5:	mov    rcx,QWORD PTR [r14+0x8]
+ 112f6d9:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112f6dd:	inc    QWORD PTR [r14+0x18]
+ 112f6e1:	test   rbx,rbx
+ 112f6e4:	je     112f6f8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x29d8>
+ 112f6e6:	mov    rdi,r14
+ 112f6e9:	mov    rdx,rbx
+ 112f6ec:	xor    ecx,ecx
+ 112f6ee:	call   1105370 <encoder.decimal.writeBuffered__anon_34679>
+ 112f6f3:	jmp    112fb8a <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e6a>
+ 112f6f8:	mov    rax,QWORD PTR [r14+0x10]
+ 112f6fc:	sub    rax,QWORD PTR [r14+0x18]
+ 112f700:	cmp    rax,0x15
+ 112f704:	jb     112fb80 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e60>
+ 112f70a:	xor    r15d,r15d
+ 112f70d:	mov    rdi,r14
+ 112f710:	xor    edx,edx
+ 112f712:	cmp    rsi,0x5f5e0ff
+ 112f719:	jbe    112fd64 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3044>
+ 112f71f:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112f724:	jmp    112fd69 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3049>
+ 112f729:	mov    rcx,QWORD PTR [r14+0x8]
+ 112f72d:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112f731:	inc    QWORD PTR [r14+0x18]
+ 112f735:	mov    rsi,rbx
+ 112f738:	neg    rsi
+ 112f73b:	cmovs  rsi,rbx
+ 112f73f:	mov    rax,QWORD PTR [r14+0x10]
+ 112f743:	sub    rax,QWORD PTR [r14+0x18]
+ 112f747:	shr    rbx,0x3f
+ 112f74b:	mov    rdi,r14
+ 112f74e:	mov    edx,ebx
+ 112f750:	cmp    rax,0x15
+ 112f754:	jb     112f76d <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a4d>
+ 112f756:	cmp    rsi,0x5f5e0ff
+ 112f75d:	jbe    112fc30 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2f10>
+ 112f763:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112f768:	jmp    112fc35 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2f15>
+ 112f76d:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112f772:	mov    r15d,eax
+ 112f775:	jmp    112fc38 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2f18>
+ 112f77a:	mov    rcx,QWORD PTR [r14+0x8]
+ 112f77e:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112f782:	inc    QWORD PTR [r14+0x18]
+ 112f786:	mov    rsi,rbx
+ 112f789:	neg    rsi
+ 112f78c:	cmovs  rsi,rbx
+ 112f790:	mov    rax,QWORD PTR [r14+0x10]
+ 112f794:	sub    rax,QWORD PTR [r14+0x18]
+ 112f798:	shr    rbx,0x3f
+ 112f79c:	mov    rdi,r14
+ 112f79f:	mov    edx,ebx
+ 112f7a1:	cmp    rax,0x15
+ 112f7a5:	jb     112f7be <encoder.common.encodeJsonWithAttributes__anon_39908+0x2a9e>
+ 112f7a7:	cmp    rsi,0x5f5e0ff
+ 112f7ae:	jbe    112fcca <encoder.common.encodeJsonWithAttributes__anon_39908+0x2faa>
+ 112f7b4:	call   1105bc0 <encoder.decimal.writeLargeNative>
+ 112f7b9:	jmp    112fccf <encoder.common.encodeJsonWithAttributes__anon_39908+0x2faf>
+ 112f7be:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112f7c3:	mov    r15d,eax
+ 112f7c6:	jmp    112fcd2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2fb2>
+ 112f7cb:	mov    rsi,QWORD PTR [rdi+0x28]
+ 112f7cf:	cmp    rsi,0x8
+ 112f7d3:	je     11300fa <encoder.common.encodeJsonWithAttributes__anon_39908+0x33da>
+ 112f7d9:	sub    rcx,r8
+ 112f7dc:	mov    r15w,0x98
+ 112f7e1:	cmp    rcx,0x4
+ 112f7e5:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f7eb:	lea    rcx,[rax+0x5]
+ 112f7ef:	mov    QWORD PTR [rdi+0x10],rcx
+ 112f7f3:	mov    ebx,DWORD PTR [rbx+rax*1+0x1]
+ 112f7f7:	mov    eax,0xff
+ 112f7fc:	sub    eax,edx
+ 112f7fe:	mov    r15w,0x9f
+ 112f803:	cmp    eax,ebx
+ 112f805:	jb     113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112f80b:	lea    rax,[rsi+0x1]
+ 112f80f:	mov    QWORD PTR [rdi+0x28],rax
+ 112f813:	mov    rax,QWORD PTR [rdi+0x18]
+ 112f817:	test   rax,rax
+ 112f81a:	je     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112f820:	mov    BYTE PTR [rbp-0x2b0],0x0
+ 112f827:	xor    ecx,ecx
+ 112f829:	test   cl,cl
+ 112f82b:	jne    11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112f831:	mov    rcx,QWORD PTR [rax+0x8]
+ 112f835:	mov    r8,QWORD PTR [rax+0x10]
+ 112f839:	add    r8,0xf
+ 112f83d:	and    r8,0xfffffffffffffff0
+ 112f841:	sub    rcx,r8
+ 112f844:	jb     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112f84a:	mov    rdx,rbx
+ 112f84d:	shl    rdx,0x4
+ 112f851:	lea    rdx,[rdx+rdx*2]
+ 112f855:	cmp    rdx,rcx
+ 112f858:	ja     11300e8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33c8>
+ 112f85e:	mov    rcx,QWORD PTR [rax]
+ 112f861:	mov    QWORD PTR [rbp-0x128],rcx
+ 112f868:	mov    QWORD PTR [rbp-0x138],rdx
+ 112f86f:	mov    QWORD PTR [rbp-0xe8],r8
+ 112f876:	lea    rcx,[r8+rdx*1]
+ 112f87a:	mov    QWORD PTR [rax+0x10],rcx
+ 112f87e:	test   rbx,rbx
+ 112f881:	mov    QWORD PTR [rbp-0x140],rbx
+ 112f888:	mov    QWORD PTR [rbp-0x78],rdi
+ 112f88c:	je     112fe18 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30f8>
+ 112f892:	mov    rax,QWORD PTR [rbp-0xe8]
+ 112f899:	mov    rcx,QWORD PTR [rbp-0x128]
+ 112f8a0:	lea    rdx,[rcx+rax*1]
+ 112f8a4:	mov    QWORD PTR [rbp-0x148],rdx
+ 112f8ab:	add    rax,rcx
+ 112f8ae:	add    rax,0x28
+ 112f8b2:	mov    QWORD PTR [rbp-0xf0],rax
+ 112f8b9:	mov    QWORD PTR [rbp-0x98],0x0
+ 112f8c4:	mov    QWORD PTR [rbp-0x130],0x0
+ 112f8cf:	jmp    112f8fe <encoder.common.encodeJsonWithAttributes__anon_39908+0x2bde>
+ 112f8d1:	mov    rcx,QWORD PTR [rbp-0x130]
+ 112f8d8:	inc    rcx
+ 112f8db:	add    QWORD PTR [rbp-0x98],0x30
+ 112f8e3:	mov    rbx,QWORD PTR [rbp-0x140]
+ 112f8ea:	mov    QWORD PTR [rbp-0x130],rcx
+ 112f8f1:	cmp    rcx,rbx
+ 112f8f4:	mov    rdi,QWORD PTR [rbp-0x78]
+ 112f8f8:	je     112fe18 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30f8>
+ 112f8fe:	mov    rax,QWORD PTR [rdi+0x8]
+ 112f902:	mov    rcx,QWORD PTR [rdi+0x10]
+ 112f906:	mov    rdx,rax
+ 112f909:	mov    r15w,0x98
+ 112f90e:	sub    rdx,rcx
+ 112f911:	jb     113011a <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fa>
+ 112f917:	cmp    rdx,0x4
+ 112f91b:	jb     113011a <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fa>
+ 112f921:	mov    rdx,QWORD PTR [rdi]
+ 112f924:	lea    rsi,[rcx+0x4]
+ 112f928:	mov    QWORD PTR [rdi+0x10],rsi
+ 112f92c:	mov    ecx,DWORD PTR [rdx+rcx*1]
+ 112f92f:	sub    rax,rsi
+ 112f932:	cmp    rax,rcx
+ 112f935:	jb     113011a <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fa>
+ 112f93b:	mov    rbx,rdx
+ 112f93e:	mov    QWORD PTR [rbp-0x48],rsi
+ 112f942:	lea    rax,[rsi+rcx*1]
+ 112f946:	mov    QWORD PTR [rdi+0x10],rax
+ 112f94a:	vpxor  xmm0,xmm0,xmm0
+ 112f94e:	vmovdqu YMMWORD PTR [rbp-0x2b0],ymm0
+ 112f956:	lea    rsi,[rbp-0x2b0]
+ 112f95d:	mov    QWORD PTR [rbp-0x150],rcx
+ 112f964:	vzeroupper
+ 112f967:	call   1125d60 <core.codec.WireInput.valueWith__anon_39675>
+ 112f96c:	test   ax,ax
+ 112f96f:	jne    1130113 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33f3>
+ 112f975:	vmovdqu ymm0,YMMWORD PTR [rbp-0x2b0]
+ 112f97d:	vmovdqu YMMWORD PTR [rbp-0x70],ymm0
+ 112f982:	mov    rdx,QWORD PTR [rbp-0x130]
+ 112f989:	lea    rax,[rdx+rdx*2]
+ 112f98d:	shl    rax,0x4
+ 112f991:	mov    rcx,QWORD PTR [rbp-0x148]
+ 112f998:	vmovdqu YMMWORD PTR [rcx+rax*1],ymm0
+ 112f99d:	add    rbx,QWORD PTR [rbp-0x48]
+ 112f9a1:	mov    QWORD PTR [rbp-0x48],rbx
+ 112f9a5:	mov    QWORD PTR [rcx+rax*1+0x20],rbx
+ 112f9aa:	mov    rsi,QWORD PTR [rbp-0x150]
+ 112f9b1:	mov    QWORD PTR [rcx+rax*1+0x28],rsi
+ 112f9b6:	test   rdx,rdx
+ 112f9b9:	je     112f8d1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2bb1>
+ 112f9bf:	mov    rcx,rsi
+ 112f9c2:	xor    r15d,r15d
+ 112f9c5:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112f9d0:	mov    rax,QWORD PTR [rbp-0xf0]
+ 112f9d7:	mov    rdi,QWORD PTR [rax+r15*1-0x8]
+ 112f9dc:	mov    rsi,QWORD PTR [rax+r15*1]
+ 112f9e0:	mov    rdx,QWORD PTR [rbp-0x48]
+ 112f9e4:	mov    rbx,rcx
+ 112f9e7:	vzeroupper
+ 112f9ea:	call   1147820 <mem.eql__anon_2586>
+ 112f9ef:	test   al,0x1
+ 112f9f1:	jne    11300d9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x33b9>
+ 112f9f7:	add    r15,0x30
+ 112f9fb:	cmp    QWORD PTR [rbp-0x98],r15
+ 112fa02:	mov    rcx,rbx
+ 112fa05:	jne    112f9d0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2cb0>
+ 112fa07:	jmp    112f8d1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2bb1>
+ 112fa0c:	mov    rcx,QWORD PTR [r14+0x8]
+ 112fa10:	mov    BYTE PTR [rcx+rax*1],0x5b
+ 112fa14:	inc    QWORD PTR [r14+0x18]
+ 112fa18:	test   r13d,r13d
+ 112fa1b:	je     112faf5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2dd5>
+ 112fa21:	xor    r12d,r12d
+ 112fa24:	data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 112fa30:	mov    rax,r12
+ 112fa33:	shl    rax,0x5
+ 112fa37:	mov    rcx,QWORD PTR [rbp-0x48]
+ 112fa3b:	vmovdqu ymm0,YMMWORD PTR [rcx+rax*1]
+ 112fa40:	vmovdqu YMMWORD PTR [rbp-0x2b0],ymm0
+ 112fa48:	test   r12,r12
+ 112fa4b:	je     112facc <encoder.common.encodeJsonWithAttributes__anon_39908+0x2dac>
+ 112fa4d:	mov    rax,QWORD PTR [r14+0x18]
+ 112fa51:	cmp    QWORD PTR [r14+0x10],rax
+ 112fa55:	jne    112fac0 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2da0>
+ 112fa57:	mov    rax,QWORD PTR [r14]
+ 112fa5a:	mov    rax,QWORD PTR [rax]
+ 112fa5d:	mov    BYTE PTR [rbp-0x30],0x2c
+ 112fa61:	lea    rcx,[rbp-0x30]
+ 112fa65:	mov    QWORD PTR [rbp-0xd0],rcx
+ 112fa6c:	mov    QWORD PTR [rbp-0xc8],0x1
+ 112fa77:	mov    ecx,0x1
+ 112fa7c:	mov    r8d,0x1
+ 112fa82:	lea    rdi,[rbp-0x90]
+ 112fa89:	mov    rsi,r14
+ 112fa8c:	lea    rdx,[rbp-0xd0]
+ 112fa93:	vzeroupper
+ 112fa96:	call   rax
+ 112fa98:	movzx  r15d,WORD PTR [rbp-0x88]
+ 112faa0:	test   r15w,r15w
+ 112faa4:	jne    112ffe1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32c1>
+ 112faaa:	cmp    QWORD PTR [rbp-0x90],0x0
+ 112fab2:	je     112fa4d <encoder.common.encodeJsonWithAttributes__anon_39908+0x2d2d>
+ 112fab4:	jmp    112facc <encoder.common.encodeJsonWithAttributes__anon_39908+0x2dac>
+ 112fab6:	cs nop WORD PTR [rax+rax*1+0x0]
+ 112fac0:	mov    rcx,QWORD PTR [r14+0x8]
+ 112fac4:	mov    BYTE PTR [rcx+rax*1],0x2c
+ 112fac8:	inc    QWORD PTR [r14+0x18]
+ 112facc:	mov    rdi,r14
+ 112facf:	lea    rsi,[rbp-0x2b0]
+ 112fad6:	xor    edx,edx
+ 112fad8:	vzeroupper
+ 112fadb:	call   1102d00 <encoder.common.valueInner>
+ 112fae0:	test   ax,ax
+ 112fae3:	jne    112ffde <encoder.common.encodeJsonWithAttributes__anon_39908+0x32be>
+ 112fae9:	inc    r12
+ 112faec:	cmp    r12,r13
+ 112faef:	jne    112fa30 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2d10>
+ 112faf5:	mov    rax,QWORD PTR [r14+0x18]
+ 112faf9:	cmp    QWORD PTR [r14+0x10],rax
+ 112fafd:	jne    112fb68 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e48>
+ 112faff:	mov    rax,QWORD PTR [r14]
+ 112fb02:	mov    rax,QWORD PTR [rax]
+ 112fb05:	mov    BYTE PTR [rbp-0x30],0x5d
+ 112fb09:	lea    rcx,[rbp-0x30]
+ 112fb0d:	mov    QWORD PTR [rbp-0xd0],rcx
+ 112fb14:	mov    QWORD PTR [rbp-0xc8],0x1
+ 112fb1f:	mov    ecx,0x1
+ 112fb24:	mov    r8d,0x1
+ 112fb2a:	lea    rdi,[rbp-0x90]
+ 112fb31:	mov    rsi,r14
+ 112fb34:	lea    rdx,[rbp-0xd0]
+ 112fb3b:	call   rax
+ 112fb3d:	mov    rdx,rbx
+ 112fb40:	movzx  r15d,WORD PTR [rbp-0x88]
+ 112fb48:	test   r15w,r15w
+ 112fb4c:	jne    112ffc8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32a8>
+ 112fb52:	cmp    QWORD PTR [rbp-0x90],0x0
+ 112fb5a:	je     112faf5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2dd5>
+ 112fb5c:	xor    r15d,r15d
+ 112fb5f:	dec    QWORD PTR [rbx+0x28]
+ 112fb63:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fb68:	mov    rcx,QWORD PTR [r14+0x8]
+ 112fb6c:	mov    BYTE PTR [rcx+rax*1],0x5d
+ 112fb70:	inc    QWORD PTR [r14+0x18]
+ 112fb74:	xor    r15d,r15d
+ 112fb77:	dec    QWORD PTR [rbx+0x28]
+ 112fb7b:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fb80:	mov    rdi,r14
+ 112fb83:	xor    edx,edx
+ 112fb85:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112fb8a:	mov    r15d,eax
+ 112fb8d:	jmp    112fd69 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3049>
+ 112fb92:	call   1105820 <encoder.decimal.writeBuffered__anon_34687>
+ 112fb97:	mov    r15d,eax
+ 112fb9a:	movabs rax,0x3fffffffffffff
+ 112fba4:	cmp    r13,rax
+ 112fba7:	sbb    r12,0x0
+ 112fbab:	setb   al
+ 112fbae:	test   r15w,r15w
+ 112fbb2:	setne  cl
+ 112fbb5:	or     cl,al
+ 112fbb7:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fbbd:	mov    rax,QWORD PTR [r14+0x18]
+ 112fbc1:	cmp    QWORD PTR [r14+0x10],rax
+ 112fbc5:	jne    112fde2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30c2>
+ 112fbcb:	mov    rax,QWORD PTR [r14]
+ 112fbce:	mov    rax,QWORD PTR [rax]
+ 112fbd1:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112fbd8:	lea    rcx,[rbp-0xd0]
+ 112fbdf:	mov    QWORD PTR [rbp-0x90],rcx
+ 112fbe6:	mov    QWORD PTR [rbp-0x88],0x1
+ 112fbf1:	mov    ecx,0x1
+ 112fbf6:	mov    r8d,0x1
+ 112fbfc:	lea    rdi,[rbp-0x2b0]
+ 112fc03:	mov    rsi,r14
+ 112fc06:	lea    rdx,[rbp-0x90]
+ 112fc0d:	call   rax
+ 112fc0f:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112fc17:	test   r15w,r15w
+ 112fc1b:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fc21:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112fc29:	je     112fbbd <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e9d>
+ 112fc2b:	jmp    112fdee <encoder.common.encodeJsonWithAttributes__anon_39908+0x30ce>
+ 112fc30:	call   1105ae0 <encoder.decimal.writeNative>
+ 112fc35:	xor    r15d,r15d
+ 112fc38:	movabs rax,0x3fffffffffffff
+ 112fc42:	cmp    r12,rax
+ 112fc45:	setb   al
+ 112fc48:	test   r15w,r15w
+ 112fc4c:	setne  cl
+ 112fc4f:	or     cl,al
+ 112fc51:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fc57:	mov    rax,QWORD PTR [r14+0x18]
+ 112fc5b:	cmp    QWORD PTR [r14+0x10],rax
+ 112fc5f:	jne    112fde2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30c2>
+ 112fc65:	mov    rax,QWORD PTR [r14]
+ 112fc68:	mov    rax,QWORD PTR [rax]
+ 112fc6b:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112fc72:	lea    rcx,[rbp-0xd0]
+ 112fc79:	mov    QWORD PTR [rbp-0x90],rcx
+ 112fc80:	mov    QWORD PTR [rbp-0x88],0x1
+ 112fc8b:	mov    ecx,0x1
+ 112fc90:	mov    r8d,0x1
+ 112fc96:	lea    rdi,[rbp-0x2b0]
+ 112fc9d:	mov    rsi,r14
+ 112fca0:	lea    rdx,[rbp-0x90]
+ 112fca7:	call   rax
+ 112fca9:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112fcb1:	test   r15w,r15w
+ 112fcb5:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fcbb:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112fcc3:	je     112fc57 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2f37>
+ 112fcc5:	jmp    112fdee <encoder.common.encodeJsonWithAttributes__anon_39908+0x30ce>
+ 112fcca:	call   1105ae0 <encoder.decimal.writeNative>
+ 112fccf:	xor    r15d,r15d
+ 112fcd2:	movabs rax,0x3fffffffffffff
+ 112fcdc:	cmp    r12,rax
+ 112fcdf:	setb   al
+ 112fce2:	test   r15w,r15w
+ 112fce6:	setne  cl
+ 112fce9:	or     cl,al
+ 112fceb:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fcf1:	mov    rax,QWORD PTR [r14+0x18]
+ 112fcf5:	cmp    QWORD PTR [r14+0x10],rax
+ 112fcf9:	jne    112fde2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30c2>
+ 112fcff:	mov    rax,QWORD PTR [r14]
+ 112fd02:	mov    rax,QWORD PTR [rax]
+ 112fd05:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112fd0c:	lea    rcx,[rbp-0xd0]
+ 112fd13:	mov    QWORD PTR [rbp-0x90],rcx
+ 112fd1a:	mov    QWORD PTR [rbp-0x88],0x1
+ 112fd25:	mov    ecx,0x1
+ 112fd2a:	mov    r8d,0x1
+ 112fd30:	lea    rdi,[rbp-0x2b0]
+ 112fd37:	mov    rsi,r14
+ 112fd3a:	lea    rdx,[rbp-0x90]
+ 112fd41:	call   rax
+ 112fd43:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112fd4b:	test   r15w,r15w
+ 112fd4f:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fd55:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112fd5d:	je     112fcf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2fd1>
+ 112fd5f:	jmp    112fdee <encoder.common.encodeJsonWithAttributes__anon_39908+0x30ce>
+ 112fd64:	call   1105ae0 <encoder.decimal.writeNative>
+ 112fd69:	or     r12,rbx
+ 112fd6c:	sete   al
+ 112fd6f:	test   r15w,r15w
+ 112fd73:	setne  cl
+ 112fd76:	or     cl,al
+ 112fd78:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fd7a:	mov    rax,QWORD PTR [r14+0x18]
+ 112fd7e:	cmp    QWORD PTR [r14+0x10],rax
+ 112fd82:	jne    112fde2 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30c2>
+ 112fd84:	mov    rax,QWORD PTR [r14]
+ 112fd87:	mov    rax,QWORD PTR [rax]
+ 112fd8a:	mov    BYTE PTR [rbp-0xd0],0x22
+ 112fd91:	lea    rcx,[rbp-0xd0]
+ 112fd98:	mov    QWORD PTR [rbp-0x90],rcx
+ 112fd9f:	mov    QWORD PTR [rbp-0x88],0x1
+ 112fdaa:	mov    ecx,0x1
+ 112fdaf:	mov    r8d,0x1
+ 112fdb5:	lea    rdi,[rbp-0x2b0]
+ 112fdbc:	mov    rsi,r14
+ 112fdbf:	lea    rdx,[rbp-0x90]
+ 112fdc6:	call   rax
+ 112fdc8:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112fdd0:	test   r15w,r15w
+ 112fdd4:	jne    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112fdd6:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112fdde:	je     112fd7a <encoder.common.encodeJsonWithAttributes__anon_39908+0x305a>
+ 112fde0:	jmp    112fdee <encoder.common.encodeJsonWithAttributes__anon_39908+0x30ce>
+ 112fde2:	mov    rcx,QWORD PTR [r14+0x8]
+ 112fde6:	mov    BYTE PTR [rcx+rax*1],0x22
+ 112fdea:	inc    QWORD PTR [r14+0x18]
+ 112fdee:	xor    r15d,r15d
+ 112fdf1:	test   r15w,r15w
+ 112fdf5:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 112fdfb:	mov    rcx,QWORD PTR [rbp-0x40]
+ 112fdff:	inc    rcx
+ 112fe02:	mov    QWORD PTR [rbp-0x40],rcx
+ 112fe06:	cmp    rcx,QWORD PTR [rbp-0xf8]
+ 112fe0d:	jne    112e8c7 <encoder.common.encodeJsonWithAttributes__anon_39908+0x1ba7>
+ 112fe13:	jmp    113001e <encoder.common.encodeJsonWithAttributes__anon_39908+0x32fe>
+ 112fe18:	xor    ecx,ecx
+ 112fe1a:	cmp    QWORD PTR [rbp-0x40],0x0
+ 112fe1f:	setne  cl
+ 112fe22:	mov    rdi,r14
+ 112fe25:	mov    rsi,r12
+ 112fe28:	mov    rdx,r13
+ 112fe2b:	vzeroupper
+ 112fe2e:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112fe33:	test   ax,ax
+ 112fe36:	jne    112ffea <encoder.common.encodeJsonWithAttributes__anon_39908+0x32ca>
+ 112fe3c:	mov    r13,QWORD PTR [rbp-0x138]
+ 112fe43:	mov    rdx,QWORD PTR [rbp-0xe8]
+ 112fe4a:	mov    rax,QWORD PTR [r14+0x18]
+ 112fe4e:	cmp    QWORD PTR [r14+0x10],rax
+ 112fe52:	jne    112fed3 <encoder.common.encodeJsonWithAttributes__anon_39908+0x31b3>
+ 112fe54:	mov    rax,QWORD PTR [r14]
+ 112fe57:	mov    rax,QWORD PTR [rax]
+ 112fe5a:	mov    BYTE PTR [rbp-0xd0],0x7b
+ 112fe61:	lea    rcx,[rbp-0xd0]
+ 112fe68:	mov    QWORD PTR [rbp-0x90],rcx
+ 112fe6f:	mov    QWORD PTR [rbp-0x88],0x1
+ 112fe7a:	mov    ecx,0x1
+ 112fe7f:	mov    r8d,0x1
+ 112fe85:	lea    rdi,[rbp-0x2b0]
+ 112fe8c:	mov    rsi,r14
+ 112fe8f:	lea    rdx,[rbp-0x90]
+ 112fe96:	call   rax
+ 112fe98:	movzx  r15d,WORD PTR [rbp-0x2a8]
+ 112fea0:	test   r15w,r15w
+ 112fea4:	jne    1130014 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32f4>
+ 112feaa:	cmp    QWORD PTR [rbp-0x2b0],0x0
+ 112feb2:	mov    r13,QWORD PTR [rbp-0x138]
+ 112feb9:	mov    rbx,QWORD PTR [rbp-0x140]
+ 112fec0:	mov    rdx,QWORD PTR [rbp-0xe8]
+ 112fec7:	mov    r14,QWORD PTR [rbp-0x38]
+ 112fecb:	je     112fe4a <encoder.common.encodeJsonWithAttributes__anon_39908+0x312a>
+ 112fed1:	jmp    112fedf <encoder.common.encodeJsonWithAttributes__anon_39908+0x31bf>
+ 112fed3:	mov    rcx,QWORD PTR [r14+0x8]
+ 112fed7:	mov    BYTE PTR [rcx+rax*1],0x7b
+ 112fedb:	inc    QWORD PTR [r14+0x18]
+ 112fedf:	test   ebx,ebx
+ 112fee1:	je     112ff4c <encoder.common.encodeJsonWithAttributes__anon_39908+0x322c>
+ 112fee3:	mov    rax,QWORD PTR [rbp-0x128]
+ 112feea:	lea    rbx,[rax+rdx*1]
+ 112feee:	add    rbx,0x28
+ 112fef2:	xor    r12d,r12d
+ 112fef5:	vmovdqu ymm0,YMMWORD PTR [rbx+r12*1-0x28]
+ 112fefc:	vmovdqu YMMWORD PTR [rbp-0x2b0],ymm0
+ 112ff04:	mov    rsi,QWORD PTR [rbx+r12*1-0x8]
+ 112ff09:	mov    rdx,QWORD PTR [rbx+r12*1]
+ 112ff0d:	xor    ecx,ecx
+ 112ff0f:	test   r12,r12
+ 112ff12:	setne  cl
+ 112ff15:	mov    rdi,r14
+ 112ff18:	vzeroupper
+ 112ff1b:	call   1103cb0 <encoder.escaping.jsonMember>
+ 112ff20:	test   ax,ax
+ 112ff23:	jne    112ffea <encoder.common.encodeJsonWithAttributes__anon_39908+0x32ca>
+ 112ff29:	mov    rdi,r14
+ 112ff2c:	lea    rsi,[rbp-0x2b0]
+ 112ff33:	xor    edx,edx
+ 112ff35:	call   1102d00 <encoder.common.valueInner>
+ 112ff3a:	test   ax,ax
+ 112ff3d:	jne    112ffea <encoder.common.encodeJsonWithAttributes__anon_39908+0x32ca>
+ 112ff43:	add    r12,0x30
+ 112ff47:	cmp    r13,r12
+ 112ff4a:	jne    112fef5 <encoder.common.encodeJsonWithAttributes__anon_39908+0x31d5>
+ 112ff4c:	mov    rax,QWORD PTR [r14+0x18]
+ 112ff50:	cmp    QWORD PTR [r14+0x10],rax
+ 112ff54:	mov    rdx,QWORD PTR [rbp-0x78]
+ 112ff58:	jne    112ffb9 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3299>
+ 112ff5a:	mov    rax,QWORD PTR [r14]
+ 112ff5d:	mov    rax,QWORD PTR [rax]
+ 112ff60:	mov    BYTE PTR [rbp-0x30],0x7d
+ 112ff64:	lea    rcx,[rbp-0x30]
+ 112ff68:	mov    QWORD PTR [rbp-0xd0],rcx
+ 112ff6f:	mov    QWORD PTR [rbp-0xc8],0x1
+ 112ff7a:	mov    ecx,0x1
+ 112ff7f:	mov    r8d,0x1
+ 112ff85:	lea    rdi,[rbp-0x90]
+ 112ff8c:	mov    rsi,r14
+ 112ff8f:	lea    rdx,[rbp-0xd0]
+ 112ff96:	call   rax
+ 112ff98:	mov    rdx,QWORD PTR [rbp-0x78]
+ 112ff9c:	movzx  r15d,WORD PTR [rbp-0x88]
+ 112ffa4:	test   r15w,r15w
+ 112ffa8:	jne    112ffc8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32a8>
+ 112ffaa:	cmp    QWORD PTR [rbp-0x90],0x0
+ 112ffb2:	je     112ff4c <encoder.common.encodeJsonWithAttributes__anon_39908+0x322c>
+ 112ffb4:	xor    r15d,r15d
+ 112ffb7:	jmp    112ffed <encoder.common.encodeJsonWithAttributes__anon_39908+0x32cd>
+ 112ffb9:	mov    rcx,QWORD PTR [r14+0x8]
+ 112ffbd:	mov    BYTE PTR [rcx+rax*1],0x7d
+ 112ffc1:	inc    QWORD PTR [r14+0x18]
+ 112ffc5:	xor    r15d,r15d
+ 112ffc8:	dec    QWORD PTR [rdx+0x28]
+ 112ffcc:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112ffd1:	call   1105ae0 <encoder.decimal.writeNative>
+ 112ffd6:	xor    r15d,r15d
+ 112ffd9:	jmp    112fb9a <encoder.common.encodeJsonWithAttributes__anon_39908+0x2e7a>
+ 112ffde:	mov    r15d,eax
+ 112ffe1:	dec    QWORD PTR [rbx+0x28]
+ 112ffe5:	jmp    112fdf1 <encoder.common.encodeJsonWithAttributes__anon_39908+0x30d1>
+ 112ffea:	mov    r15d,eax
+ 112ffed:	mov    rdx,QWORD PTR [rbp-0x78]
+ 112fff1:	jmp    112ffc8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32a8>
+ 112fff3:	mov    ecx,0x7
+ 112fff8:	test   ax,ax
+ 112fffb:	je     112f095 <encoder.common.encodeJsonWithAttributes__anon_39908+0x2375>
+ 1130001:	mov    esi,0x1075d3f
+ 1130006:	jmp    112f09c <encoder.common.encodeJsonWithAttributes__anon_39908+0x237c>
+ 113000b:	mov    rdx,rbx
+ 113000e:	mov    r14,QWORD PTR [rbp-0x38]
+ 1130012:	jmp    112ffc8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32a8>
+ 1130014:	mov    rdx,QWORD PTR [rbp-0x78]
+ 1130018:	mov    r14,QWORD PTR [rbp-0x38]
+ 113001c:	jmp    112ffc8 <encoder.common.encodeJsonWithAttributes__anon_39908+0x32a8>
+ 113001e:	mov    rax,QWORD PTR [rbp-0x100]
+ 1130025:	mov    rax,QWORD PTR [rax]
+ 1130028:	mov    rcx,QWORD PTR [rax+0x10]
+ 113002c:	mov    r15w,0x9a
+ 1130031:	cmp    rcx,QWORD PTR [rax+0x8]
+ 1130035:	jne    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 113003b:	xor    r13d,r13d
+ 113003e:	lea    rbx,[rbp-0x2b0]
+ 1130045:	lea    r15,[rbp-0x70]
+ 1130049:	nop    DWORD PTR [rax+0x0]
+ 1130050:	lea    rsi,[r13+0x1075e50]
+ 1130057:	mov    r12,r13
+ 113005a:	xor    r12,0x3
+ 113005e:	mov    rdi,QWORD PTR [r14+0x18]
+ 1130062:	lea    rax,[rdi+r12*1]
+ 1130066:	cmp    rax,QWORD PTR [r14+0x10]
+ 113006a:	ja     1130087 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3367>
+ 113006c:	add    rdi,QWORD PTR [r14+0x8]
+ 1130070:	mov    rdx,r12
+ 1130073:	call   1153fe0 <compiler_rt.memcpy.memcpyFast>
+ 1130078:	add    QWORD PTR [r14+0x18],r12
+ 113007c:	add    r13,r12
+ 113007f:	cmp    r13,0x3
+ 1130083:	jb     1130050 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3330>
+ 1130085:	jmp    11300cd <encoder.common.encodeJsonWithAttributes__anon_39908+0x33ad>
+ 1130087:	mov    rax,QWORD PTR [r14]
+ 113008a:	mov    rax,QWORD PTR [rax]
+ 113008d:	mov    QWORD PTR [rbp-0x70],rsi
+ 1130091:	mov    QWORD PTR [rbp-0x68],r12
+ 1130095:	mov    ecx,0x1
+ 113009a:	mov    r8d,0x1
+ 11300a0:	mov    rdi,rbx
+ 11300a3:	mov    rsi,r14
+ 11300a6:	mov    rdx,r15
+ 11300a9:	call   rax
+ 11300ab:	movzx  r12d,WORD PTR [rbp-0x2a8]
+ 11300b3:	test   r12w,r12w
+ 11300b7:	jne    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 11300b9:	mov    r12,QWORD PTR [rbp-0x2b0]
+ 11300c0:	mov    r14,QWORD PTR [rbp-0x38]
+ 11300c4:	add    r13,r12
+ 11300c7:	cmp    r13,0x3
+ 11300cb:	jb     1130050 <encoder.common.encodeJsonWithAttributes__anon_39908+0x3330>
+ 11300cd:	xor    r12d,r12d
+ 11300d0:	jmp    113012f <encoder.common.encodeJsonWithAttributes__anon_39908+0x340f>
+ 11300d2:	mov    r15w,0x98
+ 11300d7:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 11300d9:	mov    rax,QWORD PTR [rbp-0x78]
+ 11300dd:	dec    QWORD PTR [rax+0x28]
+ 11300e1:	mov    r15w,0x69
+ 11300e6:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 11300e8:	mov    QWORD PTR [rdi+0x28],rsi
+ 11300ec:	mov    r15w,0x6a
+ 11300f1:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 11300f3:	mov    r15w,0x9d
+ 11300f8:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 11300fa:	mov    r15w,0x9e
+ 11300ff:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 1130101:	mov    r15d,eax
+ 1130104:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 1130106:	mov    r15d,eax
+ 1130109:	mov    rax,QWORD PTR [rbp-0x78]
+ 113010d:	dec    QWORD PTR [rax+0x28]
+ 1130111:	jmp    113011e <encoder.common.encodeJsonWithAttributes__anon_39908+0x33fe>
+ 1130113:	mov    r15d,eax
+ 1130116:	mov    rdi,QWORD PTR [rbp-0x78]
+ 113011a:	dec    QWORD PTR [rdi+0x28]
+ 113011e:	mov    rax,QWORD PTR [rbp-0x100]
+ 1130125:	mov    WORD PTR [rax+0x20],r15w
+ 113012a:	mov    r12w,0xb5
+ 113012f:	mov    eax,r12d
+ 1130132:	add    rsp,0x2d8
+ 1130139:	pop    rbx
+ 113013a:	pop    r12
+ 113013c:	pop    r13
+ 113013e:	pop    r14
+ 1130140:	pop    r15
+ 1130142:	pop    rbp
+ 1130143:	vzeroupper
+ 1130146:	ret

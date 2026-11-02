@@ -271,4 +271,5 @@ test "fused wire text and logfmt match decoded encoders" {
 
 test {
     _ = @import("wire_reference_tests.zig");
+    _ = @import("wire_scratch_tests.zig");
 }

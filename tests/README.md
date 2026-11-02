@@ -15,6 +15,7 @@
 | TLS admission生命周期 | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig)、`test-admission-lifecycle` | owned/bare/borrowed复用、回调中的outer所有权、64层栈与溢出、OS线程隔离、全部Level与完整generation/channel边界 |
 | 原生CRC数学与目标选择 | [crc32_pclmul.zig](../src/platform/crc32_pclmul.zig)、[crc32.zig](../src/platform/crc32.zig)；根筛选 `partial CRC stripes` | 独立bitwise/GF2消息和seed basis、任意seed/alignment、冻结zlib、prefix/partition；helper仅在x86_64+PCLMUL+SSE2测试目标导入 |
 | ASCII短尾与公共转义 | [escaping.zig](../src/encoder/escaping.zig)、`test-escaping-tails` | 独立标量首匹配、全字节/相邻pair/尾部跨界；五种公共操作逐缓冲容量的成功字节与失败前缀 |
+| fused scratch生命周期 | [wire_scratch_tests.zig](../src/encoder/wire_scratch_tests.zig)、`test-wire-scratch` | JSON/text/logfmt错误和Fallback后的完整decode复用、准确比较次数、64顶层key/精确nested预算及后缀守卫 |
 | 共享/SPSC坐标与证据 | [journal/tests.zig](../src/journal/tests.zig)、`test-journal-coordinates` | 八容量独立递增slot/generation oracle、非二次幂环回、跨2^32及max_sequence、reserved header/commit payload/abort/release与written；独立重算有效CRC下generation错误仍拒绝并保留槽位 |
 | 配置与deadline | configuration_integration/transactions、route_policy、route_filter、predicate、deadline | 旧route版本/lease、admission、采样相位、timeout资源与reentrancy |
 | 时间与source | time_integration、local_time_integration/oracle、独立package tests | exact纳秒、固定/local cache、DST/恢复身份、repo-relative source路径 |

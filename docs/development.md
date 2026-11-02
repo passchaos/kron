@@ -21,6 +21,7 @@
 | flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
 | 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |
 | wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |
+| fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
 | 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence` |
 | build/dependency/分发 | `test-package`、`test-package-single-threaded`、`test-package-distribution`、`check-platforms` |
 

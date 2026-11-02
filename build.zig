@@ -41,6 +41,11 @@ pub fn build(b: *std.Build) void {
     b.step("test-escaping-tails", "Verify ASCII tail first matches and public writer failure prefixes").dependOn(&run_escaping_tails.step);
     test_step.dependOn(&run_escaping_tails.step);
 
+    const wire_scratch_tests = b.addTest(.{ .name = "kron-wire-scratch", .root_module = module, .filters = &.{"fused scratch lifecycle:"} });
+    const run_wire_scratch = b.addRunArtifact(wire_scratch_tests);
+    b.step("test-wire-scratch", "Verify fused scratch reuse, errors and exact descriptor budgets").dependOn(&run_wire_scratch.step);
+    test_step.dependOn(&run_wire_scratch.step);
+
     validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });

@@ -8,6 +8,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 最新 [双拓扑完整流程 profile](bench/evidence/2026-11-03-current-workflow-profile/analysis.md) 核验 800.8 万条 JSON，用于定位当前热点，不提供新的速度排名。
 
+近期 fused key scratch 的两种表示通过安全与字节差分，但 consumer 控制出现回退，已撤回；保留 `test-wire-scratch` 验证失败复用和精确嵌套预算。全部原始结果见 [key scratch 报告](bench/evidence/2026-11-03-fused-key-scratch/README.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始
