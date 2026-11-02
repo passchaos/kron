@@ -96,6 +96,10 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 最新一轮把 JSON 固定 metadata 的 timestamp/session/sequence/route_mask/config_generation 直接以 comptime tag 和原始 u64/i64 写出，跳过临时 `Value` union、运行时 tag 分派和 u64→u128 宽整数路径。40项完整 shared 核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩流程核对2408万JSON，八组 written 吞吐全为正、六组达到噪声门限，P4 batch 中位区间不重叠；text/logfmt 控制组与尾部波动仍保留。源码、正负数据与复现见 [metadata证据](bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
 
+JSON severity 字段改为按 Level 枚举选择一个完整 literal 一次写出，`err` 仍保持 `"err"` 拼写。JSON encoder probe instructions 中位 −2.05%；40项完整 shared 核对1204万JSON，四组指令中位减少1.68%–1.70%。80项 workflow 吞吐正负混合，不作一般吞吐承诺。源码与全部数据见 [severity证据](bench/evidence/2026-11-02-json-severity-literal/README.md)。
+
+同负载 A/B 对比 fd4e941 与当前源码：E-core 5 次 batch 中 current 的 Memory P1/P4、Mmap P1/P4 分别快 **14.6%/11.8%/11.4%/7.2%**；P-core 窗口噪声较大。近期优化没有造成 E-core 回退；E-core 相对 Foundation 仍落后，是 journal CRC/恢复、typed capture 与 consumer 格式化的功能成本，不是这些优化导致。数据见 [A/B证据](bench/evidence/2026-11-02-fd4e941-current-ab/README.md)。
+
 Memory journal初始化此前在`Storage.createMemory`完整清零后又由`format.initialize`清零，并额外逐页写0；现在memory backing只保留一次完整writable清零，header/checkpoint由zeroed入口写出，该轮file/mmap仍执行完整清零。16.8MB journal的batch runtime init中位9.13ms→6.64ms（5/5配对下降），sampled 10.79ms→6.99ms（区间仍重叠）；512B小队列差异低于宿主噪声。该结果针对初始化局部成本，不代表吞吐或跨库排名，详见 [memory init证据](bench/evidence/2026-11-02-memory-init-zeroing/README.md)。
 
 Fresh Linux mmap在ext4/XFS/btrfs/F2FS等能证明fresh extents读为零的文件系统上改为只写header/checkpoint，并依赖`MAP_POPULATE`跳过整段清零与逐页写；未知文件系统继续完整清零，Windows/Darwin保留prefault但改为只读touch。16.8MB journal的sampled/batch init中位54.2/53.8ms→8.2/6.9ms，5/5配对下降且中位区间不重叠；512B小队列差异低于噪声。ext4新文件/截断后扩展文件的16MiB探针均为0个非零字节。该结果不代表稳态吞吐、durable或非Linux设备资格，详见 [fresh mmap证据](bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)。

@@ -19,6 +19,10 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 JSON固定metadata的timestamp/session/sequence/route_mask/config_generation现直接以comptime tag和原始i64/u64写出，跳过临时`Value`、运行时tag分派和u64→u128宽整数路径。40项完整shared核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩workflow核对2408万JSON，八组written吞吐全为正（+0.95%–+5.55%），六组达到本轮噪声门限，Memory/Mmap P4 batch中位区间不重叠。text/logfmt控制组、cycles和尾部波动继续保留，不作为一般速度/尾部承诺。源码、全部正负数据与复现见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
 
+JSON severity字段改为按Level枚举选择一个完整literal、一次写出，`err`仍保持原`"err"`拼写；text/logfmt不变。JSON encoder probe instructions中位−2.05%；40项完整shared核对1204万JSON，四组用户态指令中位减少1.68%–1.70%。80项workflow吞吐正负混合（Memory P1 batch +6.35%、P4 sampled −5.91%、Mmap P1 batch −1.37%等），不据此宣称一般吞吐收益。源码与全部正负数据见 [severity证据](../bench/evidence/2026-11-02-json-severity-literal/README.md)。
+
+另用同负载对比`fd4e941`与当前源码：E-core 5次batch中current的Memory P1/P4、Mmap P1/P4分别快14.6%/11.8%/11.4%/7.2%，没有近期优化造成的E-core回退。P-core窗口受宿主负载影响较大（Mmap P1出现1.32–2.07M波动），不能把单个负向中位当回归。E-core相对Foundation仍落后，来自journal CRC/恢复、typed capture与consumer格式化的功能成本，而不是这些优化；证据见 [A/B](../bench/evidence/2026-11-02-fd4e941-current-ab/README.md)。
+
 Memory journal初始化原先在`Storage.createMemory`完整清零后由`format.initialize`再次清零，并额外逐页写0；现在memory backing只保留一次完整writable清零，header/checkpoint由`initializeZeroed`/`initializeV2Zeroed`写出，该轮file/mmap仍完整清零。16.8MB journal的batch runtime init中位9.13ms→6.64ms（5/5配对下降），sampled 10.79ms→6.99ms（区间仍重叠）；512B小队列差异低于宿主噪声。该结果只针对初始化局部成本，不代表吞吐或跨库排名；ReleaseSafe完整门禁151/151步骤、641/642项通过（1项系统local能力skip）。源码、原始配对数据与复现见 [memory init证据](../bench/evidence/2026-11-02-memory-init-zeroing/README.md)。
 
 Fresh Linux mmap现在在ext4/XFS/btrfs/F2FS等能证明fresh extents读为零的文件系统上只写header/checkpoint，并依赖`MAP_POPULATE`跳过整段清零与逐页写；未知文件系统继续完整清零，Windows/Darwin保留prefault但改为只读touch。16.8MB journal的sampled/batch init中位54.2/53.8ms→8.2/6.9ms，5/5配对下降且中位区间不重叠；512B小队列差异低于宿主噪声。ext4新文件与截断后扩展文件的16MiB探针均为0个非零字节。该结果不代表稳态吞吐、durable或非Linux设备资格；源码、原始配对数据与复现见 [fresh mmap证据](../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)。

@@ -4,6 +4,7 @@ const std = @import("std");
 const fields = @import("../core/field.zig");
 const Value = fields.Value;
 const Event = @import("../core/event.zig").Event;
+const Level = @import("../core/level.zig").Level;
 const formatting = @import("../submit/format.zig");
 const decimal = @import("decimal.zig");
 const time = @import("../time/root.zig");
@@ -80,6 +81,20 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
     }.write);
 }
 
+/// Complete JSON severity field. Severity labels are a closed enum spelling
+/// (`err` remains `err`), so one literal replaces prefix + scan + quotes.
+fn jsonSeverityField(level: Level) []const u8 {
+    return switch (level) {
+        .trace => ",\"severity\":\"trace\"",
+        .debug => ",\"severity\":\"debug\"",
+        .info => ",\"severity\":\"info\"",
+        .warn => ",\"severity\":\"warn\"",
+        .err => ",\"severity\":\"err\"",
+        .fatal => ",\"severity\":\"fatal\"",
+        .off => ",\"severity\":\"off\"",
+    };
+}
+
 pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("{\"timestamp_ns\":");
     try writeTaggedValue(writer, .timestamp_ns, event.timestamp_ns, .json);
@@ -87,8 +102,7 @@ pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *st
         try writer.writeAll(",\"timestamp\":");
         try quoted(writer, timestamp, .json);
     }
-    try writer.writeAll(",\"severity\":");
-    try quoted(writer, @tagName(event.level), .json);
+    try writer.writeAll(jsonSeverityField(event.level));
     try writer.writeAll(",\"scope\":");
     try quoted(writer, event.scope, .json);
     try writer.writeAll(",\"message\":");

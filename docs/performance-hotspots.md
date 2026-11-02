@@ -96,6 +96,10 @@ typed visitor之后，JSON metadata仍通过`valueInner(writer, .{ .unsigned = e
 
 采纳依据是JSON probe与四组完整shared指令稳定减少、八组未插桩吞吐全为正且六组稳定，同时输出字节、错误顺序、公开API和全部门禁不变。text/logfmt控制组、cycles和尾部波动全部保留；不更新Foundation/spdlog/tracing排名，也不叠加历史百分比。源码、二进制、原始CSV/row、慢值与复现脚本见`bench/evidence/2026-11-02-wire-metadata-direct/`。
 
+## 2026-11-02 JSON severity固定字面量
+
+JSON encoder此前每条记录写`,"severity":`，再对`@tagName(event.level)`执行`quoted`。候选按Level枚举选择一个完整literal一次写出；`err`仍输出`"err"`，text/logfmt不变。30项encoder probe的JSON instructions中位−2.05%，text/logfmt控制组instruction持平；40项完整shared核对1204万JSON，Memory/Mmap P1/P4指令中位减少1.68%–1.70%，四组CV/spread达标且区间不重叠。80项workflow吞吐正负混合（Memory P1 batch +6.35%、P4 sampled −5.91%、Mmap P1 batch −1.37%等），不作为一般吞吐收益。源码与全部正负数据见`bench/evidence/2026-11-02-json-severity-literal/`。
+
 ## 2026-11-02 Memory journal单次清零初始化
 
 Memory journal此前经历三次清零：`Storage.createMemory`完整`@memset`、逐4096字节volatile写0、随后`format.initialize`/`initializeV2`再次完整`@memset`。候选删除逐页循环，memory backing保留唯一一次完整writable清零，并新增`initializeZeroed`/`initializeV2Zeroed`只写header、identity、CRC和checkpoint；file/mmap继续使用完整清零入口，避免复用映射中的旧字节被当成有效slot payload。
