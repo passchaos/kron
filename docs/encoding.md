@@ -31,6 +31,8 @@ Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.
 
 融合路径的 scalar 通过 `WireInput.valueWith(receiver)` 直接交给按 comptime tag 编译的 writer，跳过中间 `Value` 物化和通用 tag 二次分派。`valueWith` 与公开 `value()` 使用同一套 tag、长度、节点、深度、nested、重复key 和 arena 预算检查；array/group 仍完整解析后才回调，公开 `value()` 仍构造原 `Value`，公开 value/event 继续完整校验借用树。`common.writeTaggedValue` 是内部渲染入口，不对外暴露 unchecked writer。
 
+JSON固定metadata的timestamp、session、sequence、route_mask、config_generation也直接以comptime tag和原始`i64`/`u64`调用`writeTaggedValue`，不再构造临时`Value`、运行时tag switch或把`u64`扩成`u128`。输出精度、quote、decimal与text/logfmt路径不变；局部工作量与完整shared证据见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
+
 测试锁定 filtered invalid level 仍返回 filtered、invalid tree 仍在 predicate 前失败，并核对 sized 写入与公开 encode 的完整字节一致。Redaction路径维持原/新树独立校验；prepared最新路径只在同一安全提交内复用已经检查的最终树长度。公开codec和runtime提交入口仍完整校验，不接受可复用的外部凭证。
 
 测试确认size、encode和stream每个节点仅校验一次，archive也是一次prepare；覆盖全部value tags、独立/组合node预算、invalid tree零输出、size overflow后的错误优先级、Secret脱敏和wire字节一致。Runtime、redaction和context仍各自维护它们的入口校验；本轮没有用“之前校验过”跳过公开提交边界。

@@ -17,6 +17,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 随后保留 checked wire typed visitor 与内联 scalar 渲染：`WireInput.valueWith` 在完成同一套树检查后直接回调 typed payload，融合 renderer 跳过中间 `Value` 和通用二次分派；公开 API、aggregate 验证边界和错误优先级不变。40项完整 shared 真实文件核对1204万JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，四组CV/spread达标且中位区间不重叠；80项workflow与20项P4 sampled复测的完整吞吐/尾部仍正负混合或inconclusive。独立before/after差分17527次比较、9769个valid mutation三格式逐字节一致；ReleaseSafe完整门禁151/151步骤、640/641项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL和示例。源码、被否决的outlined版本和全部原始数据见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
 
+JSON固定metadata的timestamp/session/sequence/route_mask/config_generation现直接以comptime tag和原始i64/u64写出，跳过临时`Value`、运行时tag分派和u64→u128宽整数路径。40项完整shared核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩workflow核对2408万JSON，八组written吞吐全为正（+0.95%–+5.55%），六组达到本轮噪声门限，Memory/Mmap P4 batch中位区间不重叠。text/logfmt控制组、cycles和尾部波动继续保留，不作为一般速度/尾部承诺。源码、全部正负数据与复现见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
+
 owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍绑定当时源码，见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)；当前完整门禁继续保留lazy provider修改caller时的scope/trace快照和多输出所有权边界。
 
 最近一次同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。最新数字输出优化不推导该比较的新排名，完整阶段和资格见 [前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。

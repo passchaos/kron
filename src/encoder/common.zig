@@ -82,7 +82,7 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
 
 pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("{\"timestamp_ns\":");
-    try valueInner(writer, .{ .timestamp_ns = event.timestamp_ns }, .json);
+    try writeTaggedValue(writer, .timestamp_ns, event.timestamp_ns, .json);
     if (readable) |timestamp| {
         try writer.writeAll(",\"timestamp\":");
         try quoted(writer, timestamp, .json);
@@ -94,15 +94,15 @@ pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *st
     try writer.writeAll(",\"message\":");
     try message(writer, event, .json);
     try writer.writeAll(",\"session\":");
-    try valueInner(writer, .{ .unsigned = event.session }, .json);
+    try writeTaggedValue(writer, .unsigned, event.session, .json);
     try writer.writeAll(",\"channel\":");
     try decimal.write(writer, event.channel);
     try writer.writeAll(",\"sequence\":");
-    try valueInner(writer, .{ .unsigned = event.sequence }, .json);
+    try writeTaggedValue(writer, .unsigned, event.sequence, .json);
     try writer.writeAll(",\"route_mask\":");
-    try valueInner(writer, .{ .unsigned = event.route_mask }, .json);
+    try writeTaggedValue(writer, .unsigned, event.route_mask, .json);
     try writer.writeAll(",\"config_generation\":");
-    try valueInner(writer, .{ .unsigned = event.config_generation }, .json);
+    try writeTaggedValue(writer, .unsigned, event.config_generation, .json);
     try writer.writeAll(",\"trace_flags\":");
     try decimal.write(writer, event.trace_flags);
     if (event.trace_id) |id| {

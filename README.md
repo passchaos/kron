@@ -94,4 +94,6 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 随后 checked wire typed visitor 将已验证 scalar 直接交给按 tag 编译的 writer，跳过中间 `Value` 物化和通用二次分派；40项完整 shared 真实文件核对1204万条JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，完整吞吐/尾部仍未取得一般资格。源码、独立差分和全部正负结果见 [wire scalar证据](bench/evidence/2026-11-02-wire-scalar-render/README.md)。
 
+最新一轮把 JSON 固定 metadata 的 timestamp/session/sequence/route_mask/config_generation 直接以 comptime tag 和原始 u64/i64 写出，跳过临时 `Value` union、运行时 tag 分派和 u64→u128 宽整数路径。40项完整 shared 核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩流程核对2408万JSON，八组 written 吞吐全为正、六组达到噪声门限，P4 batch 中位区间不重叠；text/logfmt 控制组与尾部波动仍保留。源码、正负数据与复现见 [metadata证据](bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
+
 原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](docs/history/readme-before-reorganization.md)。完整目标的剩余工作由 [当前验收状态](docs/implementation-status.md) 跟踪。

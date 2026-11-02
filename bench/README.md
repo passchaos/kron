@@ -28,6 +28,7 @@
 | [当前shared profile与filter实验](evidence/2026-11-02-shared-filter-cache/README.md) | 4项profile、120项PMU、80项正式完整流程；减少filter reader原子操作未证明整体收益，候选撤回 |
 | [八位十进制与冷buffered输出](evidence/2026-11-02-decimal-u32-chunks/README.md) | 保留优化；140项实际文件核对4214万JSON，四组shared指令减少3.43%–3.47%；完整速度/尾部仍inconclusive |
 | [checked wire typed visitor与内联scalar渲染](evidence/2026-11-02-wire-scalar-render/README.md) | 保留优化；40项完整shared核对1204万JSON，四组用户态指令中位减少1.65%–1.69%；完整速度/尾部仍inconclusive，独立差分覆盖17527次比较 |
+| [JSON固定metadata直接tag写入](evidence/2026-11-02-wire-metadata-direct/README.md) | 保留优化；40项完整shared核对1204万JSON，四组指令中位减少2.45%–2.48%；80项workflow核对2408万JSON，八组吞吐全为正、六组稳定，text/logfmt控制组与尾部波动保留 |
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 

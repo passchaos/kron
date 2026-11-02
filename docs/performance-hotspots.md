@@ -84,6 +84,18 @@ CRC与decoded-delivery之后，consumer剩余成本主要是`decodeRecord`的Eve
 
 保留依据是完整校验/错误优先级/独立差分/完整门禁兼容，以及四组完整shared指令稳定减少；不据此更新Foundation/tracing排名。源码、二进制、全部CSV/慢值、被否决版本和复现脚本见`bench/evidence/2026-11-02-wire-scalar-render/`。
 
+## 2026-11-02 JSON固定metadata直接tag写入
+
+typed visitor之后，JSON metadata仍通过`valueInner(writer, .{ .unsigned = event.session }, .json)`等临时union写出timestamp、session、sequence、route_mask、config_generation。该路径把`u64`装进`Value.unsigned: u128`，再经过运行时tag switch和宽整数decimal；每条JSON记录多出五次通用分派与u128实例。
+
+候选改为直接调用内部`writeTaggedValue`，以comptime tag和原始`i64`/`u64` payload写出这五个字段。JSON精度、quote、decimal、转义、公开API、wire协议和错误边界不变；text/logfmt metadata原本已经直接`decimal.write`，源码未改。没有新增分配、依赖或每emit工作，公开value/event仍完整校验。
+
+普通encoder probe的30项交替PMU中，JSON instructions/cycles中位−2.58%/−1.93%，scalar5/nested20/wide5的ns/record分别−2.60%/−1.75%/−1.55%，五组CV/spread达标且中位区间不重叠；三种格式的完整输出checksum/bytes一致。text/logfmt控制组instruction基本持平，text cycles/单case出现+1.8%–+3.8%、logfmt cycles −1.79%的方向差异；由于这两个路径源码未改，只作为binary layout/测量窗口的控制组保留，不宣称改善或退化。
+
+40项完整shared真实文件核对1204万JSON，用户态instruction中位：Memory P1/P4 −2.445%/−2.463%，Mmap P1/P4 −2.460%/−2.479%；四组CV/spread达标且中位区间不重叠。cycles全部区间重叠；同窗口written为Memory P1 +1.42%（重叠）、Memory P4 +4.13%（不重叠）、Mmap P1 −1.06%（重叠）、Mmap P4 +3.48%（不重叠）。80项未插桩workflow核对2408万JSON，八组written吞吐全为正（+0.95%–+5.55%），六组达到本轮噪声门限，Memory/Mmap P4 batch中位区间不重叠；sampled p50基本持平，p99/p999多数降低但仍有区间重叠，不能承诺一般尾延迟。
+
+采纳依据是JSON probe与四组完整shared指令稳定减少、八组未插桩吞吐全为正且六组稳定，同时输出字节、错误顺序、公开API和全部门禁不变。text/logfmt控制组、cycles和尾部波动全部保留；不更新Foundation/spdlog/tracing排名，也不叠加历史百分比。源码、二进制、原始CSV/row、慢值与复现脚本见`bench/evidence/2026-11-02-wire-metadata-direct/`。
+
 ## 2026-11-01批次合并后的schema融合
 
 基线`366adc3`的六组百万条完整JSON profile核对600.6万条物理记录，SPSC Memory inline的consumer约占52%用户态core周期采样；prepared SPSC Memory仍有约11%含子调用的decodeRecord和约15%自占的memcpy采样，后者也含producer复制。shared Memory的begin另有显著采样。profile包含setup/preparation/cleanup、排除kernel，不能从这些比例直接计算吞吐或归因某个锁。
