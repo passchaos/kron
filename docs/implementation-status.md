@@ -31,6 +31,8 @@ owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍�
 
 随后完成80项Foundation + spdlog/kron缩减同轮抽查，核对808万条JSON。Memory P1 batch配对吞吐中位1.125、95%区间1.056..1.146，Foundation/kron两侧spread 6.5%/7.9%，达到本轮局部重复性；Memory P4、Mmap P1/P4及其余sampled组仍因spread或区间跨1保持inconclusive。该窗口同时显示kron完整生命周期与shutdown中位更快，但Memory init约0.587ms vs Foundation 0.182ms、Mmap init约14.073ms vs 12.383ms，初始化/资源成本仍是独立差距。该窗口不替代原200项Foundation/tracing矩阵，也不推广为一般跨库排名；全部正负数据见 [Foundation抽查](../bench/cpp_reference/evidence/2026-11-02-current-foundation-spotcheck/README.md)。
 
+再以当前647e667完成80项Foundation + Rust tracing/kron缩减同轮抽查，核对808万条JSON。Memory P1 sampled中tracing领先约11%（0.889×，两侧spread 3.4%/4.7%）；Memory P4 sampled与Mmap P4 batch中kron分别领先约12%/11%（1.123×/1.110×，两侧spread均达标）；其余组因spread或区间跨1保持inconclusive。该窗口mmap init kron约11.2/14.1ms、tracing约19.3/19.5ms，memory init仍约0.55ms vs 0.15ms。结论是当前缩减窗口互有胜负，不是任一入口全面领先；不替代完整200项矩阵，也不更新历史排名。全部数据见 [tracing抽查](../bench/cpp_reference/evidence/2026-11-02-current-tracing-spotcheck/README.md)。
+
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 
 shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS scope决策缓存、uniform原子镜像和冷热拆分均未证明完整速度/尾部收益，全部候选撤回；实验结束时src恢复2fd7f75，Logging/outputs Fast 43/43与源码分发五模式通过。完整源码/CPU工作量/慢值见 [shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)，随后转向并保留上面的数字输出优化。
