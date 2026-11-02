@@ -159,3 +159,65 @@ test "parallel CRC collapse agrees with independent raw IEEE CRC on every input 
         try std.testing.expectEqual(~oracle.final(), update(0, &bytes));
     }
 }
+
+// Independent reflected IEEE state machine: no folding coefficients, SIMD,
+// slicing table or candidate helper contributes to the expected result.
+fn bitwiseState(initial: u32, bytes: []const u8) u32 {
+    var state = initial;
+    for (bytes) |byte| {
+        state ^= byte;
+        for (0..8) |_| state = (state >> 1) ^ (if (state & 1 != 0) @as(u32, 0xedb88320) else 0);
+    }
+    return state;
+}
+
+test "partial CRC stripes preserve every message and seed GF2 basis bit including r0 controls" {
+    var bytes: [256]u8 = undefined;
+    for ([_]usize{ 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256 }) |length| {
+        for (0..length * 8) |bit| {
+            @memset(&bytes, 0);
+            bytes[bit / 8] = @as(u8, 1) << @intCast(bit % 8);
+            try std.testing.expectEqual(bitwiseState(0, bytes[0..length]), update(0, bytes[0..length]));
+        }
+        @memset(&bytes, 0);
+        for (0..32) |bit| {
+            const state = @as(u32, 1) << @intCast(bit);
+            try std.testing.expectEqual(bitwiseState(state, bytes[0..length]), update(state, bytes[0..length]));
+        }
+    }
+}
+
+test "partial CRC stripes preserve arbitrary seeds and unaligned native input" {
+    var bytes: [1024 + 32]u8 = undefined;
+    var random = std.Random.DefaultPrng.init(0x7061727469616c34);
+    random.random().bytes(&bytes);
+    for (0..32) |alignment| {
+        for (4..33) |blocks| {
+            const input = bytes[alignment..][0 .. blocks * 16];
+            const state = random.random().int(u32);
+            try std.testing.expectEqual(bitwiseState(state, input), update(state, input));
+        }
+        const input = bytes[alignment..][0..1024];
+        const state = random.random().int(u32);
+        try std.testing.expectEqual(bitwiseState(state, input), update(state, input));
+    }
+}
+
+test "partial CRC stripes match independently frozen zlib seeded vectors" {
+    // Python zlib.crc32(data[:length], state ^ 0xffffffff) ^ 0xffffffff,
+    // where data[i] = ((i * 73 + 19) ^ (i >> 3)) & 255. zlib accepts the
+    // finalized previous checksum, so both conversions are explicit.
+    const lengths = [_]usize{ 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 512, 1024 };
+    const states = [_]u32{ 0xffffffff, 0, 0x12345678 };
+    const expected = [_][lengths.len]u32{
+        .{ 0xa7d78803, 0x31185aed, 0xb88f2cc3, 0xf70b82dd, 0x28fb523a, 0x552e9711, 0xcaad7826, 0x1ca1604c, 0xba2131ed, 0xd0d1bd53, 0x8f93ef74, 0x360b93e0, 0xdf119ac8, 0x9824741c, 0xbba1ef5a },
+        .{ 0x2da514ca, 0x40c4bdf4, 0xfd84b692, 0x134ad09f, 0x15ac5758, 0xdadb6d72, 0x9f55d4ba, 0xcc0ec1dc, 0xce21c6e0, 0x700ccc15, 0x4d4d4be8, 0x7595480c, 0x2d78e06f, 0xd571fe9b, 0xabebbf8b },
+        .{ 0x165e253e, 0xa4a6e061, 0x4c03f08b, 0x5c2c1bcf, 0x699f3205, 0x9d88b837, 0xa37f2ce1, 0x5b4e3202, 0x0b0627d1, 0x325fa360, 0x787f693f, 0x6c65c4c3, 0x80ed3591, 0x3cf6a295, 0x21a10076 },
+    };
+    var bytes: [1024]u8 = undefined;
+    for (&bytes, 0..) |*byte, index| byte.* = @truncate((index * 73 + 19) ^ (index >> 3));
+    for (states, expected) |state, values| for (lengths, values) |length, oracle| {
+        try std.testing.expectEqual(oracle, bitwiseState(state, bytes[0..length]));
+        try std.testing.expectEqual(oracle, update(state, bytes[0..length]));
+    };
+}

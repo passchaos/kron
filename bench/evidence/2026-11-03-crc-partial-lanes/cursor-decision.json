@@ -1,0 +1,88 @@
+{
+  "status": "rejected",
+  "reports": {
+    "cursor-primitive-ecore": {
+      "groups": 108,
+      "raw_samples": 5400,
+      "assessment_counts": {
+        "peer_leads": 12,
+        "inconclusive": 79,
+        "kron_leads": 17
+      },
+      "qualified_regressions": [
+        {
+          "length": 0,
+          "schema": false,
+          "ratio": 0.9738237191083704
+        },
+        {
+          "length": 0,
+          "schema": true,
+          "ratio": 0.9760984106563361
+        },
+        {
+          "length": 19,
+          "schema": false,
+          "ratio": 0.9646759634463293
+        },
+        {
+          "length": 19,
+          "schema": true,
+          "ratio": 0.9671746256755558
+        },
+        {
+          "length": 21,
+          "schema": true,
+          "ratio": 0.9740491716327104
+        },
+        {
+          "length": 43,
+          "schema": false,
+          "ratio": 0.9717151445940954
+        },
+        {
+          "length": 43,
+          "schema": true,
+          "ratio": 0.9693103574122284
+        },
+        {
+          "length": 64,
+          "schema": false,
+          "ratio": 0.9551887255383045
+        },
+        {
+          "length": 64,
+          "schema": true,
+          "ratio": 0.9617470038077524
+        },
+        {
+          "length": 65,
+          "schema": false,
+          "ratio": 0.9570178325780018
+        },
+        {
+          "length": 65,
+          "schema": true,
+          "ratio": 0.9712938390128887
+        },
+        {
+          "length": 76,
+          "schema": true,
+          "ratio": 0.9645763099846008
+        }
+      ]
+    },
+    "cursor-primitive-pcore": {
+      "groups": 108,
+      "raw_samples": 5400,
+      "assessment_counts": {
+        "inconclusive": 104,
+        "kron_leads": 4
+      },
+      "qualified_regressions": []
+    }
+  },
+  "reason": "Twelve E-core primitive regressions include short/header and r0 controls. Nineteen full-stripe instructions do not override new dispatch and tail setup costs. Most P-core cases too noisy.",
+  "full_workflow_started": false,
+  "original_CRC_math_and_protocol_correct": true
+}

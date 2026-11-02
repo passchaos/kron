@@ -14,6 +14,7 @@
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
 | TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
+| CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |
 | 时钟与时间转换/恢复 | `test-clock-dispatch`、`test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
 | flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
 | 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |

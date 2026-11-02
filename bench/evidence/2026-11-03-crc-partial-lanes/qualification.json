@@ -1,0 +1,51 @@
+{
+  "goal_status": "active; neither Foundation combination fully exceeded",
+  "production_original_crc_and_other_src_preserved": true,
+  "production_changes_retained": false,
+  "retained_changes": "three independent raw-CRC oracle tests, their private test helper and capability-gated root test discovery imports; docs/evidence",
+  "modified_src_files": [
+    "src/platform/crc32_pclmul.zig",
+    "src/root.zig"
+  ],
+  "restored_crc_prefix_sha256": "40f0b55de3258790a847ca6e3b722813b814ca1d1d088f4ed6b2e1153419e01a",
+  "current_crc_with_tests_sha256": "74a205784bce3ea1ab6a1fb610d7bd2a4f74f05e3b7e8ec20a36361712ad2eec",
+  "current_root_with_test_import_sha256": "c630577ac22be65e05a57d1dca2a0553a5c065df13676072c933653bac8fcd47",
+  "baseline_head": "cafa135ed8aea26a7295bcea9b1102cabf187402",
+  "validation": {
+    "native_crc_safe_passed": 9,
+    "legacy_noAVX_crc_safe_passed": 9,
+    "root_safe_total": 18,
+    "root_actual_new_cases": 3,
+    "root_aggregate_imports": 15,
+    "owning_debug_passed": 5,
+    "owning_fast_passed": 5,
+    "generic_safe_passed": 3,
+    "generic_native_only_skip": 1,
+    "package_distribution_steps": 2,
+    "fresh_consumer_modes": [
+      "sync",
+      "memory",
+      "mmap",
+      "spsc_memory",
+      "spsc_mmap"
+    ],
+    "all_log_sessions_ended": true,
+    "full_fault_platform_gate_rerun": false,
+    "reason_not_repeated": "all production candidates removed; only test helpers/imports/docs retained"
+  },
+  "log_sha256": {
+    "restored-crc-safe": "956b12b3974e39a64798f7bd809836e5028a893b7cc30ddc56e68d67e6610fb7",
+    "restored-root-safe": "08f90bb26bf8acfb9f23a5d4c2ea0561601a79ef65adce2311b58c508e8b737b",
+    "restored-owning-debug": "98c4c869bd98c7f00e854562c33393236322cbd54fa336ad6caf946f4a7287d7",
+    "restored-owning-fast": "98c4c869bd98c7f00e854562c33393236322cbd54fa336ad6caf946f4a7287d7",
+    "restored-legacy-safe": "956b12b3974e39a64798f7bd809836e5028a893b7cc30ddc56e68d67e6610fb7",
+    "restored-generic-safe": "d392d37c1c530513fb3dfe46189ad475b506a4f9ca9c548c2e4c600d906ebafe",
+    "restored-package": "0bf0e513d6576a8746eda6e2c26ca53fef7fd0b7ed8c4dc8a75dececccda207d"
+  },
+  "primitive_raw_samples": 32400,
+  "primitive_scope": "CRC-only batches,10000 iterations per batch; not actual logging records",
+  "new_foundation_trials": 0,
+  "new_full_logging_trials": 0,
+  "source_diff_check_scope": "src/docs/README/build, excludes preserved raw evidence whitespace",
+  "git_remote": ""
+}

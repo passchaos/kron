@@ -1,0 +1,49 @@
+{
+  "scope": "Frozen cursor source/binaries before restoration; static evidence only",
+  "function_bytes": {
+    "reference": 1600,
+    "primitive": 1600
+  },
+  "reference_text_bytes": 876381,
+  "static_instructions": 346,
+  "static_clmul_sites": 30,
+  "full_stripe_dynamic_instructions": 19,
+  "loop_lowering": "source pointer/full_end was optimized to a single remaining-full-bytes counter; add cursor64/add counter-64/jne, not literal pointer compare",
+  "partial_bounds": "rax is full_end; r8 is full_end-64 on exit; rax/r8+0x50/r8+0x60 match p/p+16/p+32",
+  "indirect_dispatch_sites": 1,
+  "r0_dispatch": "mov original length/shr4/and3/indirect jump; two vmovdqa+directjmp",
+  "r0_control_segment_dynamic_instructions": 7,
+  "partial_register_moves": [
+    2,
+    2,
+    2
+  ],
+  "byte_tail_setup_extra": "mov+and recompute bulk16 when <16B tail exists; applies to169/241",
+  "dynamic_clmul_same": {
+    "169_bytes": 22,
+    "241_bytes": 32,
+    "partial": [
+      2,
+      4,
+      6
+    ],
+    "collapse": 6,
+    "reduction": 4
+  },
+  "no_new_calls_subrsp_or_spill": true,
+  "max_xmm_number": 8,
+  "uses_ymm": false,
+  "fold_reduce_constants_and_16KiB_table_bytes_equal": true,
+  "original_controls_normalized_equal": [
+    "submitSafeDestination",
+    "slotChecksum",
+    "validateSlot",
+    "peekChecked",
+    "drainJournal",
+    "reserve",
+    "schema reserve",
+    "SPSC reserve"
+  ],
+  "three_crc_checks_preserved": true,
+  "limitations": "Lower loop bookkeeping did not imply lower complete CRC time; cursor lost guarded r0 bypass and added tail setup."
+}

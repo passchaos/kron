@@ -13,6 +13,7 @@
 | written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |
 | Clock与Io调用边界 | [clock_dispatch.zig](clock_dispatch.zig)、`test-clock-dispatch` | 精确clamp、callback内/外切换、Io身份/参数快照、zero/monotonic、public函数指针与capture/full边界 |
 | TLS admission生命周期 | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig)、`test-admission-lifecycle` | owned/bare/borrowed复用、回调中的outer所有权、64层栈与溢出、OS线程隔离、全部Level与完整generation/channel边界 |
+| 原生CRC数学与目标选择 | [crc32_pclmul.zig](../src/platform/crc32_pclmul.zig)、[crc32.zig](../src/platform/crc32.zig)；根筛选 `partial CRC stripes` | 独立bitwise/GF2消息和seed basis、任意seed/alignment、冻结zlib、prefix/partition；helper仅在x86_64+PCLMUL+SSE2测试目标导入 |
 | 配置与deadline | configuration_integration/transactions、route_policy、route_filter、predicate、deadline | 旧route版本/lease、admission、采样相位、timeout资源与reentrancy |
 | 时间与source | time_integration、local_time_integration/oracle、独立package tests | exact纳秒、固定/local cache、DST/恢复身份、repo-relative source路径 |
 | 文件/归档/解码 | file_delivery_failures、compressed_archive、decoder_matrix/fuzz、tool_query | partial/zero/CQE错误、版本/损坏、只读Reader/query/follow |
