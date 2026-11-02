@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+短key两个u32比较、noinline长fallback、显式helper/std包装内联四个候选全部撤回。默认完整流程E-core5组/P-core2组局部收益被1–3字节及9–64字节公共encoder的多组4%–12%回退否决，没有更新Foundation排名。360项实际文件核对3636万JSON、180项encoder控制核对2.43亿次完整输出；全部source、代码审查与正负见[短键报告](../bench/evidence/2026-11-03-short-keys/README.md)。生产field恢复原实现；保留9项公共byte oracle/guard/错误顺序测试和test-field-keys入口。恢复后Safe相关9步骤46项、独立Debug/Fast9项通过，源码分发验证另保留；未因纯测试/文档变化重复整库故障gate。
+
 当前AVX目标的CRC使用128位三操作数PCLMUL，legacy/non-x86 fallback保留；实际Logger更新函数少9次SIMD寄存器复制、无新spill/call，default CRC与三个校验点不变。400项版本对照核对7640万JSON，完整PMU四组instructions约减少0.7%，吞吐/周期/尾部仍正负或不确定，短PMU负向及百万条复测全部保留。Safe/分发/真实SIGKILL/九目标gate151/151步骤、631/632测试通过（1默认local能力skip，六时区专项实际执行）。最终Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先，对tracing10组peer领先；P-core对spdlog5组kron领先、对tracing5组kron领先/1组peer领先，其余不确定，目标仍未达到。精确源码、默认校验审查和限制见[CRC VEX报告](../bench/evidence/2026-11-03-crc-pure/README.md)。
 
 私有typed capture候选已撤回：EmptyContext命名scalar层省略重复树检查，完整PMU四组instructions约减少8.1%，但双拓扑默认流程没有取得稳定吞吐领先，E-core复测出现六组局部负向。metadata别名审查、真实constructor测试、全部候选源与负向数据见[typed capture报告](../bench/evidence/2026-11-03-typed-capture/README.md)。生产仍使用原Logger/Runtime接口；保留公共shared/SPSC deferred参数被clock改坏后错误分类、无reservation和admission释放的回归。总体目标仍未达到。

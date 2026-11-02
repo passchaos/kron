@@ -1,0 +1,94 @@
+{
+  "decision": "all_production_candidates_withdrawn",
+  "baseline": "73cbd27",
+  "retained": "public field equality/duplicate/validation/guard tests and test-field-keys build gate",
+  "performance_target": "Exceed both Foundation/logging + spdlog and +tracing under equivalent full output/written completion",
+  "reason": "Default/nested gains contradicted by repeatable common1..3B and>8B key regressions. noinline long fallback and forced std wrapper inlining do not resolve general input cost; inline keysEqual binaries are identical to first candidate.",
+  "file_comparisons": [
+    {
+      "name": "ecore-shared-pmu",
+      "trials": 40,
+      "records": 4040000,
+      "written_close": {
+        "inconclusive": 4
+      }
+    },
+    {
+      "name": "ecore-workflow",
+      "trials": 160,
+      "records": 16160000,
+      "written_close": {
+        "inconclusive": 11,
+        "kron_leads": 5
+      }
+    },
+    {
+      "name": "pcore-workflow",
+      "trials": 160,
+      "records": 16160000,
+      "written_close": {
+        "inconclusive": 14,
+        "kron_leads": 2
+      }
+    }
+  ],
+  "total_file_trials": 360,
+  "physical_json_records_verified": 36360000,
+  "encoder_controls": [
+    {
+      "name": "encoder-ecore",
+      "trials": 30,
+      "full_output_encoder_calls": 27000000,
+      "key_negative_groups": 0
+    },
+    {
+      "name": "encoder-ecore-repeat",
+      "trials": 30,
+      "full_output_encoder_calls": 27000000,
+      "key_negative_groups": 0
+    },
+    {
+      "name": "shapes-first",
+      "trials": 30,
+      "full_output_encoder_calls": 54000000,
+      "key_negative_groups": 36
+    },
+    {
+      "name": "shapes-outlined",
+      "trials": 30,
+      "full_output_encoder_calls": 54000000,
+      "key_negative_groups": 33
+    },
+    {
+      "name": "encoder-outlined",
+      "trials": 30,
+      "full_output_encoder_calls": 27000000,
+      "key_negative_groups": 0
+    },
+    {
+      "name": "shapes-fallback-inline",
+      "trials": 30,
+      "full_output_encoder_calls": 54000000,
+      "key_negative_groups": 39
+    }
+  ],
+  "encoder_trials": 180,
+  "full_output_encoder_calls": 243000000,
+  "candidate_foundation": "not_run: candidates rejected before promotion",
+  "candidate_full_gate": "not_run: not retained; related Safe/decoder/fuzz and native public guards sufficient to diagnose",
+  "goal_status": "active_not_met",
+  "current_production_field_sha256": "cfde94589e787e8663b8810068680ce85190b53e98c270f0091a69300fa6b643",
+  "current_head": "73cbd27ab64dd374b5468a0cdb7134f0b7c7d178",
+  "retained_verification": {
+    "safe": "test-field-keys/test-capture/test-logging,9/9steps46/46tests",
+    "debug": "9/9 public tests including real Linux guard",
+    "release_fast": "9/9 public tests including real Linux guard",
+    "package_distribution": "2/2steps;fivefreshconsumer modes actual complete output",
+    "logs": [
+      "retained-safe.log",
+      "retained-debug.log",
+      "retained-fast.log",
+      "retained-package-safe.log"
+    ]
+  }
+}

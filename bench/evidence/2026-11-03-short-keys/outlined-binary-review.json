@@ -1,0 +1,12 @@
+{
+  "scope": "Only immutable outlined-reference actual Logger binary compared with first-reference",
+  "outlined_binary_sha256": "00d7cb20736c3206c9bd88b2391e25c8a31c48cb3c9386db9243ec3a8c4bb300",
+  "source_at_review": "3674abad93085f59ce00c004af3fbca25358dea3f17ab93ed8472e2646235d50",
+  "fused": "Long and small fallback offset speculation removed for default6B; single lea n-4; exact DWORD head/tail no shortkeycall",
+  "added_costs": "Every key ptr/len spilled before prior-key tests, first keys also spill; actual<4 fallback calls std eql; >8 long helper calls shared std eql",
+  "long_helper": "10B push/mov/pop/jmp tailcall; no retained secondframe",
+  "measure": "remains0x1c1 stack0xc8 once-per-record fieldsWith; helper0x1be->0x226",
+  "fused_size": "0x34b9->0x3342, frame0x2d8 unchanged",
+  "text_size": "0xd640d->0xd670d(+768B)",
+  "qualification": "Static mechanism achieved but direct shape controls confirmed general regressions. No recommendation to keep."
+}

@@ -10,6 +10,8 @@ borrowed和owned child logger保留原context合并路径：parent < child < eve
 
 ## 验证
 
+`zig build test-field-keys -Doptimize=ReleaseSafe -j1`的9项独立公共测试对照std.mem.eql，共65,016次短/长键、unaligned、同指针/不同长度与逐字节变异比较，另验证55个首重复组合及树/深度/节点错误顺序。Linux实际mmap/mprotect guard覆盖两端切片边界；其他平台跳过该项。该step纳入普通test/verify-local，未暴露私有比较器或可复用校验证明。短键优化候选因一般输入回退全部撤回，生产继续原std比较，详细[证据](../bench/evidence/2026-11-03-short-keys/README.md)保留。
+
 `zig build test-capture -Doptimize=ReleaseSafe -j1`包含8项公共API测试：0/5/10字段、optional/bytes/float/128位整数、真实命名struct的64/65边界、动态tuple/slice重复、共享/SPSC源覆写快照、context位置/优先级、初始化后零分配、invalid nested输入与捕获后clock突变。新增shared/SPSC参数回归验证合法deferred array/group被clock改成cycle/duplicate时返回submit error，capture_errors不增长、slot不预留、admission释放，恢复原树后完整JSON成功。字段模块另有计数测试，命名key不再产生内部key比较、静态scalar不经dynamic派发；组合节点预算与多错误优先级仍和原路径一致。
 
 2026-11-03私有typed构造候选在类型擦除前复用scalar性质，完整PMU四组instructions约减少8.1%，但默认E-core吞吐出现可重复回退，已撤回全部生产入口。metadata私有副本和所有边界测试、双拓扑复测、失败与负向数据保留在[候选报告](../bench/evidence/2026-11-03-typed-capture/README.md)，不能将局部指令减少视为当前吞吐或Foundation排名。

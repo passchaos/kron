@@ -70,6 +70,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-capture", "Verify static capture and dynamic field/context boundaries").dependOn(&run_capture_tests.step);
     test_step.dependOn(&run_capture_tests.step);
 
+    const field_key_module = b.createModule(.{ .root_source_file = b.path("tests/field_key_validation.zig"), .target = target, .optimize = optimize });
+    field_key_module.addImport("kron", module);
+    const field_key_tests = b.addTest(.{ .name = "kron-field-keys", .root_module = field_key_module });
+    const run_field_keys = b.addRunArtifact(field_key_tests);
+    b.step("test-field-keys", "Verify byte equality, duplicate precedence and guarded key slices").dependOn(&run_field_keys.step);
+    test_step.dependOn(&run_field_keys.step);
+
     const single_kron = b.createModule(.{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize, .single_threaded = true, .link_libc = switch (target.result.os.tag) {
         .macos, .ios => true,
         else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,

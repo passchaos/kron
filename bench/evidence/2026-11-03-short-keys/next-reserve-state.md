@@ -1,0 +1,11 @@
+# 后续shared journal状态研究（只读，未实现）
+
+当前Journal真实native布局768B，head712/occupied720/high_water728/checkpoint736/durable744/file_version752/verify764/mode765在704..767同一cacheline。reserved tail在mapping offset64，shared实时written在72，另有producer/consumer共享line。布局事实不证明吞吐收益。
+
+Reader/follow扫描stable committed markers，64/72只校验范围；recover_only按durable checkpoint，Journal.scanRecovery从valid slots重建head并刻意忽略mapped written。尽管内置reader不依赖实时mapped written，公开mapping.bytes与格式文档仍允许外部观察游标，直接把shared改成SPSC式仅sync镜像会改变观察时序，不能默认为合法优化。
+
+保持语义的首选候选：high_water只在count_now大于monotonic加载peak时fetchMax。peak只增加，若跳过本次max说明已有不小于count_now的值；若并发提高则后续fetchMax仍取全局max。必须先核对baseline生成代码是否已跳过无变化的locked CAS，否则这是无效重复。其次评估occupied/high_water与consumer head/immutable metadata的cacheline分离，注意固定进程内memory增加及P1/P4/SPSC控制；队列容量/record预算不变。
+
+shared written仅单consumer写，load+条件store也可能替换fetchMax并保留实时映射；sync/checkpoint的shared分支当前不写该cursor。需要精确审核外部公开写访问/并发sync和recovery初始化，不能把“单consumer”扩展到任意调用者。
+
+本记录仅定位可验证的下一步骤，没有源码改动、编译或benchmark。最大水位条件、缓存行分离与written store必须各自isolated试验，保留default CRC三个位置、tail reservation gap、shutdown/cut和恢复。

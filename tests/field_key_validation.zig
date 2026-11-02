@@ -1,0 +1,253 @@
+//! Public field validation contracts, with an independent std.mem.eql oracle.
+const std = @import("std");
+const builtin = @import("builtin");
+const kron = @import("kron");
+const fields = kron.fields;
+const testing = std.testing;
+
+fn resetAudit() void {
+    fields.TestingAudit.compared_keys = 0;
+    fields.TestingAudit.visited_values = 0;
+}
+
+fn fillKey(key: []u8) void {
+    for (key, 0..) |*byte, i| byte.* = @truncate(i * 37);
+}
+
+fn expectKeyOracle(a: []const u8, b: []const u8) !void {
+    const equal = std.mem.eql(u8, a, b);
+    resetAudit();
+    const result = fields.checkUnique(&.{kron.kv(a, null)}, b);
+    if (equal) {
+        try testing.expectError(error.DuplicateKey, result);
+    } else {
+        try result;
+    }
+    try testing.expectEqual(@as(usize, 1), fields.TestingAudit.compared_keys);
+    try testing.expectEqual(@as(usize, 0), fields.TestingAudit.visited_values);
+}
+
+fn expectBothKeyOrders(a: []const u8, b: []const u8) !void {
+    try expectKeyOracle(a, b);
+    try expectKeyOracle(b, a);
+}
+
+fn expectFieldsError(entries: []const kron.Field, expected: fields.ValidationError, comparisons: usize, values: usize) !void {
+    resetAudit();
+    try testing.expectError(expected, fields.validateFields(entries));
+    try testing.expectEqual(comparisons, fields.TestingAudit.compared_keys);
+    try testing.expectEqual(values, fields.TestingAudit.visited_values);
+
+    // The convenience function and an explicitly shared validator must keep
+    // the same traversal order, node accounting, and unwound container stack.
+    resetAudit();
+    var validator: fields.ValueValidator = .{};
+    try testing.expectError(expected, validator.fields(entries));
+    try testing.expectEqual(comparisons, fields.TestingAudit.compared_keys);
+    try testing.expectEqual(values, fields.TestingAudit.visited_values);
+    try testing.expectEqual(values, validator.nodes);
+    try testing.expectEqual(@as(usize, 0), validator.depth);
+}
+
+test "field keys: lengths 0..17, separate addresses, all alignments and every byte mutation agree with eql" {
+    for (0..18) |length| {
+        for (0..8) |left_offset| {
+            for (0..8) |right_offset| {
+                var left: [40]u8 align(8) = @splat(0xa5);
+                var right: [40]u8 align(8) = @splat(0x5a);
+                const a = left[8 + left_offset ..][0..length];
+                const b = right[8 + right_offset ..][0..length];
+                fillKey(a);
+                fillKey(b);
+                try testing.expect(@intFromPtr(a.ptr) != @intFromPtr(b.ptr));
+                try testing.expectEqual(left_offset, @intFromPtr(a.ptr) % 8);
+                try testing.expectEqual(right_offset, @intFromPtr(b.ptr) % 8);
+                // Different sentinels before and after equal contents exercise
+                // slice semantics. Sentinels do not prove absence of overreads;
+                // the separate mprotect test supplies real page boundaries.
+                try testing.expectEqual(@as(u8, 0xa5), left[8 + left_offset - 1]);
+                try testing.expectEqual(@as(u8, 0xa5), left[8 + left_offset + length]);
+                try testing.expectEqual(@as(u8, 0x5a), right[8 + right_offset - 1]);
+                try testing.expectEqual(@as(u8, 0x5a), right[8 + right_offset + length]);
+                try expectBothKeyOrders(a, b);
+                for (0..length) |position| {
+                    b[position] ^= 0xff;
+                    try expectBothKeyOrders(a, b);
+                    b[position] ^= 0xff;
+                }
+            }
+        }
+    }
+}
+
+test "field keys: all different lengths 0..17 and all alignments agree with eql" {
+    for (0..18) |left_length| {
+        for (0..18) |right_length| {
+            if (left_length == right_length) continue;
+            for (0..8) |left_offset| {
+                for (0..8) |right_offset| {
+                    var left: [40]u8 align(8) = @splat(0xa5);
+                    var right: [40]u8 align(8) = @splat(0x5a);
+                    const a = left[8 + left_offset ..][0..left_length];
+                    const b = right[8 + right_offset ..][0..right_length];
+                    // Equal prefixes make length itself decisive.
+                    fillKey(a);
+                    fillKey(b);
+                    try expectBothKeyOrders(a, b);
+                }
+            }
+        }
+    }
+}
+
+test "field keys: identical slice pointers retain equality and compare differing lengths" {
+    var backing: [32]u8 align(8) = undefined;
+    fillKey(&backing);
+    for (0..8) |offset| {
+        for (0..18) |length| try expectKeyOracle(backing[offset..][0..length], backing[offset..][0..length]);
+        for (0..18) |left_length| {
+            for (0..18) |right_length| {
+                if (left_length != right_length) try expectKeyOracle(backing[offset..][0..left_length], backing[offset..][0..right_length]);
+            }
+        }
+    }
+}
+
+test "field keys: checkUnique stops at the first duplicate pair and counts every unequal length pair" {
+    const lengths = [_]usize{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17 };
+    var key_bytes: [lengths.len][17]u8 = undefined;
+    var entries: [lengths.len + 1]kron.Field = undefined;
+    for (lengths, 0..) |length, index| {
+        fillKey(&key_bytes[index]);
+        entries[index] = kron.kv(key_bytes[index][0..length], null);
+    }
+    for (lengths, 0..) |length, first_duplicate| {
+        var query: [17]u8 = undefined;
+        fillKey(&query);
+        // A second match later in the existing array must remain unexamined.
+        entries[lengths.len] = kron.kv(query[0..length], null);
+        resetAudit();
+        try testing.expectError(error.DuplicateKey, fields.checkUnique(&entries, query[0..length]));
+        try testing.expectEqual(first_duplicate + 1, fields.TestingAudit.compared_keys);
+        try testing.expectEqual(@as(usize, 0), fields.TestingAudit.visited_values);
+    }
+    var absent: [10]u8 = undefined;
+    fillKey(&absent);
+    resetAudit();
+    try fields.checkUnique(&entries, &absent);
+    try testing.expectEqual(entries.len, fields.TestingAudit.compared_keys);
+    try testing.expectEqual(@as(usize, 0), fields.TestingAudit.visited_values);
+    resetAudit();
+    try fields.checkUnique(&.{}, &absent);
+    try testing.expectEqual(@as(usize, 0), fields.TestingAudit.compared_keys);
+}
+
+test "field validation: every first duplicate position preserves pair counts and skips invalid values" {
+    const count = 10;
+    var keys: [count][8]u8 = undefined;
+    for (&keys, 0..) |*key, index| {
+        fillKey(key);
+        key[0] = @intCast(index);
+    }
+    var cycle: [1]kron.Value = undefined;
+    cycle[0] = .{ .array = &cycle };
+    for (1..count + 1) |duplicate_position| {
+        for (0..duplicate_position) |prior_position| {
+            var entries: [count + 2]kron.Field = undefined;
+            for (0..duplicate_position) |i| entries[i] = kron.kv(&keys[i], null);
+            var duplicate_key = keys[prior_position];
+            entries[duplicate_position] = kron.kv(&duplicate_key, kron.array(&cycle));
+            entries[duplicate_position + 1] = kron.kv(&keys[0], kron.array(&cycle));
+            const comparisons = duplicate_position * (duplicate_position - 1) / 2 + prior_position + 1;
+            try expectFieldsError(entries[0 .. duplicate_position + 2], error.DuplicateKey, comparisons, duplicate_position);
+        }
+    }
+    var valid: [count]kron.Field = undefined;
+    for (&valid, 0..) |*entry, i| entry.* = kron.kv(&keys[i], null);
+    resetAudit();
+    try fields.validateFields(&valid);
+    try testing.expectEqual(@as(usize, count * (count - 1) / 2), fields.TestingAudit.compared_keys);
+    try testing.expectEqual(@as(usize, count), fields.TestingAudit.visited_values);
+}
+
+test "field validation: cyclic and depth errors precede later duplicates and duplicates precede their values" {
+    var cycle: [1]kron.Value = undefined;
+    cycle[0] = .{ .array = &cycle };
+    try expectFieldsError(&.{ kron.kv("firstkey", null), kron.kv("secondky", kron.array(&cycle)), kron.kv("firstkey", null) }, error.CyclicValue, 1, 3);
+    try expectFieldsError(&.{ kron.kv("firstkey", null), kron.kv("firstkey", kron.array(&cycle)) }, error.DuplicateKey, 1, 1);
+
+    var chain: [fields.max_value_depth + 1]kron.Value = undefined;
+    chain[0] = .{ .array = &.{} };
+    for (1..chain.len) |i| chain[i] = .{ .array = chain[i - 1 .. i] };
+    try expectFieldsError(&.{ kron.kv("firstkey", null), kron.kv("secondky", chain[fields.max_value_depth]), kron.kv("firstkey", null) }, error.ValueTooDeep, 1, fields.max_value_depth + 2);
+    try expectFieldsError(&.{ kron.kv("firstkey", null), kron.kv("firstkey", chain[fields.max_value_depth]) }, error.DuplicateKey, 1, 1);
+}
+
+test "field validation: nested duplicate order retains group and sibling audit counts" {
+    var cycle: [1]kron.Value = undefined;
+    cycle[0] = .{ .array = &cycle };
+    const nested = [_]kron.Field{
+        kron.kv("innerone", null),
+        kron.kv("innertwo", null),
+        kron.kv("innerone", kron.array(&cycle)),
+    };
+    try expectFieldsError(&.{ kron.kv("outerone", null), kron.kv("outertwo", kron.group(&nested)), kron.kv("outerone", kron.array(&cycle)) }, error.DuplicateKey, 3, 4);
+}
+
+test "field validation: node budget checks retain precedence over unvisited duplicate keys" {
+    var leaves: [fields.max_value_nodes]kron.Value = @splat(.null_value);
+    try expectFieldsError(&.{ kron.kv("firstkey", kron.array(&leaves)), kron.kv("firstkey", null) }, error.TooManyValueNodes, 0, 1);
+    try expectFieldsError(&.{ kron.kv("firstkey", null), kron.kv("firstkey", kron.array(&leaves)) }, error.DuplicateKey, 1, 1);
+
+    const too_many = [_]kron.Field{kron.kv("same", null)} ** (fields.max_value_nodes + 1);
+    try expectFieldsError(&too_many, error.TooManyValueNodes, 0, 0);
+    const oversized_group = [_]kron.Field{kron.kv("same", null)} ** fields.max_value_nodes;
+    try expectFieldsError(&.{kron.kv("groupkey", kron.group(&oversized_group))}, error.TooManyValueNodes, 0, 1);
+
+    resetAudit();
+    var validator: fields.ValueValidator = .{ .nodes = fields.max_value_nodes - 1 };
+    try testing.expectError(error.TooManyValueNodes, validator.fields(&.{ kron.kv("same", null), kron.kv("same", null) }));
+    try testing.expectEqual(@as(usize, 0), fields.TestingAudit.compared_keys);
+    try testing.expectEqual(@as(usize, 0), fields.TestingAudit.visited_values);
+    try testing.expectEqual(fields.max_value_nodes - 1, validator.nodes);
+}
+
+test "field keys: Linux guard pages check exact slice boundaries at both ends" {
+    if (builtin.os.tag != .linux) return error.SkipZigTest;
+    const linux = std.os.linux;
+    const page_size = std.heap.pageSize();
+    const address = linux.mmap(null, page_size * 6, .{ .READ = true, .WRITE = true }, .{ .TYPE = .PRIVATE, .ANONYMOUS = true }, -1, 0);
+    if (linux.errno(address) != .SUCCESS) return error.GuardMappingFailed;
+    const mapping = @as([*]u8, @ptrFromInt(address))[0 .. page_size * 6];
+    defer testing.expectEqual(linux.E.SUCCESS, linux.errno(linux.munmap(mapping.ptr, mapping.len))) catch @panic("guard mapping cleanup failed");
+    // Two independently writable pages, each between inaccessible pages.
+    for ([_]usize{ 0, 2, 3, 5 }) |page| {
+        try testing.expectEqual(linux.E.SUCCESS, linux.errno(linux.mprotect(mapping[page * page_size ..].ptr, page_size, .{})));
+    }
+    const left_page = mapping[page_size .. page_size * 2];
+    const right_page = mapping[page_size * 4 .. page_size * 5];
+    for (0..18) |length| {
+        for ([_]bool{ false, true }) |left_at_end| {
+            for ([_]bool{ false, true }) |right_at_end| {
+                const a = if (left_at_end) left_page[left_page.len - length ..] else left_page[0..length];
+                const b = if (right_at_end) right_page[right_page.len - length ..] else right_page[0..length];
+                // Every nonempty slice lies wholly within one writable page.
+                // At end, the first byte outside the slice is PROT_NONE; at
+                // start, the preceding byte is PROT_NONE. Empty end slices
+                // may point at PROT_NONE and must never be dereferenced.
+                try testing.expect(@intFromPtr(a.ptr) >= @intFromPtr(left_page.ptr));
+                try testing.expect(@intFromPtr(a.ptr) + a.len <= @intFromPtr(left_page.ptr) + page_size);
+                try testing.expect(@intFromPtr(b.ptr) >= @intFromPtr(right_page.ptr));
+                try testing.expect(@intFromPtr(b.ptr) + b.len <= @intFromPtr(right_page.ptr) + page_size);
+                fillKey(a);
+                fillKey(b);
+                try expectBothKeyOrders(a, b);
+                for (0..length) |position| {
+                    b[position] ^= 0xff;
+                    try expectBothKeyOrders(a, b);
+                    b[position] ^= 0xff;
+                }
+            }
+        }
+    }
+}

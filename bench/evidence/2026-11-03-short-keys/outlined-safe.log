@@ -1,0 +1,39 @@
+test-decoder-matrix
++- run test kron-decoder-matrix w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1272 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1250 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1139 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1117 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/fe5e55b07c6404d3f6c86ac6505c7bfe/kron-decoder-matrix --cache-dir=./.zig-cache --seed=0xb85ebde7 --listen=-
+
+test-fuzz
++- run test kron-fuzz-smoke w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1272 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1250 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1139 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1117 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/58f5eaee8a53aeade3771302e3e8c7d0/kron-fuzz-smoke --cache-dir=./.zig-cache --seed=0xb85ebde7 --listen=-
+
+Build Summary: 9/9 steps succeeded; 19/19 tests passed
+test-field-keys success
++- run test kron-field-keys 9 pass (9 total) 4ms MaxRSS:5M
+   +- compile test kron-field-keys ReleaseSafe native success 11s MaxRSS:510M
+test-decoder-matrix success
++- run test kron-decoder-matrix 3 pass (3 total) 561ms MaxRSS:4M
+   +- compile test kron-decoder-matrix ReleaseSafe native success 15s MaxRSS:627M
+test-fuzz success
++- run test kron-fuzz-smoke 7 pass (7 total) 719ms MaxRSS:5M
+   +- compile test kron-fuzz-smoke ReleaseSafe native success 15s MaxRSS:626M
+
