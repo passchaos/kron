@@ -1,0 +1,14 @@
+1/13 shared_admission.test_0...OK
+2/13 tests.shared_admission.test.shared shards occupy exactly 64 independent cache lines and collisions do not deny admission...OK
+3/13 tests.shared_admission.test.shared acquire paused after initial global read cannot cross a cut without a fresh revision...OK
+4/13 tests.shared_admission.test.shared post CAS recheck rolls back cut-crossing count and wakes the cut waiter...OK
+5/13 tests.shared_admission.test.shared capture admitted before cut is counted until its exact token releases...OK
+6/13 tests.shared_admission.test.shared close freezes every line before publishing global closing and stale readers reject...OK
+7/13 tests.shared_admission.test.shared close after count CAS makes rollback wake admission epoch...OK
+8/13 tests.shared_admission.test.shared endCut racing close preserves closing regardless of global publication order...OK
+9/13 tests.shared_admission.test.shared cut rollback reaches stable zero before delayed global closing publication...OK
+10/13 tests.shared_admission.test.shared closing rollback wakes each last frozen shard with colliding and independent producers...OK
+11/13 tests.shared_admission.test.shared revision recheck rejects old observation even when cut has already ended...OK
+12/13 tests.shared_admission.test.shared revision exhaustion permanently closes instead of rolling over...OK
+13/13 tests.shared_admission.test.shared cold count scan saturates rather than overflowing to a false zero...OK
+All 13 tests passed.

@@ -23,12 +23,19 @@ def main():
     parser.add_argument("--events", type=int, default=100000)
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--modes", default="async")
+    parser.add_argument("--storages", default="memory,mmap")
+    parser.add_argument("--producers", default="1,4")
+    parser.add_argument("--phases", default="batch,sampled")
     parser.add_argument("--schema", choices=("off", "on", "both"), default="off")
     parser.add_argument("--perf", choices=("cpu_core", "cpu_atom"))
     args = parser.parse_args()
     modes = args.modes.split(",")
+    storages, producers, phases = args.storages.split(","), args.producers.split(","), args.phases.split(",")
     if not 1000 <= args.events <= 1000000 or not 5 <= args.repeats <= 10 or not set(modes) <= {"async", "spsc"} or len(modes) != len(set(modes)):
         parser.error("bounded events, 5..10 rounds and unique async/spsc modes required")
+    if (not set(storages) <= {"memory", "mmap"} or not set(producers) <= {"1", "4"} or not set(phases) <= {"batch", "sampled"}
+            or any(len(values) != len(set(values)) for values in (storages, producers, phases))):
+        parser.error("unique memory/mmap, 1/4 producers and batch/sampled cases required")
     cpus = workflow.affinity(args.affinity)
     binaries = {label: getattr(args, label).resolve(strict=True) for label in ("before", "after")}
     identities = {label: workflow.sha256(path) for label, path in binaries.items()}
@@ -42,7 +49,7 @@ def main():
                 "scope": "Frozen versions, public managed Logging, 256 slots/512B, system time, portable file, written flush/close; no durable. PMU, if selected, includes complete child process setup."}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     schemas = (False, True) if args.schema == "both" else (args.schema == "on",)
-    cases = list(itertools.product(modes, ("memory", "mmap"), (1, 4), ("batch", "sampled"), schemas))
+    cases = list(itertools.product(modes, storages, map(int, producers), phases, schemas))
     rows = []
     with (output / "results.jsonl").open("x") as evidence:
         for repetition in range(args.repeats):

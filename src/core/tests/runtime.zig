@@ -5,6 +5,7 @@ const MemorySink = @import("../../sink/memory.zig").MemorySink;
 test {
     _ = @import("runtime_prepared_measure.zig");
     _ = @import("runtime_admission_view.zig");
+    _ = @import("runtime_admission_shutdown.zig");
 }
 const fields = @import("../field.zig");
 

@@ -1,0 +1,177 @@
+diff --git a/src/core/admission.zig b/src/core/admission.zig
+index bb40c7f..0092d8b 100644
+--- a/src/core/admission.zig
++++ b/src/core/admission.zig
+@@ -16,6 +16,7 @@ const Frame = struct {
+     channel: u32 = 0,
+     filter_scope: []const u8 = "",
+     filter_decision: ?BoundDecision = null,
++    shared_token: ?*Atomic(u64) = null,
+ };
+ threadlocal var owners: [max_depth]Frame = @splat(.{});
+ threadlocal var depth: usize = 0;
+@@ -44,6 +45,22 @@ pub fn leave(owner: *anyopaque) void {
+     owners[depth] = .{};
+ }
+ 
++/// A shared admission carries its original shard through nested callbacks.
++/// The token is cleared with the TLS frame and never cached past this call.
++pub fn enterShared(owner: *anyopaque, token: *Atomic(u64)) bool {
++    if (!enter(owner)) return false;
++    owners[depth - 1].shared_token = token;
++    return true;
++}
++
++/// Release the borrowed configuration before the caller decrements its shard.
++pub fn leaveShared(owner: *anyopaque) *Atomic(u64) {
++    std.debug.assert(depth != 0 and owners[depth - 1].owner == owner);
++    const token = owners[depth - 1].shared_token.?;
++    leave(owner);
++    return token;
++}
++
+ pub fn attachResource(owner: *anyopaque, resource: *anyopaque, release_callback: *const fn (*anyopaque) void) void {
+     std.debug.assert(depth != 0 and owners[depth - 1].owner == owner);
+     std.debug.assert(owners[depth - 1].resource == null);
+@@ -166,3 +183,33 @@ test "outer runtime resource lookup survives nested independent runtime frames"
+     leave(&inner);
+     try std.testing.expectEqual(@as(u32, 3), getChannel(&outer));
+ }
++
++test "shared admission tokens survive nested owners and release resources before their count" {
++    const Observer = struct {
++        token: *Atomic(u64),
++        count_at_release: u64 = 0,
++        fn release(raw: *anyopaque) void {
++            const self: *@This() = @ptrCast(@alignCast(raw));
++            self.count_at_release = self.token.load(.seq_cst) & count_mask;
++        }
++    };
++    var first: u8 = 0;
++    var second: u8 = 0;
++    var first_token: Atomic(u64) = .init(1);
++    var second_token: Atomic(u64) = .init(1);
++    var observed: Observer = .{ .token = &first_token };
++    try std.testing.expect(enterShared(&first, &first_token));
++    attachResource(&first, &observed, Observer.release);
++    try std.testing.expect(enterShared(&second, &second_token));
++    const inner = leaveShared(&second);
++    try std.testing.expect(inner == &second_token);
++    _ = release(inner);
++    try std.testing.expect(contains(&first));
++    const outer = leaveShared(&first);
++    try std.testing.expect(outer == &first_token);
++    try std.testing.expectEqual(@as(u64, 1), observed.count_at_release);
++    _ = release(outer);
++    try std.testing.expectEqual(@as(u64, 0), first_token.load(.seq_cst));
++    try std.testing.expectEqual(@as(u64, 0), second_token.load(.seq_cst));
++    try std.testing.expect(!contains(&first));
++}
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 1a73d5c..9006f14 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -37,6 +37,7 @@ const Clock = @import("../platform/clock.zig").Clock;
+ const control_module = @import("control.zig");
+ pub const Deadline = control_module.Deadline;
+ const admission_protocol = @import("admission.zig");
++const shared_admission = @import("shared_admission.zig");
+ const closing_bit = admission_protocol.closing_bit;
+ const cut_bit = admission_protocol.cut_bit;
+ const count_mask = admission_protocol.count_mask;
+@@ -82,8 +83,9 @@ pub const Runtime = struct {
+     session: u64,
+     sync_sequence: Atomic(u64) = .init(0),
+     state: Atomic(State) = .init(.running),
+-    /// Closing/cut flags and admission count share one modification order.
++    /// Global flags/revision stay read-only on the ordinary producer path.
+     admission_gate: Atomic(u64) = .init(0),
++    admission_shards: shared_admission.Shards = .{},
+     admission_epoch: Atomic(u32) = .init(0),
+     configuration_gate: Atomic(u64) = .init(0),
+     configuration_epoch: Atomic(u32) = .init(0),
+@@ -251,7 +253,7 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn activeAdmissions(self: *Runtime) u64 {
+-        var count = self.admission_gate.load(.acquire) & count_mask;
++        var count = self.admission_shards.activeCount();
+         if (self.thread_registry) |registry| count += registry.activeAdmissions();
+         count += self.configuration_gate.load(.acquire) & count_mask;
+         return count;
+@@ -480,8 +482,8 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn end(self: *Runtime) void {
+-        admission_protocol.leave(self);
+-        const previous = admission_protocol.release(&self.admission_gate);
++        const token = admission_protocol.leaveShared(self);
++        const previous = shared_admission.release(token);
+         if (previous & count_mask == 1 and previous & (closing_bit | cut_bit) != 0) {
+             self.wakeAdmissions();
+             if (previous & closing_bit != 0) self.notify();
+@@ -499,8 +501,13 @@ pub const Runtime = struct {
+             self.reportError(error.TooManyNestedSubmissions);
+             return false;
+         }
+-        if (!admission_protocol.acquire(&self.admission_gate, &self.admission_epoch, self.io)) return false;
+-        const entered = admission_protocol.enter(self);
++        const token = self.admission_shards.acquire(&self.admission_gate, &self.admission_epoch, self.io) orelse {
++            // A provisional shard acquisition can roll back after closing.
++            // Wake the collector even if no TLS frame was ever entered.
++            self.notify();
++            return false;
++        };
++        const entered = admission_protocol.enterShared(self, token);
+         std.debug.assert(entered);
+         return true;
+     }
+@@ -514,17 +521,17 @@ pub const Runtime = struct {
+     }
+ 
+     fn waitAdmissions(self: *Runtime) void {
+-        admission_protocol.wait(&self.admission_gate, &self.admission_epoch, self.io);
++        self.admission_shards.wait(&self.admission_epoch, self.io);
+     }
+ 
+     fn cutTargets(self: *Runtime, targets: *[65]u64) usize {
+         self.cut_mutex.lockUncancelable(self.io);
+         defer self.cut_mutex.unlock(self.io);
+-        _ = self.admission_gate.fetchOr(cut_bit, .acq_rel);
+-        defer {
+-            _ = self.admission_gate.fetchAnd(~cut_bit, .release);
+-            self.wakeAdmissions();
+-        }
++        self.admission_shards.beginCut(&self.admission_gate);
++        // Revision exhaustion closes the shard protocol conservatively. Give
++        // that transition the same Runtime state and worker wakeups as close.
++        if (self.admission_gate.load(.seq_cst) & closing_bit != 0 and self.state.load(.acquire) == .running) self.closeAdmission();
++        defer self.admission_shards.endCut(&self.admission_gate, &self.admission_epoch, self.io);
+         self.waitAdmissions();
+         if (self.thread_registry) |registry| registry.beginCut();
+         defer if (self.thread_registry) |registry| registry.endCut();
+@@ -1242,10 +1249,10 @@ pub const Runtime = struct {
+ 
+     fn closeAdmission(self: *Runtime) void {
+         // The global closing bit is the collector's exit publication. Publish
+-        // only after all thread gates are closed, before waiting for users.
++        // only after all shared/thread gates close, before waiting for users.
+         if (self.thread_registry) |registry| registry.retireAll();
+         _ = self.configuration_gate.fetchOr(closing_bit, .acq_rel);
+-        _ = self.admission_gate.fetchOr(closing_bit, .acq_rel);
++        self.admission_shards.close(&self.admission_gate);
+         _ = self.state.cmpxchgStrong(.running, .closing, .release, .monotonic);
+         self.wakeAdmissions();
+         self.notify();
+diff --git a/src/core/tests/runtime.zig b/src/core/tests/runtime.zig
+index 4512523..a88037f 100644
+--- a/src/core/tests/runtime.zig
++++ b/src/core/tests/runtime.zig
+@@ -5,6 +5,7 @@ const MemorySink = @import("../../sink/memory.zig").MemorySink;
+ test {
+     _ = @import("runtime_prepared_measure.zig");
+     _ = @import("runtime_admission_view.zig");
++    _ = @import("runtime_shared_admission.zig");
+ }
+ const fields = @import("../field.zig");
+ 

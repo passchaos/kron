@@ -1,0 +1,90 @@
+diff --git a/src/platform/crc32_pclmul.zig b/src/platform/crc32_pclmul.zig
+index 80460b0..1691df4 100644
+--- a/src/platform/crc32_pclmul.zig
++++ b/src/platform/crc32_pclmul.zig
+@@ -10,6 +10,11 @@ const std = @import("std");
+ const V2 = @Vector(2, u64);
+ const k1k2: V2 = .{ 0x0154442bd4, 0x01c6e41596 };
+ const k3k4: V2 = .{ 0x01751997d0, 0x00ccaa009e };
++// Reflected-domain coefficients for shifting the earlier lanes by 256/384
++// bits. For distance d each pair is reverse32(x^(d +/- 32) mod P) << 1,
++// with the normal IEEE generator P = 0x104c11db7. Tests derive them separately.
++const k256: V2 = .{ 0x00f1da05aa, 0x015a546366 };
++const k384: V2 = .{ 0x003db1ecdc, 0x0174359406 };
+ const k5k0: V2 = .{ 0x0163cd6124, 0x0000000000 };
+ const poly: V2 = .{ 0x01db710641, 0x01f7011641 };
+ const mask: V2 = .{ 0xffffffff, 0xffffffff };
+@@ -21,9 +26,18 @@ inline fn load16(p: [*]const u8) V2 {
+ inline fn clmul(a: V2, b: V2, comptime imm: u8) V2 {
+     var x = a;
+     switch (imm) {
+-        0x00 => asm volatile ("pclmulqdq $0, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
+-        0x10 => asm volatile ("pclmulqdq $16, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
+-        0x11 => asm volatile ("pclmulqdq $17, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
++        0x00 => asm volatile ("pclmulqdq $0, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
++        0x10 => asm volatile ("pclmulqdq $16, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
++        0x11 => asm volatile ("pclmulqdq $17, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
+         else => @compileError("unsupported pclmul immediate"),
+     }
+     return x;
+@@ -68,12 +82,14 @@ pub fn update(state: u32, bytes: []const u8) u32 {
+         p += 64;
+         len -= 64;
+     }
+-    var x5 = clmul(x1, k3k4, 0x00);
+-    x1 = clmul(x1, k3k4, 0x11) ^ x2 ^ x5;
+-    x5 = clmul(x1, k3k4, 0x00);
+-    x1 = clmul(x1, k3k4, 0x11) ^ x3 ^ x5;
+-    x5 = clmul(x1, k3k4, 0x00);
+-    x1 = clmul(x1, k3k4, 0x11) ^ x4 ^ x5;
++    // Fold all earlier lanes directly to x4's position. This uses the same
++    // six multiplies as three serial folds, with independent dependency chains.
++    // The intermediate vector is CRC-equivalent; its bytes need not be equal.
++    const a = clmul(x1, k384, 0x00) ^ clmul(x1, k384, 0x11);
++    const b = clmul(x2, k256, 0x00) ^ clmul(x2, k256, 0x11);
++    const c = clmul(x3, k3k4, 0x00) ^ clmul(x3, k3k4, 0x11);
++    x1 = a ^ b ^ c ^ x4;
++    var x5: V2 = undefined;
+     while (len >= 16) {
+         x2 = load16(p);
+         x5 = clmul(x1, k3k4, 0x00);
+@@ -91,3 +107,30 @@ pub fn update(state: u32, bytes: []const u8) u32 {
+     x1 ^= b2;
+     return @truncate(x1[0] >> 32);
+ }
++
++fn coefficient(exponent: usize) u64 {
++    var remainder: u64 = 1;
++    for (0..exponent) |_| {
++        remainder <<= 1;
++        if (remainder & (@as(u64, 1) << 32) != 0) remainder ^= 0x104c11db7;
++    }
++    return @as(u64, @bitReverse(@as(u32, @intCast(remainder)))) << 1;
++}
++
++test "parallel CRC collapse coefficients derive from the independent IEEE generator" {
++    inline for (.{ .{ 128, k3k4 }, .{ 256, k256 }, .{ 384, k384 }, .{ 512, k1k2 } }) |entry| {
++        try std.testing.expectEqual(entry[1][0], coefficient(entry[0] + 32));
++        try std.testing.expectEqual(entry[1][1], coefficient(entry[0] - 32));
++    }
++}
++
++test "parallel CRC collapse agrees with independent raw IEEE CRC on every input basis bit" {
++    var bytes: [64]u8 = undefined;
++    for (0..512) |bit| {
++        @memset(&bytes, 0);
++        bytes[bit / 8] = @as(u8, 1) << @intCast(bit % 8);
++        var oracle: std.hash.Crc32 = .{ .crc = 0 };
++        oracle.update(&bytes);
++        try std.testing.expectEqual(~oracle.final(), update(0, &bytes));
++    }
++}

@@ -1,0 +1,42 @@
+{
+  "configuration": {
+    "before": ".zig-cache/admission-baseline/reference-before",
+    "after": ".zig-cache/admission-candidate/reference-after",
+    "output_dir": "bench/evidence/2026-11-02-shared-admission/pcore-long",
+    "affinity": "0,2,4,6,8,10",
+    "events": 300000,
+    "repeats": 5,
+    "modes": "async",
+    "schema": "off",
+    "perf": null
+  },
+  "binary_sha256": {
+    "before": "b98cb68b39e340f2f3abd64cb1e90c5afe6e2f984d381d4b599df9494f318697",
+    "after": "79e17cc8fa211d7f6bd5e71e8f7d346409eee20153bf4a63901257879e80c051"
+  },
+  "affinity": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+  ],
+  "loadavg_before": [
+    90.44482421875,
+    89.50927734375,
+    89.90869140625
+  ],
+  "host": {
+    "system": "Linux",
+    "node": "robot-NUC13RNGi5",
+    "release": "6.8.0-147-generic",
+    "version": "#147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026",
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "driver_sha256": "23fa6ffb6f96aa5857f8f224c8296b80a8b6b175440ca39fcbcdf700ee680ed9",
+  "oracle_sha256": "a94160ca1069021fa5722fd4c1f5a7624b459c582ab0b0df933b965d78d42df6",
+  "qualification_sha256": "2ce7088944f6694ddbd379646b479c02d0450b3bb077892b100ce845a27b4609",
+  "scope": "Frozen versions, public managed Logging, 256 slots/512B, system time, portable file, written flush/close; no durable. PMU, if selected, includes complete child process setup."
+}

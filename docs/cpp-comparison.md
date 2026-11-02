@@ -4,9 +4,13 @@
 
 性能验收目标是同时超过 Foundation/logging + spdlog 和 Foundation/logging + tracing。`analyze.py` 对新的公共 full JSON 报告生成 `foundation_qualification`：按 repetition 配对，不混合 Memory/Mmap、producer 数、batch/sampled 或 CPU 拓扑；至少5轮、两侧与配对比值 spread 均≤10%、95%配对bootstrap区间不跨1才判断该组领先。written flush/close、初始化、完整生命周期与调用 p99/p99.9 独立判定。缺少任一前端或任一选定组的配对不能宣告同时超过；关闭吞吐全部领先也只证明这次选定负载，其他性能轴仍需自己的证据。历史报告保留原统计结果，不批量重写。
 
+最新保留CRC四lane直接合并的双拓扑同轮320项对照核对3232万JSON：E-core对tracing14组peer领先、对spdlog5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定。E-core目标未达到、P-core整体inconclusive，未全面超过两个前端；完整阶段、原始数据与复现见[当前CRC报告](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
+
 最新双拓扑320项对照绑定已撤回的CRC候选：E-core对tracing 12组peer领先、对spdlog 9组peer领先/3组kron领先；P-core大多不确定，没有证明同时超过两个前端。CRC其他长度的负向成本使候选全部撤回，详见[完整正负实验](../bench/evidence/2026-11-02-prefixed-crc/README.md)。这些结果保留自己的源码身份，不是恢复后生产源码的新排名。
 
 优化前后二进制可以用 `compare_versions.py --before BEFORE --after AFTER --output-dir FRESH --affinity CPU_LIST` 比较相同的 public managed 文件流程，`--schema both`覆盖v1/v2，`--perf cpu_core|cpu_atom`另外记录完整子进程PMU。每轮完整JSON独立核对，失败现场保留，成功后清理测试日志；统计比值大于1表示after更快。基准与资格测试纳入 `zig build test-cpp-reference-report`。
+
+已确认的局部负向值可以用 `--modes spsc --storages memory --producers 1 --phases batch --events 1000000` 精细复测。默认仍覆盖Memory/Mmap、P1/P4、batch/sampled；筛选后的报告只证明实际选定范围，不能替代完整矩阵。每个场景和失败现场仍逐项保留，不用整个矩阵重跑来掩盖同一负向。
 
 Foundation tracing的公共JSON对照使用真实Subscriber/fmt层、五个typed数值字段和公开TracingMakeWriter。标准`build_tracing`使用不同的优化写入器与文本格式，通过`--libraries foundation_tracing --metadata native_tracing`单列验证；这些文本数字与公共JSON不能直接作同输出格式排名。所有Foundation源码仅复制到基准目录，库源码不修改，Rust依赖由其Cargo.lock锁定。
 

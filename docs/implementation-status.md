@@ -13,6 +13,10 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+当前保留IEEE CRC四lane直接合并：相同六次PCLMUL的依赖层数从3降1，原header/reference/payload分段、tail、seed/final XOR、三个校验点与恢复协议保持。独立GF2基/bitwise/zlib oracle和native任意seed/长度/对齐通过；ReleaseSafe完整门禁149/149步骤、621/622测试通过（1项默认local能力skip），local专项实际执行。320项双拓扑before/after核对3232万JSON，E-core4组/P-core2组关闭吞吐局部领先，其余大多不确定；短P-core SPSC Memory P1 batch负向在百万条复测未重现，所有慢值保留。另同源码320项Foundation对照核对3232万JSON：E-core对tracing 14组peer领先、对spdlog 5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定，仍未全面超过。源码/门禁/全部数据见[CRC合并证据](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
+
+固定64片shared admission候选通过协议/生命周期测试，E-core P4 cycles局部下降10~12%，但280项完整流程核对4428万JSON后存在尾部/吞吐负向且每Runtime增4096B，已全部撤回；保留独立final-admission无记录唤醒回归。资源、源码与否决见[shared admission实验](../bench/evidence/2026-11-02-shared-admission/README.md)。
+
 2026-11-02前缀CRC候选完成240项完整shared before/after、2424万条JSON核对，第二候选16组配对中位全部提高、11组通过局部门限；但扩展CRC长度出现明显负向，全部候选已撤回，生产CRC恢复97353ff。候选另完成P-core/E-core各160项Foundation spdlog/tracing对照，总核对3232万条JSON；E-core对tracing 12组peer领先、对spdlog 9组peer领先/3组kron领先，P-core多数不确定，未证明同时超过两个前端。该候选结果不作为当前生产源码新排名。保留完整配对资格、manifest组/轮次校验与原分段扩展CRC基准，12项资格/矩阵测试和相关报告gate通过；源码、原始正负值与撤回见[实验报告](../bench/evidence/2026-11-02-prefixed-crc/README.md)。
 
 当前源码在7480598之后保留native八位十进制分块与冷buffered输出。ReleaseSafe完整验证151步骤成功、639项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；数字模块Debug/Safe/Fast与generic CPU各6项、encoder重点52项通过，AArch64另完成编译。140项真实文件核对4214万JSON，shared Memory/Mmap P1/P4的完整用户态指令稳定减少3.43%–3.47%；完整速度与尾部保持inconclusive。精确源码、正负版本、风险复测与验证见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。非Linux对象编译不替代设备运行。

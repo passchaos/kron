@@ -1,0 +1,31 @@
+{
+  "cpu": 30,
+  "zig_optimize": "ReleaseFast",
+  "zig_mcpu": "native",
+  "native_command": "taskset -c 30 zig test .zig-cache/kron-crc-math/native_probe.zig -O ReleaseFast -mcpu=native",
+  "native_result": "3/3 passed",
+  "fold_basis_hardware_cases": 1536,
+  "frontend_arbitrary_seed_cases": 39312,
+  "assembly": {
+    "tree": {
+      "collapse_pclmul_count": 6,
+      "collapse_constant_load_count": 2,
+      "simd_stack_accesses": 0
+    },
+    "parallel": {
+      "collapse_pclmul_count": 6,
+      "collapse_constant_load_count": 3,
+      "simd_stack_accesses": 0
+    },
+    "serial": {
+      "collapse_pclmul_count": 6,
+      "collapse_constant_load_count": 1,
+      "simd_stack_accesses": 0
+    }
+  },
+  "source_sha256": {
+    "src/platform/crc32_pclmul.zig": "b4abef427bca84b205c1e3ca26e2ac103244529758a92cf9913a242653f9ddde",
+    "src/platform/crc32.zig": "288d2fd195a86d18aa709df082063b73aefd0d14a8b97791cac846993bdde442"
+  },
+  "performance_claim": "none; standalone assembly only, no benchmark"
+}
