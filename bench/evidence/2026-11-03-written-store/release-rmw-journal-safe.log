@@ -1,0 +1,76 @@
+1/75 root.test_0...OK
+2/75 logging.root.test_0...OK
+3/75 encoder.root.test_0...OK
+4/75 encoder.root.test_1...OK
+5/75 core.runtime.test_0...OK
+6/75 config.routes.test_0...OK
+7/75 sink.rolling_file.test_0...OK
+8/75 core.codec.test_0...OK
+9/75 journal.schema.test.schema extension roundtrip validates version layout checksum and budgets...OK
+10/75 journal.schema.test.registry deduplicates metadata keeps types source and requires sync after restart...OK
+11/75 journal.schema.test.unfinished schema slots do not hide later entries or get reused...OK
+12/75 journal.schema.test.content hash collisions still compare complete metadata before deduplication...OK
+13/75 journal.schema.test.metadata hash covers source keys kinds and scope but never event values...OK
+14/75 journal.schema.test.schema registration deeply copies keys source format and scope once...OK
+15/75 journal.schema.test.concurrent registration publishes one definition and readiness remains local...OK
+16/75 journal.schema.test.invalid refs lengths and all committed definitions are checked without mutation...OK
+17/75 journal.schema.test.ready resolution uses validated cached definitions and rejects tampered references...OK
+18/75 journal.schema.test.nested definition masks use version two while scalar definitions stay byte compatible...OK
+19/75 journal.journal.test_0...OK
+20/75 journal.journal.test.memory journal can opt out of slot CRC...OK
+21/75 journal.spsc.test_0...OK
+22/75 time.root.test_0...OK
+23/75 journal.spsc_tests.test.SPSC full wrap and exclusive producer mode preserve MPSC API...OK
+24/75 journal.spsc_tests.test.SPSC validates owner thread on reserve commit and retirement...OK
+25/75 journal.spsc_tests.test.SPSC rejects a reused thread id with an unregistered or different TLS cookie...OK
+26/75 journal.spsc_tests.test.SPSC retire reactivate invalidates old generation and retains pending data...OK
+27/75 journal.spsc_tests.test.SPSC retired channel can transfer ownership to another thread...OK
+28/75 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK
+29/75 journal.spsc_tests.test.SPSC reserve commit retire reactivate allocate nothing after creation...OK
+30/75 journal.spsc_tests.test.SPSC written durable checkpoint confirms consumer progress without reclaiming pending data...OK
+31/75 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK
+32/75 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK
+33/75 journal.format.test.zeroed initialization matches full clear for memory-backed journals...OK
+34/75 journal.storage.test.memory Storage is aligned zeroed and uses only caller memory...OK
+35/75 journal.storage.test.memory Storage publication and durability errors allocate nothing after creation...OK
+36/75 journal.storage.test.memory Storage invalid size and OOM leave no owned allocation...OK
+37/75 platform.crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
+38/75 journal.tests.test.mmap reopen replays committed payload and session without msync...OK
+39/75 journal.tests.test.normal consumer waits at reservation gap but recovery scans later commits...OK
+40/75 journal.tests.test.recovery completion includes abandoned trailing reservation but excludes new live work...OK
+41/75 journal.tests.test.recovery ignores stale high written cursor while retaining pending commits...OK
+42/75 journal.tests.test.recovery without commits completes abandoned tail immediately...OK
+43/75 journal.tests.test.recoveryRecordAt enumerates every remaining commit across gaps without consuming...OK
+44/75 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK
+45/75 journal.tests.test.abort, full, oversize, wrap reuse and generation...OK
+46/75 journal.tests.test.lock, layout, recovery opt out, checksum corruption retain evidence...OK
+47/75 journal.tests.test.durable acknowledgement and alternating checkpoint recovery...OK
+48/75 journal.tests.test.durable written checkpoint does not pass pending commits or regress...OK
+49/75 journal.tests.test.invalid options, header version and checkpoint integrity...OK
+50/75 journal.tests.test.recovery validates generation, length and commit sequence...OK
+51/75 journal.tests.test.producer hot path uses no allocator after create...OK
+52/75 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK
+53/75 journal.tests.test.checked live peek retains corrupt records instead of exposing invalid length...OK
+54/75 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK
+55/75 journal.tests.test.fresh mapped zero capability implies zero body...OK
+56/75 journal.tests.test.recoverable journals reject verify_crc false...OK
+57/75 journal.schema_journal_tests.test.schema disabled preserves v1 file size framing and bytes...OK
+58/75 journal.schema_journal_tests.test.v2 schema ref and ordinary self-contained records survive reopen across reserve gap...OK
+59/75 journal.schema_journal_tests.test.v1 v2 and schema layout mismatches leave the existing journal intact...OK
+60/75 journal.schema_journal_tests.test.Linux file and directory publication failures reject creation and release the journal lock...OK
+61/75 journal.schema_journal_tests.test.Linux directory sync failure after file sync keeps a schema unready until full retry...OK
+62/75 journal.schema_journal_tests.test.failed cold schema sync retains definition and forbids event commit until retry...OK
+63/75 journal.schema_journal_tests.test.failed schema sync definition can reopen and become ready after successful sync...OK
+64/75 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK
+65/75 journal.schema_journal_tests.test.schema table corruption is rejected even when no event refers to that definition...OK
+66/75 journal.schema_journal_tests.test.missing schema definition retains committed event and unknown schema versions are rejected...OK
+67/75 journal.schema_journal_tests.test.registered schema metadata strings keys source and format persist independently of caller buffers...OK
+68/75 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK
+69/75 core.tests.codec.test_0...OK
+70/75 core.tests.runtime_queue_progress.test.queue progress worker failure on another journal broadcasts the original error to SPSC waiter...OK
+71/75 core.tests.runtime.test_0...OK
+72/75 core.tests.runtime.test.runtime asynchronous journal drains and snapshots borrowed inputs...OK
+73/75 core.thread_registry.test_0...OK
+74/75 encoder.wire_json.test_0...OK
+75/75 core.tests.thread_registry.test.registry forwards the fixed schema budget to every preallocated journal...OK
+All 75 tests passed.

@@ -84,6 +84,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-journal-peak", "Verify exact shared peak occupancy across concurrent reservations and recovery").dependOn(&run_journal_peak.step);
     test_step.dependOn(&run_journal_peak.step);
 
+    const journal_progress_module = b.createModule(.{ .root_source_file = b.path("tests/journal_progress.zig"), .target = target, .optimize = optimize });
+    journal_progress_module.addImport("kron", module);
+    const journal_progress_tests = b.addTest(.{ .name = "kron-journal-progress", .root_module = journal_progress_module });
+    const run_journal_progress = b.addRunArtifact(journal_progress_tests);
+    b.step("test-journal-progress", "Verify immediate written progress, release publication and failed-prefix ownership").dependOn(&run_journal_progress.step);
+    test_step.dependOn(&run_journal_progress.step);
+
     const single_kron = b.createModule(.{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize, .single_threaded = true, .link_libc = switch (target.result.os.tag) {
         .macos, .ios => true,
         else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,

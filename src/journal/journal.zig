@@ -756,7 +756,9 @@ pub const Journal = struct {
 
     fn advanceWritten(self: *Journal, sequence: u64) void {
         if (self.producer_mode == .shared) {
-            _ = self.written().fetchMax(sequence, .monotonic);
+            // Publish preceding writes to acquire readers observing new progress.
+            // Slot reuse and later runtime accounting have separate boundaries.
+            _ = self.written().fetchMax(sequence, .release);
         } else if (sequence > self.single.consumer_written.load(.monotonic)) self.single.consumer_written.store(sequence, .release);
     }
 

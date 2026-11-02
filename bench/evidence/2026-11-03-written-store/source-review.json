@@ -1,0 +1,21 @@
+{
+  "scope": "Current shared written singleconsumer/release-store source contract review, no performance claim",
+  "writer_set": [
+    "scanRecovery release initialization before create publication",
+    "oneconsumer leading tombstone reclaim",
+    "oneconsumer normal releaseAfter",
+    "sameconsumer recovered gap prefix"
+  ],
+  "not_writers": [
+    "shared sync",
+    "shared checkpointWrittenDurable",
+    "readonly Reader",
+    "shutdown waiter"
+  ],
+  "handoff": "Oldconsumer stopped + external HB required for nonatomichead/recovery; cursorpoll alone insufficient",
+  "publication": "Actualgrowth release store + acquire writtenTarget publishes previousoperations; unchanged/lowsequence produces no newHB. free turn/recoverycursor/pin/count can follow cursor update.",
+  "runtime": "normalreleaseafter/pin/count within deliverymutex; leadingtombstonecheckedpeek happens before deliverylock; shutdownjoin needed for allconsumer completion",
+  "failures": "checkedpeek may consumevalidleading tombstones beforeCorruptRecord, must notcrossbadsequence but doesnot necessarily keep oldcursor",
+  "SPSC": "existingconsumer_written andmapped mirror unchanged",
+  "findings": []
+}

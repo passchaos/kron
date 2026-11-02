@@ -62,6 +62,13 @@ An output write followed by a crash before journal release may replay the
 event: recovery is at least once. Written release protects against a process
 crash while the OS remains running, and does not promise power-loss recovery.
 
+The shared written cursor uses a release atomic maximum. An acquire
+`writtenTarget()` read that observes newly advanced progress also observes the
+consumer's preceding writes. Slot-turn publication and Runtime pin/count cleanup
+can follow that cursor update; complete lifecycle confirmation still uses the
+Runtime's flush and shutdown protocol. This does not extend a released Record's
+borrowed payload lifetime or make peek/release safe for multiple consumers.
+
 `releaseAfter(record, .durable)` requires all required outputs to have been
 synced by the caller. It syncs commit data, alternates and syncs the durable
 checkpoint, then persists slot invalidation before enabling reuse. A failed

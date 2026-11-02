@@ -4,6 +4,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 性能验收目标是超过 **Foundation/logging + spdlog** 和 **Foundation/logging + tracing**，在相同完整输出与完成边界下验证吞吐、生命周期和尾延迟；P-core/E-core分别测量。当前尚未全面达到，逐组结果与资格见 [前端对照](docs/cpp-comparison.md)。
 
+共享 written 游标现在以 release RMW 发布进度，配合 `writtenTarget()` 的 acquire 读取提供明确的写入可见性；原最大值算法、CRC、恢复和队列预算保持。两种普通 store 性能候选因完整流程回退撤回，880项对照核对8888万JSON，未更新跨库排名。新公共测试覆盖实时游标、失败前缀和 join 前发布观察，详见[written报告](bench/evidence/2026-11-03-written-store/README.md)。
+
 当前共享队列只在峰值增长时更新 `high_water`，直接 CAS 循环保留精确最大值、默认 CRC 和实时 written。完整 Safe/分发/恢复/九目标门禁155步骤成功；百万条复测未确认回退，也未取得普遍吞吐收益。最新双拓扑 Foundation 对照核对3232万 JSON：P-core 对 spdlog 7组、对 tracing 4组局部领先，E-core 仍有明显差距，目标未达到。全部负向、调用成本与资格见[峰值报告](bench/evidence/2026-11-03-peak-update/README.md)。
 
 短字段名比较的四个候选已撤回：默认完整流程有局部收益，但 1–3 字节及长键输入出现稳定回退。生产保持原比较，新增公共字节 oracle、真实 guard page 和错误顺序回归；全部控制组、原始正负与限制见[短键报告](bench/evidence/2026-11-03-short-keys/README.md)。

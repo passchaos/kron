@@ -1,0 +1,11 @@
+# JSON-only透明默认队列研究：否决，未实现
+
+只读架构研究确认当前singleJSON的v4已使用fused checked wire渲染，避免scalar Value物化和第二tag遍历；不能把已删除工作重复计为潜在收益。JSON文本也丢失signed/unsigned、duration/timestamp、NaN/Inf、原始malformedUTF8及bytes类型等，无法恢复原typed Event/query/binaryarchive，且缺route generation/fingerprint。透明改为JSON-only同时去掉binary encode和decoder不满足完整原契约。
+
+只在volatileMemory新opt-in放弃typed inspection是产品取舍，不能覆盖Mmap或宣称相同能力全面超过Foundation。Mmap accepted必须已拥有可恢复完整Event，不能异步补canonical binary。公共Journal.Record.payload/submitToJournal仍是typed wire契约。
+
+最小保契约变体是同槽canonical v4/v5加JSON cache的private envelope：必须原binary先成功，cache不fit则原payloadcommit，继续全部CRC；consumer/Reader/recovery使用canonical完整检查。它只可能省consumer渲染，不能同时删producerbinary。public外部合法CRC的新envelope可能令cache与typed event不一致，若没有封闭Runtime构造/所有权，验证一致性还需重渲染。旧配置views、required/best-effort、route limit/formatter ownership、fallbacksync与publicbinarysink都须沿用原边界，不能借公开Event.tree_validated作为授权。
+
+当前inline5字段wire固定241B，最短同输出JSON235B加max-u64session21B和systemtimestamp18B，合计至少515B，未计envelopeheader即超过512B默认槽。因此inline默认必回退；v5固定message169B可能fit也仅prepared局部范围且随sequence/value长度需复核。不能加大队列、减CRC或把prepared局部资格作为全库目标。
+
+这条路线本轮只读否决，没有source/API、版本或基准改动。依据runtime submit/drain、delivery.emitWireFused、field.Value、archive.Reader和reference预算。任何未来新lossless编码需独立完整协议矩阵/错误顺序/整数原字节/Reader/recovery资格，不沿用被撤回的native-v6或typedcapture实验的微观指令结论。

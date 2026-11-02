@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+共享written恢复原fetchMax算法，仅将monotonic改release，明确发布消费端之前的写入给观察新进度的writtenTarget.acquire；实时offset72、最大值/CRC/恢复/队列预算及SPSC保持，后置turn/pin/count与Record借用生命周期仍独立。两个普通store性能候选均撤回：880项完整文件核对8888万JSON，有稳定吞吐回退，未更新Foundation排名。保留9项public进度/失败前缀/恢复/发布测试，Debug/Safe/Fast通过；最终相关Safe组合56项、journal选择75项通过，源码分发五模式/九目标对象12步骤成功。native代码/数据段与efcdc2c逐字节相同，语言级发布修复仍有意义；跨平台对象不是设备运行，之前完整gate保留原身份，未复述为本轮全库验证。详情与所有反例见[written报告](../bench/evidence/2026-11-03-written-store/README.md)。总体性能目标仍未完成，下一候选核对默认clock callback，不替换std.Io提供方或取时时点。
+
 当前shared high_water用monotonic直接weakCAS，仅在captured count超过已观察peak时更新；发布后峰值只增，因此保持精确历史最大值，occupied/CRC/slot/实时written/SPSC/预算不变。条件包装版因完整负向撤回，direct增长tag栈写与schema新增调用成本保留记录。最终Safe/分发/随机SIGKILL/九目标gate155/155步骤、648/649测试通过（1默认local能力skip，专项执行）；8项public峰值回归覆盖Memory/Mmap普通/schema、60并发wave/648完整记录、失败与重开。930项版本对照核对1.3893亿JSON，百万条吞吐与尾部仍inconclusive，没有普遍提速承诺。最新Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/5组peer领先，对tracing11组peer领先；P-core对spdlog7组、对tracing4组kron领先，其余不确定，目标未达到。精确源码与全部限制见[峰值报告](../bench/evidence/2026-11-03-peak-update/README.md)。
 
 短key两个u32比较、noinline长fallback、显式helper/std包装内联四个候选全部撤回。默认完整流程E-core5组/P-core2组局部收益被1–3字节及9–64字节公共encoder的多组4%–12%回退否决，没有更新Foundation排名。360项实际文件核对3636万JSON、180项encoder控制核对2.43亿次完整输出；全部source、代码审查与正负见[短键报告](../bench/evidence/2026-11-03-short-keys/README.md)。生产field恢复原实现；保留9项公共byte oracle/guard/错误顺序测试和test-field-keys入口。恢复后Safe相关9步骤46项、独立Debug/Fast9项通过，源码分发验证另保留；未因纯测试/文档变化重复整库故障gate。

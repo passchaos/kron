@@ -1,0 +1,8 @@
+{
+  "scope": "Independent singleconsumer max-store semantic review, no performance inference",
+  "writer_set": "constructor beforepublication; published reclaim/tombstones/releaseAfter/recoveryPrefix sameconsumer; sharedsync/checkpoint do notwrite72; checkpoints128/192 separate",
+  "value": "max(seq,old)store never decreases afterlegalHB consumerhandoff, realtimeoffset72same",
+  "non_growth": "extra release modification withsamevalue strengthensordering but acquire observingvalue cannotidentify newno-op; no postcursor turn/pin/count/handoff guarantee",
+  "SPSC": "fixedmode isolatedconsumer_written/mirror unchanged",
+  "tests": "reuseactualgrowth beforejoinmarker, rawchecksno concurrentwriter, corruptprefix andstale/recovery/durableorder"
+}

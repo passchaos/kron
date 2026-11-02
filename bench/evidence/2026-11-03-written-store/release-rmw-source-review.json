@@ -1,0 +1,8 @@
+{
+  "scope": "Independent correctness repair after failed performance candidates; no speedup claim",
+  "change": "restore original shared fetchMax algorithm, memory ordermonotonic->release",
+  "HB": "Actualgrowth releaseRMW pluswrittenTarget acquirepublishesprecedingplainwrites;oldmonotonicRMW source didnotprovide this evenifx86lockedassemblysame",
+  "no_op": "samevalueacquire cannotidentify newRMW, no newdata/postcleanup guarantee asserted",
+  "unchanged": "cursorvalues/recoveryprefix/max/CRC/queueownership/errororder/SPSCmirror",
+  "limitations": "singleconsumerstillrequired, no reclaimedRecord lifetimeextension;turn/pin/count aftercursornot certified,ARM release loweringcanchange"
+}

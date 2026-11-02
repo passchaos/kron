@@ -1,0 +1,34 @@
+{
+  "source_verified_before": true,
+  "source_verified_after": true,
+  "commands": [
+    {
+      "name": "release-rmw-journal-safe",
+      "command": [
+        "zig",
+        "test",
+        "src/root.zig",
+        "-O",
+        "ReleaseSafe",
+        "--test-filter",
+        "journal"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "release-rmw-platform-package",
+      "command": [
+        "zig",
+        "build",
+        "test-package-distribution",
+        "check-platforms",
+        "-Doptimize=ReleaseSafe",
+        "-j1",
+        "--summary",
+        "all"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "scope": "Final release-RMW source ordering repair, relevant journal/property and source distribution/platform gates; prior fullgate remains bound to efcdc2c, not restated as fresh full run"
+}
