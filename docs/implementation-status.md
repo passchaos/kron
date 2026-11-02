@@ -25,7 +25,7 @@ owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍�
 
 另以当前bc908cc完成60项raw spdlog/kron缩减同轮抽查，核对606万条JSON；Memory P4 batch的配对吞吐中位3.499、比值spread 6.2%且区间不跨1，其余Memory组因spread或区间保持inconclusive。该入口是raw spdlog而非Foundation封装，且宿主非安静窗口，因此不更新Foundation/tracing排名，也不把3.5倍外推到Mmap或其他组；全部数据见 [缩减抽查](../bench/cpp_reference/evidence/2026-11-02-current-managed-frontends/README.md)。
 
-随后完成80项Foundation + spdlog/kron缩减同轮抽查，核对808万条JSON。Memory P1 batch配对吞吐中位1.125、95%区间1.056..1.146，Foundation/kron两侧spread 6.5%/7.9%，达到本轮局部重复性；Memory P4、Mmap P1/P4及其余sampled组仍因spread或区间跨1保持inconclusive。该窗口不替代原200项Foundation/tracing矩阵，也不推广为一般跨库排名；全部正负数据见 [Foundation抽查](../bench/cpp_reference/evidence/2026-11-02-current-foundation-spotcheck/README.md)。
+随后完成80项Foundation + spdlog/kron缩减同轮抽查，核对808万条JSON。Memory P1 batch配对吞吐中位1.125、95%区间1.056..1.146，Foundation/kron两侧spread 6.5%/7.9%，达到本轮局部重复性；Memory P4、Mmap P1/P4及其余sampled组仍因spread或区间跨1保持inconclusive。该窗口同时显示kron完整生命周期与shutdown中位更快，但Memory init约0.587ms vs Foundation 0.182ms、Mmap init约14.073ms vs 12.383ms，初始化/资源成本仍是独立差距。该窗口不替代原200项Foundation/tracing矩阵，也不推广为一般跨库排名；全部正负数据见 [Foundation抽查](../bench/cpp_reference/evidence/2026-11-02-current-foundation-spotcheck/README.md)。
 
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 

@@ -24,6 +24,17 @@ Foundation是真实spdlog前端＋Rust后台；kron是managed typed-capture-defe
 | Foundation + spdlog | 352 / 573 | 850 / 29,491 | 516 / 1,003 | 1,048 / 8,133 |
 | kron async | 338 / 689 | 897 / 24,425 | 334 / 664 | 888 / 23,441 |
 
+初始化与完整生命周期中位：
+
+| 配置 | P1 init ms | P4 init ms | P1 lifecycle ms | P4 lifecycle ms | P1 shutdown ms | P4 shutdown ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Foundation + spdlog memory | 0.182 | 0.185 | 48.312 | 48.079 | 0.091 | 0.077 |
+| Foundation + spdlog mmap | 12.383 | 12.476 | 66.513 | 58.804 | 0.097 | 0.100 |
+| kron async memory | 0.587 | 0.604 | 43.486 | 45.662 | 0.029 | 0.025 |
+| kron async mmap | 14.073 | 14.425 | 57.268 | 56.508 | 0.027 | 0.021 |
+
+kron的完整生命周期与shutdown中位更快，但Memory初始化约为Foundation的3.2倍、Mmap初始化约高1.7ms；这继续支持“初始化/资源成本”作为独立优先级。该缩减窗口不把init中位差当作稳定排名，完整阶段与噪声资格仍以`analysis.json`为准。
+
 ## 配对吞吐比值
 
 比值是同一重复内`kron/Foundation`的written_records_per_sec，5对bootstrap；任一组spread≥10%或区间跨1时保持inconclusive。
