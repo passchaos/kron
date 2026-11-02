@@ -63,3 +63,5 @@ P-core 改 affinity；schema 加 --schema on --modes async；PMU 加 --perf cpu_
 恢复生产后仅保留 suite、admission/root 测试导入、test-admission-lifecycle 构建入口与文档；恢复后的最终相关 gate、Debug/Fast、View 与源码分发日志分别为 restored-safe/debug/fast/view-safe/package.log。计数与 owning source 以 qualification.json 和这些实际日志为准。生产算法未变，本轮不重复全库 SIGKILL/九目标门禁，也不把以前结果改称本轮资格。
 
 恢复后实际结果：ReleaseSafe 12/12 步骤、69/69 项通过；Debug/Fast 各 20 项 total，五项生命周期实际执行；View 选择 19 项 total 含三个实质 cases；源码分发 2/2 步骤成功，五个 fresh consumers 的写入、源快照与脱敏核验通过。格式与 diff 检查通过。最终逐文件比较确认全部 baseline src 源码/fixture 相同，仅 admission/root 测试导入和新增 suite 除外；production canonical hashes 在 qualification.json。当前无 remote，完成后提交本地版本。
+
+空白检查范围：生产源码、测试、build 与文档的 diff/zig fmt 检查通过。完整 staged evidence 检查会报告原始 patch 的上下文空格和原始测试日志末尾空行；这些是保留的原始 artifact，不重写其 bytes。qualification.json 单独记载检查范围，不能将其描述为所有原始文件的空白检查零提示。

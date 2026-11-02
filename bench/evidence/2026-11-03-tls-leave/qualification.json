@@ -176,9 +176,11 @@
       ],
       "source_snapshot_and_redaction_checked": true
     },
-    "format_and_diff_check": "passed",
+    "format_and_diff_check": "source/build/docs passed; unrestricted staged evidence check flags original patch context whitespace and raw log EOF blank lines, preserved unchanged",
     "full_failure_platform_gate_rerun": false,
-    "full_failure_platform_gate_reason": "production restored; only test/build/doc changes retained"
+    "full_failure_platform_gate_reason": "production restored; only test/build/doc changes retained",
+    "format_check_scope": "zig fmt --check build.zig src/root.zig src/core/admission.zig src/core/tests/admission_lifecycle.zig",
+    "source_diff_check": "git diff --check HEAD^ HEAD -- . :(exclude)bench/evidence/**"
   },
   "validation_log_sha256": {
     "restored-safe": "ef6e5136d7ff6d2816c7347274cddcc283cdcff04ad54d0892ae4b825f6d27b5",
