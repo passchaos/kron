@@ -2,6 +2,45 @@ const std = @import("std");
 const kron = @import("kron");
 const testing = std.testing;
 
+test "predicate route mask keeps disabled predicates and bit 63 at their original boundary" {
+    inline for (.{ .sync, .asynchronous }) |mode| {
+        var bytes: [32768]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        var routes: [64]kron.RouteOptions = undefined;
+        var names: [64][16]u8 = undefined;
+        for (&routes, &names, 0..) |*route, *name, index| route.* = .{
+            .name = try std.fmt.bufPrint(name, "output-{d}", .{index}),
+            .sink = memory.sink(),
+            .filter = if (index == 0 or index == 63) "info" else "off",
+            .predicate = if (index == 1) "@message =~ \"x\"" else if (index == 63) "status >= 500" else null,
+        };
+        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+            .submission = mode,
+            .memory_queue = if (mode == .asynchronous) .{ .capacity = 8, .max_record_bytes = 16384 } else null,
+            .max_encoded_record_bytes = 16384,
+            .routes = &routes,
+        });
+        defer runtime.destroy();
+        var long: [8193]u8 = @splat('x');
+        // The disabled route's regex would return InputTooLong if evaluated.
+        try testing.expectEqual(kron.EmitResult.accepted, try runtime.scoped("mask").tryEmit(.info, &long, .{ .status = 200 }));
+        try runtime.flush(.written);
+        try testing.expectEqual(@as(usize, 1), memory.records);
+        try testing.expectEqual(kron.EmitResult.accepted, try runtime.scoped("mask").tryEmit(.info, "high bit", .{ .status = 503 }));
+        try runtime.flush(.written);
+        try testing.expectEqual(@as(usize, 3), memory.records);
+        var lines = std.mem.tokenizeScalar(u8, memory.written(), '\n');
+        var index: usize = 0;
+        while (lines.next()) |line| : (index += 1) {
+            const parsed = try std.json.parseFromSlice(std.json.Value, testing.allocator, line, .{});
+            defer parsed.deinit();
+            const mask = parsed.value.object.get("route_mask").?;
+            if (index == 0) try testing.expectEqual(@as(i64, 1), mask.integer) else try testing.expectEqualStrings("9223372036854775809", mask.string);
+        }
+        try testing.expectEqual(@as(usize, 3), index);
+    }
+}
+
 test "delivery predicates filter captured fields before journal reservation and preserve accepted decisions" {
     var tmp = testing.tmpDir(.{});
     defer tmp.cleanup();

@@ -38,9 +38,7 @@ fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
             const value_tag = @field(std.meta.Tag(field.Value), @tagName(tag));
             switch (format) {
                 .json => {
-                    if (self.index != 0) try writer.writeByte(',');
-                    try common.jsonKey(writer, self.key);
-                    try writer.writeByte(':');
+                    try common.jsonMember(writer, self.key, self.index != 0);
                     try common.writeTaggedValue(writer, value_tag, data, .json);
                 },
                 .text => {

@@ -1,0 +1,45 @@
+{
+  "configuration": {
+    "before": ".zig-cache/encoder-next/before-reference",
+    "after": ".zig-cache/encoder-next/predicate-only-after",
+    "output_dir": "bench/evidence/2026-11-02-predicate-route-mask/ecore-pmu",
+    "affinity": "16,18,20,22,24,26",
+    "events": 100000,
+    "repeats": 5,
+    "modes": "async",
+    "storages": "memory,mmap",
+    "producers": "1,4",
+    "phases": "batch",
+    "schema": "off",
+    "perf": "cpu_atom"
+  },
+  "binary_sha256": {
+    "before": "4024a62b0a3bcc578eb97c0eedaca27c9d79457e06f2d483c43170dee667c635",
+    "after": "86db29f215809ed2624ba08d13d16f7ed5e89583623bd1a7fe74b6c8e75daeff"
+  },
+  "affinity": [
+    16,
+    18,
+    20,
+    22,
+    24,
+    26
+  ],
+  "loadavg_before": [
+    89.06103515625,
+    89.1455078125,
+    89.14453125
+  ],
+  "host": {
+    "system": "Linux",
+    "node": "robot-NUC13RNGi5",
+    "release": "6.8.0-147-generic",
+    "version": "#147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026",
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "driver_sha256": "30b854b91b5206ac321ae6f8691501e45903b03990c2538e436a4210281363b8",
+  "oracle_sha256": "a94160ca1069021fa5722fd4c1f5a7624b459c582ab0b0df933b965d78d42df6",
+  "qualification_sha256": "2ce7088944f6694ddbd379646b479c02d0450b3bb077892b100ce845a27b4609",
+  "scope": "Frozen versions, public managed Logging, 256 slots/512B, system time, portable file, written flush/close; no durable. PMU, if selected, includes complete child process setup."
+}

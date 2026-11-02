@@ -189,6 +189,69 @@ pub fn jsonKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!vo
     try writer.writeByte('"');
 }
 
+/// A complete attribute prefix can use the writable destination directly.
+/// Short/streaming writers and escaped/reserved keys retain the original
+/// comma, key, colon sequence and its partial-write error boundary.
+pub fn jsonMember(writer: *std.Io.Writer, input: []const u8, comma: bool) std.Io.Writer.Error!void {
+    const punctuation: usize = 3 + @as(usize, @intFromBool(comma));
+    const available = writer.buffer.len - writer.end;
+    if (available >= punctuation and input.len <= available - punctuation and
+        !std.mem.startsWith(u8, input, "$bytes:") and asciiRun(input) == input.len)
+    {
+        const length = input.len + punctuation;
+        const destination = writer.buffer[writer.end..][0..length];
+        const start: usize = @intFromBool(comma);
+        if (comma) destination[0] = ',';
+        destination[start] = '"';
+        @memcpy(destination[start + 1 ..][0..input.len], input);
+        destination[start + 1 + input.len ..][0..2].* = "\":".*;
+        writer.end += length;
+        return;
+    }
+    return jsonMemberFallback(writer, input, comma);
+}
+
+// Keep escape/reserved-key rendering and writer callbacks out of the complete
+// printable-key path, without changing their original partial-write sequence.
+noinline fn jsonMemberFallback(writer: *std.Io.Writer, input: []const u8, comma: bool) std.Io.Writer.Error!void {
+    if (comma) try writer.writeByte(',');
+    try jsonKey(writer, input);
+    try writer.writeByte(':');
+}
+
+test "JSON member prefix matches independent key writer across bytes and short buffers" {
+    var all_bytes: [256]u8 = undefined;
+    for (&all_bytes, 0..) |*byte, index| byte.* = @intCast(index);
+    const keys = [_][]const u8{ "", "field0", "a longer printable ASCII key", "$bytes:", "$bytes:reserved", "a\"b\\c", "雪🙂", "\x00\x7f\xff", &all_bytes };
+    for (keys) |key| for ([_]bool{ false, true }) |comma| {
+        var expected_bytes: [2048]u8 = undefined;
+        var expected = std.Io.Writer.fixed(&expected_bytes);
+        if (comma) try expected.writeByte(',');
+        try jsonKey(&expected, key);
+        try expected.writeByte(':');
+        for (0..expected.end + 2) |capacity| {
+            var old_bytes: [2048]u8 = undefined;
+            var old = std.Io.Writer.fixed(old_bytes[0..capacity]);
+            const old_result = blk: {
+                if (comma) old.writeByte(',') catch break :blk false;
+                jsonKey(&old, key) catch break :blk false;
+                old.writeByte(':') catch break :blk false;
+                break :blk true;
+            };
+            var actual_bytes: [2048]u8 = undefined;
+            var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
+            const result = if (jsonMember(&actual, key, comma)) |_| true else |_| false;
+            try std.testing.expectEqual(old_result, result);
+            try std.testing.expectEqualStrings(old.buffered(), actual.buffered());
+        }
+        var actual_bytes: [2048]u8 = undefined;
+        var actual = std.Io.Writer.fixed(&actual_bytes);
+        try actual.writeAll("prefix:");
+        try jsonMember(&actual, key, comma);
+        try std.testing.expectEqualStrings(expected.buffered(), actual.buffered()[7..]);
+    };
+}
+
 /// Keys use an injective percent encoding for bytes outside this small safe
 /// alphabet. Percent itself is escaped, preserving distinct original keys.
 pub fn logfmtKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!void {

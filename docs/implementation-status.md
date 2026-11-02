@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+当前保留JSON属性前缀直接输出（cold fallback保持原短写/UTF8/保留key行为）与不可变predicate route位图。最终完整Safe/分发/九目标门禁149/149步骤、623/624测试通过（1默认local skip，专项实际执行）。最终40项文件PMU四组instructions约减少3.04%–3.06%，但Memory P1 cycles约+2.1%局部负向，完整吞吐仍不确定；早期组合P-core P1百万条−3.7%负向和cold/单机制复测全部保留。应用400项核对480万请求、221万完整JSON，32个logged版本吞吐组31个不确定、1个局部领先，无稳定业务回退资格。同源码320项Foundation前端对照核对3232万JSON：E-core对tracing12组/对spdlog10组peer领先；P-core对tracing2组/对spdlog1组kron局部领先，其余不确定，仍未全面超过。源码、全部正负、整数候选否决见[JSON member证据](../bench/evidence/2026-11-02-json-member-direct/README.md)。
+
 当前保留IEEE CRC四lane直接合并：相同六次PCLMUL的依赖层数从3降1，原header/reference/payload分段、tail、seed/final XOR、三个校验点与恢复协议保持。独立GF2基/bitwise/zlib oracle和native任意seed/长度/对齐通过；ReleaseSafe完整门禁149/149步骤、621/622测试通过（1项默认local能力skip），local专项实际执行。320项双拓扑before/after核对3232万JSON，E-core4组/P-core2组关闭吞吐局部领先，其余大多不确定；短P-core SPSC Memory P1 batch负向在百万条复测未重现，所有慢值保留。另同源码320项Foundation对照核对3232万JSON：E-core对tracing 14组peer领先、对spdlog 5组peer领先/2组kron领先；P-core对tracing6组、对spdlog3组kron局部领先，其余不确定，仍未全面超过。源码/门禁/全部数据见[CRC合并证据](../bench/evidence/2026-11-02-crc-parallel-collapse/README.md)。
 
 固定64片shared admission候选通过协议/生命周期测试，E-core P4 cycles局部下降10~12%，但280项完整流程核对4428万JSON后存在尾部/吞吐负向且每Runtime增4096B，已全部撤回；保留独立final-admission无记录唤醒回归。资源、源码与否决见[shared admission实验](../bench/evidence/2026-11-02-shared-admission/README.md)。

@@ -1,0 +1,124 @@
+diff --git a/src/encoder/common.zig b/src/encoder/common.zig
+index 5cbcbf9..17c0112 100644
+--- a/src/encoder/common.zig
++++ b/src/encoder/common.zig
+@@ -17,6 +17,7 @@ pub const QuotedWriter = escaping_primitives.QuotedWriter;
+ pub const hexByte = escaping_primitives.hexByte;
+ pub const hex = escaping_primitives.hex;
+ pub const jsonKey = escaping_primitives.jsonKey;
++pub const jsonMember = escaping_primitives.jsonMember;
+ pub const logfmtKey = escaping_primitives.logfmtKey;
+ 
+ /// Validate the entire borrowed tree before an encoder writes its first byte.
+@@ -72,9 +73,7 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
+     return encodeJsonWithAttributes(event, readable, writer, &event, struct {
+         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
+             for (ctx.fields, 0..) |field, index| {
+-                if (index != 0) try output.writeByte(',');
+-                try jsonKey(output, field.key);
+-                try output.writeByte(':');
++                try jsonMember(output, field.key, index != 0);
+                 try valueInner(output, field.value, .json);
+             }
+         }
+@@ -379,11 +378,13 @@ pub inline fn writeTaggedValue(writer: *std.Io.Writer, comptime tag: std.meta.Ta
+         .group => {
+             try writer.writeByte('{');
+             for (data, 0..) |member, index| {
+-                if (index != 0) try writer.writeByte(',');
+                 if (escaping == .json) {
+-                    try jsonKey(writer, member.key);
+-                } else try quoted(writer, member.key, escaping);
+-                try writer.writeByte(':');
++                    try jsonMember(writer, member.key, index != 0);
++                } else {
++                    if (index != 0) try writer.writeByte(',');
++                    try quoted(writer, member.key, escaping);
++                    try writer.writeByte(':');
++                }
+                 try valueInner(writer, member.value, escaping);
+             }
+             try writer.writeByte('}');
+diff --git a/src/encoder/escaping.zig b/src/encoder/escaping.zig
+index 074ca8e..a447d1e 100644
+--- a/src/encoder/escaping.zig
++++ b/src/encoder/escaping.zig
+@@ -189,6 +189,63 @@ pub fn jsonKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!vo
+     try writer.writeByte('"');
+ }
+ 
++/// A complete attribute prefix can use the writable destination directly.
++/// Short/streaming writers and escaped/reserved keys retain the original
++/// comma, key, colon sequence and its partial-write error boundary.
++pub fn jsonMember(writer: *std.Io.Writer, input: []const u8, comma: bool) std.Io.Writer.Error!void {
++    const punctuation: usize = 3 + @as(usize, @intFromBool(comma));
++    const available = writer.buffer.len - writer.end;
++    if (available >= punctuation and input.len <= available - punctuation and
++        !std.mem.startsWith(u8, input, "$bytes:") and asciiRun(input) == input.len)
++    {
++        const length = input.len + punctuation;
++        const destination = writer.buffer[writer.end..][0..length];
++        const start: usize = @intFromBool(comma);
++        if (comma) destination[0] = ',';
++        destination[start] = '"';
++        @memcpy(destination[start + 1 ..][0..input.len], input);
++        destination[start + 1 + input.len ..][0..2].* = "\":".*;
++        writer.end += length;
++        return;
++    }
++    if (comma) try writer.writeByte(',');
++    try jsonKey(writer, input);
++    try writer.writeByte(':');
++}
++
++test "JSON member prefix matches independent key writer across bytes and short buffers" {
++    var all_bytes: [256]u8 = undefined;
++    for (&all_bytes, 0..) |*byte, index| byte.* = @intCast(index);
++    const keys = [_][]const u8{ "", "field0", "a longer printable ASCII key", "$bytes:", "$bytes:reserved", "a\"b\\c", "雪🙂", "\x00\x7f\xff", &all_bytes };
++    for (keys) |key| for ([_]bool{ false, true }) |comma| {
++        var expected_bytes: [2048]u8 = undefined;
++        var expected = std.Io.Writer.fixed(&expected_bytes);
++        if (comma) try expected.writeByte(',');
++        try jsonKey(&expected, key);
++        try expected.writeByte(':');
++        for (0..expected.end + 2) |capacity| {
++            var old_bytes: [2048]u8 = undefined;
++            var old = std.Io.Writer.fixed(old_bytes[0..capacity]);
++            const old_result = blk: {
++                if (comma) old.writeByte(',') catch break :blk false;
++                jsonKey(&old, key) catch break :blk false;
++                old.writeByte(':') catch break :blk false;
++                break :blk true;
++            };
++            var actual_bytes: [2048]u8 = undefined;
++            var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
++            const result = if (jsonMember(&actual, key, comma)) |_| true else |_| false;
++            try std.testing.expectEqual(old_result, result);
++            try std.testing.expectEqualStrings(old.buffered(), actual.buffered());
++        }
++        var actual_bytes: [2048]u8 = undefined;
++        var actual = std.Io.Writer.fixed(&actual_bytes);
++        try actual.writeAll("prefix:");
++        try jsonMember(&actual, key, comma);
++        try std.testing.expectEqualStrings(expected.buffered(), actual.buffered()[7..]);
++    };
++}
++
+ /// Keys use an injective percent encoding for bytes outside this small safe
+ /// alphabet. Percent itself is escaped, preserving distinct original keys.
+ pub fn logfmtKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!void {
+diff --git a/src/encoder/wire_json.zig b/src/encoder/wire_json.zig
+index 03092fb..5037439 100644
+--- a/src/encoder/wire_json.zig
++++ b/src/encoder/wire_json.zig
+@@ -38,9 +38,7 @@ fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
+             const value_tag = @field(std.meta.Tag(field.Value), @tagName(tag));
+             switch (format) {
+                 .json => {
+-                    if (self.index != 0) try writer.writeByte(',');
+-                    try common.jsonKey(writer, self.key);
+-                    try writer.writeByte(':');
++                    try common.jsonMember(writer, self.key, self.index != 0);
+                     try common.writeTaggedValue(writer, value_tag, data, .json);
+                 },
+                 .text => {

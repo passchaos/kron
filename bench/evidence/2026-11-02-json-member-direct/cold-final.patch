@@ -1,0 +1,309 @@
+diff --git a/src/config/route_selection.zig b/src/config/route_selection.zig
+index 5c937fb..7813231 100644
+--- a/src/config/route_selection.zig
++++ b/src/config/route_selection.zig
+@@ -1,5 +1,5 @@
+-//! Immutable precomputed level masks. Scope-dependent filters still run against
+-//! the owning snapshot; inherited routes never need a per-event route scan.
++//! Immutable precomputed level and predicate masks. Scope-dependent filters run
++//! against the owning snapshot; inherited level filters need no route scan.
+ const std = @import("std");
+ const Level = @import("../core/level.zig").Level;
+ const Route = @import("../core/runtime_types.zig").Route;
+@@ -7,12 +7,14 @@ const Route = @import("../core/runtime_types.zig").Route;
+ pub const Selection = struct {
+     inherited: [7]u64 = @splat(0),
+     explicit_filters: u64 = 0,
++    predicates: u64 = 0,
+ 
+     pub fn init(routes: []const Route) Selection {
+         std.debug.assert(routes.len <= 64);
+         var result: Selection = .{};
+         for (routes, 0..) |*route, index| {
+             const bit = @as(u64, 1) << @intCast(index);
++            if (route.predicate != null) result.predicates |= bit;
+             if (route.filter != null) {
+                 result.explicit_filters |= bit;
+                 continue;
+@@ -45,6 +47,7 @@ pub const Selection = struct {
+ 
+ test "precomputed route masks equal the route scan for every level scope and 64-bit route index" {
+     const Filter = @import("filter.zig").Filter;
++    const Predicate = @import("../pipeline/predicate.zig").Predicate;
+     const Sink = @import("../sink/interface.zig").Sink;
+     const Noop = struct {
+         fn write(_: *anyopaque, _: []const u8) anyerror!void {}
+@@ -54,6 +57,7 @@ test "precomputed route masks equal the route scan for every level scope and 64-
+     var context: u8 = 0;
+     var routes: [64]Route = undefined;
+     var names: [64][1]u8 = undefined;
++    const predicate = try Predicate.parse("exists(status)");
+     const rules = [_][]const u8{ "off", "trace", "info,db=trace,db.query=off,http=err", "warn,http=debug,http.server=off", "fatal,worker=info" };
+     for (&routes, &names, 0..) |*route, *name, index| {
+         name.* = .{@intCast(index)};
+@@ -67,20 +71,30 @@ test "precomputed route masks equal the route scan for every level scope and 64-
+             .reclaim_after = .written,
+             .recovery_identity = null,
+             .release = null,
++            .predicate = if (index % 5 < 2 or index == 63) predicate else null,
+         };
+     }
+     const scopes = [_][]const u8{ "", "db", "db.query", "db.query.child", "database", "http", "http.server", "http.serverx", "worker", "other" };
+     for ([_]usize{ 0, 1, 2, 7, 63, 64 }) |count| {
+         const selection = Selection.init(routes[0..count]);
++        var expected_predicates: u64 = 0;
++        for (routes[0..count], 0..) |*route, index| {
++            if (route.predicate != null) expected_predicates |= @as(u64, 1) << @intCast(index);
++        }
++        try std.testing.expectEqual(expected_predicates, selection.predicates);
+         for (std.enums.values(Level)) |configured| for (std.enums.values(Level)) |level| for (scopes) |scope| {
+             var expected: u64 = 0;
++            var expected_selected_predicates: u64 = 0;
+             for (routes[0..count], 0..) |*route, index| {
+                 const threshold = if (route.filter) |*filter| filter.threshold(scope) else configured;
+                 if (!threshold.allows(level)) continue;
+                 if (route.min_level) |minimum| if (!minimum.allows(level)) continue;
+                 expected |= @as(u64, 1) << @intCast(index);
++                if (route.predicate != null) expected_selected_predicates |= @as(u64, 1) << @intCast(index);
+             }
+-            try std.testing.expectEqual(expected, selection.mask(routes[0..count], level, scope, configured));
++            const selected = selection.mask(routes[0..count], level, scope, configured);
++            try std.testing.expectEqual(expected, selected);
++            try std.testing.expectEqual(expected_selected_predicates, selected & selection.predicates);
+         };
+     }
+     for (&routes) |*route| {
+@@ -93,4 +107,27 @@ test "precomputed route masks equal the route scan for every level scope and 64-
+     routes[63].filter = try Filter.parse("trace");
+     const override = Selection.init(&routes);
+     try std.testing.expectEqual(@as(u64, 1) << 63, override.mask(&routes, .info, "any", .off));
++
++    // Published selections keep their predicate presence until rebuilt, while
++    // changing only predicates leaves the precomputed level filters untouched.
++    const removed = (@as(u64, 1) << 0) | (@as(u64, 1) << 1) | (@as(u64, 1) << 63);
++    try std.testing.expectEqual(removed, override.predicates & removed);
++    routes[0].predicate = null;
++    routes[1].predicate = null;
++    routes[63].predicate = null;
++    routes[2].predicate = predicate;
++    const rebuilt = Selection.init(&routes);
++    try std.testing.expectEqual(removed, override.predicates & removed);
++    try std.testing.expectEqual((override.predicates & ~removed) | (@as(u64, 1) << 2), rebuilt.predicates);
++    try std.testing.expectEqual(override.inherited, rebuilt.inherited);
++    try std.testing.expectEqual(override.explicit_filters, rebuilt.explicit_filters);
++    routes[2].predicate = try Predicate.parse("exists(other)");
++    const changed_expression = Selection.init(&routes);
++    try std.testing.expectEqual(rebuilt.predicates, changed_expression.predicates);
++    for (&routes) |*route| route.predicate = null;
++    const no_predicates = Selection.init(&routes);
++    try std.testing.expectEqual(@as(u64, 0), no_predicates.predicates);
++    for (&routes) |*route| route.predicate = predicate;
++    const all_predicates = Selection.init(&routes);
++    try std.testing.expectEqual(std.math.maxInt(u64), all_predicates.predicates);
+ }
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 1a73d5c..675dfbb 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -637,12 +637,15 @@ pub const Runtime = struct {
+             _ = counters.filtered.fetchAdd(1, .monotonic);
+             return .filtered;
+         };
+-        for (snapshot.routes, 0..) |*route, index| {
+-            const bit = @as(u64, 1) << @intCast(index);
+-            if (event.route_mask & bit == 0) continue;
+-            if (route.predicate) |*predicate| {
+-                if (!try predicate.matches(event)) event.route_mask &= ~bit;
+-            }
++        var predicate_routes = event.route_mask & snapshot.selection.predicates;
++        while (predicate_routes != 0) {
++            const index: u6 = @intCast(@ctz(predicate_routes));
++            const bit = @as(u64, 1) << index;
++            predicate_routes &= predicate_routes - 1;
++            // The immutable selection was built from this exact route table.
++            // Visit original indices in order, so later predicates still see
++            // earlier rejected route bits removed from the current event.
++            if (!try snapshot.routes[index].predicate.?.matches(event)) event.route_mask &= ~bit;
+         }
+         if (event.route_mask == 0) {
+             _ = counters.filtered.fetchAdd(1, .monotonic);
+diff --git a/src/encoder/common.zig b/src/encoder/common.zig
+index 5cbcbf9..17c0112 100644
+--- a/src/encoder/common.zig
++++ b/src/encoder/common.zig
+@@ -17,6 +17,7 @@ pub const QuotedWriter = escaping_primitives.QuotedWriter;
+ pub const hexByte = escaping_primitives.hexByte;
+ pub const hex = escaping_primitives.hex;
+ pub const jsonKey = escaping_primitives.jsonKey;
++pub const jsonMember = escaping_primitives.jsonMember;
+ pub const logfmtKey = escaping_primitives.logfmtKey;
+ 
+ /// Validate the entire borrowed tree before an encoder writes its first byte.
+@@ -72,9 +73,7 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
+     return encodeJsonWithAttributes(event, readable, writer, &event, struct {
+         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
+             for (ctx.fields, 0..) |field, index| {
+-                if (index != 0) try output.writeByte(',');
+-                try jsonKey(output, field.key);
+-                try output.writeByte(':');
++                try jsonMember(output, field.key, index != 0);
+                 try valueInner(output, field.value, .json);
+             }
+         }
+@@ -379,11 +378,13 @@ pub inline fn writeTaggedValue(writer: *std.Io.Writer, comptime tag: std.meta.Ta
+         .group => {
+             try writer.writeByte('{');
+             for (data, 0..) |member, index| {
+-                if (index != 0) try writer.writeByte(',');
+                 if (escaping == .json) {
+-                    try jsonKey(writer, member.key);
+-                } else try quoted(writer, member.key, escaping);
+-                try writer.writeByte(':');
++                    try jsonMember(writer, member.key, index != 0);
++                } else {
++                    if (index != 0) try writer.writeByte(',');
++                    try quoted(writer, member.key, escaping);
++                    try writer.writeByte(':');
++                }
+                 try valueInner(writer, member.value, escaping);
+             }
+             try writer.writeByte('}');
+diff --git a/src/encoder/escaping.zig b/src/encoder/escaping.zig
+index 074ca8e..6e7378a 100644
+--- a/src/encoder/escaping.zig
++++ b/src/encoder/escaping.zig
+@@ -189,6 +189,69 @@ pub fn jsonKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!vo
+     try writer.writeByte('"');
+ }
+ 
++/// A complete attribute prefix can use the writable destination directly.
++/// Short/streaming writers and escaped/reserved keys retain the original
++/// comma, key, colon sequence and its partial-write error boundary.
++pub fn jsonMember(writer: *std.Io.Writer, input: []const u8, comma: bool) std.Io.Writer.Error!void {
++    const punctuation: usize = 3 + @as(usize, @intFromBool(comma));
++    const available = writer.buffer.len - writer.end;
++    if (available >= punctuation and input.len <= available - punctuation and
++        !std.mem.startsWith(u8, input, "$bytes:") and asciiRun(input) == input.len)
++    {
++        const length = input.len + punctuation;
++        const destination = writer.buffer[writer.end..][0..length];
++        const start: usize = @intFromBool(comma);
++        if (comma) destination[0] = ',';
++        destination[start] = '"';
++        @memcpy(destination[start + 1 ..][0..input.len], input);
++        destination[start + 1 + input.len ..][0..2].* = "\":".*;
++        writer.end += length;
++        return;
++    }
++    return jsonMemberFallback(writer, input, comma);
++}
++
++// Keep escape/reserved-key rendering and writer callbacks out of the complete
++// printable-key path, without changing their original partial-write sequence.
++noinline fn jsonMemberFallback(writer: *std.Io.Writer, input: []const u8, comma: bool) std.Io.Writer.Error!void {
++    if (comma) try writer.writeByte(',');
++    try jsonKey(writer, input);
++    try writer.writeByte(':');
++}
++
++test "JSON member prefix matches independent key writer across bytes and short buffers" {
++    var all_bytes: [256]u8 = undefined;
++    for (&all_bytes, 0..) |*byte, index| byte.* = @intCast(index);
++    const keys = [_][]const u8{ "", "field0", "a longer printable ASCII key", "$bytes:", "$bytes:reserved", "a\"b\\c", "雪🙂", "\x00\x7f\xff", &all_bytes };
++    for (keys) |key| for ([_]bool{ false, true }) |comma| {
++        var expected_bytes: [2048]u8 = undefined;
++        var expected = std.Io.Writer.fixed(&expected_bytes);
++        if (comma) try expected.writeByte(',');
++        try jsonKey(&expected, key);
++        try expected.writeByte(':');
++        for (0..expected.end + 2) |capacity| {
++            var old_bytes: [2048]u8 = undefined;
++            var old = std.Io.Writer.fixed(old_bytes[0..capacity]);
++            const old_result = blk: {
++                if (comma) old.writeByte(',') catch break :blk false;
++                jsonKey(&old, key) catch break :blk false;
++                old.writeByte(':') catch break :blk false;
++                break :blk true;
++            };
++            var actual_bytes: [2048]u8 = undefined;
++            var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
++            const result = if (jsonMember(&actual, key, comma)) |_| true else |_| false;
++            try std.testing.expectEqual(old_result, result);
++            try std.testing.expectEqualStrings(old.buffered(), actual.buffered());
++        }
++        var actual_bytes: [2048]u8 = undefined;
++        var actual = std.Io.Writer.fixed(&actual_bytes);
++        try actual.writeAll("prefix:");
++        try jsonMember(&actual, key, comma);
++        try std.testing.expectEqualStrings(expected.buffered(), actual.buffered()[7..]);
++    };
++}
++
+ /// Keys use an injective percent encoding for bytes outside this small safe
+ /// alphabet. Percent itself is escaped, preserving distinct original keys.
+ pub fn logfmtKey(writer: *std.Io.Writer, input: []const u8) std.Io.Writer.Error!void {
+diff --git a/src/encoder/wire_json.zig b/src/encoder/wire_json.zig
+index 03092fb..5037439 100644
+--- a/src/encoder/wire_json.zig
++++ b/src/encoder/wire_json.zig
+@@ -38,9 +38,7 @@ fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
+             const value_tag = @field(std.meta.Tag(field.Value), @tagName(tag));
+             switch (format) {
+                 .json => {
+-                    if (self.index != 0) try writer.writeByte(',');
+-                    try common.jsonKey(writer, self.key);
+-                    try writer.writeByte(':');
++                    try common.jsonMember(writer, self.key, self.index != 0);
+                     try common.writeTaggedValue(writer, value_tag, data, .json);
+                 },
+                 .text => {
+diff --git a/tests/predicate_integration.zig b/tests/predicate_integration.zig
+index c3a9cd7..78fef1a 100644
+--- a/tests/predicate_integration.zig
++++ b/tests/predicate_integration.zig
+@@ -2,6 +2,45 @@ const std = @import("std");
+ const kron = @import("kron");
+ const testing = std.testing;
+ 
++test "predicate route mask keeps disabled predicates and bit 63 at their original boundary" {
++    inline for (.{ .sync, .asynchronous }) |mode| {
++        var bytes: [32768]u8 = undefined;
++        var memory = kron.MemorySink.initBuffer(&bytes);
++        var routes: [64]kron.RouteOptions = undefined;
++        var names: [64][16]u8 = undefined;
++        for (&routes, &names, 0..) |*route, *name, index| route.* = .{
++            .name = try std.fmt.bufPrint(name, "output-{d}", .{index}),
++            .sink = memory.sink(),
++            .filter = if (index == 0 or index == 63) "info" else "off",
++            .predicate = if (index == 1) "@message =~ \"x\"" else if (index == 63) "status >= 500" else null,
++        };
++        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
++            .submission = mode,
++            .memory_queue = if (mode == .asynchronous) .{ .capacity = 8, .max_record_bytes = 16384 } else null,
++            .max_encoded_record_bytes = 16384,
++            .routes = &routes,
++        });
++        defer runtime.destroy();
++        var long: [8193]u8 = @splat('x');
++        // The disabled route's regex would return InputTooLong if evaluated.
++        try testing.expectEqual(kron.EmitResult.accepted, try runtime.scoped("mask").tryEmit(.info, &long, .{ .status = 200 }));
++        try runtime.flush(.written);
++        try testing.expectEqual(@as(usize, 1), memory.records);
++        try testing.expectEqual(kron.EmitResult.accepted, try runtime.scoped("mask").tryEmit(.info, "high bit", .{ .status = 503 }));
++        try runtime.flush(.written);
++        try testing.expectEqual(@as(usize, 3), memory.records);
++        var lines = std.mem.tokenizeScalar(u8, memory.written(), '\n');
++        var index: usize = 0;
++        while (lines.next()) |line| : (index += 1) {
++            const parsed = try std.json.parseFromSlice(std.json.Value, testing.allocator, line, .{});
++            defer parsed.deinit();
++            const mask = parsed.value.object.get("route_mask").?;
++            if (index == 0) try testing.expectEqual(@as(i64, 1), mask.integer) else try testing.expectEqualStrings("9223372036854775809", mask.string);
++        }
++        try testing.expectEqual(@as(usize, 3), index);
++    }
++}
++
+ test "delivery predicates filter captured fields before journal reservation and preserve accepted decisions" {
+     var tmp = testing.tmpDir(.{});
+     defer tmp.cleanup();

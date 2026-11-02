@@ -47,6 +47,8 @@ Logging管理独立pipeline资源；scoped返回组合logger，handle按各输�
 
 Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关闭共享同一owner与私有gate。代码拆分优先稳定职责，例如初始化、配置、脱敏、交付和codec；不通过把每个私有方法公开来缩短文件。TSC也保留资格化与回退的一致状态机，后续拆分应保持单独验证能力。
 
+route_selection保存不可变level/filter与predicate presence掩码，Runtime只遍历已选中的predicate routes。JSON member前缀的可写ASCII路径与cold转义/short writer fallback由escaping模块拥有，普通与融合encoder共用它；公共整数格式和wire协议继续由原模块负责。
+
 ## 测试与构建位置
 
 短模块测试与实现放在一起。较长codec、线程注册和Runtime回归集中到 [core/tests/](../src/core/tests/runtime.zig)，由所属生产模块的 `test` import纳入公共测试，不进入非测试可执行程序。这里只访问已有模块边界，没有为测试新增公开内部状态。

@@ -637,12 +637,15 @@ pub const Runtime = struct {
             _ = counters.filtered.fetchAdd(1, .monotonic);
             return .filtered;
         };
-        for (snapshot.routes, 0..) |*route, index| {
-            const bit = @as(u64, 1) << @intCast(index);
-            if (event.route_mask & bit == 0) continue;
-            if (route.predicate) |*predicate| {
-                if (!try predicate.matches(event)) event.route_mask &= ~bit;
-            }
+        var predicate_routes = event.route_mask & snapshot.selection.predicates;
+        while (predicate_routes != 0) {
+            const index: u6 = @intCast(@ctz(predicate_routes));
+            const bit = @as(u64, 1) << index;
+            predicate_routes &= predicate_routes - 1;
+            // The immutable selection was built from this exact route table.
+            // Visit original indices in order, so later predicates still see
+            // earlier rejected route bits removed from the current event.
+            if (!try snapshot.routes[index].predicate.?.matches(event)) event.route_mask &= ~bit;
         }
         if (event.route_mask == 0) {
             _ = counters.filtered.fetchAdd(1, .monotonic);

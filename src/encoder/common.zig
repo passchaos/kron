@@ -17,6 +17,7 @@ pub const QuotedWriter = escaping_primitives.QuotedWriter;
 pub const hexByte = escaping_primitives.hexByte;
 pub const hex = escaping_primitives.hex;
 pub const jsonKey = escaping_primitives.jsonKey;
+pub const jsonMember = escaping_primitives.jsonMember;
 pub const logfmtKey = escaping_primitives.logfmtKey;
 
 /// Validate the entire borrowed tree before an encoder writes its first byte.
@@ -72,9 +73,7 @@ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
     return encodeJsonWithAttributes(event, readable, writer, &event, struct {
         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
             for (ctx.fields, 0..) |field, index| {
-                if (index != 0) try output.writeByte(',');
-                try jsonKey(output, field.key);
-                try output.writeByte(':');
+                try jsonMember(output, field.key, index != 0);
                 try valueInner(output, field.value, .json);
             }
         }
@@ -379,11 +378,13 @@ pub inline fn writeTaggedValue(writer: *std.Io.Writer, comptime tag: std.meta.Ta
         .group => {
             try writer.writeByte('{');
             for (data, 0..) |member, index| {
-                if (index != 0) try writer.writeByte(',');
                 if (escaping == .json) {
-                    try jsonKey(writer, member.key);
-                } else try quoted(writer, member.key, escaping);
-                try writer.writeByte(':');
+                    try jsonMember(writer, member.key, index != 0);
+                } else {
+                    if (index != 0) try writer.writeByte(',');
+                    try quoted(writer, member.key, escaping);
+                    try writer.writeByte(':');
+                }
                 try valueInner(writer, member.value, escaping);
             }
             try writer.writeByte('}');
