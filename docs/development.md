@@ -13,7 +13,7 @@
 | 内部提交参数与调用者快照 | `test-submission-snapshot`、`test-capture`、`test-redaction-paths`、prepared/binding 重点回归 |
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
-| 时间转换/恢复 | `test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
+| 时钟与时间转换/恢复 | `test-clock-dispatch`、`test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
 | flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
 | 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |
 | wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |

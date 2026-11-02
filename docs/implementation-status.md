@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+Clock.realNow每call default selector及内部always_inline/Io snapshot两个性能候选均撤回，Clock/Runtime生产恢复0dfdf10。实际defaultcall3→2、defaultIo inputcopy消除已确认，但960项完整对照核对9696万JSON后没有一般速度资格，default Ecore/部分Pcore及custom控制有局部负向；schema个别局部win不覆盖反例。保留9项public Clock/Io identity、14组i96 oracle、callback内切换/Io owner修改、zero/monotonic、capture/drop/fallback及ordinary函数指针API回归。恢复后Safe12steps57tests、Debug/Fast9项、源码分发五模式2steps通过；纯tests/build变化未重复未变生产的全库故障gate，未更新Foundation排名。source/actualcode/全部控制组见[clock报告](../bench/evidence/2026-11-03-default-clock/README.md)。下一独立可验证scope是TLS leave inactive slot清理，仍未实施，整体目标未完成。
+
 共享written恢复原fetchMax算法，仅将monotonic改release，明确发布消费端之前的写入给观察新进度的writtenTarget.acquire；实时offset72、最大值/CRC/恢复/队列预算及SPSC保持，后置turn/pin/count与Record借用生命周期仍独立。两个普通store性能候选均撤回：880项完整文件核对8888万JSON，有稳定吞吐回退，未更新Foundation排名。保留9项public进度/失败前缀/恢复/发布测试，Debug/Safe/Fast通过；最终相关Safe组合56项、journal选择75项通过，源码分发五模式/九目标对象12步骤成功。native代码/数据段与efcdc2c逐字节相同，语言级发布修复仍有意义；跨平台对象不是设备运行，之前完整gate保留原身份，未复述为本轮全库验证。详情与所有反例见[written报告](../bench/evidence/2026-11-03-written-store/README.md)。总体性能目标仍未完成，下一候选核对默认clock callback，不替换std.Io提供方或取时时点。
 
 当前shared high_water用monotonic直接weakCAS，仅在captured count超过已观察peak时更新；发布后峰值只增，因此保持精确历史最大值，occupied/CRC/slot/实时written/SPSC/预算不变。条件包装版因完整负向撤回，direct增长tag栈写与schema新增调用成本保留记录。最终Safe/分发/随机SIGKILL/九目标gate155/155步骤、648/649测试通过（1默认local能力skip，专项执行）；8项public峰值回归覆盖Memory/Mmap普通/schema、60并发wave/648完整记录、失败与重开。930项版本对照核对1.3893亿JSON，百万条吞吐与尾部仍inconclusive，没有普遍提速承诺。最新Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/5组peer领先，对tracing11组peer领先；P-core对spdlog7组、对tracing4组kron领先，其余不确定，目标未达到。精确源码与全部限制见[峰值报告](../bench/evidence/2026-11-03-peak-update/README.md)。

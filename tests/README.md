@@ -11,6 +11,7 @@
 | 字段键与错误顺序 | [field_key_validation.zig](field_key_validation.zig)、`test-field-keys` | 独立eql字节oracle、精确pair/node计数、重复与cycle/depth/budget先后、Linux两端真实guard page |
 | 队列精确峰值 | [journal_peak.zig](journal_peak.zig)、`test-journal-peak` | Memory/Mmap普通/schema并发持有量与高水位、Full/oversize/abort/CRC失败、恢复重建与完整序号/数据 |
 | written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |
+| Clock与Io调用边界 | [clock_dispatch.zig](clock_dispatch.zig)、`test-clock-dispatch` | 精确clamp、callback内/外切换、Io身份/参数快照、zero/monotonic、public函数指针与capture/full边界 |
 | 配置与deadline | configuration_integration/transactions、route_policy、route_filter、predicate、deadline | 旧route版本/lease、admission、采样相位、timeout资源与reentrancy |
 | 时间与source | time_integration、local_time_integration/oracle、独立package tests | exact纳秒、固定/local cache、DST/恢复身份、repo-relative source路径 |
 | 文件/归档/解码 | file_delivery_failures、compressed_archive、decoder_matrix/fuzz、tool_query | partial/zero/CQE错误、版本/损坏、只读Reader/query/follow |

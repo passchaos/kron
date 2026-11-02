@@ -1,0 +1,9 @@
+# 下一轮TLS inactive slot研究（只读，未实现）
+
+admission Frame/owners/depth均私有。contains/getResource/getChannel/getFilterDecision只读0..depth；getResource返回snapshot/resource指针而不是Frame，BoundDecision纯值不包含pointer。depth减少后inactive slot无合法lookup，下一enter在depth增加前完整初始化全部Frame。没有公开契约要求inactive bytes/pointers清零，原.{}也不是padding等原始字节全零保证。
+
+可独立验证的最小候选：仅leave最后owners[depth]=.{}改undefined或省掉写，保持resource callback完成后才depth--，enter初始化不动。callback期间旧owner必须仍active，拒绝同owner递归；独立Runtime嵌套可用下一slot并平衡返回。Shared/thread end先leave/releaseView再释放admission gates的顺序保持。
+
+Debug/Safe的undefined通常可poison，Fast应由actualcode确认inactive store bundle是否真的消失；不能从源的undefined直接推吞吐。测试只查活跃范围/publicgetters，不读取inactive rawbytes或强求0/0xaa。三个最小scope：sameowner slotreuse/owned->borrowedresource callback不重复、release内outer/inner嵌套资源/decision/recursion、64层full/reuse及两OS线程同owner独立TLS。既有nestedfilterguard与admissionView lifetime继续适用。
+
+历史检索未找到同机制实验；共享分片候选仍clear Frame，admissionmeasure属于tree测量，都不继承其性能。actual Runtime.end/endThread/inlineleave需核callback、depth、gate与必要wake顺序，enter完整init不变且无newcall/spill。当前clock候选失败后单独下一lane，不实施/编译/benchmark本TLS方案。

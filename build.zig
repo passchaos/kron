@@ -91,6 +91,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-journal-progress", "Verify immediate written progress, release publication and failed-prefix ownership").dependOn(&run_journal_progress.step);
     test_step.dependOn(&run_journal_progress.step);
 
+    const clock_dispatch_module = b.createModule(.{ .root_source_file = b.path("tests/clock_dispatch.zig"), .target = target, .optimize = optimize });
+    clock_dispatch_module.addImport("kron", module);
+    const clock_dispatch_tests = b.addTest(.{ .name = "kron-clock-dispatch", .root_module = clock_dispatch_module });
+    const run_clock_dispatch = b.addRunArtifact(clock_dispatch_tests);
+    b.step("test-clock-dispatch", "Verify default clock dispatch, Io identity and timestamp capture boundaries").dependOn(&run_clock_dispatch.step);
+    test_step.dependOn(&run_clock_dispatch.step);
+
     const single_kron = b.createModule(.{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize, .single_threaded = true, .link_libc = switch (target.result.os.tag) {
         .macos, .ios => true,
         else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,

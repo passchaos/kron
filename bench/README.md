@@ -18,6 +18,7 @@
 
 | 证据 | 范围与边界 |
 | --- | --- |
+| [默认Clock dispatch实验](evidence/2026-11-03-default-clock/README.md) | 两候选撤回；960项/9696万JSON的default/schema/custom负向完整保留，9项Clock/Io snapshot/API回归；未更新Foundation排名 |
 | [Shared written更新实验](evidence/2026-11-03-written-store/README.md) | 两个store候选撤回，880项/8888万JSON保存负向；保留release RMW发布修复和public进度测试，未声明提速或更新Foundation排名 |
 | [Shared峰值更新](evidence/2026-11-03-peak-update/README.md) | 保留精确directCAS，条件版撤回；930项版本对照/1.3893亿JSON、155步骤完整gate；Foundation双拓扑3232万JSON仍未全面超过，所有负向/复测保留 |
 | [短字段名比较实验](evidence/2026-11-03-short-keys/README.md) | 四候选撤回；默认file可局部赢，但一般小键/长键稳定回退；360项文件/3636万JSON、180项encoder控制/2.43亿完整输出，公共guard/order测试保留 |

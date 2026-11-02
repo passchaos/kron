@@ -1,0 +1,53 @@
+{
+  "scope": "Read-only actual default managed timestamp codegen, no timing inference",
+  "binary_sha256": {
+    "before-reference": "e66add4160b4a8104c2c6873ae7dd0bed82c96c6c39374960a3fd06eb20a677b",
+    "after-reference": "b4f6fd6681bc75a95eb24b9686911c0d8d210d883a68e3ffef046b759df121e1"
+  },
+  "managed_paths": {
+    "compare_current_fn": "0x11140de",
+    "custom_original_indirect": "0x11140f0",
+    "default_Io_now_direct": "0x1114135"
+  },
+  "default": "realDefault/Io.now wrapper/clamp inline, sameprovider, vDSOhappy indirectcalls3->2; 16BIoinputload/store still beforecompare",
+  "custom": "additionalcompare/branch/rejoin, originalcontext/callback unchanged",
+  "entries": {
+    "Runtime": {
+      "before_bytes": 815,
+      "after_bytes": 931,
+      "before_stack": 664,
+      "after_stack": 680
+    },
+    "preparedRuntime": {
+      "before_bytes": 1070,
+      "after_bytes": 1166,
+      "before_stack": 984,
+      "after_stack": 968
+    },
+    "SPSC": {
+      "before_bytes": 1165,
+      "after_bytes": 1296,
+      "before_stack": 760,
+      "after_stack": 776
+    },
+    "preparedSPSC": {
+      "before_bytes": 1291,
+      "after_bytes": 1426,
+      "before_stack": 1000,
+      "after_stack": 1016
+    },
+    "Managed": {
+      "before_bytes": 3407,
+      "after_bytes": 3535,
+      "before_stack": 808,
+      "after_stack": 808
+    }
+  },
+  "elf_text": {
+    "before": 876205,
+    "after": 876829
+  },
+  "clock_realNow_outlined": false,
+  "timestamp_location": "unchangedcaptureAndSubmit",
+  "next_candidate_if_needed": "internalalways_inlinecallsite for Ioscalarization, leavepublicfncallability unchanged"
+}

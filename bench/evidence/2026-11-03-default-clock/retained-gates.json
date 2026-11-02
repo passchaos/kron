@@ -1,0 +1,63 @@
+[
+  {
+    "name": "retained-safe",
+    "command": [
+      "zig",
+      "build",
+      "test-clock-dispatch",
+      "test-capture",
+      "test-logging",
+      "test-deadline",
+      "-Doptimize=ReleaseSafe",
+      "-j1",
+      "--summary",
+      "all"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "retained-debug",
+    "command": [
+      "zig",
+      "test",
+      "-O",
+      "Debug",
+      "--dep",
+      "kron",
+      "-Mroot=tests/clock_dispatch.zig",
+      "-O",
+      "Debug",
+      "-Mkron=src/root.zig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "retained-fast",
+    "command": [
+      "zig",
+      "test",
+      "-O",
+      "ReleaseFast",
+      "--dep",
+      "kron",
+      "-Mroot=tests/clock_dispatch.zig",
+      "-O",
+      "ReleaseFast",
+      "-Mkron=src/root.zig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "retained-package",
+    "command": [
+      "zig",
+      "build",
+      "test-package-distribution",
+      "-Doptimize=ReleaseSafe",
+      "-j1",
+      "--summary",
+      "all"
+    ],
+    "exit_code": 0
+  }
+]
