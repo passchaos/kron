@@ -194,14 +194,15 @@ pub const Journal = struct {
         if (mapping.fresh) {
             var identity: [16]u8 = undefined;
             try io.randomSecure(&identity);
+            const zeroed = mapping.freshIsZeroed();
             if (schema_layout) |*table| {
                 table.identity = identity;
-                if (memory)
+                if (zeroed)
                     format.initializeV2Zeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
                 else
                     format.initializeV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
                 schema_format.writeExtension(mapping.bytes[0..format.header_bytes], table.*, identity);
-            } else if (memory)
+            } else if (zeroed)
                 format.initializeZeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
             else
                 format.initialize(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);

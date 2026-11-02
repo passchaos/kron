@@ -22,6 +22,9 @@ pub const Mapping = struct {
     io: std.Io,
     bytes: []align(4096) u8,
     fresh: bool,
+    /// True only when the platform proved that a fresh file's extents read as
+    /// zero, so journal initialization may write just the header.
+    fresh_zeroed: bool,
 
     pub fn open(io: std.Io, path: []const u8, length: usize) !Mapping {
         if (comptime !supported) return error.UnsupportedPlatform;
@@ -40,15 +43,18 @@ pub const Mapping = struct {
         if (!fresh and stat.size != length) return error.LayoutMismatch;
         if (fresh) try file.setLength(io, length);
         try backend.preallocate(file, length);
+        const fresh_zeroed = if (fresh) try backend.freshZeroed(file) else false;
         const bytes = try backend.map(file, length);
-        // Cover both 4 KiB and 16 KiB system pages; volatile stores prefault
-        // writable pages without depending on Linux-only MAP_POPULATE.
-        var offset: usize = 0;
-        while (offset < bytes.len) : (offset += 4096) {
-            const page: *volatile u8 = &bytes[offset];
-            page.* = page.*;
+        // Linux MAP_POPULATE already prefaults. Other backends touch each page
+        // read-only so the mapping is usable without marking pages dirty.
+        if (comptime backend.prefault_needed) {
+            var offset: usize = 0;
+            while (offset < bytes.len) : (offset += 4096) {
+                const page: *const volatile u8 = &bytes[offset];
+                _ = page.*;
+            }
         }
-        return .{ .file = file, .directory = directory, .io = io, .bytes = bytes, .fresh = fresh };
+        return .{ .file = file, .directory = directory, .io = io, .bytes = bytes, .fresh = fresh, .fresh_zeroed = fresh_zeroed };
     }
 
     /// Publish complete file contents and length. This is used for schema-ready

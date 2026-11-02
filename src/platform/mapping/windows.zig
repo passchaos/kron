@@ -9,7 +9,12 @@ const windows = std.os.windows;
 
 pub const supported = builtin.os.tag == .windows;
 pub const directory_durable_supported = false;
+pub const prefault_needed = true;
 pub const publishFile = syncFile;
+
+pub fn freshZeroed(_: std.Io.File) !bool {
+    return false;
+}
 pub const publishDirectory = syncDirectory;
 
 const page_readwrite: windows.DWORD = 0x04;

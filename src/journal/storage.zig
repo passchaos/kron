@@ -29,6 +29,15 @@ pub const Storage = struct {
         return .{ .bytes = bytes, .fresh = true, .backing = .{ .memory = allocator } };
     }
 
+    /// True when a fresh backing is already known to be zero, allowing
+    /// journal header initialization to skip a second full clear.
+    pub fn freshIsZeroed(self: *const Storage) bool {
+        return switch (self.backing) {
+            .mapped => |mapping| mapping.fresh_zeroed,
+            .memory => true,
+        };
+    }
+
     /// Publish before setting process-local schema readiness. Memory storage
     /// needs no persistence operation and this does not imply durability.
     pub fn publish(self: *Storage) !void {

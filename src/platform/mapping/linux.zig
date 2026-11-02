@@ -7,16 +7,31 @@ pub const directory_durable_supported = true;
 // covering dirty MAP_SHARED pages as well as file length/metadata. Cold
 // publication needs only that whole-file barrier, followed by directory fsync.
 pub const publish_file_flushes_mapping = true;
+/// Linux `map` uses MAP_POPULATE, so the generic volatile page walk is
+/// redundant and would dirty every page of a fresh mapping.
+pub const prefault_needed = false;
 
-pub fn validateFile(file: std.Io.File) !void {
+fn fileSystemType(file: std.Io.File) !u32 {
     var fs_info: [256]u8 align(8) = undefined;
     while (true) switch (linux.errno(linux.syscall2(.fstatfs, @intCast(file.handle), @intFromPtr(&fs_info)))) {
         .SUCCESS => break,
         .INTR => continue,
         else => return error.FilesystemInfoFailed,
     };
-    const fs_type = std.mem.readInt(u32, fs_info[0..4], .little);
+    return std.mem.readInt(u32, fs_info[0..4], .little);
+}
+
+pub fn validateFile(file: std.Io.File) !void {
+    const fs_type = try fileSystemType(file);
     if (fs_type == 0x01021994 or fs_type == 0x858458f6) return error.VolatileFilesystem;
+}
+
+/// A freshly extended file on these Linux filesystems is backed by unwritten
+/// extents, whose reads are zero. Unknown filesystems keep the full clear so
+/// a reused or unusual backend cannot expose stale slot bytes as valid data.
+pub fn freshZeroed(file: std.Io.File) !bool {
+    const fs_type = try fileSystemType(file);
+    return fs_type == 0xef53 or fs_type == 0x58465342 or fs_type == 0x9123683e or fs_type == 0xf2f52010;
 }
 
 pub fn preallocate(file: std.Io.File, length: usize) !void {

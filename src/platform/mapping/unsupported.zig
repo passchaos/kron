@@ -1,7 +1,11 @@
 const std = @import("std");
 pub const directory_durable_supported = false;
+pub const prefault_needed = true;
 pub fn validateFile(_: std.Io.File) !void {
     return error.UnsupportedPlatform;
+}
+pub fn freshZeroed(_: std.Io.File) !bool {
+    return false;
 }
 pub fn preallocate(_: std.Io.File, _: usize) !void {
     return error.UnsupportedPlatform;

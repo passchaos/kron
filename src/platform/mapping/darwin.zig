@@ -9,6 +9,11 @@ const supported = builtin.os.tag == .macos or builtin.os.tag == .ios;
 /// The platform exposes the operations used below. A concrete directory or
 /// storage device may reject strict synchronization; such errors propagate.
 pub const directory_durable_supported = supported;
+pub const prefault_needed = true;
+
+pub fn freshZeroed(_: std.Io.File) !bool {
+    return false;
+}
 
 const StatFs = extern struct {
     f_bsize: u32,

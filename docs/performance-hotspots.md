@@ -104,6 +104,12 @@ Memory journal此前经历三次清零：`Storage.createMemory`完整`@memset`�
 
 该优化只证明memory journal初始化局部成本下降，不代表producer/consumer吞吐、Mmap启动或跨库排名。原始20项/phase、全部命令/stdout/stderr与source/binary身份见`bench/evidence/2026-11-02-memory-init-zeroing/`。
 
+## 2026-11-02 Fresh Linux mmap只写header初始化
+
+Fresh mmap此前对整段映射执行`@memset`，并在`Mapping.open`逐页写同一字节，导致所有页变脏，publication/fsync需要回写整个journal。Linux `map`已使用`MAP_POPULATE`；fresh file在`setLength`+`fallocate`后由ext4/XFS/btrfs/F2FS等文件系统提供读为零的unwritten extents。候选让这些文件系统只写header/identity/CRC/checkpoint，未知文件系统继续完整清零；Windows/Darwin保留prefault但改为volatile read，不无谓dirty页，freshZeroed返回false。
+
+ext4 zero探针对16MiB新文件与写入4KiB后truncate到0再扩展的文件读取全部bytes，两者均0个非零字节。`mmap_init_probe.py`用async Mmap、file sink、256槽、64KiB record（约16.8MB journal）5对交替：sampled init 54.212ms→8.227ms（0.152），batch 53.809ms→6.948ms（0.129）；5/5配对下降，中位区间不重叠。512B小队列中位0.945/0.961，区间重叠，差异低于噪声。该结果只证明fresh mmap初始化局部成本，不代表producer/consumer吞吐、Mmap稳态、durable或跨库排名；非Linux设备运行资格仍未取得。原始数据与复现见`bench/evidence/2026-11-02-mmap-fresh-zero-init/`。
+
 ## 2026-11-01批次合并后的schema融合
 
 基线`366adc3`的六组百万条完整JSON profile核对600.6万条物理记录，SPSC Memory inline的consumer约占52%用户态core周期采样；prepared SPSC Memory仍有约11%含子调用的decodeRecord和约15%自占的memcpy采样，后者也含producer复制。shared Memory的begin另有显著采样。profile包含setup/preparation/cleanup、排除kernel，不能从这些比例直接计算吞吐或归因某个锁。
