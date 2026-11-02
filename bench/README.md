@@ -36,6 +36,7 @@
 | [JSON固定metadata直接tag写入](evidence/2026-11-02-wire-metadata-direct/README.md) | 保留优化；40项完整shared核对1204万JSON，四组指令中位减少2.45%–2.48%；80项workflow核对2408万JSON，八组吞吐全为正、六组稳定，text/logfmt控制组与尾部波动保留 |
 | [wire tag与payload合并写出](evidence/2026-11-02-wire-tag-batching/README.md) | 已否决；30项encoder probe instruction中位−0.003%、区间全部重叠，未运行完整流程，生产源码已恢复 |
 | [quotedAscii改用writeVecAll](evidence/2026-11-02-quoted-ascii-vec/README.md) | 已否决；30项encoder probe JSON instructions +26.7%、输出字节一致，生产源码已恢复 |
+| [短ASCII quoted合并写出](evidence/2026-11-02-quoted-ascii-short-compose/README.md) | 已否决；30项encoder probe JSON/text instructions +2.7%/+2.8%，logfmt下降未复现，生产源码已恢复 |
 | [Memory journal单次清零初始化](evidence/2026-11-02-memory-init-zeroing/README.md) | 保留优化；16.8MB journal batch init 9.13→6.64ms（5/5配对下降），sampled区间仍重叠；512B小队列低于噪声 |
 | [Fresh Linux mmap只写header初始化](evidence/2026-11-02-mmap-fresh-zero-init/README.md) | 保留优化；16.8MB journal init 54.2/53.8ms→8.2/6.9ms，5/5配对下降、区间不重叠；ext4 zero契约探针通过，非白名单文件系统完整清零 |
 
