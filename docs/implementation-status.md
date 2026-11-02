@@ -39,6 +39,8 @@ owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍�
 
 另在无SMT兄弟的物理核（当前主机CPU16/18/20/22/24/26，通常对应E-core）完成两组80项缩减同轮抽查，各核对808万条JSON。tracing在8组中位全部更高，其中5组达到两侧spread/区间门限；Foundation + spdlog有5组达到门限领先，P4与Mmap差距尤其明显（Mmap P4 batch约0.580×）。这与P-core窗口kron中位多数领先形成明显反差，说明当前完整流程性能对CPU拓扑高度敏感。不能把任一窗口作为全面排名；后续需分别profile P-core/E-core的producer、journal reserve/CRC、consumer格式化与交付阶段，并在两种拓扑重跑完整矩阵。数据见 [E-core tracing](../bench/cpp_reference/evidence/2026-11-02-current-tracing-quiet-affinity/README.md)与 [E-core spdlog](../bench/cpp_reference/evidence/2026-11-02-current-foundation-quiet-affinity/README.md)。
 
+随后完成E-core 160项完整JSON矩阵（16,160,000条逐条核对）及40项原生tracing文本控制。tracing在16个JSON对照中全部领先kron async/SPSC；Foundation + spdlog在多数P4/Mmap组领先；kron async仅Memory P1 batch接近持平（1.002×），SPSC Memory P1 sampled略领先（1.063×），其余组落后。SPSC比async在E-core提高约5%–15%，但不足以改变Foundation领先。该矩阵绑定当前c0b9706源码，不替代P-core或功能归一化比较；数据见 [E-core完整矩阵](../bench/cpp_reference/evidence/2026-11-02-managed-frontends-ecore-full/README.md)。
+
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 
 shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS scope决策缓存、uniform原子镜像和冷热拆分均未证明完整速度/尾部收益，全部候选撤回；实验结束时src恢复2fd7f75，Logging/outputs Fast 43/43与源码分发五模式通过。完整源码/CPU工作量/慢值见 [shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)，随后转向并保留上面的数字输出优化。
