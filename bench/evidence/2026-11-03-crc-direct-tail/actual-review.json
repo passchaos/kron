@@ -1,0 +1,159 @@
+{
+  "review": "initial exact20/24 direct tail; independent read-only actual-code review",
+  "baseline_commit": "185e70051172eb01906547b97fd971fab327f7b7",
+  "binary_sha256": {
+    "before-bench": "93d2593fbc714edee4a31026db1088bcf713c872f52da20e7278d415e990f6c3",
+    "after-bench": "adc7950474009d384e4fc632402517cceaf3b8053a3c66a6a2a024c4524b1956",
+    "before-reference": "be069a0c8255afc6ec34a12fb6cfef958c6c2fba5eb96f13ffea905b44e019d1",
+    "after-reference": "aff092b9a26cda3f523ac4d0f5d43adb6e59e4a7d6978f8253cb4904b80fb076"
+  },
+  "binary_root": "/home/passchaos/project-z/kron/.zig-cache/crc-direct-tail",
+  "methods": {
+    "symbols": "GNU nm -S --defined-only",
+    "instructions": "GNU objdump -d -Mintel --no-show-raw-insn --disassemble=SYMBOL",
+    "extent": "last decoded instruction end minus symbol start; agrees with st_size",
+    "versions": {
+      "binutils": "2.42",
+      "python": "3.12.3",
+      "current_zig": "0.16.0"
+    },
+    "compiler_limit": "Builds record zig ReleaseFast without explicit mcpu; current compiler identity was separately queried, not frozen compiler hash",
+    "stack_references": "Explicit rbp/rsp memory operands; implicit push/pop excluded",
+    "instruction_count": "Includes padding NOP rows"
+  },
+  "reference_symbols": {
+    "Crc32.update": {
+      "before_bytes": 1412,
+      "after_bytes": 1748,
+      "before_instructions": 310,
+      "after_instructions": 371,
+      "before_static_clmul": 20,
+      "after_static_clmul": 31,
+      "frame_bytes_both": 0,
+      "explicit_stack_refs_both": 0,
+      "calls_both": 0
+    },
+    "slotChecksum": {
+      "before_bytes": 156,
+      "after_bytes": 485,
+      "before_instructions": 48,
+      "after_instructions": 98,
+      "before_frame": 32,
+      "after_frame": 16,
+      "before_stack_refs": 13,
+      "after_stack_refs": 6,
+      "before_calls": 3,
+      "after_calls": 2,
+      "after_static_clmul": 16,
+      "static_count_limit": "Sum across both version arms; v1 5 and v2 11 dynamic before payload"
+    },
+    "submitSafeDestination": {
+      "before_bytes": 5784,
+      "after_bytes": 6086,
+      "before_instructions": 1048,
+      "after_instructions": 1098,
+      "frame_bytes_both": 3352,
+      "before_stack_refs": 372,
+      "after_stack_refs": 356,
+      "before_calls": 30,
+      "after_calls": 28,
+      "after_static_clmul": 16
+    }
+  },
+  "primitive_symbols": {
+    "Crc32.update": "Same bytes/instruction arithmetic as reference; existing 64-bit versus reference 32-bit bulk setup and one NOP difference",
+    "start.posixCallMainAndExit": {
+      "before_bytes": 20766,
+      "after_bytes": 20177,
+      "before_instructions": 4526,
+      "after_instructions": 4413,
+      "before_frame_hex": "0x11708",
+      "after_frame_hex": "0x11678",
+      "before_stack_refs": 923,
+      "after_stack_refs": 857,
+      "calls_both": 113,
+      "before_static_clmul": 0,
+      "after_static_clmul": 27,
+      "limit": "Entire startup/oracle/timed owner, not dynamic record cost"
+    }
+  },
+  "discrepancy": {
+    "earlier_summary_bytes": {
+      "update": 1856,
+      "slotChecksum": 812
+    },
+    "verified_actual_bytes": {
+      "update": 1748,
+      "slotChecksum": 485
+    },
+    "result": "Both nm.st_size and actual extent agree for these hashes; the earlier numbers have unresolved artifact/transcription origin and must not be used."
+  },
+  "exact20": {
+    "dynamic_clmul": 5,
+    "loads": [
+      "16B at input+0",
+      "redundant overlapping 8B reload at input+8",
+      "exact4B at input+16"
+    ],
+    "bounds": "All within20; extra high-half load is real cost",
+    "seed": "VMOVD complete rawu32, zero remaining bits",
+    "tail": "SHLD builds tail4<<32|H>>32 highlane; unpack builds H<<32 lowlane"
+  },
+  "exact24": {
+    "dynamic_clmul": 6,
+    "loads": [
+      "16B at input+0",
+      "exact8B at input+16"
+    ],
+    "bounds": "All within24",
+    "seed": "Complete rawu32 zeroextended",
+    "tail": "VMOVQ then VPSLLDQ8 sets high64"
+  },
+  "reduction": "Original four-multiply R, rawstate no complement; helpers inlined no callees",
+  "long_paths": {
+    "ge64_first90_instructions": "Normalized identical startup/stripes/collapse/partials/reduction/tail selection",
+    "byte_tail63_instructions": "Same except padding NOP",
+    "raw_update_source": "Byteidentical",
+    "other_short_lengths": "Original portable arithmetic plus two new comparisons/layout cost"
+  },
+  "journal_order": {
+    "v1": "header5CLMUL -> payload original update -> NOT",
+    "v2": "header5 -> reference6 -> payload original update -> NOT",
+    "producer": "CRC stored before committed publication",
+    "checks": [
+      "producer",
+      "initial checked peek",
+      "reclaim checked peek"
+    ],
+    "source_segments": "20/24/payload remain independent"
+  },
+  "normalized_unchanged_controls": [
+    "validateSlot",
+    "peekChecked",
+    "drainJournal",
+    "emitWireFused",
+    "JSON/logfmt attributes renderers",
+    "wire_json.renderFormat",
+    "writeCheckpoint",
+    "Reservation.abort"
+  ],
+  "loaded_constants": {
+    "method": "Resolve each actual table-load address via ELF LOAD, compare every1024B row separately; no contiguous16KiB assumption",
+    "static_row_references_per_binary": 42,
+    "distinct_row_values": 16,
+    "ordered_row_values_equal_across_four_binaries": true,
+    "six_original_fold_constants_equal": true,
+    "new_k64_bytes": "9e00aacc00000000400671db01000000",
+    "header_seed_bytes": "ffffffff000000000000000000000000",
+    "reference_seed_shuffle": "04050607808080808080808080808080",
+    "seed_shuffle": "Complete rawu32 extracted into low32, rest zero"
+  },
+  "source_archive": "129 candidate files match source manifest; only two shadow platform files changed; production untouched",
+  "result": "No major new CRC spill/frame failure; caller copying/layout changes are real. Review conveys no performance qualification; candidate remains rejected.",
+  "reviewer_execution": {
+    "edited_files": [],
+    "compiled": false,
+    "tests": false,
+    "benchmarks": false
+  }
+}

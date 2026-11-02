@@ -1,0 +1,13 @@
+1/12 crc32.test.sliced IEEE CRC32 standard vectors match the persisted polynomial...OK
+2/12 crc32.test.sliced CRC matches standard oracle across lengths alignments and incremental partitions...OK
+3/12 crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
+4/12 crc32.test.compile-time PCLMUL path matches the portable oracle across block and partition boundaries...OK
+5/12 crc32_pclmul.test.parallel CRC collapse coefficients derive from the independent IEEE generator...OK
+6/12 crc32_pclmul.test.parallel CRC collapse agrees with independent raw IEEE CRC on every input basis bit...OK
+7/12 crc32_pclmul.test.direct CRC tail coefficients derive independently from the normal IEEE generator...OK
+8/12 crc32_pclmul.test.direct CRC tails preserve every 20 and 24 byte message and seed basis bit...OK
+9/12 crc32_pclmul.test.direct CRC tails preserve 10240 arbitrary seeds per length across all 32 alignments...OK
+10/12 crc32_pclmul.test.partial CRC stripes preserve every message and seed GF2 basis bit including r0 controls...OK
+11/12 crc32_pclmul.test.partial CRC stripes preserve arbitrary seeds and unaligned native input...OK
+12/12 crc32_pclmul.test.partial CRC stripes match independently frozen zlib seeded vectors...OK
+All 12 tests passed.

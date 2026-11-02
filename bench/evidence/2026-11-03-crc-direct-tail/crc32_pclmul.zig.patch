@@ -1,0 +1,121 @@
+--- /home/passchaos/project-z/kron/.zig-cache/crc-direct-tail/before/src/platform/crc32_pclmul.zig	2026-11-03 07:46:52.118246773 +0800
++++ /home/passchaos/project-z/kron/.zig-cache/crc-direct-tail/candidate/src/platform/crc32_pclmul.zig	2026-11-03 07:48:01.941529686 +0800
+@@ -3,8 +3,8 @@
+ //! module only replaces the block loop. It is imported only when the compile
+ //! target advertises PCLMUL and SSE2, so generic targets never analyze the
+ //! inline assembly. AVX targets use the three-operand 128-bit VEX form;
+-//! other PCLMUL targets retain legacy SSE. Inputs must be at least 64 bytes
+-//! and a multiple of 16.
++//! other PCLMUL targets retain legacy SSE. The block update requires at least
++//! 64 bytes and a multiple of 16; exact 20/24-byte updates use direct tails.
+ //! Based on the published Gopal/Ozturk/Intel folding construction; the
+ //! constants below are the reflected-domain CRC-32 values.
+ const std = @import("std");
+@@ -19,6 +19,7 @@
+ const k256: V2 = .{ 0x00f1da05aa, 0x015a546366 };
+ const k384: V2 = .{ 0x003db1ecdc, 0x0174359406 };
+ const k5k0: V2 = .{ 0x0163cd6124, 0x0000000000 };
++const k64: V2 = .{ k3k4[1], 0x01db710640 };
+ const poly: V2 = .{ 0x01db710641, 0x01f7011641 };
+ const mask: V2 = .{ 0xffffffff, 0xffffffff };
+ 
+@@ -77,6 +78,42 @@
+     return @bitCast(std.simd.shiftElementsLeft(lanes, 1, 0));
+ }
+ 
++// The original four-multiply reduction is copied for the exact-tail owners.
++// The existing block update retains its literal reduction and code boundary.
++inline fn reduceTail(input: V2) u32 {
++    var x1 = input;
++    const t = clmul(x1, k3k4, 0x10);
++    x1 = shiftRight8(x1) ^ t;
++    const low = shiftRight4(x1);
++    x1 &= mask;
++    x1 = clmul(x1, k5k0, 0x00) ^ low;
++    const b1 = clmul(x1 & mask, poly, 0x10);
++    const b2 = clmul(b1 & mask, poly, 0x00);
++    x1 ^= b2;
++    return @truncate(x1[0] >> 32);
++}
++
++/// Returns the raw reflected state after exactly 20 bytes, without final XOR.
++/// The 16-byte load and the four-byte tail load stay within the supplied slice.
++pub inline fn update20(state: u32, bytes: []const u8) u32 {
++    std.debug.assert(bytes.len == 20);
++    const value = load16(bytes.ptr) ^ V2{ @as(u64, state), 0 };
++    const tail = std.mem.readInt(u32, bytes[16..][0..4], .little);
++    const product = clmul(value, k5k0, 0x00);
++    const combined = product ^ V2{ value[1] << 32, (value[1] >> 32) ^ (@as(u64, tail) << 32) };
++    return reduceTail(combined);
++}
++
++/// Returns the raw reflected state after exactly 24 bytes, without final XOR.
++/// The 16-byte load and the eight-byte tail load stay within the supplied slice.
++pub inline fn update24(state: u32, bytes: []const u8) u32 {
++    std.debug.assert(bytes.len == 24);
++    const value = load16(bytes.ptr) ^ V2{ @as(u64, state), 0 };
++    const tail = std.mem.readInt(u64, bytes[16..][0..8], .little);
++    const combined = clmul(value, k64, 0x00) ^ clmul(value, k64, 0x11) ^ V2{ 0, tail };
++    return reduceTail(combined);
++}
++
+ /// Returns the reflected CRC register state after `bytes`. The caller seeds
+ /// with its current state and finalizes with bitwise NOT, exactly as the
+ /// portable table path does.
+@@ -171,6 +208,56 @@
+     return state;
+ }
+ 
++test "direct CRC tail coefficients derive independently from the normal IEEE generator" {
++    try std.testing.expectEqual(coefficient(64), k5k0[0]);
++    try std.testing.expectEqual(coefficient(96), k64[0]);
++    try std.testing.expectEqual(coefficient(32), k64[1]);
++}
++
++test "direct CRC tails preserve every 20 and 24 byte message and seed basis bit" {
++    var bytes: [24]u8 = undefined;
++    inline for (.{ 20, 24 }) |length| {
++        for (0..length * 8) |bit| {
++            @memset(&bytes, 0);
++            bytes[bit / 8] = @as(u8, 1) << @intCast(bit % 8);
++            const input = bytes[0..length];
++            const actual = if (length == 20) update20(0, input) else update24(0, input);
++            var oracle: std.hash.Crc32 = .{ .crc = 0 };
++            oracle.update(input);
++            try std.testing.expectEqual(bitwiseState(0, input), actual);
++            try std.testing.expectEqual(~oracle.final(), actual);
++        }
++        @memset(&bytes, 0);
++        for (0..32) |bit| {
++            const state = @as(u32, 1) << @intCast(bit);
++            const input = bytes[0..length];
++            const actual = if (length == 20) update20(state, input) else update24(state, input);
++            var oracle: std.hash.Crc32 = .{ .crc = state };
++            oracle.update(input);
++            try std.testing.expectEqual(bitwiseState(state, input), actual);
++            try std.testing.expectEqual(~oracle.final(), actual);
++        }
++    }
++}
++
++test "direct CRC tails preserve 10240 arbitrary seeds per length across all 32 alignments" {
++    var bytes: [24 + 31]u8 = undefined;
++    var random = std.Random.DefaultPrng.init(0x6469726563747461);
++    for (0..10_240) |iteration| {
++        random.random().bytes(&bytes);
++        const alignment = iteration % 32;
++        inline for (.{ 20, 24 }) |length| {
++            const input = bytes[alignment..][0..length];
++            const state = random.random().int(u32);
++            const actual = if (length == 20) update20(state, input) else update24(state, input);
++            var oracle: std.hash.Crc32 = .{ .crc = state };
++            oracle.update(input);
++            try std.testing.expectEqual(bitwiseState(state, input), actual);
++            try std.testing.expectEqual(~oracle.final(), actual);
++        }
++    }
++}
++
+ test "partial CRC stripes preserve every message and seed GF2 basis bit including r0 controls" {
+     var bytes: [256]u8 = undefined;
+     for ([_]usize{ 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256 }) |length| {
