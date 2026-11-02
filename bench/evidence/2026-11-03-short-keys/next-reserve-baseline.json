@@ -1,0 +1,11 @@
+{
+  "scope": "read-only full Logger baseline machine code, no timing claim",
+  "binary_sha256": "d038139eaab1b02e0ef21b6df441bd2e9a8e0ea7f770c0710b6323f154c0f47c",
+  "owning_journal_source_sha256": "d181c3a4421f50bef2ab189f16d956ec5c2caa342c6b08efcb2e614462ed3b7c",
+  "reserve_symbol": "journal.journal.Journal.reserve",
+  "occupied_increment": "0x10fb6d4 lock xadd0x2d0",
+  "peak_load": "0x10fb6e0 mov0x2d8",
+  "peak_compare_max": "0x10fb6f0 cmp count/current, cmova0x10fb6f6",
+  "peak_RMW": "0x10fb6fa lock cmpxchg even when desired equals current peak",
+  "next_safe_candidate": "condition monotonic load first; only fetchMax if count_now>peak. Skipping is safe while peak monotonic; stale low read only causes redundant fetchMax. No change to occupancy, queue bounds, CRC, mapped real-time written."
+}

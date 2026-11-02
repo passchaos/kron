@@ -9,3 +9,5 @@ Reader/follow扫描stable committed markers，64/72只校验范围；recover_onl
 shared written仅单consumer写，load+条件store也可能替换fetchMax并保留实时映射；sync/checkpoint的shared分支当前不写该cursor。需要精确审核外部公开写访问/并发sync和recovery初始化，不能把“单consumer”扩展到任意调用者。
 
 本记录仅定位可验证的下一步骤，没有源码改动、编译或benchmark。最大水位条件、缓存行分离与written store必须各自isolated试验，保留default CRC三个位置、tail reservation gap、shutdown/cut和恢复。
+
+父代理进一步只读核对真实baseline `Journal.reserve`：occupied在0x10fb6d4执行lock xadd；high_water在0x10fb6e0读旧值，0x10fb6f0比较并cmova选择max，然后0x10fb6fa无条件lock cmpxchg。即使count_now≤peak，仍执行locked RMW。下一候选有实际生成代码依据，原文本“先核对”条件已满足；baseline asm/binary/source身份存入next-reserve-baseline文件。尚未实施或测量，不能将少RMW直接换算吞吐收益。
