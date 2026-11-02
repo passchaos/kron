@@ -90,6 +90,7 @@ test {
     std.testing.refAllDecls(@This());
     _ = @import("core/level.zig");
     _ = @import("core/admission.zig");
+    _ = @import("encoder/escaping.zig");
     _ = @import("platform/crc32.zig");
     const test_cpu = @import("builtin").cpu;
     if (test_cpu.arch == .x86_64 and

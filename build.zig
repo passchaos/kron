@@ -36,6 +36,11 @@ pub fn build(b: *std.Build) void {
     b.step("test-journal-coordinates", "Verify full width shared/SPSC ring coordinates and generation corruption evidence").dependOn(&run_journal_coordinates.step);
     test_step.dependOn(&run_journal_coordinates.step);
 
+    const escaping_tail_tests = b.addTest(.{ .name = "kron-escaping-tails", .root_module = module, .filters = &.{"ASCII short tail"} });
+    const run_escaping_tails = b.addRunArtifact(escaping_tail_tests);
+    b.step("test-escaping-tails", "Verify ASCII tail first matches and public writer failure prefixes").dependOn(&run_escaping_tails.step);
+    test_step.dependOn(&run_escaping_tails.step);
+
     validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });

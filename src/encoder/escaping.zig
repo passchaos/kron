@@ -331,6 +331,115 @@ test "ASCII word scan matches scalar predicate for every byte pair lane and alig
     };
 }
 
+test "ASCII short tail scan matches independent scalar predicate for every lane and adjacent pair" {
+    var storage: [32]u8 = undefined;
+    for ([_]usize{ 0, 3 }) |offset| for ([_]usize{ 5, 6, 7, 8, 13, 14, 15, 16, 21, 22, 23, 24 }) |length| {
+        const tail = 1 + (length - 1) / 8 * 8;
+        for (0..4) |lane| for (0..256) |byte| {
+            @memset(&storage, 'a');
+            const input = storage[offset..][0..length];
+            input[tail + lane] = @intCast(byte);
+            try std.testing.expectEqual(scalarRun(input), asciiRun(input));
+        };
+    };
+    // The three exact four-byte tails exhaust all adjacent values in their
+    // first three lanes; the longer tails also cover four-byte/scalar borders.
+    // Keep this corpus bounded: lengths sharing the same word do not repeat
+    // identical pairs merely because their final printable scalar suffix differs.
+    for ([_]usize{ 5, 13, 21 }) |length| for (0..3) |lane| {
+        const tail = length - 4;
+        for (0..65536) |pair| {
+            @memset(&storage, 'a');
+            const input = storage[3..][0..length];
+            input[tail + lane] = @truncate(pair);
+            input[tail + lane + 1] = @truncate(pair >> 8);
+            try std.testing.expectEqual(scalarRun(input), asciiRun(input));
+        }
+    };
+    for ([_]usize{ 8, 16, 24 }) |length| {
+        const tail = length - 7;
+        for (0..65536) |pair| {
+            @memset(&storage, 'a');
+            const input = storage[3..][0..length];
+            input[tail + 3] = @truncate(pair);
+            input[tail + 4] = @truncate(pair >> 8);
+            try std.testing.expectEqual(scalarRun(input), asciiRun(input));
+        }
+    }
+}
+
+test "ASCII short tail outputs preserve quoted key and comma member partial write prefixes" {
+    const Reference = struct {
+        fn quotedBytes(writer: *std.Io.Writer, input: []const u8, mode: Escaping) !void {
+            var output = try QuotedWriter.init(writer, mode);
+            for (input) |byte| try output.byte(byte);
+            try output.finish();
+        }
+        fn key(writer: *std.Io.Writer, input: []const u8) !void {
+            if (!std.mem.startsWith(u8, input, "$bytes:") and std.unicode.utf8ValidateSlice(input)) return quotedBytes(writer, input, .json);
+            try writer.writeAll("\"$bytes:");
+            try hex(writer, input);
+            try writer.writeByte('"');
+        }
+        fn member(writer: *std.Io.Writer, input: []const u8, comma: bool) !void {
+            if (comma) try writer.writeByte(',');
+            try key(writer, input);
+            try writer.writeByte(':');
+        }
+    };
+    var input_bytes: [24]u8 = undefined;
+    for ([_]usize{ 5, 6, 7, 8, 13, 14, 15, 16, 21, 22, 23, 24 }) |length| {
+        const tail = 1 + (length - 1) / 8 * 8;
+        for (0..4) |lane| for ([_]u8{ 'a', 0, 0x1f, '"', '\\', 0x7f, 0x80, 0xff }) |byte| {
+            @memset(&input_bytes, 'a');
+            const input = input_bytes[0..length];
+            input[tail + lane] = byte;
+            inline for (.{ Escaping.json, Escaping.text }) |mode| {
+                var expected_bytes: [128]u8 = undefined;
+                var expected = std.Io.Writer.fixed(&expected_bytes);
+                try Reference.quotedBytes(&expected, input, mode);
+                for (0..expected.end + 2) |capacity| {
+                    var reference_bytes: [128]u8 = undefined;
+                    var reference = std.Io.Writer.fixed(reference_bytes[0..capacity]);
+                    const reference_ok = if (Reference.quotedBytes(&reference, input, mode)) |_| true else |_| false;
+                    var actual_bytes: [128]u8 = undefined;
+                    var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
+                    const actual_ok = if (quoted(&actual, input, mode)) |_| true else |_| false;
+                    try std.testing.expectEqual(reference_ok, actual_ok);
+                    try std.testing.expectEqualSlices(u8, reference.buffered(), actual.buffered());
+                }
+            }
+            var expected_bytes: [128]u8 = undefined;
+            var expected = std.Io.Writer.fixed(&expected_bytes);
+            try Reference.key(&expected, input);
+            for (0..expected.end + 2) |capacity| {
+                var reference_bytes: [128]u8 = undefined;
+                var reference = std.Io.Writer.fixed(reference_bytes[0..capacity]);
+                const reference_ok = if (Reference.key(&reference, input)) |_| true else |_| false;
+                var actual_bytes: [128]u8 = undefined;
+                var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
+                const actual_ok = if (jsonKey(&actual, input)) |_| true else |_| false;
+                try std.testing.expectEqual(reference_ok, actual_ok);
+                try std.testing.expectEqualSlices(u8, reference.buffered(), actual.buffered());
+            }
+            for ([_]bool{ false, true }) |comma| {
+                expected.end = 0;
+                try Reference.member(&expected, input, comma);
+                for (0..expected.end + 2) |capacity| {
+                    var reference_bytes: [128]u8 = undefined;
+                    var reference = std.Io.Writer.fixed(reference_bytes[0..capacity]);
+                    const reference_ok = if (Reference.member(&reference, input, comma)) |_| true else |_| false;
+                    var actual_bytes: [128]u8 = undefined;
+                    var actual = std.Io.Writer.fixed(actual_bytes[0..capacity]);
+                    const actual_ok = if (jsonMember(&actual, input, comma)) |_| true else |_| false;
+                    try std.testing.expectEqual(reference_ok, actual_ok);
+                    try std.testing.expectEqualSlices(u8, reference.buffered(), actual.buffered());
+                }
+            }
+        };
+    }
+}
+
 test "ASCII word scan retains exact escaping and streaming output across random chunk boundaries" {
     var random = std.Random.DefaultPrng.init(0x61736369692d7275);
     var input_bytes: [128]u8 = undefined;

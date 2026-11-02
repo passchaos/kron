@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+全局4B ASCII尾扫描和member-only特化两个版本均撤回，production保原8B/scalar尾与Writer组织。global自动outline399B scanner新增callee-save/call，Ecore37/Pcore26个公共控制稳定负向；member-only恢复quote/key/consume原机器码，但Ecore5组member较长/UTF8/转义控制仍负向，5–8B局部win不覆盖反例。两版总16000个escaping-only批次（不是物理JSON），完整源码/before公共prefixoracle和全部signedevidence见[尾扫描报告](../bench/evidence/2026-11-03-ascii-four-byte-tail/README.md)，零完整日志/Foundationtrial。新增短尾firstmatch/pair/failureprefix两回归与test-escaping-tails入口，恢复后Safe6步骤47项/escaping模块7项、新两cases的Debug/Fast/generic实际执行通过，源码分发五fresh模式2步骤成功；production字节与旧tests原样，报告finalqualification记录scope，整体性能目标仍未达到。
+
 完整u64固定容量倒数候选已在queue门槛拒绝：独立误差证明/20万随机与native三优化级/generic三mathcase通过，Journal坐标两case各17total/relatedjournal81项通过，实际MULX+IMUL+校正、validator/drain原frame保持；但Journal768→832B、13/16容量queue组稳定负向（约6–11%），没有fullJSON/Foundationtrial，不将未使用模块加入生产。全部证据见[倒数报告](../bench/evidence/2026-11-03-capacity-reciprocal/README.md)。当前原始生产源码随后八项双topology完整profile核验8008000JSON、零lost，原始无损capture和份额见[当前profile](../bench/evidence/2026-11-03-current-workflow-profile/analysis.md)，单次采样占比不是吞吐或可达优化百分比，完整Foundation目标仍未完成。
 
 三入口容量特化未推广。always_tail首版在默认Debug后端、LLVM inferred错误集合函数类型、以及独立exactaliases尝试的聚合sret返回上失败，原始diagnostic/source保留。公开原inferred接口的always_inline包装层版通过默认Debug/Safe/Fast/generic两项回归和78项journal，原baseline同断言17项通过；但actual SPSC新0xa8frame、drain frame+832B/代码+4370B、arbitraryvalidatorwrapper frame0x58→0x148，未过预设no-new-frame/temp门槛，零性能trial。生产workspace未应用候选，没有Foundation排名变化，原始证据见[入口特化](../bench/evidence/2026-11-03-journal-entry-specialization/README.md)。下一固定容量精确算术需要独立数学/机器码/完整流程证据，总体目标仍未完成。
