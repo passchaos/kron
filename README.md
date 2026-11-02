@@ -10,6 +10,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 近期 fused key scratch 的两种表示通过安全与字节差分，但 consumer 控制出现回退，已撤回；保留 `test-wire-scratch` 验证失败复用和精确嵌套预算。全部原始结果见 [key scratch 报告](bench/evidence/2026-11-03-fused-key-scratch/README.md)。
 
+短 CRC 单 lane 和代码隔离两个候选也已撤回，70 长度双拓扑控制有稳定回退；保留 `test-crc-segments` 验证任意 seed、20/24 字节分段和 guard-page 边界。源码、实际调用变化与全部反例见 [短 CRC 报告](bench/evidence/2026-11-03-short-crc/README.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始

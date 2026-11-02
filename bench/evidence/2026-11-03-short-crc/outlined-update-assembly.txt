@@ -1,0 +1,274 @@
+
+.zig-cache/short-crc/outlined-reference:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000113af20 <platform.crc32.Crc32.update>:
+ 113af20:	push   rbp
+ 113af21:	mov    rbp,rsp
+ 113af24:	push   rbx
+ 113af25:	cmp    rdx,0x40
+ 113af29:	jb     113b0db <platform.crc32.Crc32.update+0x1bb>
+ 113af2f:	mov    r8d,edx
+ 113af32:	and    r8d,0xf
+ 113af36:	mov    eax,edx
+ 113af38:	and    eax,0xfffffff0
+ 113af3b:	vmovss xmm0,DWORD PTR [rdi]
+ 113af3f:	vxorps xmm2,xmm0,XMMWORD PTR [rsi]
+ 113af43:	vmovups xmm1,XMMWORD PTR [rsi+0x10]
+ 113af48:	vmovups xmm0,XMMWORD PTR [rsi+0x20]
+ 113af4d:	vmovdqu xmm3,XMMWORD PTR [rsi+0x30]
+ 113af52:	lea    rcx,[rax-0x40]
+ 113af56:	lea    r9,[rsi+0x40]
+ 113af5a:	cmp    rcx,0x40
+ 113af5e:	jb     113afd5 <platform.crc32.Crc32.update+0xb5>
+ 113af60:	vmovaps xmm4,XMMWORD PTR [rip+0xfffffffffff34748]        # 106f6b0 <__anon_32035+0x30>
+ 113af68:	nop    DWORD PTR [rax+rax*1+0x0]
+ 113af70:	vpclmullqlqdq xmm5,xmm2,xmm4
+ 113af76:	vpclmullqlqdq xmm6,xmm1,xmm4
+ 113af7c:	vpclmullqlqdq xmm7,xmm0,xmm4
+ 113af82:	vpclmullqlqdq xmm8,xmm3,xmm4
+ 113af88:	vpclmulhqhqdq xmm2,xmm2,xmm4
+ 113af8e:	vxorps xmm5,xmm5,XMMWORD PTR [r9]
+ 113af93:	vxorps xmm2,xmm5,xmm2
+ 113af97:	vpclmulhqhqdq xmm1,xmm1,xmm4
+ 113af9d:	vxorps xmm5,xmm6,XMMWORD PTR [r9+0x10]
+ 113afa3:	vxorps xmm1,xmm5,xmm1
+ 113afa7:	vpclmulhqhqdq xmm0,xmm0,xmm4
+ 113afad:	vxorps xmm5,xmm7,XMMWORD PTR [r9+0x20]
+ 113afb3:	vxorps xmm0,xmm5,xmm0
+ 113afb7:	vpclmulhqhqdq xmm3,xmm3,xmm4
+ 113afbd:	vpxor  xmm5,xmm8,XMMWORD PTR [r9+0x30]
+ 113afc3:	vpxor  xmm3,xmm5,xmm3
+ 113afc7:	add    rcx,0xffffffffffffffc0
+ 113afcb:	add    r9,0x40
+ 113afcf:	cmp    rcx,0x3f
+ 113afd3:	ja     113af70 <platform.crc32.Crc32.update+0x50>
+ 113afd5:	vmovaps xmm4,XMMWORD PTR [rip+0xfffffffffff34d73]        # 106fd50 <__anon_63878+0x40>
+ 113afdd:	vpclmullqlqdq xmm5,xmm2,xmm4
+ 113afe3:	vpxor  xmm3,xmm5,xmm3
+ 113afe7:	vpclmulhqhqdq xmm2,xmm2,xmm4
+ 113afed:	vmovaps xmm4,XMMWORD PTR [rip+0xfffffffffff3491b]        # 106f910 <__anon_30772+0x40>
+ 113aff5:	vpclmullqlqdq xmm5,xmm1,xmm4
+ 113affb:	vpxor  xmm2,xmm2,xmm5
+ 113afff:	vpxor  xmm2,xmm3,xmm2
+ 113b003:	vpclmulhqhqdq xmm3,xmm1,xmm4
+ 113b009:	vmovaps xmm1,XMMWORD PTR [rip+0xfffffffffff347ff]        # 106f810 <__anon_39715+0x30>
+ 113b011:	vpclmullqlqdq xmm4,xmm0,xmm1
+ 113b017:	vpxor  xmm3,xmm3,xmm4
+ 113b01b:	vpclmulhqhqdq xmm0,xmm0,xmm1
+ 113b021:	vpxor  xmm0,xmm3,xmm0
+ 113b025:	vpxor  xmm0,xmm2,xmm0
+ 113b029:	test   rcx,rcx
+ 113b02c:	je     113b05f <platform.crc32.Crc32.update+0x13f>
+ 113b02e:	xor    r10d,r10d
+ 113b031:	data16 data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 113b040:	vpclmullqlqdq xmm2,xmm0,xmm1
+ 113b046:	vpclmulhqhqdq xmm0,xmm0,xmm1
+ 113b04c:	vpxor  xmm2,xmm2,XMMWORD PTR [r9+r10*1]
+ 113b052:	vpxor  xmm0,xmm2,xmm0
+ 113b056:	add    r10,0x10
+ 113b05a:	cmp    rcx,r10
+ 113b05d:	jne    113b040 <platform.crc32.Crc32.update+0x120>
+ 113b05f:	vpclmullqhqdq xmm1,xmm0,xmm1
+ 113b065:	vpsrldq xmm0,xmm0,0x8
+ 113b06a:	vpxor  xmm0,xmm1,xmm0
+ 113b06e:	vpsrldq xmm1,xmm0,0x4
+ 113b073:	vpxor  xmm2,xmm2,xmm2
+ 113b077:	vpblendd xmm0,xmm0,xmm2,0xa
+ 113b07d:	vmovsd xmm3,QWORD PTR [rip+0xfffffffffff3463b]        # 106f6c0 <__anon_32035+0x40>
+ 113b085:	vpclmullqlqdq xmm0,xmm0,xmm3
+ 113b08b:	vpxor  xmm0,xmm0,xmm1
+ 113b08f:	vpblendd xmm1,xmm0,xmm2,0xa
+ 113b095:	vmovaps xmm3,XMMWORD PTR [rip+0xfffffffffff34ba3]        # 106fc40 <__anon_30009+0x30>
+ 113b09d:	vpclmullqhqdq xmm1,xmm1,xmm3
+ 113b0a3:	vpblendd xmm1,xmm1,xmm2,0xa
+ 113b0a9:	vpclmullqlqdq xmm1,xmm1,xmm3
+ 113b0af:	vpxor  xmm0,xmm0,xmm1
+ 113b0b3:	vpextrd ecx,xmm0,0x1
+ 113b0b9:	test   r8,r8
+ 113b0bc:	je     113b28b <platform.crc32.Crc32.update+0x36b>
+ 113b0c2:	mov    r9d,edx
+ 113b0c5:	and    r9d,0x7
+ 113b0c9:	cmp    r8d,0x8
+ 113b0cd:	jae    113b176 <platform.crc32.Crc32.update+0x256>
+ 113b0d3:	xor    r8d,r8d
+ 113b0d6:	jmp    113b25c <platform.crc32.Crc32.update+0x33c>
+ 113b0db:	cmp    rdx,0xf
+ 113b0df:	jbe    113b0e8 <platform.crc32.Crc32.update+0x1c8>
+ 113b0e1:	pop    rbx
+ 113b0e2:	pop    rbp
+ 113b0e3:	jmp    113b3d0 <platform.crc32.Crc32.updateShortSegment>
+ 113b0e8:	mov    eax,DWORD PTR [rdi]
+ 113b0ea:	cmp    rdx,0x8
+ 113b0ee:	jb     113b290 <platform.crc32.Crc32.update+0x370>
+ 113b0f4:	xor    eax,DWORD PTR [rsi]
+ 113b0f6:	movzx  r8d,al
+ 113b0fa:	movzx  ecx,ah
+ 113b0fd:	mov    ecx,DWORD PTR [rcx*4+0x1068ac0]
+ 113b104:	xor    ecx,DWORD PTR [r8*4+0x10686c0]
+ 113b10c:	mov    ebx,DWORD PTR [rsi+0x4]
+ 113b10f:	mov    r8d,eax
+ 113b112:	shr    r8d,0xe
+ 113b116:	and    r8d,0x3fc
+ 113b11d:	xor    ecx,DWORD PTR [r8+0x1068ec0]
+ 113b124:	shr    eax,0x18
+ 113b127:	xor    ecx,DWORD PTR [rax*4+0x10692c0]
+ 113b12e:	movzx  eax,bl
+ 113b131:	xor    ecx,DWORD PTR [rax*4+0x10696c0]
+ 113b138:	movzx  eax,bh
+ 113b13b:	xor    ecx,DWORD PTR [rax*4+0x1069ac0]
+ 113b142:	mov    eax,ebx
+ 113b144:	shr    eax,0xe
+ 113b147:	and    eax,0x3fc
+ 113b14c:	xor    ecx,DWORD PTR [rax+0x1069ec0]
+ 113b152:	shr    ebx,0x18
+ 113b155:	xor    ecx,DWORD PTR [rbx*4+0x1066f68]
+ 113b15c:	add    rdx,0xfffffffffffffff8
+ 113b160:	mov    r8d,0x8
+ 113b166:	mov    eax,ecx
+ 113b168:	test   rdx,rdx
+ 113b16b:	jne    113b29c <platform.crc32.Crc32.update+0x37c>
+ 113b171:	jmp    113b3bf <platform.crc32.Crc32.update+0x49f>
+ 113b176:	lea    r10,[rsi+rax*1]
+ 113b17a:	and    edx,0x8
+ 113b17d:	add    r10,0x7
+ 113b181:	xor    r8d,r8d
+ 113b184:	data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 113b190:	movzx  r11d,BYTE PTR [r10+r8*1-0x7]
+ 113b196:	xor    r11b,cl
+ 113b199:	movzx  r11d,r11b
+ 113b19d:	shr    ecx,0x8
+ 113b1a0:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b1a8:	movzx  r11d,BYTE PTR [r10+r8*1-0x6]
+ 113b1ae:	xor    r11b,cl
+ 113b1b1:	movzx  r11d,r11b
+ 113b1b5:	shr    ecx,0x8
+ 113b1b8:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b1c0:	movzx  r11d,BYTE PTR [r10+r8*1-0x5]
+ 113b1c6:	xor    r11b,cl
+ 113b1c9:	movzx  r11d,r11b
+ 113b1cd:	shr    ecx,0x8
+ 113b1d0:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b1d8:	movzx  r11d,BYTE PTR [r10+r8*1-0x4]
+ 113b1de:	xor    r11b,cl
+ 113b1e1:	movzx  r11d,r11b
+ 113b1e5:	shr    ecx,0x8
+ 113b1e8:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b1f0:	movzx  r11d,BYTE PTR [r10+r8*1-0x3]
+ 113b1f6:	xor    r11b,cl
+ 113b1f9:	movzx  r11d,r11b
+ 113b1fd:	shr    ecx,0x8
+ 113b200:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b208:	movzx  r11d,BYTE PTR [r10+r8*1-0x2]
+ 113b20e:	xor    r11b,cl
+ 113b211:	movzx  r11d,r11b
+ 113b215:	shr    ecx,0x8
+ 113b218:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b220:	movzx  r11d,BYTE PTR [r10+r8*1-0x1]
+ 113b226:	xor    r11b,cl
+ 113b229:	movzx  r11d,r11b
+ 113b22d:	shr    ecx,0x8
+ 113b230:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b238:	movzx  r11d,BYTE PTR [r10+r8*1]
+ 113b23d:	xor    r11b,cl
+ 113b240:	movzx  r11d,r11b
+ 113b244:	shr    ecx,0x8
+ 113b247:	xor    ecx,DWORD PTR [r11*4+0x1066f68]
+ 113b24f:	add    r8,0x8
+ 113b253:	cmp    rdx,r8
+ 113b256:	jne    113b190 <platform.crc32.Crc32.update+0x270>
+ 113b25c:	test   r9,r9
+ 113b25f:	je     113b28b <platform.crc32.Crc32.update+0x36b>
+ 113b261:	add    r8,rax
+ 113b264:	add    rsi,r8
+ 113b267:	xor    eax,eax
+ 113b269:	nop    DWORD PTR [rax+0x0]
+ 113b270:	movzx  edx,BYTE PTR [rsi+rax*1]
+ 113b274:	xor    dl,cl
+ 113b276:	movzx  edx,dl
+ 113b279:	shr    ecx,0x8
+ 113b27c:	xor    ecx,DWORD PTR [rdx*4+0x1066f68]
+ 113b283:	inc    rax
+ 113b286:	cmp    r9,rax
+ 113b289:	jne    113b270 <platform.crc32.Crc32.update+0x350>
+ 113b28b:	mov    DWORD PTR [rdi],ecx
+ 113b28d:	pop    rbx
+ 113b28e:	pop    rbp
+ 113b28f:	ret
+ 113b290:	xor    r8d,r8d
+ 113b293:	test   rdx,rdx
+ 113b296:	je     113b3bf <platform.crc32.Crc32.update+0x49f>
+ 113b29c:	mov    ecx,edx
+ 113b29e:	and    ecx,0x7
+ 113b2a1:	cmp    rdx,0x8
+ 113b2a5:	jae    113b2af <platform.crc32.Crc32.update+0x38f>
+ 113b2a7:	xor    r9d,r9d
+ 113b2aa:	jmp    113b38c <platform.crc32.Crc32.update+0x46c>
+ 113b2af:	lea    r10,[rsi+r8*1]
+ 113b2b3:	and    rdx,0xfffffffffffffff8
+ 113b2b7:	add    r10,0x7
+ 113b2bb:	xor    r9d,r9d
+ 113b2be:	xchg   ax,ax
+ 113b2c0:	movzx  r11d,BYTE PTR [r10+r9*1-0x7]
+ 113b2c6:	xor    r11b,al
+ 113b2c9:	movzx  r11d,r11b
+ 113b2cd:	shr    eax,0x8
+ 113b2d0:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b2d8:	movzx  r11d,BYTE PTR [r10+r9*1-0x6]
+ 113b2de:	xor    r11b,al
+ 113b2e1:	movzx  r11d,r11b
+ 113b2e5:	shr    eax,0x8
+ 113b2e8:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b2f0:	movzx  r11d,BYTE PTR [r10+r9*1-0x5]
+ 113b2f6:	xor    r11b,al
+ 113b2f9:	movzx  r11d,r11b
+ 113b2fd:	shr    eax,0x8
+ 113b300:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b308:	movzx  r11d,BYTE PTR [r10+r9*1-0x4]
+ 113b30e:	xor    r11b,al
+ 113b311:	movzx  r11d,r11b
+ 113b315:	shr    eax,0x8
+ 113b318:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b320:	movzx  r11d,BYTE PTR [r10+r9*1-0x3]
+ 113b326:	xor    r11b,al
+ 113b329:	movzx  r11d,r11b
+ 113b32d:	shr    eax,0x8
+ 113b330:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b338:	movzx  r11d,BYTE PTR [r10+r9*1-0x2]
+ 113b33e:	xor    r11b,al
+ 113b341:	movzx  r11d,r11b
+ 113b345:	shr    eax,0x8
+ 113b348:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b350:	movzx  r11d,BYTE PTR [r10+r9*1-0x1]
+ 113b356:	xor    r11b,al
+ 113b359:	movzx  r11d,r11b
+ 113b35d:	shr    eax,0x8
+ 113b360:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b368:	movzx  r11d,BYTE PTR [r10+r9*1]
+ 113b36d:	xor    r11b,al
+ 113b370:	movzx  r11d,r11b
+ 113b374:	shr    eax,0x8
+ 113b377:	xor    eax,DWORD PTR [r11*4+0x1066f68]
+ 113b37f:	add    r9,0x8
+ 113b383:	cmp    rdx,r9
+ 113b386:	jne    113b2c0 <platform.crc32.Crc32.update+0x3a0>
+ 113b38c:	test   rcx,rcx
+ 113b38f:	je     113b3bf <platform.crc32.Crc32.update+0x49f>
+ 113b391:	add    r9,r8
+ 113b394:	add    rsi,r9
+ 113b397:	xor    edx,edx
+ 113b399:	nop    DWORD PTR [rax+0x0]
+ 113b3a0:	movzx  r8d,BYTE PTR [rsi+rdx*1]
+ 113b3a5:	xor    r8b,al
+ 113b3a8:	movzx  r8d,r8b
+ 113b3ac:	shr    eax,0x8
+ 113b3af:	xor    eax,DWORD PTR [r8*4+0x1066f68]
+ 113b3b7:	inc    rdx
+ 113b3ba:	cmp    rcx,rdx
+ 113b3bd:	jne    113b3a0 <platform.crc32.Crc32.update+0x480>
+ 113b3bf:	mov    DWORD PTR [rdi],eax
+ 113b3c1:	pop    rbx
+ 113b3c2:	pop    rbp
+ 113b3c3:	ret

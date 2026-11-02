@@ -92,6 +92,7 @@ test {
     _ = @import("core/admission.zig");
     _ = @import("encoder/escaping.zig");
     _ = @import("platform/crc32.zig");
+    _ = @import("platform/crc32_segment_tests.zig");
     const test_cpu = @import("builtin").cpu;
     if (test_cpu.arch == .x86_64 and
         std.Target.x86.featureSetHas(test_cpu.features, .pclmul) and

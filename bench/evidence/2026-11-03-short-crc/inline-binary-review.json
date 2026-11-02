@@ -1,0 +1,84 @@
+{
+  "scope": "Frozenfirstinline shortCRC, notoutlinedvariant",
+  "Crc32_update": {
+    "bytes": [
+      1412,
+      1620
+    ],
+    "instructions": [
+      310,
+      355
+    ],
+    "static_PCLMUL": [
+      20,
+      26
+    ],
+    "frame_stack_calls": 0,
+    "short_raw_dynamic_PCLMUL": {
+      "16": 4,
+      "32": 6,
+      "48": 8
+    },
+    "seed": "vmovd rawu32+XOR zeroextendedfirst16",
+    "short_bulk": "length&0x30 after<64",
+    "loads": "offsets0/16/32 within16-48bulk",
+    "long_path": "first90instructions and63byte-tail instructions normalizedequal exceptpaddingNOP; no executedmath/control/call/spillchange"
+  },
+  "slotChecksum": {
+    "bytes": [
+      156,
+      650
+    ],
+    "instructions": [
+      48,
+      147
+    ],
+    "frame": [
+      32,
+      16
+    ],
+    "stackrefs": [
+      13,
+      6
+    ],
+    "staticcalls": [
+      3,
+      2
+    ],
+    "after": "v1header4mul+4row0->payloadupdate->NOT;v2header4mul+4row0->ref4mul+8slice->payloadupdate->NOT"
+  },
+  "producer": {
+    "submitSafe_bytes": [
+      5784,
+      5656
+    ],
+    "instructions": [
+      1048,
+      1025
+    ],
+    "frame": 3352,
+    "stackrefs": [
+      372,
+      351
+    ],
+    "staticcalls": [
+      30,
+      28
+    ],
+    "change": "threeCRCsegmentcalls becomeoneexisting slotChecksumcall beforeCRCstore/committedmarker; semantic segments retained"
+  },
+  "other_controls": "validateSlot/peek/drain/fused/JSON/logfmt/text/reference/layout/checkpoint/abort normalizedequal",
+  "all_three_record_checks_preserved": true,
+  "lookup_tables": {
+    "native16slice_branch_retained": true,
+    "CRCupdate_static_refs": 42,
+    "distinct_rows": 16,
+    "all_1KiBrowbytes_equal": true,
+    "slotChecksum_new_refs": 16,
+    "slot_distinct_rows": 8,
+    "source_poly_unchanged": true
+  },
+  "loaded_coefficients_and_seed_bytes_equal": true,
+  "no_new_updateShort_or_reduce_symbol": true,
+  "performance_caveat": "longpathopcodeidentity doesnot exclude newlayout/earliersegmentdependencycost;70lengthcounterexamples invalidatedretention"
+}

@@ -46,6 +46,11 @@ pub fn build(b: *std.Build) void {
     b.step("test-wire-scratch", "Verify fused scratch reuse, errors and exact descriptor budgets").dependOn(&run_wire_scratch.step);
     test_step.dependOn(&run_wire_scratch.step);
 
+    const crc_segment_tests = b.addTest(.{ .name = "kron-crc-segments", .root_module = module, .filters = &.{"CRC segments:"} });
+    const run_crc_segments = b.addRunArtifact(crc_segment_tests);
+    b.step("test-crc-segments", "Verify arbitrary-seed CRC segment boundaries and guard pages").dependOn(&run_crc_segments.step);
+    test_step.dependOn(&run_crc_segments.step);
+
     validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });
