@@ -1,0 +1,58 @@
+{
+  "scope": "Frozen direct4+r CRC-only source and binaries, not restored workspace",
+  "CRC_function_bytes": {
+    "before": 1412,
+    "after": 1840
+  },
+  "CRC_static_instructions_after": 388,
+  "full_stripe_instructions": 20,
+  "full_stripe_CLMUL": 8,
+  "r0_r1_r2_r3_CLMUL": [
+    6,
+    8,
+    10,
+    12
+  ],
+  "lane_register_moves": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "dynamic_CLMUL_total": {
+    "169": 22,
+    "241": 32
+  },
+  "nonzero_weighted_terms": "no folded CLMUL output feeds another term; only singleV2join reduction",
+  "r0_control_constant_cost": "dispatch lea/shr/indirectjump+case-to-reduction directjump+k128reload, net3 non-folddynamic instructions over oldtailfalse test/je",
+  "new_calls_or_stackspill": false,
+  "max_xmm": 8,
+  "uses_ymm": false,
+  "constant_objects": {
+    "original_six_equal": true,
+    "new640_768_matches_source": true,
+    "reference_primitive_equal": true,
+    "table_count": 16,
+    "table_bytes": 16384,
+    "table_bytes_equal": true
+  },
+  "normalized_controls_equal": {
+    "submitSafeDestination": 1048,
+    "slotChecksum": 48,
+    "validateSlot": 154,
+    "peekChecked": 162,
+    "reserve": 126,
+    "schema_reserve": 68,
+    "SPSC_reserve": 133,
+    "drainJournal": 2132
+  },
+  "raw_draining_relocation": "recordDeliveryError function ptr0x10f5820->0x10f5840 only, normalized equal",
+  "three_CRC_checks_preserved": true,
+  "source_isolated_from_divrem": true,
+  "segments_delta": {
+    "text": 416,
+    "rodata": 32
+  },
+  "source_crc_sha256": "eb657be74be00b7bc5a598b08fb354deaaf416346934f57d8db475b6c81ec4e7",
+  "limitation": "R0 static gate failed, no primitive/full workflow trials, no speed benefit or regression claim"
+}

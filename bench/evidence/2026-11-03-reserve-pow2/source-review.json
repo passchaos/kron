@@ -1,0 +1,21 @@
+{
+  "source_correctness_review": "passed, isolatedonly",
+  "pow2_condition": "ZigBitwiseExpr precedesComparison; capacity&mask==0 means(capacity&mask)==0",
+  "coordinates_fields": {
+    "generation": "u64",
+    "index": "usize"
+  },
+  "shift": "u6, legalnonzerocapacity<=max_sequence permitsctz<=61; cap1shift0",
+  "fallback": "samecapturedcapacity division+remainder",
+  "protocol": "SequenceExhaustedprecedescoords, fullretryrecomputes, existingCAS/peak/marker/headerorder preserved",
+  "newtestcapacities": [
+    255,
+    257,
+    512
+  ],
+  "oracle": "same independentincrement slot/gen after seed and commitpayload+reservedheader+checkedrecords",
+  "overflow_and_pointer_boundaries": "fixturemaximumrounds1541; nextturns<=max_sequence+511, farbelowu64max",
+  "production_workspace_changed": false,
+  "compile_test_benchmark_by_reviewer": false,
+  "limitation": "sourcepropermath doesnot ruleout PHI/spill/ctz/codegen cost"
+}

@@ -31,6 +31,11 @@ pub fn build(b: *std.Build) void {
     b.step("test-admission-lifecycle", "Verify TLS owner reuse, release callback nesting and thread isolation").dependOn(&run_admission_lifecycle.step);
     test_step.dependOn(&run_admission_lifecycle.step);
 
+    const journal_coordinate_tests = b.addTest(.{ .name = "kron-journal-coordinates", .root_module = module, .filters = &.{ "reserve coordinates", "checksum valid generation" } });
+    const run_journal_coordinates = b.addRunArtifact(journal_coordinate_tests);
+    b.step("test-journal-coordinates", "Verify full width shared/SPSC ring coordinates and generation corruption evidence").dependOn(&run_journal_coordinates.step);
+    test_step.dependOn(&run_journal_coordinates.step);
+
     validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });

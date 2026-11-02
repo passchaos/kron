@@ -1,0 +1,139 @@
+{
+  "status": "rejected",
+  "reports": {
+    "ecore-workflow": {
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 14,
+          "kron_leads": 1,
+          "peer_leads": 1
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 16
+        },
+        "p50_ns": {
+          "inconclusive": 8
+        },
+        "p999_ns": {
+          "inconclusive": 7,
+          "kron_leads": 1
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "pcore-workflow": {
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 16
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 16
+        },
+        "p50_ns": {
+          "inconclusive": 8
+        },
+        "p999_ns": {
+          "inconclusive": 8
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "ecore-pmu": {
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 4
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 4
+        },
+        "p50_ns": {},
+        "p999_ns": {},
+        "instructions": {
+          "inconclusive": 1,
+          "kron_leads": 3
+        },
+        "cycles": {
+          "kron_leads": 1,
+          "inconclusive": 3
+        }
+      }
+    },
+    "schema-ecore": {
+      "trials": 80,
+      "physical_records_verified": 8080000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 8
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 8
+        },
+        "p50_ns": {
+          "peer_leads": 1,
+          "inconclusive": 3
+        },
+        "p999_ns": {
+          "inconclusive": 4
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "spsc-control-long": {
+      "trials": 10,
+      "physical_records_verified": 10010000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 1
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 1
+        },
+        "p50_ns": {
+          "peer_leads": 1
+        },
+        "p999_ns": {
+          "inconclusive": 1
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "shared-long": {
+      "trials": 80,
+      "physical_records_verified": 80080000,
+      "counts": {
+        "written_records_per_sec": {
+          "inconclusive": 8
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 8
+        },
+        "p50_ns": {
+          "inconclusive": 4
+        },
+        "p999_ns": {
+          "inconclusive": 4
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    }
+  },
+  "trials": 530,
+  "physical_records_verified": 134530000,
+  "reason": "Shared long complete workflow noqualified throughput/lifecycle win; short limitedwin not longvalidated, SPSC longp50 baselinelead retained. LessDIV and0.1percent instructions insufficient to establishretention.",
+  "production_journal_restored": true,
+  "original_source_sha256": "6005c4d0179f8fc30480673fa0c609a3aa818de2d6e25c3f8cfc1aa18ca7d75f",
+  "retained_regression": "shared reserve coordinate test only",
+  "next_candidate": "poweroftwo capture branch independently compared to original4e35989, not faileddivrembaseline",
+  "Foundation_target_met": false
+}

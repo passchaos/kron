@@ -1,0 +1,51 @@
+{
+  "scope": "Frozen cachedproducer-only isolatedsource/reference/queue",
+  "Journal_size": 768,
+  "Journal_alignment": 64,
+  "CoordinateMode_size": 2,
+  "CoordinateMode_alignment": 1,
+  "optional_shift_size": 2,
+  "optional_shift_alignment": 1,
+  "field_offsets": {
+    "coordinate_shift": 764,
+    "coordinate_presence": 765,
+    "verify_crc": 766,
+    "producer_mode": 767
+  },
+  "other_offsets_unchanged": true,
+  "cold_init": {
+    "BLSR": "0x10848f9",
+    "TZCNT": "0x1084900",
+    "mode_store": "0x1084925 Journal+764",
+    "Someencoding": "shift|0x100",
+    "Noneencoding": 0,
+    "allocator_bytes": 768,
+    "allocator_alignment": 64,
+    "calls": 73,
+    "extra_static_instructions": 15,
+    "fresh_and_reopen_common": true
+  },
+  "hotreserve": {
+    "bytes": 583,
+    "static_instructions": 128,
+    "presencecmp": "0x10fb647 Journal+765",
+    "shiftload": "0x10fb650 Journal+764",
+    "has_BLSR_or_TZCNT": false,
+    "pow2_DIV": 0,
+    "nonpow_DIV": 1,
+    "fallback64": "0x10fb691",
+    "fallback32": "0x10fb6b1",
+    "quotient": "R8",
+    "index": "RDX",
+    "new_spill_call_frame": false
+  },
+  "controls": "SPSC/schema/validator/slotChecksum/peek/submitSafe normalized equal afterknownfields, addressandanonbytes relocation; notbyteidentity",
+  "drain": "only recordDeliveryError pointer+64 besidesknownfieldrelocs, size/frame/calls equal, no newspill",
+  "CRC": {
+    "instructions": 310,
+    "VEX_PCLMUL": 20,
+    "tables_bytes": 16384,
+    "tables_equal": true
+  },
+  "limitations": "coldcostandpublicfieldpositionschanged, sizesamealoneisnotspeedproof; sourcecorrectness doesnot overrideactualnegative"
+}

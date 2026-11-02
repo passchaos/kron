@@ -1,0 +1,198 @@
+
+.zig-cache/journal-cached-coordinates/after-reference:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000001081f00 <journal.journal.Journal.validateSlot>:
+ 1081f00:	push   rbp
+ 1081f01:	mov    rbp,rsp
+ 1081f04:	push   r15
+ 1081f06:	push   r14
+ 1081f08:	push   r13
+ 1081f0a:	push   r12
+ 1081f0c:	push   rbx
+ 1081f0d:	sub    rsp,0x78
+ 1081f11:	mov    r14,QWORD PTR [rsi+0x1a0]
+ 1081f18:	mov    r9,QWORD PTR [rsi+0x200]
+ 1081f1f:	imul   r9,rdx
+ 1081f23:	mov    r13,QWORD PTR [r14+r9*1+0x1008]
+ 1081f2b:	movabs rax,0xc000000000000000
+ 1081f35:	lea    r8,[rax+r13*1]
+ 1081f39:	inc    rax
+ 1081f3c:	cmp    r8,rax
+ 1081f3f:	jb     10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081f45:	lea    rax,[r13*4+0x2]
+ 1081f4d:	cmp    rcx,rax
+ 1081f50:	jne    10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081f56:	mov    r15,QWORD PTR [r14+r9*1+0x1010]
+ 1081f5e:	mov    ebx,DWORD PTR [r14+r9*1+0x1018]
+ 1081f66:	lea    r8,[r13-0x1]
+ 1081f6a:	mov    rcx,QWORD PTR [rsi+0x1f0]
+ 1081f71:	cmp    BYTE PTR [rsi+0x2fd],0x0
+ 1081f78:	je     1081f96 <journal.journal.Journal.validateSlot+0x96>
+ 1081f7a:	movzx  eax,BYTE PTR [rsi+0x2fc]
+ 1081f81:	shrx   rax,r8,rax
+ 1081f86:	dec    rcx
+ 1081f89:	and    rcx,r8
+ 1081f8c:	cmp    rcx,rdx
+ 1081f8f:	je     1081fd2 <journal.journal.Journal.validateSlot+0xd2>
+ 1081f91:	jmp    10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081f96:	mov    r10,rdx
+ 1081f99:	mov    rax,r8
+ 1081f9c:	or     rax,rcx
+ 1081f9f:	shr    rax,0x20
+ 1081fa3:	je     1081fbd <journal.journal.Journal.validateSlot+0xbd>
+ 1081fa5:	mov    rax,r8
+ 1081fa8:	xor    edx,edx
+ 1081faa:	div    rcx
+ 1081fad:	mov    rcx,rdx
+ 1081fb0:	mov    rdx,r10
+ 1081fb3:	cmp    rcx,rdx
+ 1081fb6:	je     1081fd2 <journal.journal.Journal.validateSlot+0xd2>
+ 1081fb8:	jmp    10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081fbd:	mov    eax,r8d
+ 1081fc0:	xor    edx,edx
+ 1081fc2:	div    ecx
+ 1081fc4:	mov    ecx,edx
+ 1081fc6:	mov    rdx,r10
+ 1081fc9:	cmp    rcx,rdx
+ 1081fcc:	jne    10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081fd2:	inc    rax
+ 1081fd5:	cmp    r15,rax
+ 1081fd8:	jne    10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081fde:	cmp    QWORD PTR [rsi+0x1f8],rbx
+ 1081fe5:	jb     10820b8 <journal.journal.Journal.validateSlot+0x1b8>
+ 1081feb:	add    r14,r9
+ 1081fee:	lea    rax,[r14+0x1040]
+ 1081ff5:	mov    QWORD PTR [rbp-0x50],rax
+ 1081ff9:	cmp    BYTE PTR [rsi+0x2fe],0x1
+ 1082000:	jne    10820f0 <journal.journal.Journal.validateSlot+0x1f0>
+ 1082006:	mov    QWORD PTR [rbp-0x80],rdx
+ 108200a:	mov    QWORD PTR [rbp-0x48],rdi
+ 108200e:	mov    eax,DWORD PTR [r14+0x101c]
+ 1082015:	mov    DWORD PTR [rbp-0x54],eax
+ 1082018:	mov    QWORD PTR [rbp-0x40],rsi
+ 108201c:	cmp    DWORD PTR [rsi+0x2f0],0x1
+ 1082023:	jne    1082049 <journal.journal.Journal.validateSlot+0x149>
+ 1082025:	mov    QWORD PTR [rbp-0x68],r13
+ 1082029:	mov    QWORD PTR [rbp-0x60],r15
+ 108202d:	mov    DWORD PTR [rbp-0x58],ebx
+ 1082030:	mov    DWORD PTR [rbp-0x2c],0xffffffff
+ 1082037:	lea    r12,[rbp-0x2c]
+ 108203b:	lea    rsi,[rbp-0x68]
+ 108203f:	mov    edx,0x14
+ 1082044:	mov    rdi,r12
+ 1082047:	jmp    108208d <journal.journal.Journal.validateSlot+0x18d>
+ 1082049:	lea    rax,[r14+0x1020]
+ 1082050:	mov    QWORD PTR [rbp-0x88],rax
+ 1082057:	mov    QWORD PTR [rbp-0x68],r13
+ 108205b:	mov    QWORD PTR [rbp-0x60],r15
+ 108205f:	mov    DWORD PTR [rbp-0x58],ebx
+ 1082062:	mov    DWORD PTR [rbp-0x2c],0xffffffff
+ 1082069:	lea    r12,[rbp-0x2c]
+ 108206d:	lea    rsi,[rbp-0x68]
+ 1082071:	mov    edx,0x14
+ 1082076:	mov    rdi,r12
+ 1082079:	call   113ce60 <platform.crc32.Crc32.update>
+ 108207e:	mov    edx,0x18
+ 1082083:	mov    rdi,r12
+ 1082086:	mov    rsi,QWORD PTR [rbp-0x88]
+ 108208d:	call   113ce60 <platform.crc32.Crc32.update>
+ 1082092:	mov    rdi,r12
+ 1082095:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1082099:	mov    rdx,rbx
+ 108209c:	call   113ce60 <platform.crc32.Crc32.update>
+ 10820a1:	mov    eax,DWORD PTR [rbp-0x2c]
+ 10820a4:	xor    eax,DWORD PTR [rbp-0x54]
+ 10820a7:	cmp    eax,0xffffffff
+ 10820aa:	mov    rdi,QWORD PTR [rbp-0x48]
+ 10820ae:	mov    rdx,QWORD PTR [rbp-0x80]
+ 10820b2:	mov    rsi,QWORD PTR [rbp-0x40]
+ 10820b6:	je     10820f0 <journal.journal.Journal.validateSlot+0x1f0>
+ 10820b8:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffffdaed8]        # 105cf98 <__anon_6074+0x30>
+ 10820c0:	vmovups YMMWORD PTR [rdi+0x30],ymm0
+ 10820c5:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffffdaebb]        # 105cf88 <__anon_6074+0x20>
+ 10820cd:	vmovups YMMWORD PTR [rdi+0x20],ymm0
+ 10820d2:	vmovdqu ymm0,YMMWORD PTR [rip+0xfffffffffffdae8e]        # 105cf68 <__anon_6074>
+ 10820da:	vmovdqu YMMWORD PTR [rdi],ymm0
+ 10820de:	add    rsp,0x78
+ 10820e2:	pop    rbx
+ 10820e3:	pop    r12
+ 10820e5:	pop    r13
+ 10820e7:	pop    r14
+ 10820e9:	pop    r15
+ 10820eb:	pop    rbp
+ 10820ec:	vzeroupper
+ 10820ef:	ret
+ 10820f0:	cmp    DWORD PTR [rsi+0x2f0],0x1
+ 10820f7:	jne    108215c <journal.journal.Journal.validateSlot+0x25c>
+ 10820f9:	mov    BYTE PTR [rbp-0x32],0x0
+ 10820fd:	mov    WORD PTR [rbp-0x34],0x0
+ 1082103:	mov    WORD PTR [rbp-0x30],0x0
+ 1082109:	mov    BYTE PTR [rbp-0x2e],0x0
+ 108210d:	vpxor  xmm0,xmm0,xmm0
+ 1082111:	xor    ecx,ecx
+ 1082113:	xor    esi,esi
+ 1082115:	xor    r12d,r12d
+ 1082118:	mov    WORD PTR [rdi+0x48],0x0
+ 108211e:	mov    QWORD PTR [rdi],r13
+ 1082121:	mov    QWORD PTR [rdi+0x8],r15
+ 1082125:	mov    rax,QWORD PTR [rbp-0x50]
+ 1082129:	mov    QWORD PTR [rdi+0x10],rax
+ 108212d:	mov    QWORD PTR [rdi+0x18],rbx
+ 1082131:	mov    QWORD PTR [rdi+0x20],rdx
+ 1082135:	mov    DWORD PTR [rdi+0x28],r12d
+ 1082139:	mov    WORD PTR [rdi+0x2c],si
+ 108213d:	vmovdqu XMMWORD PTR [rdi+0x2e],xmm0
+ 1082142:	mov    WORD PTR [rdi+0x3e],0x0
+ 1082148:	mov    BYTE PTR [rdi+0x40],cl
+ 108214b:	movzx  eax,WORD PTR [rbp-0x30]
+ 108214f:	mov    WORD PTR [rdi+0x41],ax
+ 1082153:	movzx  eax,BYTE PTR [rbp-0x2e]
+ 1082157:	mov    BYTE PTR [rdi+0x43],al
+ 108215a:	jmp    10820de <journal.journal.Journal.validateSlot+0x1de>
+ 108215c:	cmp    WORD PTR [r14+0x1026],0x0
+ 1082165:	je     1082172 <journal.journal.Journal.validateSlot+0x272>
+ 1082167:	mov    WORD PTR [rdi+0x48],0x8f
+ 108216d:	jmp    10820de <journal.journal.Journal.validateSlot+0x1de>
+ 1082172:	mov    r12d,DWORD PTR [r14+0x1020]
+ 1082179:	movzx  ecx,WORD PTR [r14+0x1024]
+ 1082181:	vmovdqu xmm1,XMMWORD PTR [r14+0x1028]
+ 108218a:	test   r12d,r12d
+ 108218d:	je     10821f2 <journal.journal.Journal.validateSlot+0x2f2>
+ 108218f:	mov    DWORD PTR [rbp-0xa0],r12d
+ 1082196:	mov    WORD PTR [rbp-0x9c],cx
+ 108219d:	vmovdqu XMMWORD PTR [rbp-0x9a],xmm1
+ 10821a5:	cmp    BYTE PTR [rsi+0x288],0x0
+ 10821ac:	je     108221e <journal.journal.Journal.validateSlot+0x31e>
+ 10821ae:	add    rsi,0x208
+ 10821b5:	lea    rax,[rbp-0xa0]
+ 10821bc:	mov    QWORD PTR [rbp-0x48],rdi
+ 10821c0:	mov    rdi,rsi
+ 10821c3:	mov    rsi,rax
+ 10821c6:	mov    r14,rdx
+ 10821c9:	vmovdqa XMMWORD PTR [rbp-0x80],xmm1
+ 10821ce:	mov    DWORD PTR [rbp-0x40],ecx
+ 10821d1:	call   1132570 <journal.schema.Registry.validateReady>
+ 10821d6:	mov    esi,DWORD PTR [rbp-0x40]
+ 10821d9:	vmovdqa xmm0,XMMWORD PTR [rbp-0x80]
+ 10821de:	mov    rdx,r14
+ 10821e1:	mov    rdi,QWORD PTR [rbp-0x48]
+ 10821e5:	mov    cl,0x1
+ 10821e7:	test   ax,ax
+ 10821ea:	je     1082118 <journal.journal.Journal.validateSlot+0x218>
+ 10821f0:	jmp    1082222 <journal.journal.Journal.validateSlot+0x322>
+ 10821f2:	test   cx,cx
+ 10821f5:	jne    1082167 <journal.journal.Journal.validateSlot+0x267>
+ 10821fb:	vpshufd xmm0,xmm1,0xee
+ 1082200:	vpor   xmm0,xmm1,xmm0
+ 1082204:	vpshufd xmm1,xmm0,0x55
+ 1082209:	vpor   xmm0,xmm0,xmm1
+ 108220d:	vmovd  eax,xmm0
+ 1082211:	test   eax,eax
+ 1082213:	je     10820f9 <journal.journal.Journal.validateSlot+0x1f9>
+ 1082219:	jmp    1082167 <journal.journal.Journal.validateSlot+0x267>
+ 108221e:	mov    ax,0x90
+ 1082222:	mov    WORD PTR [rdi+0x48],ax
+ 1082226:	jmp    10820de <journal.journal.Journal.validateSlot+0x1de>

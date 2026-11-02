@@ -1,0 +1,11 @@
+# Journal 缓存容量坐标实验
+
+当前独立候选，baseline原4e35989，不继承所有已拒producer-only百分比。统一利用经layout验证且immutable的capacity缓存optionalshift，pow2坐标index/mask、gen/shift、nextTurn整圈base；fallback任意cap保留/%及divremfusion。
+
+覆盖shared/SPSCproducer及consumerselector、actualsequence validator、reclaimnextturn和recoveryindex；绝不删CRC、长度/schema readiness、marker/head/turn、Record借用和独立actualseq/gen校验，不用oldrecord凭证跳过回收前检查。保持64-bit整数范围/容量预算、无新Journal字段（沿用2Bmode）、所有error/lease/pin/barrier/written/ack顺序。
+
+前序producercache正确但preparedMmapP4吞吐有稳定negative而撤回；此方案仅减少current5DIV consumer与更多producer真实坐标cost，必须独立测。所有源码/原始test/binary/CRC检查/静态spill/图形域/hash/正负窗口保留，sourcecorrectness不替代性能。
+
+现8cap1/2/3/7/255/256/257/512×0/2^32/max×shared/single/abort真实环回与独立incrementoracle，另checksum-valid actualgeneration错误仍CorruptRecord、旧capturedrelease仍重查且不回收；相同tests需先在原baseline执行。allcompile/testend后才独立queue控制/完整JSON标准测量，selectedbitshifts不当完整Foundationranking。
+
+最终原variant不保留：queue两topology800rawbatch全部checksum/pending核验，Ecore8组不确定且arbitrary负向中位，Pcore4组pow不确定、4组nonpow3/7/255/257稳定基线领先约0.918–0.922。未开展任何完整日志workflow，不把queue单位当物理JSON。actualvalidator从636→811B，slotChecksum被inline到validator，CRC局部stack/frame从0x58→0x78增加32B，call2→4；这是真实边界成本，不能以5DIV→0推收益。冻结source/bin/archive/两队列negative保持，后续明确保留原slotChecksumboundary的新variant需独立验证。

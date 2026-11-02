@@ -1,0 +1,101 @@
+{
+  "scope": "Firstwholecoordinatevariant, frozenisolatedsource, not followingcall-boundaryvariant",
+  "dynamic_DIV": {
+    "shared_reserve_before": 2,
+    "shared_reserve_after_pow2": 0,
+    "shared_reserve_after_nonpow": 1,
+    "single_reserve_before": 2,
+    "single_reserve_after_pow2": 0,
+    "single_reserve_after_nonpow": 2,
+    "commit_before": 1,
+    "commit_after_pow2": 0,
+    "commit_after_nonpow": 1,
+    "consumer_before": 5,
+    "consumer_after_pow2": 0,
+    "consumer_after_nonpow": 5,
+    "queue_nonpow_before": 8,
+    "queue_nonpow_after": 7
+  },
+  "functions": {
+    "reserve": {
+      "bytes": [
+        546,
+        583
+      ],
+      "instructions": [
+        126,
+        128
+      ]
+    },
+    "SPSCreserve": {
+      "bytes": [
+        574,
+        617
+      ],
+      "instructions": [
+        133,
+        144
+      ]
+    },
+    "validateSlot": {
+      "bytes": [
+        636,
+        811
+      ],
+      "instructions": [
+        154,
+        191
+      ],
+      "own_frame": [
+        88,
+        120
+      ],
+      "static_stack_references": [
+        26,
+        42
+      ],
+      "directcalls": [
+        2,
+        4
+      ],
+      "cause": "slotChecksumwasinlined, now3CRCupdate+readyvsprior1slotChecksum+ready"
+    },
+    "peekChecked": {
+      "bytes": [
+        744,
+        782
+      ],
+      "frame": 168
+    },
+    "drainJournal": {
+      "bytes": [
+        11132,
+        11164
+      ],
+      "frame": 40488
+    },
+    "submitSafeDestination": {
+      "bytes": [
+        5784,
+        5809
+      ],
+      "frame": 3352
+    }
+  },
+  "arbitrary_capacity_new_mode_checks": "roughly7pernormalsharedqueue/8pernormalSPSC, sameDIVcounts exceptsharedreservefusion",
+  "Journal_bytes": 768,
+  "alignment": 64,
+  "cache_offsets": [
+    764,
+    765
+  ],
+  "verify_mode_offsets": [
+    766,
+    767
+  ],
+  "inlinehelpers_no_new_calls": true,
+  "new_reserve_SPSC_spill": false,
+  "original_protocol": "actualseq/marker then slot/gen/length thenCRC/schema, releasecheckedpeek retained, currenttailnextturn/order retained",
+  "CRC": "310instruction20VEX16KiBtablesame",
+  "limitation": "ownerframegrowthdoesnot proveoveralltransitivestackgrowth; fewerDIVnotperformanceproof; nonpow4stablequeuecounterexamples"
+}

@@ -1,0 +1,12 @@
+{
+  "affected_capture": "shared-long",
+  "main_build_and_functional_test_overlap": false,
+  "lightweight_preparation_commands_during_capture": [
+    "zig fmt --check for isolated pow2 source and queue probe",
+    "python3 -m py_compile for queue-control Python driver"
+  ],
+  "command_scope": "format/syntax checks only; no candidate Zig compiler/codegen, executable test or second benchmark",
+  "potential_disturbance": "very short preparation may affect scheduling; preserve window scope and all raw data, do not suppress negative results",
+  "next_candidate_build_and_test": "wait until current long workflow process exits",
+  "qualification": "do not reinterpret unchanged source controls or short validation as proof of no timing disturbance"
+}

@@ -1,0 +1,55 @@
+{
+  "scope": "18 bounded owningSPSC/callers checked; normalized instructions, callseq, stack accesses andsizes unchanged",
+  "symbols": [
+    "beginThread",
+    "endThread",
+    "threadSnapshot",
+    "threadFilterDecision",
+    "enterThreadAdmission",
+    "ThreadOwner.begin",
+    "ThreadOwner.submit",
+    "ThreadOwner.releaseChannel",
+    "Clock.realDefault",
+    "Crc32.update",
+    "encodeSized",
+    "submitDestination",
+    "submitSafeDestination",
+    "Worker.emit SPSC",
+    "Worker.emit prepared",
+    "Worker.emit managed",
+    "Owner.submitOne",
+    "Owner.endOne"
+  ],
+  "Clock_realNow": "no separate symbol; inline callingWorker andindirectcallback sequenceequal, realDefault103B/25instructions",
+  "common_entry_shift_bytes": -32,
+  "examples": {
+    "ThreadOwner.begin": {
+      "before": "0x1112000",
+      "after": "0x1111fe0",
+      "page_offsets": [
+        0,
+        4064
+      ],
+      "cacheline_offsets": [
+        0,
+        32
+      ]
+    },
+    "beginThread/threadSnapshot/CRC": {
+      "cacheline_offsets": [
+        16,
+        48
+      ]
+    },
+    "SPSCWorker.emit": {
+      "cacheline_offsets": [
+        48,
+        16
+      ]
+    }
+  },
+  "new_spill_or_caller_schedule": false,
+  "observed_long_p50": "candidateabout+4.7%, fivepairedroundscandidateslower; retainedcounterexample",
+  "causality": "layoutchanged, but static proofdoesnot showlayout causedlatency; identical codecannot invalidateactualnegative",
+  "benchmark_or_compile_by_reviewer": false
+}

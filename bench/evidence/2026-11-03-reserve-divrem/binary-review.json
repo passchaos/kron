@@ -1,0 +1,42 @@
+{
+  "scope": "frozen divrem-only native executable",
+  "reserve_bytes": [
+    546,
+    519
+  ],
+  "reserve_instructions": [
+    126,
+    114
+  ],
+  "dynamic_success_DIV": [
+    2,
+    1
+  ],
+  "after_DIV": {
+    "u64": "0x10fb618 div r9",
+    "u32": "0x10fb634 div r9d"
+  },
+  "quotient": "0x10fb660 RAX->r10, CAS0x10fb66a, success inc r10 0x10fb6d1, generationstore0x10fb745",
+  "remainder": "RDX slot survives until return",
+  "retry": "failed CAS updatesposition0x10fb67d and jmp0x10fb5f7 rerange+divrem; turn retries also recompute",
+  "publish_order": [
+    "reserved marker0x10fb735",
+    "sequence0x10fb73d",
+    "generation0x10fb745"
+  ],
+  "stack": "no newframe/call/spill; original CAS booleanstack writes rbp-8/-16 remain",
+  "Journal_bytes": 768,
+  "field_offsets_equal": true,
+  "normalized_controls_equal": [
+    "schema wrapper",
+    "SPSC reserve",
+    "validateSlot",
+    "slotChecksum",
+    "peekChecked",
+    "CRC update",
+    "submitSafeDestination"
+  ],
+  "CRC_tables_and_loaded_const_bytes_equal": true,
+  "commit_consumer_generation_independent": true,
+  "limitations": "Reduced DIV/static instructions do not prove throughput; original clock/CRC/budgets unchanged and SPSC is source control"
+}

@@ -12,6 +12,7 @@
 | 字段/context/对象适配 | `test-field-keys`、`test-capture`、`test-adapter`、`test-redaction-paths`、`test-compile-fail` |
 | 内部提交参数与调用者快照 | `test-submission-snapshot`、`test-capture`、`test-redaction-paths`、prepared/binding 重点回归 |
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
+| Journal槽位/generation坐标 | `test-journal-coordinates`；共享/SPSC八容量、完整序号/环回与有效CRC错误generation保留证据 |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
 | TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
 | CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |

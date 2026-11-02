@@ -1,0 +1,24 @@
+{
+  "status": "rejected_at_static_gate",
+  "candidate": "direct4+r single weighted collapse",
+  "native_oracle_passed": {
+    "Debug": 9,
+    "ReleaseSafe": 9,
+    "ReleaseFast": 9,
+    "legacy_SSE_Safe": 9,
+    "generic_Safe": {
+      "passed": 3,
+      "native_only_skip": 1
+    }
+  },
+  "source_and_binaries_preserved": true,
+  "production_restored_to_head": true,
+  "benchmark_trials": 0,
+  "physical_records_verified": 0,
+  "reason": "R0 adds three dynamic non-fold instructions including indirect dispatch/common k128 reload, despite no lane moves and original20-instruction full stripe. Pre-set r0 static cost gate failed; no runtime speed claim.",
+  "reference_bytes": {
+    "before": 1412,
+    "candidate": 1840
+  },
+  "goal_status": "active; Foundation target not achieved"
+}

@@ -8,6 +8,10 @@ TLS 失效槽位清理和紧凑 Frame 两种候选均因完整流程回退撤回
 
 CRC 16B 余块延续的无条件分派、零余块守卫和块终点循环三个候选均撤回。双拓扑 54 长度/两种 header 形状共 32400 个计时批次全部 checksum 一致，但各版都有 E-core 控制回退；循环少指令或 241B 局部收益未构成保留资格。新增独立 bitwise/GF2 消息与 seed 基向量、任意 seed/对齐及 45 个 zlib 固定向量回归；完整原始正负和测试发现修正见 [CRC 余块报告](bench/evidence/2026-11-03-crc-partial-lanes/README.md)。生产保持原 CRC、三个检查点与恢复格式，未更新 Foundation 排名。
 
+直接加权折叠 CRC 余块的候选通过独立数学与目标验证，但零余块实际增加分派和常量读取成本，未过预设静态门槛，已撤回且未开展性能试验；证据见 [直接折叠报告](bench/evidence/2026-11-03-crc-direct-partial/README.md)。共享预留商/余数复用虽将成功路径两次 DIV 降为一次，530 项完整对照核验 1.3453 亿条 JSON 后，长流程未取得稳定收益，SPSC p50 控制有负向，生产候选同样撤回；坐标边界回归与全部结果见 [预留除法报告](bench/evidence/2026-11-03-reserve-divrem/README.md)。后续二次幂候选的决定单独记录，不叠加这些结果的速度比。
+
+后续二次幂预留、创建时缓存及完整 Journal 坐标候选也已撤回：前两者虽有局部指令/延迟收益，完整流程仍有吞吐或 schema 控制负向；完整坐标虽消除默认消费者五次 DIV，任意容量出现回退，保持原 CRC 调用边界后仍无收益资格。生产保持原 Journal 数学，新增 `test-journal-coordinates` 验证共享/SPSC 八容量环回、跨 2³²/序号上限以及 CRC 有效但 generation 错误的拒绝和证据保留。全部源码与正负见 [二次幂](bench/evidence/2026-11-03-reserve-pow2/README.md)、[缓存预留](bench/evidence/2026-11-03-reserve-cached-pow2/README.md)、[完整坐标](bench/evidence/2026-11-03-journal-cached-coordinates/README.md) 和 [调用边界](bench/evidence/2026-11-03-journal-coordinate-call/README.md)。Foundation 目标仍未达成。
+
 默认时钟回调与内部 inline 两个优化候选因完整流程负向撤回，生产继续原 std.Io 注入路径。960项对照核对9696万完整JSON，减少调用和 Io 复制未证明整体收益；保留回调切换、Io 参数快照、纳秒边界与调用时点回归。完整反例见[clock报告](bench/evidence/2026-11-03-default-clock/README.md)，未更新 Foundation 排名。
 
 共享 written 游标现在以 release RMW 发布进度，配合 `writtenTarget()` 的 acquire 读取提供明确的写入可见性；原最大值算法、CRC、恢复和队列预算保持。两种普通 store 性能候选因完整流程回退撤回，880项对照核对8888万JSON，未更新跨库排名。新公共测试覆盖实时游标、失败前缀和 join 前发布观察，详见[written报告](bench/evidence/2026-11-03-written-store/README.md)。
