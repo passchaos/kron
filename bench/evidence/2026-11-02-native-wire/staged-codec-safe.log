@@ -1,0 +1,70 @@
+1/69 root.test_0...OK
+2/69 logging.root.test_0...OK
+3/69 encoder.root.test_0...OK
+4/69 encoder.root.test_1...OK
+5/69 core.runtime.test_0...OK
+6/69 config.routes.test_0...OK
+7/69 sink.rolling_file.test_0...OK
+8/69 pipeline.flight_recorder.test.flight recorder captured codec frame contains no original secret...OK
+9/69 core.codec.test_0...OK
+10/69 core.schema_codec.test.reference v5 native range integers preserve frozen payload and schema bytes...OK
+11/69 core.schema_codec.test.referenced event omits static metadata and survives copied schema plus values...OK
+12/69 core.schema_codec.test.ordinary dynamic message and optional typed metadata roundtrip...OK
+13/69 core.schema_codec.test.reference codec rejects malformed lengths counts tags and wrong versions...OK
+14/69 core.schema_codec.test.reference values retain integer extremes float bits bytes and time wrappers...OK
+15/69 core.schema_codec.test.nested references keep one schema while values sizes and nested keys change...OK
+16/69 core.schema_codec.test.schema metadata and reference encoding reject invalid nested values...OK
+17/69 core.schema_codec.test.historical schema payload v2 reads scalar definitions with zero route generation...OK
+18/69 core.schema_codec.test.reference size and encoding validate each node once and count only payload keys...OK
+19/69 core.schema_codec.test.reference single-pass validation preserves shared node depth and duplicate budgets...OK
+20/69 core.schema_codec.test.reference length overflow follows tree shape and level errors with zero output...OK
+21/69 journal.journal.test_0...OK
+22/69 journal.spsc.test_0...OK
+23/69 time.root.test_0...OK
+24/69 platform.static_clock.test.static clocks keep explicit injection and native capability separate...OK
+25/69 platform.tsc_clock.test.native wall fallback preserves backward wall-clock adjustments...OK
+26/69 core.wire_write.test.native integer wire boundaries use explicit little endian bytes and preserve wide wrappers...OK
+27/69 core.wire_write.test.native integer wire preserves recursive modes and short slice and stream prefixes...OK
+28/69 core.wire_size.test.native integer wire size matches independent boundary lengths...OK
+29/69 core.wire_size.test.native integer wire size preserves nested keys positional arguments and shared node budget...OK
+30/69 core.wire_size.test.bounded length arithmetic agrees with exact wide sums at wire limits and native extremes...OK
+31/69 core.tests.codec.test.wire measurement rejects logical oversized slices only after full tree validation...OK
+32/69 core.tests.codec.test.public value writer still validates invalid nested input before output...OK
+33/69 core.tests.codec.test.codec roundtrip copies all metadata and values without source pointers...OK
+34/69 core.tests.codec.test.codec deferred arguments are copied after attributes and never contain secret values...OK
+35/69 core.tests.codec.test.codec rejects every truncated prefix, unknown version and malformed lengths...OK
+36/69 core.tests.codec.test.codec validates boolean, tag, duplicate keys and bounded output...OK
+37/69 core.tests.codec.test.codec v6 wire golden preserves independent historical v4 header bytes...OK
+38/69 core.tests.codec.test.codec route fingerprint spans the appended header and both output paths...OK
+39/69 core.tests.codec.test.codec rejects corrupt source string terminators and reserved header bits...OK
+40/69 core.tests.codec.test.codec single byte corruption cannot bypass bounds validation...OK
+41/69 core.tests.codec.test.codec preserves float bits in an unaligned payload...OK
+42/69 core.tests.codec.test.historical self-contained v1 68-byte fixture decodes and reencodes as v6...OK
+43/69 core.tests.codec.test.legacy header offsets preserve source trace and deferred arguments...OK
+44/69 core.tests.codec.test.standalone decoder rejects v2 references and unversioned extended v1 headers...OK
+45/69 core.tests.codec.test.nested wire copies source bytes and descriptors into caller scratch only...OK
+46/69 core.tests.codec.test.nested input rejects cycles depth nodes and duplicate group keys before writing...OK
+47/69 core.tests.codec.test.size overflow retains complete validation priority and never touches output...OK
+48/69 core.tests.codec.test.admission measurement skips level validation and sized writes stay byte-identical...OK
+49/69 core.tests.codec.test.size encode and streaming visit values once while preserving all scalar and nested wire sizes...OK
+50/69 core.tests.codec.test.nested decoder rejects malformed child counts depth keys and legacy tags...OK
+51/69 core.tests.codec.test.historical v3 header migrates route generation and preserves scalar body...OK
+52/69 core.tests.codec.test.full node budget fits fixed scratch for the largest group descriptor layout...OK
+53/69 core.tests.codec.test.wire typed visitor rejects damaged values before invoking its receiver...OK
+54/69 core.tests.codec.test_0...OK
+55/69 core.tests.codec_native.test.native codec frozen v4 fixtures retain old bytes and migrate complete values and JSON...OK
+56/69 core.tests.codec_native.test.native codec five u64 fields save forty bytes with identical public values and JSON...OK
+57/69 core.tests.codec_native.test.native codec integer edges are little endian unaligned bounded and preserve signedness...OK
+58/69 core.tests.codec_native.test.native codec typed callbacks remain canonical and reject partial or noncanonical values...OK
+59/69 core.tests.codec_native.test.native codec old inline versions reject native tags before payload and unknown versions remain errors...OK
+60/69 core.tests.codec_native.test.native codec aggregate callback waits for complete children and retains duplicate error order...OK
+61/69 core.tests.codec_native.test.native codec shared node and depth budgets precede later malformed values without output...OK
+62/69 core.tests.codec_native.test.native codec both encoders retain public level first and admission tree first error priority...OK
+63/69 encoder.decimal.test.decimal output matches the standard formatter for native widths and all u16 values...OK
+64/69 encoder.decimal.test.direct native output preserves binary decimal boundaries and existing writer bytes...OK
+65/69 core.tests.runtime.test_0...OK
+66/69 core.tests.runtime_prepared_measure.test.prepared runtime measure visits the final tree once while public reference codecs always validate...OK
+67/69 core.thread_registry.test_0...OK
+68/69 encoder.wire_json.test_0...OK
+69/69 encoder.wire_json.test.fused inline v4 v6 preserve wire checks and complete JSON text logfmt output...OK
+All 69 tests passed.

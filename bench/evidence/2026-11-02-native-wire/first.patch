@@ -1,0 +1,929 @@
+diff --git a/src/core/codec.zig b/src/core/codec.zig
+index a774dab..5b7f179 100644
+--- a/src/core/codec.zig
++++ b/src/core/codec.zig
+@@ -7,19 +7,24 @@ const wire = @import("wire_write.zig");
+ 
+ /// Stable little-endian wire format, independent of Zig struct layout. The
+ /// journal owns commit/checksum framing; this codec owns complete event bytes.
+-/// New self-contained payloads use version 4 with an 84-byte header. Historical
+-/// version 1 has a 68-byte header without route_fingerprint. Historical
++/// New self-contained payloads use version 6 with an 84-byte header and native
++/// integer tags. Historical v4 retains wide integers and nested values.
++/// Version 1 has a 68-byte header without route_fingerprint. Historical
+ /// self-contained v3 and schema-referenced v2 use 76 bytes. Schema-referenced
+ /// v5 shares the v4 header and carries route_generation.
+ /// Header: magic[4], version:u16, flags:u16, length:u32, level:u8,
+ /// trace_flags:u8, reserved[2],
+ /// timestamp:i64, session:u64, sequence:u64, channel:u32, route_mask:u64,
+ /// config_generation:u64, field_count:u32, argument_count:u32,
+-/// route_fingerprint:u64, route_generation:u64 (v4/v5).
++/// route_fingerprint:u64, route_generation:u64 (v4/v5/v6).
+ /// Then scope/message length-prefixed bytes, optional trace/span/source, fields,
+ /// and formatting arguments. Source strings include an explicit NUL terminator.
+ pub const magic = "KRNE";
+-pub const version: u16 = 4;
++pub const version: u16 = 6;
++pub const legacy_nested_version: u16 = 4;
++/// Explicit old-format output supports staged reader/writer upgrades. It keeps
++/// the entire v4 body, including 128-bit scalar integers, byte-compatible.
++pub const InlineVersion = enum(u16) { v4 = legacy_nested_version, v6 = version };
+ pub const previous_version: u16 = 3;
+ /// Enough descriptor storage for every event admitted by the node budget.
+ pub const decode_scratch_fields: usize = field.max_value_nodes;
+@@ -38,8 +43,12 @@ pub const valueTag = wire.valueTag;
+ const Tag = ValueTag;
+ 
+ pub fn encodedSize(event: Event) EncodeError!usize {
++    return encodedSizeVersioned(.v6, event);
++}
++
++pub fn encodedSizeVersioned(comptime wire_version: InlineVersion, event: Event) EncodeError!usize {
+     _ = try encodeLevel(event.level);
+-    return measure(event);
++    return measureVersioned(wire_version, event);
+ }
+ 
+ /// Validate the complete borrowed tree and return the exact wire size without
+@@ -47,7 +56,15 @@ pub fn encodedSize(event: Event) EncodeError!usize {
+ /// reuses the result for the accepted write; public encode keeps level-first
+ /// error ordering.
+ pub fn measure(event: Event) EncodeError!usize {
+-    var visitor: SizeVisitor = .{ .total = header_size };
++    return measureVersioned(.v6, event);
++}
++
++fn integerEncoding(comptime wire_version: InlineVersion) wire.IntegerEncoding {
++    return if (wire_version == .v6) .native64 else .wide128;
++}
++
++fn measureVersioned(comptime wire_version: InlineVersion, event: Event) EncodeError!usize {
++    var visitor: @import("wire_size.zig").SizeVisitorFor(integerEncoding(wire_version)) = .{ .total = header_size };
+     visitor.blob(event.scope.len, false);
+     visitor.blob(event.message.len, false);
+     if (event.trace_id != null) visitor.add(16);
+@@ -75,7 +92,18 @@ pub fn encodedValueSize(value: field.Value) (error{TooLarge} || field.Validation
+ /// All validation occurs before touching destination. Typed numbers are copied
+ /// in binary form; formatting happens only when a collector invokes an encoder.
+ pub fn encode(event: Event, destination: []u8) EncodeError![]const u8 {
+-    return encodeSized(event, try encodedSize(event), destination);
++    return encodeVersioned(.v6, event, destination);
++}
++
++/// Select v4 for old-reader interoperability; v6 is the default writer format.
++/// Both modes preserve the same complete Event validation and value range.
++pub fn encodeVersioned(comptime wire_version: InlineVersion, event: Event, destination: []u8) EncodeError![]const u8 {
++    const size = try encodedSizeVersioned(wire_version, event);
++    if (destination.len < size) return error.BufferTooSmall;
++    var output: Output = .{ .bytes = destination[0..size] };
++    try writeEvent(&output, event, size, wire_version);
++    std.debug.assert(output.position == size);
++    return output.bytes;
+ }
+ 
+ /// Writes an event whose exact size was measured for the same unchanged event.
+@@ -86,7 +114,7 @@ pub fn encodeSized(event: Event, size: usize, destination: []u8) EncodeError![]c
+     _ = try encodeLevel(event.level);
+     if (destination.len < size) return error.BufferTooSmall;
+     var output: Output = .{ .bytes = destination[0..size] };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+     std.debug.assert(output.position == size);
+     return output.bytes;
+ }
+@@ -98,7 +126,7 @@ pub const WriteError = EncodeError || std.Io.Writer.Error;
+ pub fn writeTo(event: Event, writer: *std.Io.Writer) WriteError!void {
+     const size = try encodedSize(event);
+     var output: StreamOutput = .{ .writer = writer };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+ }
+ 
+ /// Validate/measure once, then hash and emit identical self-contained bytes.
+@@ -110,12 +138,12 @@ pub fn writeFramed(event: Event, writer: *std.Io.Writer, comptime framing: anyty
+     var hash_buffer: [256]u8 = undefined;
+     var hashing = std.Io.Writer.Hashing(std.hash.Crc32).initHasher(.init(), &hash_buffer);
+     var hash_output: StreamOutput = .{ .writer = &hashing.writer };
+-    try writeEvent(&hash_output, event, size);
++    try writeEvent(&hash_output, event, size, .v6);
+     try hashing.writer.flush();
+     const header = framing(@as(u32, @intCast(size)), hashing.hasher.final());
+     try writer.writeAll(&header);
+     var output: StreamOutput = .{ .writer = writer };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+ }
+ 
+ /// Shares only the stable event header with other versioned payload codecs.
+@@ -148,11 +176,11 @@ fn writeHeaderTo(output: anytype, event: Event, size: usize, wire_version: u16)
+     try output.int(u32, @intCast(event.fields.len));
+     try output.int(u32, @intCast(event.format_args.len));
+     if (wire_version != legacy_version) try output.int(u64, event.route_fingerprint);
+-    if (wire_version == version or wire_version == reference_version) try output.int(u64, event.route_generation);
++    if (hasRouteGeneration(wire_version)) try output.int(u64, event.route_generation);
+ }
+ 
+-fn writeEvent(output: anytype, event: Event, size: usize) @TypeOf(output.*).Error!void {
+-    try writeHeaderTo(output, event, size, version);
++fn writeEvent(output: anytype, event: Event, size: usize, comptime wire_version: InlineVersion) @TypeOf(output.*).Error!void {
++    try writeHeaderTo(output, event, size, @intFromEnum(wire_version));
+     try writeBlob(output, event.scope);
+     try writeBlob(output, event.message);
+     if (event.trace_id) |id| try output.put(&id);
+@@ -164,8 +192,8 @@ fn writeEvent(output: anytype, event: Event, size: usize) @TypeOf(output.*).Erro
+         try output.int(u32, source.line);
+         try output.int(u32, source.column);
+     }
+-    for (event.fields) |entry| try writeField(output, entry);
+-    for (event.format_args) |argument| try writeField(output, argument);
++    for (event.fields) |entry| try wire.writeFieldWith(output, entry, integerEncoding(wire_version));
++    for (event.format_args) |argument| try wire.writeFieldWith(output, argument, integerEncoding(wire_version));
+ }
+ 
+ /// Numeric header shared by the inline and referenced payload codecs. The
+@@ -176,21 +204,43 @@ pub const EventHeader = struct {
+     field_count: usize,
+     argument_count: usize,
+     header_bytes: usize,
++    wire_version: u16,
+ };
+ 
++fn hasRouteGeneration(wire_version: u16) bool {
++    return wire_version == legacy_nested_version or wire_version == reference_version or wire_version == version;
++}
++
+ fn headerBytesForVersion(wire_version: u16) error{UnsupportedVersion}!usize {
+     return switch (wire_version) {
+         legacy_version => legacy_header_size,
+         legacy_reference_version, previous_version => previous_header_size,
+-        reference_version, version => header_size,
++        legacy_nested_version, reference_version, version => header_size,
+         else => error.UnsupportedVersion,
+     };
+ }
+ 
+ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeader {
++    return readHeaderFor(.exact, payload, wire_version);
++}
++
++/// The fused collector keeps both old v4 and current v6 at the original
++/// checked-header boundary. Other historical records use materialized decode.
++pub fn readInlineHeader(payload: []const u8) DecodeError!EventHeader {
++    return readHeaderFor(.modern_inline, payload, 0);
++}
++
++const HeaderMode = enum { exact, modern_inline, self_contained };
++
++fn readHeaderFor(comptime mode: HeaderMode, payload: []const u8, expected: u16) DecodeError!EventHeader {
+     var input: WireInput = .{ .bytes = payload };
+     if (!std.mem.eql(u8, try input.take(4), magic)) return error.InvalidMagic;
+-    if (try input.int(u16) != wire_version) return error.UnsupportedVersion;
++    const wire_version = try input.int(u16);
++    switch (mode) {
++        .exact => if (wire_version != expected) return error.UnsupportedVersion,
++        .modern_inline => if (wire_version != legacy_nested_version and wire_version != version) return error.UnsupportedVersion,
++        .self_contained => if (wire_version != legacy_version and wire_version != previous_version and wire_version != legacy_nested_version and wire_version != version) return error.UnsupportedVersion,
++    }
+     const bytes = try headerBytesForVersion(wire_version);
+     const flags = try input.int(u16);
+     if (flags & ~@as(u16, 15) != 0) return error.InvalidFlags;
+@@ -218,8 +268,8 @@ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeade
+     const count: usize = try input.int(u32);
+     const argument_count: usize = try input.int(u32);
+     event.route_fingerprint = if (wire_version == legacy_version) 0 else try input.int(u64);
+-    event.route_generation = if (wire_version == version or wire_version == reference_version) try input.int(u64) else 0;
+-    return .{ .event = event, .flags = flags, .field_count = count, .argument_count = argument_count, .header_bytes = bytes };
++    event.route_generation = if (hasRouteGeneration(wire_version)) try input.int(u64) else 0;
++    return .{ .event = event, .flags = flags, .field_count = count, .argument_count = argument_count, .header_bytes = bytes, .wire_version = wire_version };
+ }
+ 
+ /// Returned byte/source slices borrow payload. Attributes and arguments occupy
+@@ -227,18 +277,15 @@ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeade
+ /// Use decode_scratch_fields entries for every admitted event. A smaller arena
+ /// returns TooManyFields. No decode-time allocation or persisted pointer exists.
+ pub fn decode(payload: []const u8, scratch: []field.Field) DecodeError!Event {
+-    var prefix: WireInput = .{ .bytes = payload };
+-    if (!std.mem.eql(u8, try prefix.take(4), magic)) return error.InvalidMagic;
+-    const wire_version = try prefix.int(u16);
+-    if (wire_version != legacy_version and wire_version != previous_version and wire_version != version) return error.UnsupportedVersion;
+-    const header = try readHeader(payload, wire_version);
++    const header = try readHeaderFor(.self_contained, payload, 0);
++    const wire_version = header.wire_version;
+     var event = header.event;
+     const flags = header.flags;
+     const count = header.field_count;
+     const argument_count = header.argument_count;
+     if (count > scratch.len or argument_count > scratch.len - count) return error.TooManyFields;
+     var arena = DescriptorArena.init(scratch[count + argument_count ..]);
+-    var input: Input = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = wire_version == version };
++    var input: Input = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = wire_version == legacy_nested_version or wire_version == version, .allow_native_integers = wire_version == version };
+     event.scope = try input.blob();
+     event.message = try input.blob();
+     if (flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
+@@ -344,6 +391,7 @@ pub const WireInput = struct {
+     position: usize = 0,
+     arena: ?*DescriptorArena = null,
+     allow_nested: bool = false,
++    allow_native_integers: bool = false,
+     nodes: usize = 0,
+     depth: usize = 0,
+ 
+@@ -396,7 +444,8 @@ pub const WireInput = struct {
+         if (self.nodes == field.max_value_nodes) return error.TooManyValueNodes;
+         self.nodes += 1;
+         const raw = try self.int(u8);
+-        const tag = std.enums.fromInt(Tag, raw) orelse return error.InvalidTag;
++        const tag = std.enums.fromInt(wire.PhysicalTag, raw) orelse return error.InvalidTag;
++        if (!self.allow_native_integers and (tag == .signed64 or tag == .unsigned64)) return error.InvalidTag;
+         if (!self.allow_nested and (tag == .array or tag == .group)) return error.InvalidTag;
+         switch (tag) {
+             .null_value => try receiver.accept(.null_value, {}),
+@@ -405,8 +454,18 @@ pub const WireInput = struct {
+                 if (raw_boolean > 1) return error.InvalidValue;
+                 try receiver.accept(.boolean, raw_boolean == 1);
+             },
+-            .signed => try receiver.accept(.signed, try self.int(i128)),
+-            .unsigned => try receiver.accept(.unsigned, try self.int(u128)),
++            .signed => {
++                const integer = try self.int(i128);
++                if (self.allow_native_integers and std.math.cast(i64, integer) != null) return error.InvalidValue;
++                try receiver.accept(.signed, integer);
++            },
++            .unsigned => {
++                const integer = try self.int(u128);
++                if (self.allow_native_integers and std.math.cast(u64, integer) != null) return error.InvalidValue;
++                try receiver.accept(.unsigned, integer);
++            },
++            .signed64 => try receiver.accept(.signed, try self.int(i64)),
++            .unsigned64 => try receiver.accept(.unsigned, try self.int(u64)),
+             .float => try receiver.accept(.float, @as(f64, @bitCast(try self.int(u64)))),
+             .string => try receiver.accept(.string, try self.blob()),
+             .bytes => try receiver.accept(.bytes, try self.blob()),
+@@ -445,4 +504,6 @@ pub const WireInput = struct {
+ 
+ test {
+     _ = @import("tests/codec.zig");
++    _ = @import("wire_write.zig");
++    _ = @import("wire_size.zig");
+ }
+diff --git a/src/core/reference_encoding.zig b/src/core/reference_encoding.zig
+index 2a58128..a3580f0 100644
+--- a/src/core/reference_encoding.zig
++++ b/src/core/reference_encoding.zig
+@@ -85,8 +85,8 @@ pub fn writeMeasured(event: Event, definition: Definition, values_bytes: u64, de
+         output.writeAll(event.message) catch return error.BufferTooSmall;
+     }
+     var values_output: wire.StreamOutput = .{ .writer = &output };
+-    for (event.fields) |field| wire.writeValueTo(&values_output, field.value) catch return error.BufferTooSmall;
+-    for (event.format_args) |argument| wire.writeValueTo(&values_output, argument.value) catch return error.BufferTooSmall;
++    for (event.fields) |field| wire.writeValueToWith(&values_output, field.value, .wide128) catch return error.BufferTooSmall;
++    for (event.format_args) |argument| wire.writeValueToWith(&values_output, argument.value, .wide128) catch return error.BufferTooSmall;
+     std.debug.assert(output.end == size);
+     return destination[0..size];
+ }
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 675dfbb..99a27a9 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -911,7 +911,7 @@ pub const Runtime = struct {
+                     const header = if (definition) |canonical|
+                         try schema_codec.readReferenceHeader(record.payload, canonical, fields.len)
+                     else
+-                        codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
++                        codec.readInlineHeader(record.payload) catch |err| switch (err) {
+                             error.UnsupportedVersion => break :blk false,
+                             else => return err,
+                         };
+diff --git a/src/core/schema_codec.zig b/src/core/schema_codec.zig
+index 56e0baf..4ff47bc 100644
+--- a/src/core/schema_codec.zig
++++ b/src/core/schema_codec.zig
+@@ -1,5 +1,5 @@
+ //! Schema-referenced event payload v5 (also reads historical v2). The fixed journal slot header owns the
+-//! schema reference; a standalone archive writes self-contained codec v4.
++//! schema reference; a standalone archive writes the current self-contained codec.
+ const std = @import("std");
+ const codec = @import("codec.zig");
+ pub const schema = @import("../journal/schema.zig");
+@@ -70,7 +70,7 @@ pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) De
+     event.scope = definition.scope;
+     event.source = definition.source;
+     var arena = codec.DescriptorArena.init(scratch[header.field_count + header.argument_count ..]);
+-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = definition.ref.version == schema.nested_version };
++    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = definition.ref.version == schema.nested_version, .allow_native_integers = false };
+     if (header.flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
+     if (header.flags & 4 != 0) event.span_id = (try input.take(8))[0..8].*;
+     event.message = if (definition.message) |message| message else try input.blob();
+@@ -95,6 +95,33 @@ pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) De
+     return event;
+ }
+ 
++test "reference v5 native range integers preserve frozen payload and schema bytes" {
++    const frozen_schema = @embedFile("tests/fixtures/v5_definition.bin");
++    const frozen_payload = @embedFile("tests/fixtures/v5_reference.bin");
++    const frozen_inline = @embedFile("tests/fixtures/v4_scalar.bin");
++    const definition = (try schema.decodeEntry(frozen_schema, 0, 1024)).?;
++    var scratch: [codec.decode_scratch_fields]Field = undefined;
++    const event = try resolve(frozen_payload, definition, &scratch);
++    var output: [4096]u8 = undefined;
++    try std.testing.expectEqualSlices(u8, frozen_payload, try encodeReference(event, definition, &output));
++    try std.testing.expectEqualSlices(u8, frozen_inline, try codec.encodeVersioned(.v4, event, &output));
++    const compact = try codec.encode(event, &output);
++    try std.testing.expectEqual(frozen_inline.len - 40, compact.len);
++    var metadata_fields: [5]FieldSchema = undefined;
++    var metadata_arguments: [0]FieldSchema = .{};
++    const metadata = try eventMetadata(event, &metadata_fields, &metadata_arguments);
++    try std.testing.expectEqualSlices(u8, &definition.ref.hash, &try schema.metadataHash(metadata));
++    // These old reference records remain wide128. New physical tags must fail
++    // before reading their numeric body even when the old schema allows signed
++    // or unsigned values of any size.
++    const first_value = frozen_payload.len - 5 * 17;
++    var damaged: [frozen_payload.len]u8 = frozen_payload.*;
++    for ([_]u8{ 11, 12 }) |tag| {
++        damaged[first_value] = tag;
++        try std.testing.expectError(error.InvalidTag, resolve(&damaged, definition, &scratch));
++    }
++}
++
+ test "referenced event omits static metadata and survives copied schema plus values" {
+     const field = @import("field.zig");
+     var region: [2 * 1088]u8 align(64) = @splat(0);
+diff --git a/src/core/tests/codec.zig b/src/core/tests/codec.zig
+index 14ff07e..5a67e51 100644
+--- a/src/core/tests/codec.zig
++++ b/src/core/tests/codec.zig
+@@ -9,6 +9,7 @@ const version = codec.version;
+ const previous_version = codec.previous_version;
+ const decode_scratch_fields = codec.decode_scratch_fields;
+ const legacy_version = codec.legacy_version;
++const legacy_nested_version = codec.legacy_nested_version;
+ const legacy_reference_version = codec.legacy_reference_version;
+ const reference_version = codec.reference_version;
+ const legacy_header_size = codec.legacy_header_size;
+@@ -225,10 +226,11 @@ test "codec validates boolean, tag, duplicate keys and bounded output" {
+     try std.testing.expectError(error.DuplicateKey, decode(unique, &scratch));
+ }
+ 
+-test "codec wire golden is little endian and independent of struct padding" {
++test "codec v6 wire golden preserves independent historical v4 header bytes" {
+     var buffer: [128]u8 = undefined;
+-    const payload = try encode(.{ .level = .info, .scope = "a", .message = "b", .fields = &.{}, .timestamp_ns = -2, .session = 1, .sequence = 2, .channel = 3, .route_mask = 4, .route_fingerprint = 0x0102030405060708, .config_generation = 5, .trace_flags = 6 }, &buffer);
+-    const expected = [_]u8{
++    const event: Event = .{ .level = .info, .scope = "a", .message = "b", .fields = &.{}, .timestamp_ns = -2, .session = 1, .sequence = 2, .channel = 3, .route_mask = 4, .route_fingerprint = 0x0102030405060708, .config_generation = 5, .trace_flags = 6 };
++    // This literal is the original v4 golden, independent of either encoder.
++    const expected_v4 = [_]u8{
+         'K', 'R', 'N', 'E', // magic
+         4, 0, 0, 0, // self-contained version, flags
+         94, 0, 0, 0, // total length
+@@ -245,7 +247,18 @@ test "codec wire golden is little endian and independent of struct padding" {
+         1, 0, 0, 0, 'a', // scope
+         1, 0, 0, 0, 'b', // message
+     };
+-    try std.testing.expectEqualSlices(u8, &expected, payload);
++    const old = try codec.encodeVersioned(.v4, event, &buffer);
++    try std.testing.expectEqualSlices(u8, &expected_v4, old);
++    var scratch: [0]field.Field = .{};
++    const restored = try decode(&expected_v4, &scratch);
++    try std.testing.expectEqual(event.route_fingerprint, restored.route_fingerprint);
++    try std.testing.expectEqual(legacy_nested_version, (try readHeader(&expected_v4, legacy_nested_version)).wire_version);
++    // No integer fields occur in this fixture; only the event version changes.
++    var expected_v6 = expected_v4;
++    expected_v6[4] = 6;
++    const current = try encode(event, &buffer);
++    try std.testing.expectEqualSlices(u8, &expected_v6, current);
++    try std.testing.expectEqual(@as(u16, 6), (try readHeader(current, version)).wire_version);
+ }
+ 
+ test "codec route fingerprint spans the appended header and both output paths" {
+@@ -311,7 +324,7 @@ test "codec preserves float bits in an unaligned payload" {
+     for (restored.fields, patterns) |entry, bits| try std.testing.expectEqual(bits, @as(u64, @bitCast(entry.value.float)));
+ }
+ 
+-test "historical self-contained v1 68-byte fixture decodes and reencodes as v4" {
++test "historical self-contained v1 68-byte fixture decodes and reencodes as v6" {
+     const legacy = [_]u8{
+         'K', 'R', 'N', 'E',
+         1, 0, 0, 0, // historical version and flags
+@@ -353,7 +366,7 @@ test "historical self-contained v1 68-byte fixture decodes and reencodes as v4"
+ test "legacy header offsets preserve source trace and deferred arguments" {
+     const original: Event = .{ .level = .warn, .scope = "legacy", .message = "value={d}", .message_template = true, .format_args = &.{field.kv("0", @as(i64, -42))}, .fields = &.{field.kv("ok", true)}, .timestamp_ns = 17, .trace_id = @splat(0xab), .span_id = @splat(0xcd), .trace_flags = 1, .source = @src(), .route_fingerprint = 123 };
+     var current_buffer: [2048]u8 = undefined;
+-    const current = try encode(original, &current_buffer);
++    const current = try codec.encodeVersioned(.v4, original, &current_buffer);
+     var legacy_buffer: [2048]u8 = undefined;
+     var writer = std.Io.Writer.fixed(&legacy_buffer);
+     try writeHeader(original, current.len - 16, legacy_version, &writer);
+@@ -367,7 +380,7 @@ test "legacy header offsets preserve source trace and deferred arguments" {
+     try std.testing.expectEqual(original.span_id.?, restored.span_id.?);
+     try std.testing.expectEqual(@as(i128, -42), restored.format_args[0].value.signed);
+     try std.testing.expectEqual(@as(u64, 0), restored.route_fingerprint);
+-    try std.testing.expectEqual(@as(usize, 84), (try readHeader(current, version)).header_bytes);
++    try std.testing.expectEqual(@as(usize, 84), (try readHeader(current, legacy_nested_version)).header_bytes);
+     const migrated = try encode(restored, &current_buffer);
+     try std.testing.expectEqual(@as(u16, version), std.mem.readInt(u16, migrated[4..6], .little));
+     try std.testing.expectEqualStrings("legacy", (try decode(migrated, &scratch)).scope);
+@@ -555,7 +568,7 @@ test "nested decoder rejects malformed child counts depth keys and legacy tags"
+ test "historical v3 header migrates route generation and preserves scalar body" {
+     const event: Event = .{ .level = .info, .scope = "v3", .message = "legacy", .timestamp_ns = 1, .fields = &.{field.kv("answer", 42)}, .route_fingerprint = 123, .route_generation = 99 };
+     var current_buffer: [256]u8 = undefined;
+-    const current = try encode(event, &current_buffer);
++    const current = try codec.encodeVersioned(.v4, event, &current_buffer);
+     var legacy_buffer: [256]u8 = undefined;
+     var writer = std.Io.Writer.fixed(&legacy_buffer);
+     try writeHeader(event, current.len - 8, previous_version, &writer);
+@@ -567,7 +580,7 @@ test "historical v3 header migrates route generation and preserves scalar body"
+     try std.testing.expectEqual(event.route_fingerprint, restored.route_fingerprint);
+     try std.testing.expectEqual(@as(u128, 42), restored.fields[0].value.unsigned);
+     const migrated = try encode(restored, &current_buffer);
+-    try std.testing.expectEqual(@as(u16, 4), std.mem.readInt(u16, migrated[4..6], .little));
++    try std.testing.expectEqual(@as(u16, 6), std.mem.readInt(u16, migrated[4..6], .little));
+     try std.testing.expectEqual(@as(u64, 0), (try decode(migrated, &scratch)).route_generation);
+ }
+ 
+@@ -626,3 +639,7 @@ test "wire typed visitor rejects damaged values before invoking its receiver" {
+     try valid.valueWith(&receiver);
+     try std.testing.expectEqual(@as(usize, 1), receiver.calls);
+ }
++
++test {
++    _ = @import("codec_native.zig");
++}
+diff --git a/src/core/wire_size.zig b/src/core/wire_size.zig
+index 0ee9d1f..6465875 100644
+--- a/src/core/wire_size.zig
++++ b/src/core/wire_size.zig
+@@ -3,65 +3,135 @@
+ //! validation credential or borrowed event is stored here.
+ const std = @import("std");
+ const field = @import("field.zig");
++const wire = @import("wire_write.zig");
+ 
+-pub const SizeVisitor = struct {
+-    pub const Error = error{};
+-    // A single length above u32 cannot fit the wire format. Cap each term at
+-    // u32_max + 1, preserving that error without overflowing a native total.
+-    // There are at most 256 nodes/keys and five event/source strings; their
+-    // bounded sum is below 2^42. Validation still finishes before result().
+-    comptime {
+-        std.debug.assert(@bitSizeOf(usize) <= 64);
+-    }
+-    total: u64 = 0,
++/// Standalone value and reference payloads keep the historical representation.
++pub const SizeVisitor = SizeVisitorFor(.wide128);
+ 
+-    pub fn add(self: *SizeVisitor, amount: usize) void {
+-        self.total += @min(@as(u64, amount), @as(u64, std.math.maxInt(u32)) + 1);
+-    }
++pub fn SizeVisitorFor(comptime encoding: wire.IntegerEncoding) type {
++    return struct {
++        const Self = @This();
++        pub const Error = error{};
++        // A single length above u32 cannot fit the wire format. Cap each term at
++        // u32_max + 1, preserving that error without overflowing a native total.
++        // There are at most 256 nodes/keys and five event/source strings; their
++        // bounded sum is below 2^42. Validation still finishes before result().
++        comptime {
++            std.debug.assert(@bitSizeOf(usize) <= 64);
++        }
++        total: u64 = 0,
+ 
+-    pub fn blob(self: *SizeVisitor, length: usize, terminated: bool) void {
+-        self.add(4);
+-        self.add(length);
+-        if (terminated) self.add(1);
+-    }
++        pub fn add(self: *Self, amount: usize) void {
++            self.total += @min(@as(u64, amount), @as(u64, std.math.maxInt(u32)) + 1);
++        }
+ 
+-    pub fn result(self: *const SizeVisitor) error{TooLarge}!usize {
+-        if (self.total > std.math.maxInt(u32)) return error.TooLarge;
+-        return @intCast(self.total);
+-    }
++        pub fn blob(self: *Self, length: usize, terminated: bool) void {
++            self.add(4);
++            self.add(length);
++            if (terminated) self.add(1);
++        }
+ 
+-    pub fn onField(self: *SizeVisitor, entry: field.Field) Error!void {
+-        self.blob(entry.key.len, false);
+-    }
++        pub fn result(self: *const Self) error{TooLarge}!usize {
++            if (self.total > std.math.maxInt(u32)) return error.TooLarge;
++            return @intCast(self.total);
++        }
+ 
+-    pub fn onValue(self: *SizeVisitor, value: field.Value) Error!void {
+-        switch (value) {
+-            .null_value => self.add(1),
+-            .boolean => self.add(2),
+-            .signed, .unsigned => self.add(17),
+-            .float, .duration_ns, .timestamp_ns => self.add(9),
+-            .string, .bytes => |bytes| {
+-                self.add(5);
+-                self.add(bytes.len);
+-            },
+-            .array, .group => self.add(5),
++        pub fn onField(self: *Self, entry: field.Field) Error!void {
++            self.blob(entry.key.len, false);
+         }
+-    }
+-};
++
++        pub fn onValue(self: *Self, value: field.Value) Error!void {
++            switch (wire.physicalTag(value, encoding)) {
++                .null_value => self.add(1),
++                .boolean => self.add(2),
++                .signed, .unsigned => self.add(17),
++                .signed64, .unsigned64, .float, .duration_ns, .timestamp_ns => self.add(9),
++                .string, .bytes => {
++                    self.add(5);
++                    self.add(switch (value) {
++                        .string, .bytes => |bytes| bytes.len,
++                        else => unreachable,
++                    });
++                },
++                .array, .group => self.add(5),
++            }
++        }
++    };
++}
+ 
+ test "wire size caps individually unrepresentable lengths without losing exact valid sums" {
+-    var visitor: SizeVisitor = .{};
+-    visitor.add(std.math.maxInt(u32));
+-    try std.testing.expectEqual(@as(usize, std.math.maxInt(u32)), try visitor.result());
+-    visitor.add(1);
+-    try std.testing.expectError(error.TooLarge, visitor.result());
++    inline for (.{ wire.IntegerEncoding.wide128, wire.IntegerEncoding.native64 }) |encoding| {
++        var visitor: SizeVisitorFor(encoding) = .{};
++        visitor.add(std.math.maxInt(u32));
++        try std.testing.expectEqual(@as(usize, std.math.maxInt(u32)), try visitor.result());
++        visitor.add(1);
++        try std.testing.expectError(error.TooLarge, visitor.result());
++
++        visitor = .{};
++        // Every arbitrary usize term used by a full valid descriptor tree can
++        // exceed u32, including multiple maxInt(usize) strings and keys.
++        for (0..2 * field.max_value_nodes + 5) |_| visitor.blob(std.math.maxInt(usize), true);
++        try std.testing.expectError(error.TooLarge, visitor.result());
++        try std.testing.expect(visitor.total < @as(u64, 1) << 42);
++    }
++}
+ 
+-    visitor = .{};
+-    // Every arbitrary usize term used by a full valid descriptor tree can
+-    // exceed u32, including multiple maxInt(usize) strings and keys.
+-    for (0..2 * field.max_value_nodes + 5) |_| visitor.blob(std.math.maxInt(usize), true);
+-    try std.testing.expectError(error.TooLarge, visitor.result());
+-    try std.testing.expect(visitor.total < @as(u64, 1) << 42);
++test "native integer wire size matches independent boundary lengths" {
++    const cases = [_]struct { value: field.Value, native_length: usize }{
++        .{ .value = .{ .signed = std.math.minInt(i128) }, .native_length = 17 },
++        .{ .value = .{ .signed = @as(i128, std.math.minInt(i64)) - 1 }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.minInt(i64) }, .native_length = 9 },
++        .{ .value = .{ .signed = -1 }, .native_length = 9 },
++        .{ .value = .{ .signed = 0 }, .native_length = 9 },
++        .{ .value = .{ .signed = std.math.maxInt(i64) }, .native_length = 9 },
++        .{ .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.maxInt(u64) }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.maxInt(i128) }, .native_length = 17 },
++        .{ .value = .{ .unsigned = 0 }, .native_length = 9 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u64) }, .native_length = 9 },
++        .{ .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 }, .native_length = 17 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u128) }, .native_length = 17 },
++    };
++    for (cases) |case| {
++        var native: SizeVisitorFor(.native64) = .{};
++        var wide: SizeVisitor = .{};
++        try native.onValue(case.value);
++        try wide.onValue(case.value);
++        try std.testing.expectEqual(case.native_length, try native.result());
++        try std.testing.expectEqual(@as(usize, 17), try wide.result());
++    }
++}
++
++test "native integer wire size preserves nested keys positional arguments and shared node budget" {
++    const attributes = [_]field.Field{.{ .key = "root", .value = .{ .group = &.{
++        .{ .key = "a", .value = .{ .array = &.{ .{ .signed = -1 }, .{ .unsigned = std.math.maxInt(u64) }, .{ .signed = std.math.minInt(i128) }, .{ .string = "ok" } } } },
++        .{ .key = "b", .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 } },
++    } } }};
++    const arguments = [_]field.Field{
++        .{ .key = "", .value = .{ .signed = 1 } },
++        .{ .key = "", .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 } },
++    };
++    inline for (.{ wire.IntegerEncoding.wide128, wire.IntegerEncoding.native64 }) |encoding| {
++        var visitor: SizeVisitorFor(encoding) = .{};
++        var validator: field.ValueValidator = .{};
++        try validator.fieldsWith(&attributes, &visitor);
++        // Independently count key lengths, container counts, and payload widths.
++        // Native: root key 8, group 5, a key 5, array 5, values 9+9+17+7,
++        // b key 5, value 17 = 87. Wide adds 16 for the two narrow integers.
++        try std.testing.expectEqual(@as(usize, if (encoding == .native64) 87 else 103), try visitor.result());
++        try validator.argumentsWith(&arguments, &visitor);
++        // Repeated positional keys add 4 each; their values use 9/17 or 17/17.
++        try std.testing.expectEqual(@as(usize, if (encoding == .native64) 121 else 145), try visitor.result());
++        try std.testing.expectEqual(@as(usize, 9), validator.nodes);
++
++        var repeated: [field.max_value_nodes - 9]field.Field = undefined;
++        @memset(&repeated, .{ .key = "", .value = .{ .signed = 0 } });
++        try validator.argumentsWith(&repeated, &visitor);
++        const expected: usize = if (encoding == .native64) 121 + repeated.len * 13 else 145 + repeated.len * 21;
++        try std.testing.expectEqual(expected, try visitor.result());
++        try std.testing.expectError(error.TooManyValueNodes, validator.valueWith(.{ .signed = 0 }, &visitor));
++        try std.testing.expectEqual(expected, try visitor.result());
++    }
+ }
+ 
+ test "bounded length arithmetic agrees with exact wide sums at wire limits and native extremes" {
+diff --git a/src/core/wire_write.zig b/src/core/wire_write.zig
+index b486579..7c35425 100644
+--- a/src/core/wire_write.zig
++++ b/src/core/wire_write.zig
+@@ -7,6 +7,15 @@ const field = @import("field.zig");
+ 
+ pub const ValueTag = enum(u8) { null_value = 0, boolean = 1, signed = 2, unsigned = 3, float = 4, string = 5, bytes = 6, duration_ns = 7, timestamp_ns = 8, array = 9, group = 10 };
+ 
++/// Integer payload policy for a complete value tree. Historical and standalone
++/// value writers retain 128-bit payloads; native payload versions may narrow
++/// integers that fit their corresponding signed or unsigned 64-bit range.
++pub const IntegerEncoding = enum { wide128, native64 };
++
++/// Physical wire tags retain the canonical tags and extend only integer storage.
++/// The borrowed Value and schema identity continue using canonical ValueTag.
++pub const PhysicalTag = enum(u8) { null_value = 0, boolean = 1, signed = 2, unsigned = 3, float = 4, string = 5, bytes = 6, duration_ns = 7, timestamp_ns = 8, array = 9, group = 10, signed64 = 11, unsigned64 = 12 };
++
+ pub fn valueTag(value: field.Value) ValueTag {
+     return switch (value) {
+         .null_value => .null_value,
+@@ -23,7 +32,14 @@ pub fn valueTag(value: field.Value) ValueTag {
+     };
+ }
+ 
+-const Tag = ValueTag;
++pub fn physicalTag(value: field.Value, comptime encoding: IntegerEncoding) PhysicalTag {
++    if (encoding == .native64) switch (value) {
++        .signed => |v| if (v >= std.math.minInt(i64) and v <= std.math.maxInt(i64)) return .signed64,
++        .unsigned => |v| if (v <= std.math.maxInt(u64)) return .unsigned64,
++        else => {},
++    };
++    return @enumFromInt(@intFromEnum(valueTag(value)));
++}
+ 
+ pub const StreamOutput = struct {
+     pub const Error = std.Io.Writer.Error;
+@@ -51,54 +67,147 @@ pub fn writeTerminated(output: anytype, bytes: []const u8) @TypeOf(output.*).Err
+ }
+ 
+ pub fn writeField(output: anytype, entry: field.Field) @TypeOf(output.*).Error!void {
++    try writeFieldWith(output, entry, .wide128);
++}
++
++pub fn writeFieldWith(output: anytype, entry: field.Field, comptime encoding: IntegerEncoding) @TypeOf(output.*).Error!void {
+     try writeBlob(output, entry.key);
+-    try writeValueTo(output, entry.value);
++    try writeValueToWith(output, entry.value, encoding);
+ }
+ 
+ pub fn writeValueTo(output: anytype, value: field.Value) @TypeOf(output.*).Error!void {
++    try writeValueToWith(output, value, .wide128);
++}
++
++pub fn writeValueToWith(output: anytype, value: field.Value, comptime encoding: IntegerEncoding) @TypeOf(output.*).Error!void {
++    const tag = physicalTag(value, encoding);
++    try output.int(u8, @intFromEnum(tag));
+     switch (value) {
+-        .null_value => try output.int(u8, @intFromEnum(Tag.null_value)),
+-        .boolean => |v| {
+-            try output.int(u8, @intFromEnum(Tag.boolean));
+-            try output.int(u8, @intFromBool(v));
+-        },
++        .null_value => {},
++        .boolean => |v| try output.int(u8, @intFromBool(v)),
+         .signed => |v| {
+-            try output.int(u8, @intFromEnum(Tag.signed));
+-            try output.int(i128, v);
++            if (tag == .signed64) try output.int(i64, @intCast(v)) else try output.int(i128, v);
+         },
+         .unsigned => |v| {
+-            try output.int(u8, @intFromEnum(Tag.unsigned));
+-            try output.int(u128, v);
+-        },
+-        .float => |v| {
+-            try output.int(u8, @intFromEnum(Tag.float));
+-            try output.int(u64, @bitCast(v));
+-        },
+-        .string => |v| {
+-            try output.int(u8, @intFromEnum(Tag.string));
+-            try writeBlob(output, v);
+-        },
+-        .bytes => |v| {
+-            try output.int(u8, @intFromEnum(Tag.bytes));
+-            try writeBlob(output, v);
+-        },
+-        .duration_ns => |v| {
+-            try output.int(u8, @intFromEnum(Tag.duration_ns));
+-            try output.int(i64, v);
+-        },
+-        .timestamp_ns => |v| {
+-            try output.int(u8, @intFromEnum(Tag.timestamp_ns));
+-            try output.int(i64, v);
++            if (tag == .unsigned64) try output.int(u64, @intCast(v)) else try output.int(u128, v);
+         },
++        .float => |v| try output.int(u64, @bitCast(v)),
++        .string, .bytes => |v| try writeBlob(output, v),
++        .duration_ns, .timestamp_ns => |v| try output.int(i64, v),
+         .array => |values| {
+-            try output.int(u8, @intFromEnum(Tag.array));
+             try output.int(u32, @intCast(values.len));
+-            for (values) |child| try writeValueTo(output, child);
++            for (values) |child| try writeValueToWith(output, child, encoding);
+         },
+         .group => |entries| {
+-            try output.int(u8, @intFromEnum(Tag.group));
+             try output.int(u32, @intCast(entries.len));
+-            for (entries) |entry| try writeField(output, entry);
++            for (entries) |entry| try writeFieldWith(output, entry, encoding);
+         },
+     }
+ }
++
++const TestOutput = struct {
++    pub const Error = error{BufferTooSmall};
++    bytes: []u8,
++    position: usize = 0,
++
++    pub fn put(self: *TestOutput, bytes: []const u8) Error!void {
++        if (bytes.len > self.bytes.len - self.position) return error.BufferTooSmall;
++        @memcpy(self.bytes[self.position..][0..bytes.len], bytes);
++        self.position += bytes.len;
++    }
++
++    pub fn int(self: *TestOutput, comptime T: type, value: T) Error!void {
++        var bytes: [@sizeOf(T)]u8 = undefined;
++        std.mem.writeInt(T, &bytes, value, .little);
++        try self.put(&bytes);
++    }
++};
++
++test "native integer wire boundaries use explicit little endian bytes and preserve wide wrappers" {
++    const zero8 = [_]u8{0} ** 8;
++    const ff8 = [_]u8{0xff} ** 8;
++    const min128 = [_]u8{2} ++ ([_]u8{0} ** 15) ++ [_]u8{0x80};
++    const max128 = [_]u8{2} ++ ([_]u8{0xff} ** 15) ++ [_]u8{0x7f};
++    const below_min64 = [_]u8{2} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f} ++ ff8;
++    const above_max64 = [_]u8{2} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ zero8;
++    const above_maxu64 = [_]u8{3} ++ zero8 ++ [_]u8{1} ++ ([_]u8{0} ** 7);
++    const maxu128 = [_]u8{3} ++ ff8 ++ ff8;
++    // Expected bytes are literal protocol fixtures, independent of physicalTag
++    // and the integer writer. Signed positive values keep signedness even when
++    // they fit u64 but exceed i64.
++    const cases = [_]struct { value: field.Value, native: []const u8, wide: []const u8 }{
++        .{ .value = .{ .signed = std.math.minInt(i128) }, .native = &min128, .wide = &min128 },
++        .{ .value = .{ .signed = @as(i128, std.math.minInt(i64)) - 1 }, .native = &below_min64, .wide = &below_min64 },
++        .{ .value = .{ .signed = std.math.minInt(i64) }, .native = &([_]u8{11} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80}), .wide = &([_]u8{2} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ ff8) },
++        .{ .value = .{ .signed = -1 }, .native = &([_]u8{11} ++ ff8), .wide = &([_]u8{2} ++ ff8 ++ ff8) },
++        .{ .value = .{ .signed = 0 }, .native = &([_]u8{11} ++ zero8), .wide = &([_]u8{2} ++ zero8 ++ zero8) },
++        .{ .value = .{ .signed = std.math.maxInt(i64) }, .native = &([_]u8{11} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f}), .wide = &([_]u8{2} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f} ++ zero8) },
++        .{ .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 }, .native = &above_max64, .wide = &above_max64 },
++        .{ .value = .{ .signed = std.math.maxInt(u64) }, .native = &([_]u8{2} ++ ff8 ++ zero8), .wide = &([_]u8{2} ++ ff8 ++ zero8) },
++        .{ .value = .{ .signed = std.math.maxInt(i128) }, .native = &max128, .wide = &max128 },
++        .{ .value = .{ .unsigned = 0 }, .native = &([_]u8{12} ++ zero8), .wide = &([_]u8{3} ++ zero8 ++ zero8) },
++        .{ .value = .{ .unsigned = std.math.maxInt(u64) }, .native = &([_]u8{12} ++ ff8), .wide = &([_]u8{3} ++ ff8 ++ zero8) },
++        .{ .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 }, .native = &above_maxu64, .wide = &above_maxu64 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u128) }, .native = &maxu128, .wide = &maxu128 },
++    };
++    for (cases) |case| {
++        try std.testing.expectEqual(case.wide[0], @intFromEnum(valueTag(case.value)));
++        try std.testing.expectEqual(case.native[0], @intFromEnum(physicalTag(case.value, .native64)));
++        try std.testing.expectEqual(case.wide[0], @intFromEnum(physicalTag(case.value, .wide128)));
++
++        var buffer: [17]u8 = undefined;
++        var output: TestOutput = .{ .bytes = &buffer };
++        try writeValueToWith(&output, case.value, .native64);
++        try std.testing.expectEqualSlices(u8, case.native, buffer[0..output.position]);
++        var writer = std.Io.Writer.fixed(&buffer);
++        var stream: StreamOutput = .{ .writer = &writer };
++        try writeValueToWith(&stream, case.value, .native64);
++        try std.testing.expectEqualSlices(u8, case.native, writer.buffered());
++
++        output = .{ .bytes = &buffer };
++        try writeValueTo(&output, case.value);
++        try std.testing.expectEqualSlices(u8, case.wide, buffer[0..output.position]);
++        writer = std.Io.Writer.fixed(&buffer);
++        try writeValueToWith(&stream, case.value, .wide128);
++        try std.testing.expectEqualSlices(u8, case.wide, writer.buffered());
++    }
++}
++
++test "native integer wire preserves recursive modes and short slice and stream prefixes" {
++    const entry: field.Field = .{ .key = "root", .value = .{ .group = &.{
++        .{ .key = "a", .value = .{ .array = &.{ .{ .signed = -1 }, .{ .unsigned = std.math.maxInt(u64) }, .{ .signed = std.math.minInt(i128) }, .{ .string = "ok" } } } },
++        .{ .key = "b", .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 } },
++    } } };
++    try field.validateValue(entry.value);
++    const prefix = [_]u8{ 4, 0, 0, 0, 'r', 'o', 'o', 't', 10, 2, 0, 0, 0, 1, 0, 0, 0, 'a', 9, 4, 0, 0, 0 };
++    const suffix = [_]u8{2} ++ ([_]u8{0} ** 15) ++ [_]u8{ 0x80, 5, 2, 0, 0, 0, 'o', 'k', 1, 0, 0, 0, 'b', 2 } ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ ([_]u8{0} ** 8);
++    const native = prefix ++ [_]u8{11} ++ ([_]u8{0xff} ** 8) ++ [_]u8{12} ++ ([_]u8{0xff} ** 8) ++ suffix;
++    const wide = prefix ++ [_]u8{2} ++ ([_]u8{0xff} ** 16) ++ [_]u8{3} ++ ([_]u8{0xff} ** 8) ++ ([_]u8{0} ** 8) ++ suffix;
++    inline for (.{ IntegerEncoding.wide128, IntegerEncoding.native64 }) |encoding| {
++        const expected = if (encoding == .native64) &native else &wide;
++        var buffer: [wide.len]u8 = undefined;
++        var output: TestOutput = .{ .bytes = buffer[0..expected.len] };
++        try writeFieldWith(&output, entry, encoding);
++        try std.testing.expectEqualSlices(u8, expected, buffer[0..output.position]);
++        var writer = std.Io.Writer.fixed(buffer[0..expected.len]);
++        var stream: StreamOutput = .{ .writer = &writer };
++        try writeFieldWith(&stream, entry, encoding);
++        try std.testing.expectEqualSlices(u8, expected, writer.buffered());
++
++        for (0..expected.len) |capacity| {
++            @memset(&buffer, 0xa5);
++            output = .{ .bytes = buffer[0..capacity] };
++            try std.testing.expectError(error.BufferTooSmall, writeFieldWith(&output, entry, encoding));
++            try std.testing.expectEqualSlices(u8, expected[0..output.position], buffer[0..output.position]);
++            for (buffer[output.position..]) |byte| try std.testing.expectEqual(@as(u8, 0xa5), byte);
++
++            writer = std.Io.Writer.fixed(buffer[0..capacity]);
++            try std.testing.expectError(error.WriteFailed, writeFieldWith(&stream, entry, encoding));
++            try std.testing.expectEqualSlices(u8, expected[0..capacity], writer.buffered());
++        }
++    }
++    var buffer: [wide.len]u8 = undefined;
++    var output: TestOutput = .{ .bytes = &buffer };
++    try writeField(&output, entry);
++    try std.testing.expectEqualSlices(u8, &wide, buffer[0..output.position]);
++}
+diff --git a/src/encoder/wire_json.zig b/src/encoder/wire_json.zig
+index 5037439..0090de6 100644
+--- a/src/encoder/wire_json.zig
++++ b/src/encoder/wire_json.zig
+@@ -1,4 +1,4 @@
+-//! Fused wire-to-record rendering for the current self-contained v4 payload.
++//! Fused wire-to-record rendering for self-contained v4/v6 payloads.
+ //! This path is used only when the consumer selected a single JSON, text or
+ //! logfmt route and the payload has no deferred message/arguments. The checked
+ //! wire parser validates every value while the record is built in a
+@@ -107,7 +107,7 @@ fn renderFormat(comptime format: Format, comptime referenced: bool, payload: []c
+     if (header.event.message_template or header.argument_count != 0) return error.Fallback;
+     if (header.field_count > key_scratch.len) return error.TooManyFields;
+     var arena = codec.DescriptorArena.init(key_scratch[header.field_count..]);
+-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true };
++    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true, .allow_native_integers = !referenced and header.wire_version == codec.version };
+     var event = header.event;
+     event.scope = if (referenced) definition.scope else try input.blob();
+     if (!referenced) event.message = try input.blob();
+@@ -272,3 +272,52 @@ test "fused wire text and logfmt match decoded encoders" {
+ test {
+     _ = @import("wire_reference_tests.zig");
+ }
++
++test "fused inline v4 v6 preserve wire checks and complete JSON text logfmt output" {
++    const fixtures = .{
++        @embedFile("../core/tests/fixtures/v4_scalar.bin"),
++        @embedFile("../core/tests/fixtures/v4_wide.bin"),
++        @embedFile("../core/tests/fixtures/v4_nested.bin"),
++    };
++    inline for (fixtures) |legacy| {
++        var scratch: [codec.decode_scratch_fields]field.Field = undefined;
++        const event = try codec.decode(legacy, &scratch);
++        var current_bytes: [4096]u8 = undefined;
++        const current = try codec.encode(event, &current_bytes);
++        for ([_][]const u8{ legacy, current }) |payload| {
++            const header = try codec.readInlineHeader(payload);
++            var keys: [codec.decode_scratch_fields]field.Field = undefined;
++            var decode_scratch: [codec.decode_scratch_fields]field.Field = undefined;
++            const decoded = try codec.decode(payload, &decode_scratch);
++            inline for (.{ Format.json, Format.text, Format.logfmt }) |format| {
++                var actual_bytes: [8192]u8 = undefined;
++                const actual = try render(format, payload, header, &actual_bytes, &keys, null);
++                var expected_bytes: [8192]u8 = undefined;
++                var expected = std.Io.Writer.fixed(&expected_bytes);
++                try common.encodeWithTime(@field(common.RecordFormat, @tagName(format)), decoded, null, &expected);
++                try std.testing.expectEqualStrings(expected.buffered(), actual);
++            }
++        }
++    }
++    const legacy = fixtures[0];
++    var scratch: [codec.decode_scratch_fields]field.Field = undefined;
++    const event = try codec.decode(legacy, &scratch);
++    var current: [4096]u8 = undefined;
++    const encoded = try codec.encode(event, &current);
++    const header = try codec.readInlineHeader(encoded);
++    // First key follows the fixed header, scope/message, trace/span and source.
++    var scan: codec.WireInput = .{ .bytes = encoded, .position = codec.header_size };
++    _ = try scan.blob();
++    _ = try scan.blob();
++    _ = try scan.take(16 + 8);
++    _ = try scan.terminated();
++    _ = try scan.terminated();
++    _ = try scan.terminated();
++    _ = try scan.take(8);
++    _ = try scan.blob();
++    current[scan.position] = 13;
++    var keys: [codec.decode_scratch_fields]field.Field = undefined;
++    var output: [8192]u8 = undefined;
++    try std.testing.expectError(error.InvalidTag, render(.json, encoded, header, &output, &keys, null));
++    try std.testing.expectError(error.InvalidTag, codec.decode(encoded, &scratch));
++}

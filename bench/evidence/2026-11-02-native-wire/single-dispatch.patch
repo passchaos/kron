@@ -1,0 +1,1575 @@
+diff --git a/build.zig b/build.zig
+index c131602..43ce532 100644
+--- a/build.zig
++++ b/build.zig
+@@ -259,10 +259,14 @@ pub fn build(b: *std.Build) void {
+     random_crash_check.addArg("--reader");
+     random_crash_check.addArtifactArg(tool);
+     const random_crash_oracle = b.addSystemCommand(&.{ "python3", "tests/test_runtime_crash_oracle.py" });
++    const crash_versions = b.addSystemCommand(&.{ "python3", "tests/test_crash_versions.py" });
+     const random_crash_step = b.step("test-runtime-crash", "Kill running shared/SPSC producers at random times and verify every ACK");
+     random_crash_step.dependOn(&random_crash_check.step);
+     random_crash_step.dependOn(&random_crash_oracle.step);
+-    b.step("test-runtime-crash-oracle", "Reject missing, duplicate, corrupt and conflicting recovery evidence").dependOn(&random_crash_oracle.step);
++    random_crash_step.dependOn(&crash_versions.step);
++    const crash_oracle_step = b.step("test-runtime-crash-oracle", "Reject missing, duplicate, corrupt and conflicting recovery evidence");
++    crash_oracle_step.dependOn(&random_crash_oracle.step);
++    crash_oracle_step.dependOn(&crash_versions.step);
+ 
+     const power_module = b.createModule(.{ .root_source_file = b.path("tests/power_loss/testwriter.zig"), .target = target, .optimize = optimize });
+     power_module.addImport("kron", module);
+diff --git a/src/core/codec.zig b/src/core/codec.zig
+index a774dab..22574b9 100644
+--- a/src/core/codec.zig
++++ b/src/core/codec.zig
+@@ -7,19 +7,24 @@ const wire = @import("wire_write.zig");
+ 
+ /// Stable little-endian wire format, independent of Zig struct layout. The
+ /// journal owns commit/checksum framing; this codec owns complete event bytes.
+-/// New self-contained payloads use version 4 with an 84-byte header. Historical
+-/// version 1 has a 68-byte header without route_fingerprint. Historical
++/// New self-contained payloads use version 6 with an 84-byte header and native
++/// integer tags. Historical v4 retains wide integers and nested values.
++/// Version 1 has a 68-byte header without route_fingerprint. Historical
+ /// self-contained v3 and schema-referenced v2 use 76 bytes. Schema-referenced
+ /// v5 shares the v4 header and carries route_generation.
+ /// Header: magic[4], version:u16, flags:u16, length:u32, level:u8,
+ /// trace_flags:u8, reserved[2],
+ /// timestamp:i64, session:u64, sequence:u64, channel:u32, route_mask:u64,
+ /// config_generation:u64, field_count:u32, argument_count:u32,
+-/// route_fingerprint:u64, route_generation:u64 (v4/v5).
++/// route_fingerprint:u64, route_generation:u64 (v4/v5/v6).
+ /// Then scope/message length-prefixed bytes, optional trace/span/source, fields,
+ /// and formatting arguments. Source strings include an explicit NUL terminator.
+ pub const magic = "KRNE";
+-pub const version: u16 = 4;
++pub const version: u16 = 6;
++pub const legacy_nested_version: u16 = 4;
++/// Explicit old-format output supports staged reader/writer upgrades. It keeps
++/// the entire v4 body, including 128-bit scalar integers, byte-compatible.
++pub const InlineVersion = enum(u16) { v4 = legacy_nested_version, v6 = version };
+ pub const previous_version: u16 = 3;
+ /// Enough descriptor storage for every event admitted by the node budget.
+ pub const decode_scratch_fields: usize = field.max_value_nodes;
+@@ -38,8 +43,12 @@ pub const valueTag = wire.valueTag;
+ const Tag = ValueTag;
+ 
+ pub fn encodedSize(event: Event) EncodeError!usize {
++    return encodedSizeVersioned(.v6, event);
++}
++
++pub fn encodedSizeVersioned(comptime wire_version: InlineVersion, event: Event) EncodeError!usize {
+     _ = try encodeLevel(event.level);
+-    return measure(event);
++    return measureVersioned(wire_version, event);
+ }
+ 
+ /// Validate the complete borrowed tree and return the exact wire size without
+@@ -47,7 +56,15 @@ pub fn encodedSize(event: Event) EncodeError!usize {
+ /// reuses the result for the accepted write; public encode keeps level-first
+ /// error ordering.
+ pub fn measure(event: Event) EncodeError!usize {
+-    var visitor: SizeVisitor = .{ .total = header_size };
++    return measureVersioned(.v6, event);
++}
++
++fn integerEncoding(comptime wire_version: InlineVersion) wire.IntegerEncoding {
++    return if (wire_version == .v6) .native64 else .wide128;
++}
++
++fn measureVersioned(comptime wire_version: InlineVersion, event: Event) EncodeError!usize {
++    var visitor: @import("wire_size.zig").SizeVisitorFor(integerEncoding(wire_version)) = .{ .total = header_size };
+     visitor.blob(event.scope.len, false);
+     visitor.blob(event.message.len, false);
+     if (event.trace_id != null) visitor.add(16);
+@@ -75,7 +92,18 @@ pub fn encodedValueSize(value: field.Value) (error{TooLarge} || field.Validation
+ /// All validation occurs before touching destination. Typed numbers are copied
+ /// in binary form; formatting happens only when a collector invokes an encoder.
+ pub fn encode(event: Event, destination: []u8) EncodeError![]const u8 {
+-    return encodeSized(event, try encodedSize(event), destination);
++    return encodeVersioned(.v6, event, destination);
++}
++
++/// Select v4 for old-reader interoperability; v6 is the default writer format.
++/// Both modes preserve the same complete Event validation and value range.
++pub fn encodeVersioned(comptime wire_version: InlineVersion, event: Event, destination: []u8) EncodeError![]const u8 {
++    const size = try encodedSizeVersioned(wire_version, event);
++    if (destination.len < size) return error.BufferTooSmall;
++    var output: Output = .{ .bytes = destination[0..size] };
++    try writeEvent(&output, event, size, wire_version);
++    std.debug.assert(output.position == size);
++    return output.bytes;
+ }
+ 
+ /// Writes an event whose exact size was measured for the same unchanged event.
+@@ -86,7 +114,7 @@ pub fn encodeSized(event: Event, size: usize, destination: []u8) EncodeError![]c
+     _ = try encodeLevel(event.level);
+     if (destination.len < size) return error.BufferTooSmall;
+     var output: Output = .{ .bytes = destination[0..size] };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+     std.debug.assert(output.position == size);
+     return output.bytes;
+ }
+@@ -98,7 +126,7 @@ pub const WriteError = EncodeError || std.Io.Writer.Error;
+ pub fn writeTo(event: Event, writer: *std.Io.Writer) WriteError!void {
+     const size = try encodedSize(event);
+     var output: StreamOutput = .{ .writer = writer };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+ }
+ 
+ /// Validate/measure once, then hash and emit identical self-contained bytes.
+@@ -110,12 +138,12 @@ pub fn writeFramed(event: Event, writer: *std.Io.Writer, comptime framing: anyty
+     var hash_buffer: [256]u8 = undefined;
+     var hashing = std.Io.Writer.Hashing(std.hash.Crc32).initHasher(.init(), &hash_buffer);
+     var hash_output: StreamOutput = .{ .writer = &hashing.writer };
+-    try writeEvent(&hash_output, event, size);
++    try writeEvent(&hash_output, event, size, .v6);
+     try hashing.writer.flush();
+     const header = framing(@as(u32, @intCast(size)), hashing.hasher.final());
+     try writer.writeAll(&header);
+     var output: StreamOutput = .{ .writer = writer };
+-    try writeEvent(&output, event, size);
++    try writeEvent(&output, event, size, .v6);
+ }
+ 
+ /// Shares only the stable event header with other versioned payload codecs.
+@@ -148,11 +176,11 @@ fn writeHeaderTo(output: anytype, event: Event, size: usize, wire_version: u16)
+     try output.int(u32, @intCast(event.fields.len));
+     try output.int(u32, @intCast(event.format_args.len));
+     if (wire_version != legacy_version) try output.int(u64, event.route_fingerprint);
+-    if (wire_version == version or wire_version == reference_version) try output.int(u64, event.route_generation);
++    if (hasRouteGeneration(wire_version)) try output.int(u64, event.route_generation);
+ }
+ 
+-fn writeEvent(output: anytype, event: Event, size: usize) @TypeOf(output.*).Error!void {
+-    try writeHeaderTo(output, event, size, version);
++inline fn writeEvent(output: anytype, event: Event, size: usize, comptime wire_version: InlineVersion) @TypeOf(output.*).Error!void {
++    try writeHeaderTo(output, event, size, @intFromEnum(wire_version));
+     try writeBlob(output, event.scope);
+     try writeBlob(output, event.message);
+     if (event.trace_id) |id| try output.put(&id);
+@@ -164,8 +192,8 @@ fn writeEvent(output: anytype, event: Event, size: usize) @TypeOf(output.*).Erro
+         try output.int(u32, source.line);
+         try output.int(u32, source.column);
+     }
+-    for (event.fields) |entry| try writeField(output, entry);
+-    for (event.format_args) |argument| try writeField(output, argument);
++    for (event.fields) |entry| try wire.writeFieldWith(output, entry, integerEncoding(wire_version));
++    for (event.format_args) |argument| try wire.writeFieldWith(output, argument, integerEncoding(wire_version));
+ }
+ 
+ /// Numeric header shared by the inline and referenced payload codecs. The
+@@ -176,21 +204,43 @@ pub const EventHeader = struct {
+     field_count: usize,
+     argument_count: usize,
+     header_bytes: usize,
++    wire_version: u16,
+ };
+ 
++fn hasRouteGeneration(wire_version: u16) bool {
++    return wire_version == legacy_nested_version or wire_version == reference_version or wire_version == version;
++}
++
+ fn headerBytesForVersion(wire_version: u16) error{UnsupportedVersion}!usize {
+     return switch (wire_version) {
+         legacy_version => legacy_header_size,
+         legacy_reference_version, previous_version => previous_header_size,
+-        reference_version, version => header_size,
++        legacy_nested_version, reference_version, version => header_size,
+         else => error.UnsupportedVersion,
+     };
+ }
+ 
+ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeader {
++    return readHeaderFor(.exact, payload, wire_version);
++}
++
++/// The fused collector keeps both old v4 and current v6 at the original
++/// checked-header boundary. Other historical records use materialized decode.
++pub fn readInlineHeader(payload: []const u8) DecodeError!EventHeader {
++    return readHeaderFor(.modern_inline, payload, 0);
++}
++
++const HeaderMode = enum { exact, modern_inline, self_contained };
++
++fn readHeaderFor(comptime mode: HeaderMode, payload: []const u8, expected: u16) DecodeError!EventHeader {
+     var input: WireInput = .{ .bytes = payload };
+     if (!std.mem.eql(u8, try input.take(4), magic)) return error.InvalidMagic;
+-    if (try input.int(u16) != wire_version) return error.UnsupportedVersion;
++    const wire_version = try input.int(u16);
++    switch (mode) {
++        .exact => if (wire_version != expected) return error.UnsupportedVersion,
++        .modern_inline => if (wire_version != legacy_nested_version and wire_version != version) return error.UnsupportedVersion,
++        .self_contained => if (wire_version != legacy_version and wire_version != previous_version and wire_version != legacy_nested_version and wire_version != version) return error.UnsupportedVersion,
++    }
+     const bytes = try headerBytesForVersion(wire_version);
+     const flags = try input.int(u16);
+     if (flags & ~@as(u16, 15) != 0) return error.InvalidFlags;
+@@ -218,8 +268,8 @@ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeade
+     const count: usize = try input.int(u32);
+     const argument_count: usize = try input.int(u32);
+     event.route_fingerprint = if (wire_version == legacy_version) 0 else try input.int(u64);
+-    event.route_generation = if (wire_version == version or wire_version == reference_version) try input.int(u64) else 0;
+-    return .{ .event = event, .flags = flags, .field_count = count, .argument_count = argument_count, .header_bytes = bytes };
++    event.route_generation = if (hasRouteGeneration(wire_version)) try input.int(u64) else 0;
++    return .{ .event = event, .flags = flags, .field_count = count, .argument_count = argument_count, .header_bytes = bytes, .wire_version = wire_version };
+ }
+ 
+ /// Returned byte/source slices borrow payload. Attributes and arguments occupy
+@@ -227,18 +277,15 @@ pub fn readHeader(payload: []const u8, wire_version: u16) DecodeError!EventHeade
+ /// Use decode_scratch_fields entries for every admitted event. A smaller arena
+ /// returns TooManyFields. No decode-time allocation or persisted pointer exists.
+ pub fn decode(payload: []const u8, scratch: []field.Field) DecodeError!Event {
+-    var prefix: WireInput = .{ .bytes = payload };
+-    if (!std.mem.eql(u8, try prefix.take(4), magic)) return error.InvalidMagic;
+-    const wire_version = try prefix.int(u16);
+-    if (wire_version != legacy_version and wire_version != previous_version and wire_version != version) return error.UnsupportedVersion;
+-    const header = try readHeader(payload, wire_version);
++    const header = try readHeaderFor(.self_contained, payload, 0);
++    const wire_version = header.wire_version;
+     var event = header.event;
+     const flags = header.flags;
+     const count = header.field_count;
+     const argument_count = header.argument_count;
+     if (count > scratch.len or argument_count > scratch.len - count) return error.TooManyFields;
+     var arena = DescriptorArena.init(scratch[count + argument_count ..]);
+-    var input: Input = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = wire_version == version };
++    var input: Input = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = wire_version == legacy_nested_version or wire_version == version, .allow_native_integers = wire_version == version };
+     event.scope = try input.blob();
+     event.message = try input.blob();
+     if (flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
+@@ -344,6 +391,7 @@ pub const WireInput = struct {
+     position: usize = 0,
+     arena: ?*DescriptorArena = null,
+     allow_nested: bool = false,
++    allow_native_integers: bool = false,
+     nodes: usize = 0,
+     depth: usize = 0,
+ 
+@@ -396,7 +444,8 @@ pub const WireInput = struct {
+         if (self.nodes == field.max_value_nodes) return error.TooManyValueNodes;
+         self.nodes += 1;
+         const raw = try self.int(u8);
+-        const tag = std.enums.fromInt(Tag, raw) orelse return error.InvalidTag;
++        const tag = std.enums.fromInt(wire.PhysicalTag, raw) orelse return error.InvalidTag;
++        if (!self.allow_native_integers and (tag == .signed64 or tag == .unsigned64)) return error.InvalidTag;
+         if (!self.allow_nested and (tag == .array or tag == .group)) return error.InvalidTag;
+         switch (tag) {
+             .null_value => try receiver.accept(.null_value, {}),
+@@ -405,8 +454,18 @@ pub const WireInput = struct {
+                 if (raw_boolean > 1) return error.InvalidValue;
+                 try receiver.accept(.boolean, raw_boolean == 1);
+             },
+-            .signed => try receiver.accept(.signed, try self.int(i128)),
+-            .unsigned => try receiver.accept(.unsigned, try self.int(u128)),
++            .signed => {
++                const integer = try self.int(i128);
++                if (self.allow_native_integers and std.math.cast(i64, integer) != null) return error.InvalidValue;
++                try receiver.accept(.signed, integer);
++            },
++            .unsigned => {
++                const integer = try self.int(u128);
++                if (self.allow_native_integers and std.math.cast(u64, integer) != null) return error.InvalidValue;
++                try receiver.accept(.unsigned, integer);
++            },
++            .signed64 => try receiver.accept(.signed, try self.int(i64)),
++            .unsigned64 => try receiver.accept(.unsigned, try self.int(u64)),
+             .float => try receiver.accept(.float, @as(f64, @bitCast(try self.int(u64)))),
+             .string => try receiver.accept(.string, try self.blob()),
+             .bytes => try receiver.accept(.bytes, try self.blob()),
+@@ -445,4 +504,6 @@ pub const WireInput = struct {
+ 
+ test {
+     _ = @import("tests/codec.zig");
++    _ = @import("wire_write.zig");
++    _ = @import("wire_size.zig");
+ }
+diff --git a/src/core/reference_encoding.zig b/src/core/reference_encoding.zig
+index 2a58128..a3580f0 100644
+--- a/src/core/reference_encoding.zig
++++ b/src/core/reference_encoding.zig
+@@ -85,8 +85,8 @@ pub fn writeMeasured(event: Event, definition: Definition, values_bytes: u64, de
+         output.writeAll(event.message) catch return error.BufferTooSmall;
+     }
+     var values_output: wire.StreamOutput = .{ .writer = &output };
+-    for (event.fields) |field| wire.writeValueTo(&values_output, field.value) catch return error.BufferTooSmall;
+-    for (event.format_args) |argument| wire.writeValueTo(&values_output, argument.value) catch return error.BufferTooSmall;
++    for (event.fields) |field| wire.writeValueToWith(&values_output, field.value, .wide128) catch return error.BufferTooSmall;
++    for (event.format_args) |argument| wire.writeValueToWith(&values_output, argument.value, .wide128) catch return error.BufferTooSmall;
+     std.debug.assert(output.end == size);
+     return destination[0..size];
+ }
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 675dfbb..99a27a9 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -911,7 +911,7 @@ pub const Runtime = struct {
+                     const header = if (definition) |canonical|
+                         try schema_codec.readReferenceHeader(record.payload, canonical, fields.len)
+                     else
+-                        codec.readHeader(record.payload, codec.version) catch |err| switch (err) {
++                        codec.readInlineHeader(record.payload) catch |err| switch (err) {
+                             error.UnsupportedVersion => break :blk false,
+                             else => return err,
+                         };
+diff --git a/src/core/schema_codec.zig b/src/core/schema_codec.zig
+index 56e0baf..4ff47bc 100644
+--- a/src/core/schema_codec.zig
++++ b/src/core/schema_codec.zig
+@@ -1,5 +1,5 @@
+ //! Schema-referenced event payload v5 (also reads historical v2). The fixed journal slot header owns the
+-//! schema reference; a standalone archive writes self-contained codec v4.
++//! schema reference; a standalone archive writes the current self-contained codec.
+ const std = @import("std");
+ const codec = @import("codec.zig");
+ pub const schema = @import("../journal/schema.zig");
+@@ -70,7 +70,7 @@ pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) De
+     event.scope = definition.scope;
+     event.source = definition.source;
+     var arena = codec.DescriptorArena.init(scratch[header.field_count + header.argument_count ..]);
+-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = definition.ref.version == schema.nested_version };
++    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = definition.ref.version == schema.nested_version, .allow_native_integers = false };
+     if (header.flags & 2 != 0) event.trace_id = (try input.take(16))[0..16].*;
+     if (header.flags & 4 != 0) event.span_id = (try input.take(8))[0..8].*;
+     event.message = if (definition.message) |message| message else try input.blob();
+@@ -95,6 +95,33 @@ pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) De
+     return event;
+ }
+ 
++test "reference v5 native range integers preserve frozen payload and schema bytes" {
++    const frozen_schema = @embedFile("tests/fixtures/v5_definition.bin");
++    const frozen_payload = @embedFile("tests/fixtures/v5_reference.bin");
++    const frozen_inline = @embedFile("tests/fixtures/v4_scalar.bin");
++    const definition = (try schema.decodeEntry(frozen_schema, 0, 1024)).?;
++    var scratch: [codec.decode_scratch_fields]Field = undefined;
++    const event = try resolve(frozen_payload, definition, &scratch);
++    var output: [4096]u8 = undefined;
++    try std.testing.expectEqualSlices(u8, frozen_payload, try encodeReference(event, definition, &output));
++    try std.testing.expectEqualSlices(u8, frozen_inline, try codec.encodeVersioned(.v4, event, &output));
++    const compact = try codec.encode(event, &output);
++    try std.testing.expectEqual(frozen_inline.len - 40, compact.len);
++    var metadata_fields: [5]FieldSchema = undefined;
++    var metadata_arguments: [0]FieldSchema = .{};
++    const metadata = try eventMetadata(event, &metadata_fields, &metadata_arguments);
++    try std.testing.expectEqualSlices(u8, &definition.ref.hash, &try schema.metadataHash(metadata));
++    // These old reference records remain wide128. New physical tags must fail
++    // before reading their numeric body even when the old schema allows signed
++    // or unsigned values of any size.
++    const first_value = frozen_payload.len - 5 * 17;
++    var damaged: [frozen_payload.len]u8 = frozen_payload.*;
++    for ([_]u8{ 11, 12 }) |tag| {
++        damaged[first_value] = tag;
++        try std.testing.expectError(error.InvalidTag, resolve(&damaged, definition, &scratch));
++    }
++}
++
+ test "referenced event omits static metadata and survives copied schema plus values" {
+     const field = @import("field.zig");
+     var region: [2 * 1088]u8 align(64) = @splat(0);
+diff --git a/src/core/tests/codec.zig b/src/core/tests/codec.zig
+index 14ff07e..5a67e51 100644
+--- a/src/core/tests/codec.zig
++++ b/src/core/tests/codec.zig
+@@ -9,6 +9,7 @@ const version = codec.version;
+ const previous_version = codec.previous_version;
+ const decode_scratch_fields = codec.decode_scratch_fields;
+ const legacy_version = codec.legacy_version;
++const legacy_nested_version = codec.legacy_nested_version;
+ const legacy_reference_version = codec.legacy_reference_version;
+ const reference_version = codec.reference_version;
+ const legacy_header_size = codec.legacy_header_size;
+@@ -225,10 +226,11 @@ test "codec validates boolean, tag, duplicate keys and bounded output" {
+     try std.testing.expectError(error.DuplicateKey, decode(unique, &scratch));
+ }
+ 
+-test "codec wire golden is little endian and independent of struct padding" {
++test "codec v6 wire golden preserves independent historical v4 header bytes" {
+     var buffer: [128]u8 = undefined;
+-    const payload = try encode(.{ .level = .info, .scope = "a", .message = "b", .fields = &.{}, .timestamp_ns = -2, .session = 1, .sequence = 2, .channel = 3, .route_mask = 4, .route_fingerprint = 0x0102030405060708, .config_generation = 5, .trace_flags = 6 }, &buffer);
+-    const expected = [_]u8{
++    const event: Event = .{ .level = .info, .scope = "a", .message = "b", .fields = &.{}, .timestamp_ns = -2, .session = 1, .sequence = 2, .channel = 3, .route_mask = 4, .route_fingerprint = 0x0102030405060708, .config_generation = 5, .trace_flags = 6 };
++    // This literal is the original v4 golden, independent of either encoder.
++    const expected_v4 = [_]u8{
+         'K', 'R', 'N', 'E', // magic
+         4, 0, 0, 0, // self-contained version, flags
+         94, 0, 0, 0, // total length
+@@ -245,7 +247,18 @@ test "codec wire golden is little endian and independent of struct padding" {
+         1, 0, 0, 0, 'a', // scope
+         1, 0, 0, 0, 'b', // message
+     };
+-    try std.testing.expectEqualSlices(u8, &expected, payload);
++    const old = try codec.encodeVersioned(.v4, event, &buffer);
++    try std.testing.expectEqualSlices(u8, &expected_v4, old);
++    var scratch: [0]field.Field = .{};
++    const restored = try decode(&expected_v4, &scratch);
++    try std.testing.expectEqual(event.route_fingerprint, restored.route_fingerprint);
++    try std.testing.expectEqual(legacy_nested_version, (try readHeader(&expected_v4, legacy_nested_version)).wire_version);
++    // No integer fields occur in this fixture; only the event version changes.
++    var expected_v6 = expected_v4;
++    expected_v6[4] = 6;
++    const current = try encode(event, &buffer);
++    try std.testing.expectEqualSlices(u8, &expected_v6, current);
++    try std.testing.expectEqual(@as(u16, 6), (try readHeader(current, version)).wire_version);
+ }
+ 
+ test "codec route fingerprint spans the appended header and both output paths" {
+@@ -311,7 +324,7 @@ test "codec preserves float bits in an unaligned payload" {
+     for (restored.fields, patterns) |entry, bits| try std.testing.expectEqual(bits, @as(u64, @bitCast(entry.value.float)));
+ }
+ 
+-test "historical self-contained v1 68-byte fixture decodes and reencodes as v4" {
++test "historical self-contained v1 68-byte fixture decodes and reencodes as v6" {
+     const legacy = [_]u8{
+         'K', 'R', 'N', 'E',
+         1, 0, 0, 0, // historical version and flags
+@@ -353,7 +366,7 @@ test "historical self-contained v1 68-byte fixture decodes and reencodes as v4"
+ test "legacy header offsets preserve source trace and deferred arguments" {
+     const original: Event = .{ .level = .warn, .scope = "legacy", .message = "value={d}", .message_template = true, .format_args = &.{field.kv("0", @as(i64, -42))}, .fields = &.{field.kv("ok", true)}, .timestamp_ns = 17, .trace_id = @splat(0xab), .span_id = @splat(0xcd), .trace_flags = 1, .source = @src(), .route_fingerprint = 123 };
+     var current_buffer: [2048]u8 = undefined;
+-    const current = try encode(original, &current_buffer);
++    const current = try codec.encodeVersioned(.v4, original, &current_buffer);
+     var legacy_buffer: [2048]u8 = undefined;
+     var writer = std.Io.Writer.fixed(&legacy_buffer);
+     try writeHeader(original, current.len - 16, legacy_version, &writer);
+@@ -367,7 +380,7 @@ test "legacy header offsets preserve source trace and deferred arguments" {
+     try std.testing.expectEqual(original.span_id.?, restored.span_id.?);
+     try std.testing.expectEqual(@as(i128, -42), restored.format_args[0].value.signed);
+     try std.testing.expectEqual(@as(u64, 0), restored.route_fingerprint);
+-    try std.testing.expectEqual(@as(usize, 84), (try readHeader(current, version)).header_bytes);
++    try std.testing.expectEqual(@as(usize, 84), (try readHeader(current, legacy_nested_version)).header_bytes);
+     const migrated = try encode(restored, &current_buffer);
+     try std.testing.expectEqual(@as(u16, version), std.mem.readInt(u16, migrated[4..6], .little));
+     try std.testing.expectEqualStrings("legacy", (try decode(migrated, &scratch)).scope);
+@@ -555,7 +568,7 @@ test "nested decoder rejects malformed child counts depth keys and legacy tags"
+ test "historical v3 header migrates route generation and preserves scalar body" {
+     const event: Event = .{ .level = .info, .scope = "v3", .message = "legacy", .timestamp_ns = 1, .fields = &.{field.kv("answer", 42)}, .route_fingerprint = 123, .route_generation = 99 };
+     var current_buffer: [256]u8 = undefined;
+-    const current = try encode(event, &current_buffer);
++    const current = try codec.encodeVersioned(.v4, event, &current_buffer);
+     var legacy_buffer: [256]u8 = undefined;
+     var writer = std.Io.Writer.fixed(&legacy_buffer);
+     try writeHeader(event, current.len - 8, previous_version, &writer);
+@@ -567,7 +580,7 @@ test "historical v3 header migrates route generation and preserves scalar body"
+     try std.testing.expectEqual(event.route_fingerprint, restored.route_fingerprint);
+     try std.testing.expectEqual(@as(u128, 42), restored.fields[0].value.unsigned);
+     const migrated = try encode(restored, &current_buffer);
+-    try std.testing.expectEqual(@as(u16, 4), std.mem.readInt(u16, migrated[4..6], .little));
++    try std.testing.expectEqual(@as(u16, 6), std.mem.readInt(u16, migrated[4..6], .little));
+     try std.testing.expectEqual(@as(u64, 0), (try decode(migrated, &scratch)).route_generation);
+ }
+ 
+@@ -626,3 +639,7 @@ test "wire typed visitor rejects damaged values before invoking its receiver" {
+     try valid.valueWith(&receiver);
+     try std.testing.expectEqual(@as(usize, 1), receiver.calls);
+ }
++
++test {
++    _ = @import("codec_native.zig");
++}
+diff --git a/src/core/wire_size.zig b/src/core/wire_size.zig
+index 0ee9d1f..de36a83 100644
+--- a/src/core/wire_size.zig
++++ b/src/core/wire_size.zig
+@@ -3,65 +3,133 @@
+ //! validation credential or borrowed event is stored here.
+ const std = @import("std");
+ const field = @import("field.zig");
++const wire = @import("wire_write.zig");
+ 
+-pub const SizeVisitor = struct {
+-    pub const Error = error{};
+-    // A single length above u32 cannot fit the wire format. Cap each term at
+-    // u32_max + 1, preserving that error without overflowing a native total.
+-    // There are at most 256 nodes/keys and five event/source strings; their
+-    // bounded sum is below 2^42. Validation still finishes before result().
+-    comptime {
+-        std.debug.assert(@bitSizeOf(usize) <= 64);
+-    }
+-    total: u64 = 0,
++/// Standalone value and reference payloads keep the historical representation.
++pub const SizeVisitor = SizeVisitorFor(.wide128);
+ 
+-    pub fn add(self: *SizeVisitor, amount: usize) void {
+-        self.total += @min(@as(u64, amount), @as(u64, std.math.maxInt(u32)) + 1);
+-    }
++pub fn SizeVisitorFor(comptime encoding: wire.IntegerEncoding) type {
++    return struct {
++        const Self = @This();
++        pub const Error = error{};
++        // A single length above u32 cannot fit the wire format. Cap each term at
++        // u32_max + 1, preserving that error without overflowing a native total.
++        // There are at most 256 nodes/keys and five event/source strings; their
++        // bounded sum is below 2^42. Validation still finishes before result().
++        comptime {
++            std.debug.assert(@bitSizeOf(usize) <= 64);
++        }
++        total: u64 = 0,
+ 
+-    pub fn blob(self: *SizeVisitor, length: usize, terminated: bool) void {
+-        self.add(4);
+-        self.add(length);
+-        if (terminated) self.add(1);
+-    }
++        pub fn add(self: *Self, amount: usize) void {
++            self.total += @min(@as(u64, amount), @as(u64, std.math.maxInt(u32)) + 1);
++        }
+ 
+-    pub fn result(self: *const SizeVisitor) error{TooLarge}!usize {
+-        if (self.total > std.math.maxInt(u32)) return error.TooLarge;
+-        return @intCast(self.total);
+-    }
++        pub fn blob(self: *Self, length: usize, terminated: bool) void {
++            self.add(4);
++            self.add(length);
++            if (terminated) self.add(1);
++        }
+ 
+-    pub fn onField(self: *SizeVisitor, entry: field.Field) Error!void {
+-        self.blob(entry.key.len, false);
+-    }
++        pub fn result(self: *const Self) error{TooLarge}!usize {
++            if (self.total > std.math.maxInt(u32)) return error.TooLarge;
++            return @intCast(self.total);
++        }
+ 
+-    pub fn onValue(self: *SizeVisitor, value: field.Value) Error!void {
+-        switch (value) {
+-            .null_value => self.add(1),
+-            .boolean => self.add(2),
+-            .signed, .unsigned => self.add(17),
+-            .float, .duration_ns, .timestamp_ns => self.add(9),
+-            .string, .bytes => |bytes| {
+-                self.add(5);
+-                self.add(bytes.len);
+-            },
+-            .array, .group => self.add(5),
++        pub fn onField(self: *Self, entry: field.Field) Error!void {
++            self.blob(entry.key.len, false);
+         }
+-    }
+-};
++
++        pub fn onValue(self: *Self, value: field.Value) Error!void {
++            switch (value) {
++                .null_value => self.add(1),
++                .boolean => self.add(2),
++                .signed => |v| self.add(if (wire.integerTag(i128, v, encoding) == .signed64) 9 else 17),
++                .unsigned => |v| self.add(if (wire.integerTag(u128, v, encoding) == .unsigned64) 9 else 17),
++                .float, .duration_ns, .timestamp_ns => self.add(9),
++                .string, .bytes => |bytes| {
++                    self.add(5);
++                    self.add(bytes.len);
++                },
++                .array, .group => self.add(5),
++            }
++        }
++    };
++}
+ 
+ test "wire size caps individually unrepresentable lengths without losing exact valid sums" {
+-    var visitor: SizeVisitor = .{};
+-    visitor.add(std.math.maxInt(u32));
+-    try std.testing.expectEqual(@as(usize, std.math.maxInt(u32)), try visitor.result());
+-    visitor.add(1);
+-    try std.testing.expectError(error.TooLarge, visitor.result());
++    inline for (.{ wire.IntegerEncoding.wide128, wire.IntegerEncoding.native64 }) |encoding| {
++        var visitor: SizeVisitorFor(encoding) = .{};
++        visitor.add(std.math.maxInt(u32));
++        try std.testing.expectEqual(@as(usize, std.math.maxInt(u32)), try visitor.result());
++        visitor.add(1);
++        try std.testing.expectError(error.TooLarge, visitor.result());
++
++        visitor = .{};
++        // Every arbitrary usize term used by a full valid descriptor tree can
++        // exceed u32, including multiple maxInt(usize) strings and keys.
++        for (0..2 * field.max_value_nodes + 5) |_| visitor.blob(std.math.maxInt(usize), true);
++        try std.testing.expectError(error.TooLarge, visitor.result());
++        try std.testing.expect(visitor.total < @as(u64, 1) << 42);
++    }
++}
+ 
+-    visitor = .{};
+-    // Every arbitrary usize term used by a full valid descriptor tree can
+-    // exceed u32, including multiple maxInt(usize) strings and keys.
+-    for (0..2 * field.max_value_nodes + 5) |_| visitor.blob(std.math.maxInt(usize), true);
+-    try std.testing.expectError(error.TooLarge, visitor.result());
+-    try std.testing.expect(visitor.total < @as(u64, 1) << 42);
++test "native integer wire size matches independent boundary lengths" {
++    const cases = [_]struct { value: field.Value, native_length: usize }{
++        .{ .value = .{ .signed = std.math.minInt(i128) }, .native_length = 17 },
++        .{ .value = .{ .signed = @as(i128, std.math.minInt(i64)) - 1 }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.minInt(i64) }, .native_length = 9 },
++        .{ .value = .{ .signed = -1 }, .native_length = 9 },
++        .{ .value = .{ .signed = 0 }, .native_length = 9 },
++        .{ .value = .{ .signed = std.math.maxInt(i64) }, .native_length = 9 },
++        .{ .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.maxInt(u64) }, .native_length = 17 },
++        .{ .value = .{ .signed = std.math.maxInt(i128) }, .native_length = 17 },
++        .{ .value = .{ .unsigned = 0 }, .native_length = 9 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u64) }, .native_length = 9 },
++        .{ .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 }, .native_length = 17 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u128) }, .native_length = 17 },
++    };
++    for (cases) |case| {
++        var native: SizeVisitorFor(.native64) = .{};
++        var wide: SizeVisitor = .{};
++        try native.onValue(case.value);
++        try wide.onValue(case.value);
++        try std.testing.expectEqual(case.native_length, try native.result());
++        try std.testing.expectEqual(@as(usize, 17), try wide.result());
++    }
++}
++
++test "native integer wire size preserves nested keys positional arguments and shared node budget" {
++    const attributes = [_]field.Field{.{ .key = "root", .value = .{ .group = &.{
++        .{ .key = "a", .value = .{ .array = &.{ .{ .signed = -1 }, .{ .unsigned = std.math.maxInt(u64) }, .{ .signed = std.math.minInt(i128) }, .{ .string = "ok" } } } },
++        .{ .key = "b", .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 } },
++    } } }};
++    const arguments = [_]field.Field{
++        .{ .key = "", .value = .{ .signed = 1 } },
++        .{ .key = "", .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 } },
++    };
++    inline for (.{ wire.IntegerEncoding.wide128, wire.IntegerEncoding.native64 }) |encoding| {
++        var visitor: SizeVisitorFor(encoding) = .{};
++        var validator: field.ValueValidator = .{};
++        try validator.fieldsWith(&attributes, &visitor);
++        // Independently count key lengths, container counts, and payload widths.
++        // Native: root key 8, group 5, a key 5, array 5, values 9+9+17+7,
++        // b key 5, value 17 = 87. Wide adds 16 for the two narrow integers.
++        try std.testing.expectEqual(@as(usize, if (encoding == .native64) 87 else 103), try visitor.result());
++        try validator.argumentsWith(&arguments, &visitor);
++        // Repeated positional keys add 4 each; their values use 9/17 or 17/17.
++        try std.testing.expectEqual(@as(usize, if (encoding == .native64) 121 else 145), try visitor.result());
++        try std.testing.expectEqual(@as(usize, 9), validator.nodes);
++
++        var repeated: [field.max_value_nodes - 9]field.Field = undefined;
++        @memset(&repeated, .{ .key = "", .value = .{ .signed = 0 } });
++        try validator.argumentsWith(&repeated, &visitor);
++        const expected: usize = if (encoding == .native64) 121 + repeated.len * 13 else 145 + repeated.len * 21;
++        try std.testing.expectEqual(expected, try visitor.result());
++        try std.testing.expectError(error.TooManyValueNodes, validator.valueWith(.{ .signed = 0 }, &visitor));
++        try std.testing.expectEqual(expected, try visitor.result());
++    }
+ }
+ 
+ test "bounded length arithmetic agrees with exact wide sums at wire limits and native extremes" {
+diff --git a/src/core/wire_write.zig b/src/core/wire_write.zig
+index b486579..fced2f8 100644
+--- a/src/core/wire_write.zig
++++ b/src/core/wire_write.zig
+@@ -7,6 +7,15 @@ const field = @import("field.zig");
+ 
+ pub const ValueTag = enum(u8) { null_value = 0, boolean = 1, signed = 2, unsigned = 3, float = 4, string = 5, bytes = 6, duration_ns = 7, timestamp_ns = 8, array = 9, group = 10 };
+ 
++/// Integer payload policy for a complete value tree. Historical and standalone
++/// value writers retain 128-bit payloads; native payload versions may narrow
++/// integers that fit their corresponding signed or unsigned 64-bit range.
++pub const IntegerEncoding = enum { wide128, native64 };
++
++/// Physical wire tags retain the canonical tags and extend only integer storage.
++/// The borrowed Value and schema identity continue using canonical ValueTag.
++pub const PhysicalTag = enum(u8) { null_value = 0, boolean = 1, signed = 2, unsigned = 3, float = 4, string = 5, bytes = 6, duration_ns = 7, timestamp_ns = 8, array = 9, group = 10, signed64 = 11, unsigned64 = 12 };
++
+ pub fn valueTag(value: field.Value) ValueTag {
+     return switch (value) {
+         .null_value => .null_value,
+@@ -23,7 +32,20 @@ pub fn valueTag(value: field.Value) ValueTag {
+     };
+ }
+ 
+-const Tag = ValueTag;
++pub fn physicalTag(value: field.Value, comptime encoding: IntegerEncoding) PhysicalTag {
++    switch (value) {
++        .signed => |v| return integerTag(i128, v, encoding),
++        .unsigned => |v| return integerTag(u128, v, encoding),
++        else => {},
++    }
++    return @enumFromInt(@intFromEnum(valueTag(value)));
++}
++
++pub inline fn integerTag(comptime T: type, integer: T, comptime encoding: IntegerEncoding) PhysicalTag {
++    if (T == i128) return if (encoding == .native64 and integer >= std.math.minInt(i64) and integer <= std.math.maxInt(i64)) .signed64 else .signed;
++    if (T == u128) return if (encoding == .native64 and integer <= std.math.maxInt(u64)) .unsigned64 else .unsigned;
++    @compileError("wire integer classification requires i128 or u128");
++}
+ 
+ pub const StreamOutput = struct {
+     pub const Error = std.Io.Writer.Error;
+@@ -51,54 +73,163 @@ pub fn writeTerminated(output: anytype, bytes: []const u8) @TypeOf(output.*).Err
+ }
+ 
+ pub fn writeField(output: anytype, entry: field.Field) @TypeOf(output.*).Error!void {
++    try writeFieldWith(output, entry, .wide128);
++}
++
++pub fn writeFieldWith(output: anytype, entry: field.Field, comptime encoding: IntegerEncoding) @TypeOf(output.*).Error!void {
+     try writeBlob(output, entry.key);
+-    try writeValueTo(output, entry.value);
++    try writeValueToWith(output, entry.value, encoding);
+ }
+ 
+ pub fn writeValueTo(output: anytype, value: field.Value) @TypeOf(output.*).Error!void {
++    try writeValueToWith(output, value, .wide128);
++}
++
++pub fn writeValueToWith(output: anytype, value: field.Value, comptime encoding: IntegerEncoding) @TypeOf(output.*).Error!void {
+     switch (value) {
+-        .null_value => try output.int(u8, @intFromEnum(Tag.null_value)),
++        .null_value => try output.int(u8, @intFromEnum(PhysicalTag.null_value)),
+         .boolean => |v| {
+-            try output.int(u8, @intFromEnum(Tag.boolean));
++            try output.int(u8, @intFromEnum(PhysicalTag.boolean));
+             try output.int(u8, @intFromBool(v));
+         },
+         .signed => |v| {
+-            try output.int(u8, @intFromEnum(Tag.signed));
+-            try output.int(i128, v);
++            const tag = integerTag(i128, v, encoding);
++            try output.int(u8, @intFromEnum(tag));
++            if (tag == .signed64) try output.int(i64, @intCast(v)) else try output.int(i128, v);
+         },
+         .unsigned => |v| {
+-            try output.int(u8, @intFromEnum(Tag.unsigned));
+-            try output.int(u128, v);
++            const tag = integerTag(u128, v, encoding);
++            try output.int(u8, @intFromEnum(tag));
++            if (tag == .unsigned64) try output.int(u64, @intCast(v)) else try output.int(u128, v);
+         },
+         .float => |v| {
+-            try output.int(u8, @intFromEnum(Tag.float));
++            try output.int(u8, @intFromEnum(PhysicalTag.float));
+             try output.int(u64, @bitCast(v));
+         },
+-        .string => |v| {
+-            try output.int(u8, @intFromEnum(Tag.string));
++        inline .string, .bytes => |v, tag| {
++            try output.int(u8, @intFromEnum(@field(PhysicalTag, @tagName(tag))));
+             try writeBlob(output, v);
+         },
+-        .bytes => |v| {
+-            try output.int(u8, @intFromEnum(Tag.bytes));
+-            try writeBlob(output, v);
+-        },
+-        .duration_ns => |v| {
+-            try output.int(u8, @intFromEnum(Tag.duration_ns));
+-            try output.int(i64, v);
+-        },
+-        .timestamp_ns => |v| {
+-            try output.int(u8, @intFromEnum(Tag.timestamp_ns));
++        inline .duration_ns, .timestamp_ns => |v, tag| {
++            try output.int(u8, @intFromEnum(@field(PhysicalTag, @tagName(tag))));
+             try output.int(i64, v);
+         },
+         .array => |values| {
+-            try output.int(u8, @intFromEnum(Tag.array));
++            try output.int(u8, @intFromEnum(PhysicalTag.array));
+             try output.int(u32, @intCast(values.len));
+-            for (values) |child| try writeValueTo(output, child);
++            for (values) |child| try writeValueToWith(output, child, encoding);
+         },
+         .group => |entries| {
+-            try output.int(u8, @intFromEnum(Tag.group));
++            try output.int(u8, @intFromEnum(PhysicalTag.group));
+             try output.int(u32, @intCast(entries.len));
+-            for (entries) |entry| try writeField(output, entry);
++            for (entries) |entry| try writeFieldWith(output, entry, encoding);
+         },
+     }
+ }
++
++const TestOutput = struct {
++    pub const Error = error{BufferTooSmall};
++    bytes: []u8,
++    position: usize = 0,
++
++    pub fn put(self: *TestOutput, bytes: []const u8) Error!void {
++        if (bytes.len > self.bytes.len - self.position) return error.BufferTooSmall;
++        @memcpy(self.bytes[self.position..][0..bytes.len], bytes);
++        self.position += bytes.len;
++    }
++
++    pub fn int(self: *TestOutput, comptime T: type, value: T) Error!void {
++        var bytes: [@sizeOf(T)]u8 = undefined;
++        std.mem.writeInt(T, &bytes, value, .little);
++        try self.put(&bytes);
++    }
++};
++
++test "native integer wire boundaries use explicit little endian bytes and preserve wide wrappers" {
++    const zero8 = [_]u8{0} ** 8;
++    const ff8 = [_]u8{0xff} ** 8;
++    const min128 = [_]u8{2} ++ ([_]u8{0} ** 15) ++ [_]u8{0x80};
++    const max128 = [_]u8{2} ++ ([_]u8{0xff} ** 15) ++ [_]u8{0x7f};
++    const below_min64 = [_]u8{2} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f} ++ ff8;
++    const above_max64 = [_]u8{2} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ zero8;
++    const above_maxu64 = [_]u8{3} ++ zero8 ++ [_]u8{1} ++ ([_]u8{0} ** 7);
++    const maxu128 = [_]u8{3} ++ ff8 ++ ff8;
++    // Expected bytes are literal protocol fixtures, independent of physicalTag
++    // and the integer writer. Signed positive values keep signedness even when
++    // they fit u64 but exceed i64.
++    const cases = [_]struct { value: field.Value, native: []const u8, wide: []const u8 }{
++        .{ .value = .{ .signed = std.math.minInt(i128) }, .native = &min128, .wide = &min128 },
++        .{ .value = .{ .signed = @as(i128, std.math.minInt(i64)) - 1 }, .native = &below_min64, .wide = &below_min64 },
++        .{ .value = .{ .signed = std.math.minInt(i64) }, .native = &([_]u8{11} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80}), .wide = &([_]u8{2} ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ ff8) },
++        .{ .value = .{ .signed = -1 }, .native = &([_]u8{11} ++ ff8), .wide = &([_]u8{2} ++ ff8 ++ ff8) },
++        .{ .value = .{ .signed = 0 }, .native = &([_]u8{11} ++ zero8), .wide = &([_]u8{2} ++ zero8 ++ zero8) },
++        .{ .value = .{ .signed = std.math.maxInt(i64) }, .native = &([_]u8{11} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f}), .wide = &([_]u8{2} ++ ([_]u8{0xff} ** 7) ++ [_]u8{0x7f} ++ zero8) },
++        .{ .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 }, .native = &above_max64, .wide = &above_max64 },
++        .{ .value = .{ .signed = std.math.maxInt(u64) }, .native = &([_]u8{2} ++ ff8 ++ zero8), .wide = &([_]u8{2} ++ ff8 ++ zero8) },
++        .{ .value = .{ .signed = std.math.maxInt(i128) }, .native = &max128, .wide = &max128 },
++        .{ .value = .{ .unsigned = 0 }, .native = &([_]u8{12} ++ zero8), .wide = &([_]u8{3} ++ zero8 ++ zero8) },
++        .{ .value = .{ .unsigned = std.math.maxInt(u64) }, .native = &([_]u8{12} ++ ff8), .wide = &([_]u8{3} ++ ff8 ++ zero8) },
++        .{ .value = .{ .unsigned = @as(u128, std.math.maxInt(u64)) + 1 }, .native = &above_maxu64, .wide = &above_maxu64 },
++        .{ .value = .{ .unsigned = std.math.maxInt(u128) }, .native = &maxu128, .wide = &maxu128 },
++    };
++    for (cases) |case| {
++        try std.testing.expectEqual(case.wide[0], @intFromEnum(valueTag(case.value)));
++        try std.testing.expectEqual(case.native[0], @intFromEnum(physicalTag(case.value, .native64)));
++        try std.testing.expectEqual(case.wide[0], @intFromEnum(physicalTag(case.value, .wide128)));
++
++        var buffer: [17]u8 = undefined;
++        var output: TestOutput = .{ .bytes = &buffer };
++        try writeValueToWith(&output, case.value, .native64);
++        try std.testing.expectEqualSlices(u8, case.native, buffer[0..output.position]);
++        var writer = std.Io.Writer.fixed(&buffer);
++        var stream: StreamOutput = .{ .writer = &writer };
++        try writeValueToWith(&stream, case.value, .native64);
++        try std.testing.expectEqualSlices(u8, case.native, writer.buffered());
++
++        output = .{ .bytes = &buffer };
++        try writeValueTo(&output, case.value);
++        try std.testing.expectEqualSlices(u8, case.wide, buffer[0..output.position]);
++        writer = std.Io.Writer.fixed(&buffer);
++        try writeValueToWith(&stream, case.value, .wide128);
++        try std.testing.expectEqualSlices(u8, case.wide, writer.buffered());
++    }
++}
++
++test "native integer wire preserves recursive modes and short slice and stream prefixes" {
++    const entry: field.Field = .{ .key = "root", .value = .{ .group = &.{
++        .{ .key = "a", .value = .{ .array = &.{ .{ .signed = -1 }, .{ .unsigned = std.math.maxInt(u64) }, .{ .signed = std.math.minInt(i128) }, .{ .string = "ok" } } } },
++        .{ .key = "b", .value = .{ .signed = @as(i128, std.math.maxInt(i64)) + 1 } },
++    } } };
++    try field.validateValue(entry.value);
++    const prefix = [_]u8{ 4, 0, 0, 0, 'r', 'o', 'o', 't', 10, 2, 0, 0, 0, 1, 0, 0, 0, 'a', 9, 4, 0, 0, 0 };
++    const suffix = [_]u8{2} ++ ([_]u8{0} ** 15) ++ [_]u8{ 0x80, 5, 2, 0, 0, 0, 'o', 'k', 1, 0, 0, 0, 'b', 2 } ++ ([_]u8{0} ** 7) ++ [_]u8{0x80} ++ ([_]u8{0} ** 8);
++    const native = prefix ++ [_]u8{11} ++ ([_]u8{0xff} ** 8) ++ [_]u8{12} ++ ([_]u8{0xff} ** 8) ++ suffix;
++    const wide = prefix ++ [_]u8{2} ++ ([_]u8{0xff} ** 16) ++ [_]u8{3} ++ ([_]u8{0xff} ** 8) ++ ([_]u8{0} ** 8) ++ suffix;
++    inline for (.{ IntegerEncoding.wide128, IntegerEncoding.native64 }) |encoding| {
++        const expected = if (encoding == .native64) &native else &wide;
++        var buffer: [wide.len]u8 = undefined;
++        var output: TestOutput = .{ .bytes = buffer[0..expected.len] };
++        try writeFieldWith(&output, entry, encoding);
++        try std.testing.expectEqualSlices(u8, expected, buffer[0..output.position]);
++        var writer = std.Io.Writer.fixed(buffer[0..expected.len]);
++        var stream: StreamOutput = .{ .writer = &writer };
++        try writeFieldWith(&stream, entry, encoding);
++        try std.testing.expectEqualSlices(u8, expected, writer.buffered());
++
++        for (0..expected.len) |capacity| {
++            @memset(&buffer, 0xa5);
++            output = .{ .bytes = buffer[0..capacity] };
++            try std.testing.expectError(error.BufferTooSmall, writeFieldWith(&output, entry, encoding));
++            try std.testing.expectEqualSlices(u8, expected[0..output.position], buffer[0..output.position]);
++            for (buffer[output.position..]) |byte| try std.testing.expectEqual(@as(u8, 0xa5), byte);
++
++            writer = std.Io.Writer.fixed(buffer[0..capacity]);
++            try std.testing.expectError(error.WriteFailed, writeFieldWith(&stream, entry, encoding));
++            try std.testing.expectEqualSlices(u8, expected[0..capacity], writer.buffered());
++        }
++    }
++    var buffer: [wide.len]u8 = undefined;
++    var output: TestOutput = .{ .bytes = &buffer };
++    try writeField(&output, entry);
++    try std.testing.expectEqualSlices(u8, &wide, buffer[0..output.position]);
++}
+diff --git a/src/encoder/wire_json.zig b/src/encoder/wire_json.zig
+index 5037439..0090de6 100644
+--- a/src/encoder/wire_json.zig
++++ b/src/encoder/wire_json.zig
+@@ -1,4 +1,4 @@
+-//! Fused wire-to-record rendering for the current self-contained v4 payload.
++//! Fused wire-to-record rendering for self-contained v4/v6 payloads.
+ //! This path is used only when the consumer selected a single JSON, text or
+ //! logfmt route and the payload has no deferred message/arguments. The checked
+ //! wire parser validates every value while the record is built in a
+@@ -107,7 +107,7 @@ fn renderFormat(comptime format: Format, comptime referenced: bool, payload: []c
+     if (header.event.message_template or header.argument_count != 0) return error.Fallback;
+     if (header.field_count > key_scratch.len) return error.TooManyFields;
+     var arena = codec.DescriptorArena.init(key_scratch[header.field_count..]);
+-    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true };
++    var input: codec.WireInput = .{ .bytes = payload, .position = header.header_bytes, .arena = &arena, .allow_nested = if (referenced) definition.ref.version == schema_codec.schema.nested_version else true, .allow_native_integers = !referenced and header.wire_version == codec.version };
+     var event = header.event;
+     event.scope = if (referenced) definition.scope else try input.blob();
+     if (!referenced) event.message = try input.blob();
+@@ -272,3 +272,52 @@ test "fused wire text and logfmt match decoded encoders" {
+ test {
+     _ = @import("wire_reference_tests.zig");
+ }
++
++test "fused inline v4 v6 preserve wire checks and complete JSON text logfmt output" {
++    const fixtures = .{
++        @embedFile("../core/tests/fixtures/v4_scalar.bin"),
++        @embedFile("../core/tests/fixtures/v4_wide.bin"),
++        @embedFile("../core/tests/fixtures/v4_nested.bin"),
++    };
++    inline for (fixtures) |legacy| {
++        var scratch: [codec.decode_scratch_fields]field.Field = undefined;
++        const event = try codec.decode(legacy, &scratch);
++        var current_bytes: [4096]u8 = undefined;
++        const current = try codec.encode(event, &current_bytes);
++        for ([_][]const u8{ legacy, current }) |payload| {
++            const header = try codec.readInlineHeader(payload);
++            var keys: [codec.decode_scratch_fields]field.Field = undefined;
++            var decode_scratch: [codec.decode_scratch_fields]field.Field = undefined;
++            const decoded = try codec.decode(payload, &decode_scratch);
++            inline for (.{ Format.json, Format.text, Format.logfmt }) |format| {
++                var actual_bytes: [8192]u8 = undefined;
++                const actual = try render(format, payload, header, &actual_bytes, &keys, null);
++                var expected_bytes: [8192]u8 = undefined;
++                var expected = std.Io.Writer.fixed(&expected_bytes);
++                try common.encodeWithTime(@field(common.RecordFormat, @tagName(format)), decoded, null, &expected);
++                try std.testing.expectEqualStrings(expected.buffered(), actual);
++            }
++        }
++    }
++    const legacy = fixtures[0];
++    var scratch: [codec.decode_scratch_fields]field.Field = undefined;
++    const event = try codec.decode(legacy, &scratch);
++    var current: [4096]u8 = undefined;
++    const encoded = try codec.encode(event, &current);
++    const header = try codec.readInlineHeader(encoded);
++    // First key follows the fixed header, scope/message, trace/span and source.
++    var scan: codec.WireInput = .{ .bytes = encoded, .position = codec.header_size };
++    _ = try scan.blob();
++    _ = try scan.blob();
++    _ = try scan.take(16 + 8);
++    _ = try scan.terminated();
++    _ = try scan.terminated();
++    _ = try scan.terminated();
++    _ = try scan.take(8);
++    _ = try scan.blob();
++    current[scan.position] = 13;
++    var keys: [codec.decode_scratch_fields]field.Field = undefined;
++    var output: [8192]u8 = undefined;
++    try std.testing.expectError(error.InvalidTag, render(.json, encoded, header, &output, &keys, null));
++    try std.testing.expectError(error.InvalidTag, codec.decode(encoded, &scratch));
++}
+diff --git a/tests/async_storage.zig b/tests/async_storage.zig
+index 9918766..9b621e9 100644
+--- a/tests/async_storage.zig
++++ b/tests/async_storage.zig
+@@ -4,6 +4,69 @@ const builtin = @import("builtin");
+ const kron = @import("kron");
+ const testing = std.testing;
+ 
++test "async storage: mapped Runtime replays mixed v4 v6 commits before accepting current events" {
++    if (builtin.os.tag != .linux) return error.SkipZigTest;
++    var temporary = testing.tmpDir(.{});
++    defer temporary.cleanup();
++    var path_bytes: [128]u8 = undefined;
++    const path = try std.fmt.bufPrint(&path_bytes, ".zig-cache/tmp/{s}/mixed-native.journal", .{temporary.sub_path});
++    var output: [8192]u8 = undefined;
++    var memory = kron.MemorySink.initBuffer(&output);
++    const routes = [_]kron.RouteOptions{.{ .name = "mixed", .sink = memory.sink(), .recovery_identity = "mixed-wire-runtime" }};
++    const initial = try kron.Runtime.create(testing.allocator, testing.io, .{ .routes = &routes });
++    const identity = initial.currentConfiguration();
++    initial.destroy();
++    const journal = try kron.Journal.create(testing.allocator, testing.io, .{ .path = path, .capacity = 8, .max_record_bytes = 1024, .recover = false });
++    var journal_live = true;
++    defer if (journal_live) journal.deinit();
++    inline for (.{ kron.codec.InlineVersion.v4, kron.codec.InlineVersion.v6 }) |version| {
++        var reservation = try journal.reserve();
++        defer reservation.abort();
++        const payload = try kron.codec.encodeVersioned(version, .{
++            .level = .info,
++            .scope = "mixed",
++            .message = if (version == .v4) "old v4" else "new v6",
++            .fields = &.{kron.kv("value", @as(u64, 42))},
++            .timestamp_ns = 17,
++            .session = 11,
++            .sequence = reservation.sequence,
++            .channel = 0,
++            .route_mask = 1,
++            .config_generation = 1,
++            .route_generation = identity.generation,
++            .route_fingerprint = identity.fingerprint,
++        }, reservation.buffer());
++        try reservation.commit(payload.len);
++    }
++    try journal.sync();
++    journal.deinit();
++    journal_live = false;
++    const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
++        .submission = .asynchronous,
++        .journal = .{ .path = path, .capacity = 8, .max_record_bytes = 1024 },
++        .routes = &routes,
++    });
++    defer runtime.destroy();
++    try runtime.flush(.written);
++    try testing.expectEqual(@as(u64, 2), runtime.health().recovered);
++    try testing.expectEqual(@as(u64, 2), runtime.health().written);
++    try testing.expectEqual(@as(usize, 0), runtime.health().journal_pending);
++    try testing.expectEqual(kron.EmitResult.accepted, try runtime.scoped("mixed").tryEmit(.info, "live v6", .{ .value = @as(u64, 43) }));
++    try runtime.shutdown(.drain);
++    try testing.expectEqual(@as(usize, 3), memory.records);
++    var lines = std.mem.tokenizeScalar(u8, memory.written(), '\n');
++    const messages = [_][]const u8{ "old v4", "new v6", "live v6" };
++    var count: usize = 0;
++    while (lines.next()) |line| : (count += 1) {
++        const parsed = try std.json.parseFromSlice(std.json.Value, testing.allocator, line, .{});
++        defer parsed.deinit();
++        try testing.expect(count < messages.len);
++        try testing.expectEqualStrings(messages[count], parsed.value.object.get("message").?.string);
++        try testing.expectEqual(42 + @as(i64, @intFromBool(count == 2)), parsed.value.object.get("attributes").?.object.get("value").?.integer);
++    }
++    try testing.expectEqual(@as(usize, 3), count);
++}
++
+ test "async storage: failed memory durable release and policy replacement preserve ownership" {
+     const Release = struct {
+         calls: usize = 0,
+diff --git a/tests/crash_recovery.py b/tests/crash_recovery.py
+index 61171d3..cb4a798 100644
+--- a/tests/crash_recovery.py
++++ b/tests/crash_recovery.py
+@@ -98,16 +98,17 @@ def verify_records(records, expected_sequences, phase):
+     assert all(record["attributes"]["id"] != 999 for record in records)
+ 
+ 
+-def verify_journal_layout(data, phase, expected_sequences):
++def verify_journal_layout(data, phase, expected_sequences, *, expected_version=None):
+     def number(offset, size):
+         assert offset + size <= len(data), "truncated journal layout"
+         return int.from_bytes(data[offset : offset + size], "little")
+ 
+     assert data.startswith(b"KRONJNL1"), "unexpected journal header"
+     schema = phase.startswith("schema-")
+-    # Protocol migration adds route_generation: self-contained v4 and schema
+-    # references v5 use 84 bytes. Legacy v1/v3 and references v2 remain readable.
+-    expected_payload_version = 5 if schema else 4
++    # Current inline v6 and schema references v5 retain the 84-byte header.
++    # Explicit v4 expectations qualify older fixtures, not current writer output.
++    expected_payload_version = (5 if schema else 6) if expected_version is None else expected_version
++    assert expected_payload_version in ((5,) if schema else (4, 6)), "unsupported expected payload version"
+     assert number(8, 4) == (2 if schema else 1), "wrong journal protocol version"
+     capacity = number(16, 8)
+     maximum = number(24, 8)
+@@ -190,7 +191,7 @@ def run_phase(writer, reader, directory, phase, expected_sequences, timeout):
+     # committed records; inspection must not acknowledge/consume the journal.
+     verify_records(recover(reader, journal, timeout), expected_sequences, phase)
+     assert hashlib.sha256(journal.read_bytes()).digest() == before_hash, "repeat inspection changed the journal"
+-    payload_version = 5 if phase.startswith("schema-") else 4
++    payload_version = 5 if phase.startswith("schema-") else 6
+     print(f"SIGKILL {phase}: recovered {len(records)} committed events (expected payload v{payload_version})", flush=True)
+ 
+ 
+diff --git a/tests/decoder_fuzz.zig b/tests/decoder_fuzz.zig
+index 28cc66a..b702595 100644
+--- a/tests/decoder_fuzz.zig
++++ b/tests/decoder_fuzz.zig
+@@ -8,16 +8,35 @@ test {
+     _ = @import("decoder_matrix.zig");
+ }
+ 
++fn canonical(decoded: kron.Event, wire_version: u16, destination: []u8, historical: []u8) ![]const u8 {
++    if (wire_version == 6) return kron.codec.encodeVersioned(.v6, decoded, destination);
++    const wide = try kron.codec.encodeVersioned(.v4, decoded, destination);
++    if (wire_version == 4) return wide;
++    const header_bytes: usize = switch (wire_version) {
++        1 => kron.codec.legacy_header_size,
++        3 => kron.codec.previous_header_size,
++        else => return error.UnexpectedAcceptedVersion,
++    };
++    // Preserve exact legacy headers independently from current compact values.
++    var writer = std.Io.Writer.fixed(historical);
++    try kron.codec.writeHeader(decoded, wide.len - (kron.codec.header_size - header_bytes), wire_version, &writer);
++    try writer.writeAll(wide[kron.codec.header_size..]);
++    return writer.buffered();
++}
++
+ test "bounded decoder mutation corpus never escapes its input or emits invalid JSON" {
+     var random = std.Random.DefaultPrng.init(0x6b726f6e66757a7a);
+     const rng = random.random();
+     var original: [4096]u8 = undefined;
+     var mutated: [4096]u8 = undefined;
+     var encoded_again: [4096]u8 = undefined;
++    var historical_again: [4096]u8 = undefined;
+     var text: [16 * 1024]u8 = undefined;
+     var scratch: [128]kron.Field = undefined;
+     const entries = [_]kron.Field{
+         kron.kv("integer", @as(i128, std.math.minInt(i128))),
++        kron.kv("native_signed", @as(i64, -42)),
++        kron.kv("native_unsigned", @as(u64, 42)),
+         kron.kv("float", @as(f64, -0.0)),
+         kron.kv("message", "UTF-8 \xc3\xa9\n\"\\"),
+         kron.kv("binary", kron.bytes(&.{ 0, 255, 10 })),
+@@ -30,25 +49,31 @@ test "bounded decoder mutation corpus never escapes its input or emits invalid J
+         .timestamp_ns = 123,
+         .source = @src(),
+     };
+-    const valid = try kron.codec.encode(event, &original);
+-    for (0..4096) |iteration| {
+-        @memcpy(mutated[0..valid.len], valid);
+-        const changes = 1 + iteration % 4;
+-        for (0..changes) |_| {
+-            const index = rng.uintLessThan(usize, valid.len);
+-            mutated[index] ^= rng.int(u8);
++    inline for (.{ kron.codec.InlineVersion.v4, kron.codec.InlineVersion.v6 }) |version| {
++        const valid = try kron.codec.encodeVersioned(version, event, &original);
++        for (0..4096) |iteration| {
++            @memcpy(mutated[0..valid.len], valid);
++            const changes = 1 + iteration % 4;
++            for (0..changes) |_| {
++                const index = rng.uintLessThan(usize, valid.len);
++                mutated[index] ^= rng.int(u8);
++            }
++            const length = if (iteration % 3 == 0) rng.uintLessThan(usize, valid.len + 1) else valid.len;
++            const input = mutated[0..length];
++            const decoded = kron.codec.decode(input, &scratch) catch continue;
++            const wire_version = std.mem.readInt(u16, input[4..6], .little);
++            // Reencode by the version actually accepted, including mutations of
++            // the version itself. v4 wide bytes and v6 canonical compact bytes
++            // each retain their independent byte-for-byte invariant.
++            const reencoded = try canonical(decoded, wire_version, &encoded_again, &historical_again);
++            // Successful decoding must retain a canonical representation. Changes
++            // accepted as ordinary values must never produce out-of-bounds views.
++            try std.testing.expectEqualSlices(u8, input, reencoded);
++            var output = std.Io.Writer.fixed(&text);
++            try kron.encoder.encode(.json, decoded, &output);
++            const parsed = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, output.buffered(), .{});
++            parsed.deinit();
+         }
+-        const length = if (iteration % 3 == 0) rng.uintLessThan(usize, valid.len + 1) else valid.len;
+-        const input = mutated[0..length];
+-        const decoded = kron.codec.decode(input, &scratch) catch continue;
+-        const reencoded = try kron.codec.encode(decoded, &encoded_again);
+-        // Successful decoding must retain a canonical representation. Changes
+-        // accepted as ordinary values must never produce out-of-bounds views.
+-        try std.testing.expectEqualSlices(u8, input, reencoded);
+-        var output = std.Io.Writer.fixed(&text);
+-        try kron.encoder.encode(.json, decoded, &output);
+-        const parsed = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, output.buffered(), .{});
+-        parsed.deinit();
+     }
+ }
+ 
+diff --git a/tests/decoder_matrix.zig b/tests/decoder_matrix.zig
+index d58cf28..5746abd 100644
+--- a/tests/decoder_matrix.zig
++++ b/tests/decoder_matrix.zig
+@@ -6,37 +6,43 @@ const kron = @import("kron");
+ 
+ const budget = 4096;
+ const mutations = 2048;
+-const Kind = enum { inline_v1, inline_v3, inline_v4, inline_nested, reference_v2, reference_v5, reference_nested, reference_template };
++const Kind = enum { inline_v1, inline_v3, inline_v4, inline_nested, inline_v6, inline_v6_nested, inline_v6_deferred, reference_v2, reference_v5, reference_nested, reference_template };
+ 
+ const Fixture = struct {
+-    values: [11]kron.Value = .{
++    values: [13]kron.Value = .{
+         .null_value,                                 kron.fields.fromAny(true),                                             kron.fields.fromAny(std.math.minInt(i128)),
+         kron.fields.fromAny(std.math.maxInt(u128)),  kron.fields.fromAny(@as(f64, @bitCast(@as(u64, 0x7ff8000000000042)))), kron.fields.fromAny("utf8 \xc3\xa9\n\"\\"),
+         kron.fields.fromAny(kron.bytes("\x00\xff")), kron.fields.fromAny(kron.durationNs(-17)),                             kron.fields.fromAny(kron.timestampNs(18)),
+-        .{ .array = &.{} },                          .{ .group = &.{} },
++        kron.fields.fromAny(@as(i64, -42)),          kron.fields.fromAny(@as(u64, 42)),                                     .{ .array = &.{} },
++        .{ .group = &.{} },
+     },
++    legacy_values: [11]kron.Value = undefined,
+     nested: [2]kron.Field = undefined,
+-    fields: [11]kron.Field = undefined,
+-    arguments: [2]kron.Field = .{ kron.kv("count", @as(u64, 42)), kron.kv("label", "original") },
++    fields: [13]kron.Field = undefined,
++    arguments: [3]kron.Field = .{ kron.kv("count", @as(u64, 42)), kron.kv("label", "original"), kron.kv("wide", std.math.maxInt(u128)) },
+     event: kron.Event = undefined,
+ 
+     fn init(self: *Fixture, kind: Kind) void {
+         self.* = .{};
+-        const names = [_][]const u8{ "none", "boolean", "signed", "unsigned", "float", "string", "bytes", "duration", "time", "array", "group" };
++        const names = [_][]const u8{ "none", "boolean", "signed", "unsigned", "float", "string", "bytes", "duration", "time", "native_signed", "native_unsigned", "array", "group" };
+         for (&self.fields, names, self.values) |*field, key, value| field.* = .{ .key = key, .value = value };
+-        self.nested = .{ kron.kv("all", kron.array(&self.values)), kron.kv("secret", kron.secret("never captured")) };
+-        const nested = kind == .inline_nested or kind == .reference_nested or kind == .reference_template;
++        @memcpy(self.legacy_values[0..9], self.values[0..9]);
++        self.legacy_values[9] = self.values[11];
++        self.legacy_values[10] = self.values[12];
++        const current_inline = kind == .inline_v6 or kind == .inline_v6_nested or kind == .inline_v6_deferred;
++        self.nested = .{ kron.kv("all", kron.array(if (current_inline) &self.values else &self.legacy_values)), kron.kv("secret", kron.secret("never captured")) };
++        const nested = kind == .inline_nested or kind == .inline_v6_nested or kind == .reference_nested or kind == .reference_template;
+         if (nested) self.fields[0] = kron.kv("root", kron.group(&self.nested));
+-        const template = kind == .reference_template;
++        const template = kind == .reference_template or kind == .inline_v6_deferred;
+         self.event = .{
+             .level = .info,
+             .scope = "decoder.matrix",
+-            .message = if (template) "value {[count]d}: {[label]s}" else "dynamic message",
++            .message = if (kind == .inline_v6_deferred) "value {[count]d}: {[label]s}, wide {[wide]x}" else if (template) "value {[count]d}: {[label]s}" else "dynamic message",
+             .message_template = template,
+-            .format_args = if (template) &self.arguments else &.{},
++            .format_args = if (kind == .inline_v6_deferred) &self.arguments else if (template) self.arguments[0..2] else &.{},
+             // Legacy payloads have only scalar tags. Current scalar fixtures
+             // also omit the two container tags, whose coverage is in nested.
+-            .fields = if (nested) self.fields[0..1] else self.fields[0..9],
++            .fields = if (nested) self.fields[0..1] else if (current_inline) self.fields[0..11] else self.fields[0..9],
+             .timestamp_ns = -123,
+             .session = std.math.maxInt(u64),
+             .sequence = 19,
+@@ -62,6 +68,7 @@ fn wireVersion(kind: Kind) u16 {
+         .inline_v1 => 1,
+         .inline_v3 => 3,
+         .inline_v4, .inline_nested => 4,
++        .inline_v6, .inline_v6_nested, .inline_v6_deferred => 6,
+         .reference_v2 => 2,
+         .reference_v5, .reference_nested, .reference_template => 5,
+     };
+@@ -71,16 +78,20 @@ fn headerBytes(version: u16) usize {
+     return switch (version) {
+         1 => 68,
+         2, 3 => 76,
+-        4, 5 => 84,
++        4, 5, 6 => 84,
+         else => unreachable,
+     };
+ }
+ 
+-fn migrateHeader(event: kron.Event, current: []const u8, version: u16, destination: []u8) ![]const u8 {
+-    const length = current.len - (kron.codec.header_size - headerBytes(version));
++fn migrateHeader(event: kron.Event, payload: []const u8, version: u16, destination: []u8) ![]const u8 {
++    // Historical inline headers are reconstructed only over a v4 wide body.
++    // A current compact body cannot be relabeled as historical wire data.
++    const body_version = std.mem.readInt(u16, payload[4..6], .little);
++    if (version == 1 or version == 3 or version == 4) try std.testing.expectEqual(@as(u16, 4), body_version);
++    const length = payload.len - (kron.codec.header_size - headerBytes(version));
+     var output = std.Io.Writer.fixed(destination);
+     try kron.codec.writeHeader(event, length, version, &output);
+-    try output.writeAll(current[kron.codec.header_size..]);
++    try output.writeAll(payload[kron.codec.header_size..]);
+     return output.buffered();
+ }
+ 
+@@ -175,9 +186,9 @@ fn accepted(input: []const u8, definition: ?kron.schema.Definition, scratch: []k
+     try validator.fields(decoded.fields);
+     try validator.arguments(decoded.format_args);
+     var canonical: [budget]u8 = undefined;
+-    const payload = if (definition) |schema| try kron.schema_codec.encodeReference(decoded, schema, &canonical) else try kron.codec.encode(decoded, &canonical);
+     const version = std.mem.readInt(u16, input[4..6], .little);
+-    if (version == 4 or version == 5) {
++    const payload = if (definition) |schema| try kron.schema_codec.encodeReference(decoded, schema, &canonical) else if (version == 6) try kron.codec.encodeVersioned(.v6, decoded, &canonical) else try kron.codec.encodeVersioned(.v4, decoded, &canonical);
++    if (version == 4 or version == 5 or version == 6) {
+         try std.testing.expectEqualSlices(u8, input, payload);
+     } else {
+         // Normalize to the historical header again. Missing legacy fields
+@@ -218,11 +229,11 @@ test "event version matrix truncation and mutation retain bounded ownership cano
+         defer registry.deinit();
+         var definition: ?kron.schema.Definition = null;
+         if (referenced(kind)) {
+-            var fields: [11]kron.schema.FieldSchema = undefined;
+-            var args: [2]kron.schema.FieldSchema = undefined;
++            var fields: [13]kron.schema.FieldSchema = undefined;
++            var args: [3]kron.schema.FieldSchema = undefined;
+             definition = try registry.resolve((try registry.register(try kron.schema_codec.eventMetadata(fixture.event, &fields, &args))).ref);
+         }
+-        const payload = if (definition) |schema| try kron.schema_codec.encodeReference(fixture.event, schema, &current) else try kron.codec.encode(fixture.event, &current);
++        const payload = if (definition) |schema| try kron.schema_codec.encodeReference(fixture.event, schema, &current) else if (wireVersion(kind) == 6) try kron.codec.encodeVersioned(.v6, fixture.event, &current) else try kron.codec.encodeVersioned(.v4, fixture.event, &current);
+         const valid = try migrateHeader(fixture.event, payload, wireVersion(kind), &original);
+         try std.testing.expect(try scratch.decode(valid, definition, scratch.fields.len));
+         // Exercise descriptor exhaustion at every small caller capacity,
+@@ -260,6 +271,77 @@ test "event version matrix truncation and mutation retain bounded ownership cano
+     }
+ }
+ 
++fn scalarRecord(wire_version: u16, tag: u8, value: []const u8, destination: []u8) ![]const u8 {
++    const fields = [_]kron.Field{kron.kv("n", @as(i64, 0))};
++    const event: kron.Event = .{ .level = .info, .scope = "", .message = "", .fields = &fields, .timestamp_ns = 0 };
++    var writer = std.Io.Writer.fixed(destination);
++    try kron.codec.writeHeader(event, headerBytes(wire_version) + 14 + value.len, wire_version, &writer);
++    // Independently specified lengths/key/tag; no current body relabeled as old.
++    try writer.writeAll(&.{ 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 'n', tag });
++    try writer.writeAll(value);
++    return writer.buffered();
++}
++
++test "inline compact integer tags are v6 only and historical widths preserve canonical error priority" {
++    var bytes: [128]u8 = undefined;
++    var value: [16]u8 = undefined;
++    var scratch: [1]kron.Field = undefined;
++    inline for (.{ @as(u8, 11), @as(u8, 12) }) |tag| {
++        std.mem.writeInt(u64, value[0..8], 42, .little);
++        inline for (.{ @as(u16, 1), @as(u16, 3), @as(u16, 4) }) |version| {
++            const historical = try scalarRecord(version, tag, value[0..8], &bytes);
++            try std.testing.expectError(error.InvalidTag, kron.codec.decode(historical, &scratch));
++            try std.testing.expectError(error.TooManyFields, kron.codec.decode(historical, &.{}));
++            const missing_payload = try scalarRecord(version, tag, &.{}, &bytes);
++            try std.testing.expectError(error.InvalidTag, kron.codec.decode(missing_payload, &scratch));
++        }
++        const current = try scalarRecord(6, tag, value[0..8], &bytes);
++        const decoded = try kron.codec.decode(current, &scratch);
++        var canonical: [128]u8 = undefined;
++        try std.testing.expectEqualSlices(u8, current, try kron.codec.encodeVersioned(.v6, decoded, &canonical));
++        const short = try scalarRecord(6, tag, value[0..7], &bytes);
++        try std.testing.expectError(error.Truncated, kron.codec.decode(short, &scratch));
++        try std.testing.expectError(error.TooManyFields, kron.codec.decode(short, &.{}));
++    }
++    inline for (.{ @as(u8, 2), @as(u8, 3) }) |tag| {
++        std.mem.writeInt(u128, &value, 42, .little);
++        inline for (.{ @as(u16, 1), @as(u16, 3), @as(u16, 4) }) |version| {
++            const historical = try scalarRecord(version, tag, &value, &bytes);
++            const decoded = try kron.codec.decode(historical, &scratch);
++            var canonical: [128]u8 = undefined;
++            var normalized_header: [128]u8 = undefined;
++            const wide = try kron.codec.encodeVersioned(.v4, decoded, &canonical);
++            try std.testing.expectEqualSlices(u8, historical, try migrateHeader(decoded, wide, version, &normalized_header));
++        }
++        const noncanonical = try scalarRecord(6, tag, &value, &bytes);
++        try std.testing.expectError(error.InvalidValue, kron.codec.decode(noncanonical, &scratch));
++        try std.testing.expectError(error.TooManyFields, kron.codec.decode(noncanonical, &.{}));
++        bytes[12] = 255;
++        try std.testing.expectError(error.InvalidLevel, kron.codec.decode(noncanonical, &.{}));
++        bytes[6] = 0x80;
++        try std.testing.expectError(error.InvalidFlags, kron.codec.decode(noncanonical, &.{}));
++    }
++}
++
++test "v6 wide signed and unsigned retain exact bytes outside their native ranges" {
++    var bytes: [128]u8 = undefined;
++    var canonical: [128]u8 = undefined;
++    var value: [16]u8 = undefined;
++    var scratch: [1]kron.Field = undefined;
++    for ([_]i128{ std.math.minInt(i128), @as(i128, std.math.minInt(i64)) - 1, @as(i128, std.math.maxInt(i64)) + 1, std.math.maxInt(i128) }) |number| {
++        std.mem.writeInt(i128, &value, number, .little);
++        const payload = try scalarRecord(6, 2, &value, &bytes);
++        const decoded = try kron.codec.decode(payload, &scratch);
++        try std.testing.expectEqualSlices(u8, payload, try kron.codec.encodeVersioned(.v6, decoded, &canonical));
++    }
++    for ([_]u128{ @as(u128, std.math.maxInt(u64)) + 1, std.math.maxInt(u128) }) |number| {
++        std.mem.writeInt(u128, &value, number, .little);
++        const payload = try scalarRecord(6, 3, &value, &bytes);
++        const decoded = try kron.codec.decode(payload, &scratch);
++        try std.testing.expectEqualSlices(u8, payload, try kron.codec.encodeVersioned(.v6, decoded, &canonical));
++    }
++}
++
+ fn refreshEntry(entry: []u8) void {
+     const length = std.mem.readInt(u32, entry[16..20], .little);
+     const body = entry[64..][0..length];
+@@ -282,8 +364,8 @@ test "schema definition mutation validates structure after refreshed checksum an
+     var original: [2112]u8 align(64) = @splat(0);
+     var registry = try kron.schema.Registry.init(std.testing.allocator, std.testing.io, &original, try kron.schema.layout(4096, 1, 2048));
+     defer registry.deinit();
+-    var fields: [11]kron.schema.FieldSchema = undefined;
+-    var args: [2]kron.schema.FieldSchema = undefined;
++    var fields: [13]kron.schema.FieldSchema = undefined;
++    var args: [3]kron.schema.FieldSchema = undefined;
+     const meta = try kron.schema_codec.eventMetadata(fixture.event, &fields, &args);
+     _ = try registry.register(meta);
+     const body_length = std.mem.readInt(u32, original[16..20], .little);
+@@ -354,12 +436,12 @@ test "persistent Reader exports the supported event version matrix without modif
+         var definition: ?kron.schema.Definition = null;
+         var reference: ?kron.schema.Ref = null;
+         if (referenced(kind)) {
+-            var fields: [11]kron.schema.FieldSchema = undefined;
+-            var args: [2]kron.schema.FieldSchema = undefined;
++            var fields: [13]kron.schema.FieldSchema = undefined;
++            var args: [3]kron.schema.FieldSchema = undefined;
+             reference = try store.registerSchema(try kron.schema_codec.eventMetadata(fixture.event, &fields, &args));
+             definition = try store.resolveSchema(reference.?);
+         }
+-        const payload = if (definition) |schema| try kron.schema_codec.encodeReference(fixture.event, schema, &current) else try kron.codec.encode(fixture.event, &current);
++        const payload = if (definition) |schema| try kron.schema_codec.encodeReference(fixture.event, schema, &current) else if (wireVersion(kind) == 6) try kron.codec.encodeVersioned(.v6, fixture.event, &current) else try kron.codec.encodeVersioned(.v4, fixture.event, &current);
+         const bytes = try migrateHeader(fixture.event, payload, wireVersion(kind), &historical);
+         const expected_event = if (definition) |schema| try kron.schema_codec.resolve(bytes, schema, &scratch) else try kron.codec.decode(bytes, &scratch);
+         const expected = try kron.codec.encode(expected_event, &expected_bytes);
+@@ -401,5 +483,5 @@ test "persistent Reader exports the supported event version matrix without modif
+             try std.testing.expectEqual(digest, std.hash.Wyhash.hash(0, image));
+         }
+     }
+-    std.debug.print("persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged\n", .{});
++    std.debug.print("persistent Reader matrix: {d} file fixtures, two independent exports each, original bytes unchanged\n", .{std.enums.values(Kind).len});
+ }
+diff --git a/tests/recovery_campaign.py b/tests/recovery_campaign.py
+index 2b6ee65..ff4e475 100644
+--- a/tests/recovery_campaign.py
++++ b/tests/recovery_campaign.py
+@@ -123,7 +123,10 @@ def verify_records(records, identifiers, ready):
+         }, record
+ 
+ 
+-def verify_journal(data, ready):
++def verify_journal(data, ready, *, expected_version=None):
++    expected_payload_version = (5 if ready["schema"] else 6) if expected_version is None else expected_version
++    assert expected_payload_version in ((5,) if ready["schema"] else (4, 6)), "unsupported expected payload version"
++
+     def number(offset, width):
+         assert 0 <= offset <= len(data) - width, "truncated journal structure"
+         return int.from_bytes(data[offset:offset + width], "little")
+@@ -172,7 +175,11 @@ def verify_journal(data, ready):
+         if ready["schema"]:
+             crc_data += reference
+         assert zlib.crc32(crc_data + payload) == number(slot + 28, 4)
+-        assert payload[:4] == b"KRNE" and int.from_bytes(payload[4:6], "little") == (5 if ready["schema"] else 4)
++        assert payload[:4] == b"KRNE", "unexpected event payload magic"
++        actual_payload_version = int.from_bytes(payload[4:6], "little")
++        assert actual_payload_version == expected_payload_version, (
++            f"expected payload version {expected_payload_version}, got {actual_payload_version}"
++        )
+         identifier = sequence - 2
+         expected_generation = generation_for(identifier, ready)
+         assert int.from_bytes(payload[76:84], "little") == expected_generation
+diff --git a/tests/runtime_crash_oracle.py b/tests/runtime_crash_oracle.py
+index 8be4c76..7678829 100644
+--- a/tests/runtime_crash_oracle.py
++++ b/tests/runtime_crash_oracle.py
+@@ -91,8 +91,15 @@ def verify_coverage(written, recovered, acknowledgements, ready):
+             "unique": len(by_key), "overlap": duplicates, "unacknowledged_commits": len(extra)}
+ 
+ 
+-def committed_sequences(data, schema):
+-    """Check immutable headers/slot CRC with Python zlib, independently of Zig."""
++def committed_sequences(data, schema, *, expected_version=None):
++    """Check journal structure, event envelope version and CRC independently of Zig.
++
++    Current writers use inline v6 or schema-reference v5. Older inline v4
++    fixtures require an explicit expectation. Payload field tags/values are
++    decoded by the separate recovery reader, not this structural oracle.
++    """
++    expected_payload_version = (5 if schema else 6) if expected_version is None else expected_version
++    assert expected_payload_version in ((5,) if schema else (4, 6)), "unsupported expected payload version"
+     assert RAW_PASSWORD not in data, "raw password reached journal"
+     def number(offset, width):
+         assert 0 <= offset <= len(data) - width
+@@ -132,7 +139,11 @@ def committed_sequences(data, schema):
+         length = number(slot + 24, 4)
+         assert 84 <= length <= 4096
+         payload = data[slot + 64:slot + 64 + length]
+-        assert payload[:4] == b"KRNE" and int.from_bytes(payload[4:6], "little") == (5 if schema else 4)
++        assert payload[:4] == b"KRNE", "unexpected event payload magic"
++        actual_payload_version = int.from_bytes(payload[4:6], "little")
++        assert actual_payload_version == expected_payload_version, (
++            f"expected payload version {expected_payload_version}, got {actual_payload_version}"
++        )
+         checksum = struct.pack("<QQI", sequence, generation, length)
+         reference = data[slot + 32:slot + 56]
+         if schema:
+diff --git a/tests/test_runtime_crash_oracle.py b/tests/test_runtime_crash_oracle.py
+index 3082e29..d1a0f23 100644
+--- a/tests/test_runtime_crash_oracle.py
++++ b/tests/test_runtime_crash_oracle.py
+@@ -88,10 +88,10 @@ class OracleTests(unittest.TestCase):
+         struct.pack_into("<QQQII", image, slot, 6, 1, 1, 84, zlib.crc32(struct.pack("<QQI", 1, 1, 84) + payload))
+         image[slot + 64:slot + 148] = payload
+         struct.pack_into("<Q", image, slot + 4160, 9)  # sequence 2 reserved
+-        self.assertEqual(committed_sequences(image, False), ({1}, 1))
++        self.assertEqual(committed_sequences(image, False, expected_version=4), ({1}, 1))
+         image[slot + 80] ^= 1
+         with self.assertRaises(AssertionError):
+-            committed_sequences(image, False)
++            committed_sequences(image, False, expected_version=4)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/tests/tool_query.zig b/tests/tool_query.zig
+index 93c81fe..1886477 100644
+--- a/tests/tool_query.zig
++++ b/tests/tool_query.zig
+@@ -23,6 +23,13 @@ fn append(journal: *kron.Journal, value: kron.Event) !void {
+     try reservation.commit(payload.len);
+ }
+ 
++fn appendPayload(journal: *kron.Journal, payload: []const u8) !void {
++    var reservation = try journal.reserve();
++    errdefer reservation.abort();
++    @memcpy(reservation.buffer()[0..payload.len], payload);
++    try reservation.commit(payload.len);
++}
++
+ fn schemaJournalFor(tmp: *const testing.TmpDir, buffer: []u8, capacity: usize, maximum: usize, schema_capacity: usize, max_schema_bytes: usize) !*kron.Journal {
+     if (@import("builtin").os.tag != .linux or @import("builtin").cpu.arch.endian() != .little or @sizeOf(usize) != 8) return error.SkipZigTest;
+     return kron.Journal.create(testing.allocator, testing.io, .{
+@@ -800,7 +807,7 @@ test "compressed headers CRC raw data count truncation and memory budgets are di
+     try testing.expectEqual(@as(u64, 1), (try reader.next()).?.sequence);
+ }
+ 
+-test "plain and compressed readers accept historical v1 v3 and current nested frames" {
++test "plain journal and compressed readers accept historical v1 v3 v4 and current v6 frames" {
+     var tmp = testing.tmpDir(.{});
+     defer tmp.cleanup();
+     const legacy = [_]u8{
+@@ -817,29 +824,47 @@ test "plain and compressed readers accept historical v1 v3 and current nested fr
+     var previous = event("previous", 3);
+     previous.route_fingerprint = 99;
+     previous.route_generation = 8;
+-    var current_bytes: [1024]u8 = undefined;
+-    const current = try kron.codec.encode(previous, &current_bytes);
++    previous.fields = &.{ kron.kv("number", @as(i64, -42)), kron.kv("wide", std.math.maxInt(u128)) };
++    var previous_body_bytes: [1024]u8 = undefined;
++    const previous_body = try kron.codec.encodeVersioned(.v4, previous, &previous_body_bytes);
+     var previous_bytes: [1024]u8 = undefined;
+     var previous_writer = std.Io.Writer.fixed(&previous_bytes);
+     const difference = kron.codec.header_size - kron.codec.previous_header_size;
+-    try kron.codec.writeHeader(previous, current.len - difference, kron.codec.previous_version, &previous_writer);
+-    try previous_writer.writeAll(current[kron.codec.header_size..]);
++    try kron.codec.writeHeader(previous, previous_body.len - difference, kron.codec.previous_version, &previous_writer);
++    try previous_writer.writeAll(previous_body[kron.codec.header_size..]);
+     try payloadFrame(&writer, previous_writer.buffered());
+-    var nested = event("current", 4);
++    var old_nested = event("legacy-nested", 4);
++    old_nested.route_generation = 8;
++    old_nested.fields = &.{kron.kv("array", kron.fields.array(&.{ .null_value, kron.fields.fromAny(@as(u64, 7)) }))};
++    var old_nested_bytes: [1024]u8 = undefined;
++    const old_nested_payload = try kron.codec.encodeVersioned(.v4, old_nested, &old_nested_bytes);
++    try payloadFrame(&writer, old_nested_payload);
++    var nested = event("current", 5);
+     nested.route_generation = 9;
+-    nested.fields = &.{kron.kv("array", kron.fields.array(&.{.null_value}))};
++    nested.fields = &.{kron.kv("array", kron.fields.array(&.{ .null_value, kron.fields.fromAny(@as(u64, 7)), kron.fields.fromAny(std.math.maxInt(u128)) }))};
+     try kron.encoder.encode(.binary, nested, &writer);
++    var current_bytes: [1024]u8 = undefined;
++    var journal_path: [160]u8 = undefined;
++    const journal = try journalFor(&tmp, &journal_path, 4);
++    defer journal.deinit();
++    try appendPayload(journal, &legacy);
++    try appendPayload(journal, previous_writer.buffered());
++    try appendPayload(journal, old_nested_payload);
++    var journal_current_bytes: [1024]u8 = undefined;
++    const journal_current = try kron.codec.encodeVersioned(.v6, nested, &journal_current_bytes);
++    try appendPayload(journal, journal_current);
++    const original_journal_hash = std.hash.Wyhash.hash(0, journal.mapping.bytes);
+     const plain = try tmp.dir.createFile(testing.io, "mixed.arc", .{});
+     defer plain.close(testing.io);
+     try plain.writePositionalAll(testing.io, writer.buffered(), 0);
+     var workspace = try kron.compression.Workspace.init(testing.allocator);
+     defer workspace.deinit();
+     var encoded: [16384]u8 = undefined;
+-    const block = try compressedBlock(&workspace, writer.buffered(), 3, &encoded);
++    const block = try compressedBlock(&workspace, writer.buffered(), 4, &encoded);
+     const compressed = try tmp.dir.createFile(testing.io, "mixed.cmp", .{});
+     defer compressed.close(testing.io);
+     try compressed.writePositionalAll(testing.io, block, 0);
+-    inline for (.{ "mixed.arc", "mixed.cmp" }) |filename| {
++    inline for (.{ "mixed.arc", "input.journal", "mixed.cmp" }) |filename| {
+         var path: [160]u8 = undefined;
+         const reader = try kron.archive.Reader.openOptions(testing.allocator, testing.io, try pathFor(&tmp, &path, filename), .{ .max_archive_record_bytes = 4096 });
+         defer reader.deinit();
+@@ -851,10 +876,19 @@ test "plain and compressed readers accept historical v1 v3 and current nested fr
+         try testing.expectEqualStrings("previous", second.message);
+         try testing.expectEqual(@as(u64, 99), second.route_fingerprint);
+         try testing.expectEqual(@as(u64, 0), second.route_generation);
++        try testing.expect((try tool.Query.parse("number == -42")).matches(second));
++        try testing.expect((try tool.Query.parse("wide == 340282366920938463463374607431768211455")).matches(second));
+         const third = (try reader.next()).?;
++        try testing.expectEqualStrings("legacy-nested", third.message);
+         try testing.expect(third.fields[0].value.array[0] == .null_value);
+-        try testing.expectEqual(@as(u64, 9), third.route_generation);
++        try testing.expectEqual(@as(u64, 8), third.route_generation);
++        const fourth = (try reader.next()).?;
++        try testing.expectEqualStrings("current", fourth.message);
++        try testing.expect(fourth.fields[0].value.array[0] == .null_value);
++        try testing.expectEqual(@as(u64, 9), fourth.route_generation);
++        try testing.expectEqualSlices(u8, try kron.codec.encodeVersioned(.v6, nested, &current_bytes), try kron.codec.encodeVersioned(.v6, fourth, &journal_current_bytes));
+         try testing.expect(try reader.next() == null);
++        try testing.expectEqual(original_journal_hash, std.hash.Wyhash.hash(0, journal.mapping.bytes));
+     }
+ }
+ 

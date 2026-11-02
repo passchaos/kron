@@ -1,5 +1,8 @@
 //! Wire roundtrip, historical versions, validation and descriptor ownership.
 const std = @import("std");
+test {
+    _ = @import("codec_frozen.zig");
+}
 const field = @import("../field.zig");
 const Event = @import("../event.zig").Event;
 const Level = @import("../level.zig").Level;

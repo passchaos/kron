@@ -1,0 +1,87 @@
+test-decoder-matrix
++- run test kron-decoder-matrix
+   +- compile test kron-decoder-matrix ReleaseSafe native 1 errors
+src/core/codec.zig:459:23: error: local constant shadows declaration of 'value'
+                const value = try self.int(i128);
+                      ^~~~~
+src/core/codec.zig:428:9: note: declared here
+    pub fn value(self: *Input) DecodeError!field.Value {
+    ~~~~^~
+error: 1 compilation errors
+failed command: /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig test -OReleaseSafe --dep kron -Mroot=/home/passchaos/project-z/kron/tests/decoder_matrix.zig -OReleaseSafe -Mkron=/home/passchaos/project-z/kron/src/root.zig --cache-dir .zig-cache --global-cache-dir /home/passchaos/.cache/zig --name kron-decoder-matrix --zig-lib-dir /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/ --listen=-
+
+test-query
++- run test kron-query
+   +- compile test kron-query ReleaseSafe native 1 errors
+src/core/codec.zig:459:23: error: local constant shadows declaration of 'value'
+                const value = try self.int(i128);
+                      ^~~~~
+src/core/codec.zig:428:9: note: declared here
+    pub fn value(self: *Input) DecodeError!field.Value {
+    ~~~~^~
+error: 1 compilation errors
+failed command: /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig test -OReleaseSafe --dep kron --dep kroncat -Mroot=/home/passchaos/project-z/kron/tests/tool_query.zig -OReleaseSafe -Mkron=/home/passchaos/project-z/kron/src/root.zig -OReleaseSafe --dep kron -Mkroncat=/home/passchaos/project-z/kron/tools/kroncat.zig --cache-dir .zig-cache --global-cache-dir /home/passchaos/.cache/zig --name kron-query --zig-lib-dir /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/ --listen=-
+
+test-fuzz
++- run test kron-fuzz-smoke
+   +- compile test kron-fuzz-smoke ReleaseSafe native 1 errors
+src/core/codec.zig:459:23: error: local constant shadows declaration of 'value'
+                const value = try self.int(i128);
+                      ^~~~~
+src/core/codec.zig:428:9: note: declared here
+    pub fn value(self: *Input) DecodeError!field.Value {
+    ~~~~^~
+error: 1 compilation errors
+failed command: /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig test -OReleaseSafe --dep kron -Mroot=/home/passchaos/project-z/kron/tests/decoder_fuzz.zig -OReleaseSafe -Mkron=/home/passchaos/project-z/kron/src/root.zig --cache-dir .zig-cache --global-cache-dir /home/passchaos/.cache/zig --name kron-fuzz-smoke --zig-lib-dir /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib/ --listen=-
+
+Build Summary: 0/9 steps succeeded (3 failed)
+test-fuzz transitive failure
++- run test kron-fuzz-smoke transitive failure
+   +- compile test kron-fuzz-smoke ReleaseSafe native 1 errors
+test-decoder-matrix transitive failure
++- run test kron-decoder-matrix transitive failure
+   +- compile test kron-decoder-matrix ReleaseSafe native 1 errors
+test-query transitive failure
++- run test kron-query transitive failure
+   +- compile test kron-query ReleaseSafe native 1 errors
+
+error: the following build command failed with exit code 1:
+.zig-cache/o/ddd605dd4a0bd9e4961952734befaec1/build /home/passchaos/Temp/zig-x86_64-linux-0.16.0/zig /home/passchaos/Temp/zig-x86_64-linux-0.16.0/lib /home/passchaos/project-z/kron .zig-cache /home/passchaos/.cache/zig --seed 0x93e2d002 -Z27987315e38d863e test-fuzz test-decoder-matrix test-query -Doptimize=ReleaseSafe -j1
+test-decoder-matrix
++- run test kron-decoder-matrix w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix inline_v6: 423 truncations, 2048 mutations, 1154 valid reencodes
+decoder matrix inline_v6_nested: 358 truncations, 2048 mutations, 1131 valid reencodes
+decoder matrix inline_v6_deferred: 517 truncations, 2048 mutations, 1184 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1235 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1253 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1137 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1141 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 11 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/853783686df4dd0afe4626781a6e21a8/kron-decoder-matrix --cache-dir=./.zig-cache --seed=0xe1acf72d --listen=-
+
+test-fuzz
++- run test kron-fuzz-smoke w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix inline_v6: 423 truncations, 2048 mutations, 1154 valid reencodes
+decoder matrix inline_v6_nested: 358 truncations, 2048 mutations, 1131 valid reencodes
+decoder matrix inline_v6_deferred: 517 truncations, 2048 mutations, 1184 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1235 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1253 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1137 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1141 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 11 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/65ae5c9a1b73e721df9982c239450fe7/kron-fuzz-smoke --cache-dir=./.zig-cache --seed=0xe1acf72d --listen=-
+
+
+Final rerun: zig build test-fuzz test-decoder-matrix test-query -Doptimize=ReleaseSafe -j1
+Process exit status: 0; all three requested targets passed.
+The original compilation failure is retained above; build runner prints corpus stderr as warnings.

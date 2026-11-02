@@ -95,6 +95,28 @@ pub fn resolve(payload: []const u8, definition: Definition, scratch: []Field) De
     return event;
 }
 
+test "frozen v5 reference payload and metadata preserve native range integer bytes" {
+    const frozen_schema = @embedFile("tests/fixtures/v5_definition.bin");
+    const frozen_payload = @embedFile("tests/fixtures/v5_reference.bin");
+    const frozen_inline = @embedFile("tests/fixtures/v4_scalar.bin");
+    const definition = (try schema.decodeEntry(frozen_schema, 0, 1024)).?;
+    var scratch: [codec.decode_scratch_fields]Field = undefined;
+    const event = try resolve(frozen_payload, definition, &scratch);
+    var output: [4096]u8 = undefined;
+    try std.testing.expectEqualSlices(u8, frozen_payload, try encodeReference(event, definition, &output));
+    try std.testing.expectEqualSlices(u8, frozen_inline, try codec.encode(event, &output));
+    var metadata_fields: [5]FieldSchema = undefined;
+    var metadata_arguments: [0]FieldSchema = .{};
+    const metadata = try eventMetadata(event, &metadata_fields, &metadata_arguments);
+    try std.testing.expectEqualSlices(u8, &definition.ref.hash, &try schema.metadataHash(metadata));
+    const first_value = frozen_payload.len - 5 * 17;
+    var damaged: [frozen_payload.len]u8 = frozen_payload.*;
+    for ([_]u8{ 11, 12 }) |tag| {
+        damaged[first_value] = tag;
+        try std.testing.expectError(error.InvalidTag, resolve(&damaged, definition, &scratch));
+    }
+}
+
 test "referenced event omits static metadata and survives copied schema plus values" {
     const field = @import("field.zig");
     var region: [2 * 1088]u8 align(64) = @splat(0);
