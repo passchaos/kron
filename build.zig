@@ -26,6 +26,11 @@ pub fn build(b: *std.Build) void {
     const logging_tests = b.addTest(.{ .name = "kron-logging", .root_module = module, .filters = &.{"managed logging"} });
     b.step("test-logging", "Verify application logging ownership, outputs and lifetime").dependOn(&b.addRunArtifact(logging_tests).step);
 
+    const admission_lifecycle_tests = b.addTest(.{ .name = "kron-admission-lifecycle", .root_module = module, .filters = &.{"admission lifecycle:"} });
+    const run_admission_lifecycle = b.addRunArtifact(admission_lifecycle_tests);
+    b.step("test-admission-lifecycle", "Verify TLS owner reuse, release callback nesting and thread isolation").dependOn(&run_admission_lifecycle.step);
+    test_step.dependOn(&run_admission_lifecycle.step);
+
     validation.addPlatforms(b);
 
     const adapter_module = b.createModule(.{ .root_source_file = b.path("tests/adapter_integration.zig"), .target = target, .optimize = optimize });

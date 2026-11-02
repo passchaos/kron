@@ -1,0 +1,61 @@
+{
+  "scope": "ActualFastreference static proof, no speedclaim",
+  "binary_sha256": {
+    "before-reference": "e66add4160b4a8104c2c6873ae7dd0bed82c96c6c39374960a3fd06eb20a677b",
+    "after-reference": "a5e22027c3247bb0a280d002f33aea04bf6fad99beedede47d1b301f23d5482e"
+  },
+  "functions": {
+    "Runtime.end": {
+      "before_bytes": 557,
+      "after_bytes": 484,
+      "before_instructions": 123,
+      "after_instructions": 111,
+      "unchanged_stack": 48,
+      "calls": 4
+    },
+    "Runtime.endThread": {
+      "before_bytes": 405,
+      "after_bytes": 329,
+      "before_instructions": 92,
+      "after_instructions": 80,
+      "unchanged_stack": 40,
+      "calls": 2
+    },
+    "admission.enter": {
+      "bytes": 158,
+      "instructions": 35,
+      "init_stride": 80
+    }
+  },
+  "removed": "eachend3YMMconstantloads+3TLSstores+slotoffset; endvzeroupper3->0/endThread4->0",
+  "order": "callback thenreloaddepth/decrement, sharedgate/cutclosingwake unchanged, channelrelease normalizedsame",
+  "normalized_unchanged": [
+    "begin",
+    "beginThread",
+    "reserve",
+    "schemareserve",
+    "SPSCreserve",
+    "slotChecksum",
+    "releaseAdmissionView",
+    "Crc32.update"
+  ],
+  "CRC_tables": "16tables16384bytes allsame",
+  "segments": {
+    "text": [
+      876205,
+      876061
+    ],
+    "rodata": [
+      482383,
+      482319
+    ],
+    "TLSowners": [
+      5120,
+      5120
+    ],
+    "TLSdepth": [
+      8,
+      8
+    ]
+  }
+}

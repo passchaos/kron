@@ -1,0 +1,129 @@
+{
+  "scope": "Read-only actual ReleaseFast original optional+clear versus compact scalar Frame; frozen candidate, not restored production source",
+  "binary_sha256": {
+    "before": "e66add4160b4a8104c2c6873ae7dd0bed82c96c6c39374960a3fd06eb20a677b",
+    "compact": "9996d1eb2489fb6005c721a736b32a3ce4e08e3f15b164d0aa14eedd0fbb81c6"
+  },
+  "Frame": {
+    "bytes": [
+      80,
+      64
+    ],
+    "alignment": [
+      8,
+      8
+    ],
+    "compact_offsets": {
+      "owner": 0,
+      "resource": 8,
+      "release": 16,
+      "scope": 24,
+      "filter_generation": 40,
+      "configuration_generation": 48,
+      "channel": 56,
+      "level": 60,
+      "presence": 61
+    }
+  },
+  "segments": {
+    "owners_bytes": [
+      5120,
+      4096
+    ],
+    "tdata_bytes": [
+      5376,
+      4352
+    ],
+    "tbss_bytes": [
+      281172,
+      281172
+    ],
+    "text_bytes": [
+      876205,
+      876189
+    ],
+    "PT_TLS_file_and_memory_size_delta": -1024,
+    "PT_TLS_alignment": 8
+  },
+  "function_bytes": {
+    "Runtime.begin": [
+      1269,
+      1265
+    ],
+    "Runtime.end": [
+      557,
+      541
+    ],
+    "Runtime.beginThread": [
+      502,
+      475
+    ],
+    "Runtime.endThread": [
+      405,
+      373
+    ],
+    "admission.enter": [
+      158,
+      160
+    ],
+    "admission.getFilterDecision": [
+      157,
+      191
+    ],
+    "Runtime.threadFilterDecision": [
+      554,
+      591
+    ]
+  },
+  "static_instructions": {
+    "admission.enter": [
+      35,
+      34
+    ],
+    "Runtime.beginThread": [
+      115,
+      109
+    ],
+    "admission.getFilterDecision": [
+      50,
+      58
+    ]
+  },
+  "stack_unchanged_bytes": {
+    "Runtime.end": 48,
+    "Runtime.endThread": 40,
+    "Runtime.threadFilterDecision": 72,
+    "Runtime.threadSnapshot": 136
+  },
+  "initialization": "enter fully initializes owner/resource/release/scope/generations/channel/level/presence before publishing depth; leave retains complete clear, 3 YMM load/store groups become 2",
+  "decision_cost": "standalone optional reconstruction uses presence branch, 3 scalar loads and 4 return field stores; already-inlined threadFilterDecision loses a shared contiguous 24B return copy tail",
+  "independent_getter_calls": {
+    "before": 1,
+    "compact": 1,
+    "caller": "Runtime.threadSnapshot, admitted matching-channel/resource branch; new bare admission does not execute this call",
+    "compact_call_address": "0x1112623",
+    "return_layout": "32B optional at rbp-0x80; test rbp-0x68 then copy config 8B and level/generation 16B into 24B BoundDecision; caller copies equal"
+  },
+  "order": "callback, depth reload/decrement, full clear, then shared/channel release and wake remain unchanged",
+  "controls_normalized_equal": [
+    "reserve",
+    "schema reserve",
+    "SPSC reserve",
+    "slotChecksum",
+    "releaseAdmissionView",
+    "channel release"
+  ],
+  "CRC": {
+    "update_static_instructions": 310,
+    "table_count": 16,
+    "table_bytes": 16384,
+    "instructions_and_tables_equal": true
+  },
+  "limitations": [
+    "Frame alignment is 8B, not cacheline alignment",
+    "TLS symbol/segment reduction is not proof of RSS reduction",
+    "No new call or spill slot, but local reconstruction grows code",
+    "Independent getter call was not added by compact and does not alone explain observed default SPSC regressions",
+    "Static code and footprint reductions do not prove throughput benefit"
+  ]
+}

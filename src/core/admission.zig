@@ -166,3 +166,7 @@ test "outer runtime resource lookup survives nested independent runtime frames" 
     leave(&inner);
     try std.testing.expectEqual(@as(u32, 3), getChannel(&outer));
 }
+
+test {
+    _ = @import("tests/admission_lifecycle.zig");
+}

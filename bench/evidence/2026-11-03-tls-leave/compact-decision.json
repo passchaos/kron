@@ -1,0 +1,110 @@
+{
+  "status": "rejected",
+  "candidate": "fully initialized compact scalar Frame, original clear-on-leave retained",
+  "baseline_commit": "3c1252b48589a7270d668ccbea4fde0bf159f8f5",
+  "source_and_binary_unchanged_at_end_of_measurement": true,
+  "binary_sha256": "9996d1eb2489fb6005c721a736b32a3ce4e08e3f15b164d0aa14eedd0fbb81c6",
+  "trials": 440,
+  "physical_records_verified": 44440000,
+  "reports": {
+    "compact-ecore-workflow": {
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "assessment_counts": {
+        "written_records_per_sec": {
+          "inconclusive": 10,
+          "peer_leads": 6
+        },
+        "written_flush_records_per_sec": {
+          "inconclusive": 10,
+          "peer_leads": 6
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 13,
+          "peer_leads": 3
+        },
+        "p999_ns": {
+          "inconclusive": 6,
+          "peer_leads": 2
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "compact-pcore-workflow": {
+      "trials": 160,
+      "physical_records_verified": 16160000,
+      "assessment_counts": {
+        "written_records_per_sec": {
+          "inconclusive": 14,
+          "kron_leads": 1,
+          "peer_leads": 1
+        },
+        "written_flush_records_per_sec": {
+          "inconclusive": 14,
+          "kron_leads": 1,
+          "peer_leads": 1
+        },
+        "lifecycle_records_per_sec": {
+          "inconclusive": 16
+        },
+        "p999_ns": {
+          "inconclusive": 8
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "compact-schema-ecore": {
+      "trials": 80,
+      "physical_records_verified": 8080000,
+      "assessment_counts": {
+        "written_records_per_sec": {
+          "kron_leads": 1,
+          "inconclusive": 7
+        },
+        "written_flush_records_per_sec": {
+          "kron_leads": 1,
+          "inconclusive": 7
+        },
+        "lifecycle_records_per_sec": {
+          "kron_leads": 1,
+          "inconclusive": 7
+        },
+        "p999_ns": {
+          "inconclusive": 4
+        },
+        "instructions": {},
+        "cycles": {}
+      }
+    },
+    "compact-ecore-pmu": {
+      "trials": 40,
+      "physical_records_verified": 4040000,
+      "assessment_counts": {
+        "written_records_per_sec": {
+          "peer_leads": 1,
+          "inconclusive": 3
+        },
+        "written_flush_records_per_sec": {
+          "peer_leads": 1,
+          "inconclusive": 3
+        },
+        "lifecycle_records_per_sec": {
+          "peer_leads": 1,
+          "inconclusive": 3
+        },
+        "p999_ns": {},
+        "instructions": {
+          "kron_leads": 2,
+          "inconclusive": 2
+        },
+        "cycles": {
+          "inconclusive": 4
+        }
+      }
+    }
+  },
+  "reason": "Six qualified E-core default throughput regressions and one P-core regression; no E-core default win. A P-core local win and smaller TLS cannot cover counterexamples. PMU instruction reduction is not a throughput guarantee.",
+  "qualification_scope": "All original full JSON, written flush, shutdown, cleanup; CPU topologies, schema and PMU reported separately. Original CRC and all three checks retained. Not a Foundation ranking."
+}

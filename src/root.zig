@@ -89,4 +89,5 @@ pub const TscClock = @import("platform/tsc_clock.zig").TscClock;
 test {
     std.testing.refAllDecls(@This());
     _ = @import("core/level.zig");
+    _ = @import("core/admission.zig");
 }

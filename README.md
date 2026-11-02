@@ -4,6 +4,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 性能验收目标是超过 **Foundation/logging + spdlog** 和 **Foundation/logging + tracing**，在相同完整输出与完成边界下验证吞吐、生命周期和尾延迟；P-core/E-core分别测量。当前尚未全面达到，逐组结果与资格见 [前端对照](docs/cpp-comparison.md)。
 
+TLS 失效槽位清理和紧凑 Frame 两种候选均因完整流程回退撤回，生产保留原 optional decision 与完整槽位清理。880 项对照核对 8888 万条完整 JSON；紧凑表示虽令 TLS 数组少 1 KiB，E-core 仍有六组吞吐回退，未取得保留资格。新增五项生命周期回归覆盖复用、回调嵌套、64 层栈、线程隔离与完整 generation/channel 边界；全部正负及测试发现记录见 [TLS 报告](bench/evidence/2026-11-03-tls-leave/README.md)。未更新 Foundation 排名。
+
 默认时钟回调与内部 inline 两个优化候选因完整流程负向撤回，生产继续原 std.Io 注入路径。960项对照核对9696万完整JSON，减少调用和 Io 复制未证明整体收益；保留回调切换、Io 参数快照、纳秒边界与调用时点回归。完整反例见[clock报告](bench/evidence/2026-11-03-default-clock/README.md)，未更新 Foundation 排名。
 
 共享 written 游标现在以 release RMW 发布进度，配合 `writtenTarget()` 的 acquire 读取提供明确的写入可见性；原最大值算法、CRC、恢复和队列预算保持。两种普通 store 性能候选因完整流程回退撤回，880项对照核对8888万JSON，未更新跨库排名。新公共测试覆盖实时游标、失败前缀和 join 前发布观察，详见[written报告](bench/evidence/2026-11-03-written-store/README.md)。
