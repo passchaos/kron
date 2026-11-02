@@ -25,6 +25,7 @@
 | [E-core quiet-affinity tracing对照](cpp_reference/evidence/2026-11-02-current-tracing-quiet-affinity/README.md) | 647e667；80项/808万JSON；单线程物理核上tracing 8组中位全高，5组达到门限，暴露kron拓扑敏感性 |
 | [E-core quiet-affinity Foundation+spdlog对照](cpp_reference/evidence/2026-11-02-current-foundation-quiet-affinity/README.md) | 647e667；80项/808万JSON；单线程物理核上spdlog 5组达到门限领先，P4/Mmap差距明显 |
 | [E-core完整JSON跨库矩阵](cpp_reference/evidence/2026-11-02-managed-frontends-ecore-full/README.md) | c0b9706；160项/1616万JSON；tracing 16/16领先，spdlog多数P4/Mmap领先；kron仅Memory P1接近持平/SPSC sampled略领先 |
+| [P-core完整JSON跨库矩阵](cpp_reference/evidence/2026-11-02-managed-frontends-pcore-full/README.md) | c0b9706；160项/1616万JSON；宿主高负载，多数组inconclusive；方向kron对spdlog多数≥1，对tracing Memory P1/Mmap P1落后、P4部分领先 |
 | [当前初始化诊断](evidence/2026-11-02-current-init-profile/README.md) | ce5aae9四配置strace与8800条JSON核对；不提供重复性/跨库排名 |
 | [应用影响](evidence/2026-11-01-application-impact/README.md) | 确定性业务模型、无 logger/P1/P4/P16、JSON/结果 oracle、用户态 PMU；合成负载边界 |
 | [prepared measure](evidence/2026-11-01-prepared-measure/README.md) | prepared 长度复用、节点/旧 codec 差分、完整文件与 PMU；负向尾部分位保留 |
