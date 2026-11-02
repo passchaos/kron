@@ -21,11 +21,20 @@
 | fallback_sync | P1 | 1000 | 1000 | 0 | 237.55µs | 1.48ms | 16.47ms | 251.57ms |
 | fallback_sync | P4 | 1000 | 1000 | 0 | 253.96µs | 2.48ms | 157.73ms | 251.12ms |
 
+P16（1600 events，16 producers）另测：
+
+| 策略 | accepted | written | dropped | p50 | p99 | max | total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| block | 1600 | 1600 | 0 | 759ns | 80.71ms | 264.30ms | 403.34ms |
+| drop_newest | 65 | 65 | 1535 | 150ns | 2.56µs | 7.39µs | 16.56ms |
+| fallback_sync | 1600 | 1600 | 0 | 254.23µs | 58.79ms | 342.64ms | 401.09ms |
+
 ## 解读
 
 - **block**：无丢失，accepted=written=1000；但队列满后producer阻塞，p99约15–16ms，接近64槽×200µs的排队上界；P4 max受线程调度影响可到约97ms。
 - **drop_newest**：producer p99保持在亚微秒级，但只保留consumer能处理的64条，936条被丢弃；适合可丢日志。
 - **fallback_sync**：无丢失，但满队列时producer直接执行慢写，p50被推到约0.24–0.25ms，p99约1.5–2.5ms；P4 max可达约158ms。它把阻塞从队列等待转移到producer同步写。
+- **P16**：block/fallback的p99升到约59–81ms、max到约264–343ms，说明阻塞尾部随producer数量放大；drop仍保持亚微秒级p99，但只保留65/1600条。
 - 三种策略都正确完成flush/shutdown；high water均为64，说明队列上界生效。
 
 ## 边界
