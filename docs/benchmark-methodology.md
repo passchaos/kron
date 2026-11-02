@@ -527,6 +527,29 @@ before interpreting rates. Binary/deferred outputs and text/JSON outputs belong
 in separate comparisons. This benchmark does not install dependencies or label
 an implementation strongest based on unrelated published figures.
 
+## Feature contracts and raw throughput
+
+A raw record rate is not a feature-normalized ranking. The kron Memory journal
+performs slot reserve/commit/abort, generation and sequence validation, CRC
+generation and consumer revalidation, and deferred structured capture before
+consumer formatting. Foundation + spdlog/tracing Memory frontends do not carry
+the same journal/CRC/recovery contract; their mmap queues also differ from kron's
+schema, pin, reclaim and durable boundaries. The same JSON bytes and written
+flush can therefore still represent different reliability work.
+
+CPU topology is part of the measurement identity. On the current host the
+`auto` window uses SMT P-cores, while CPUs 16..31 are single-thread physical
+cores that usually map to E-cores. The E-core profile shows CRC, journal
+reserve/validate and consumer formatting as larger shares, and Foundation
+frontends can lead on raw throughput there. P-core windows previously showed
+kron ahead in some groups. Neither window is a universal ranking.
+
+The same-source `fd4e941 -> current` A/B on E-cores shows current faster by
+7.2%–14.6%, so recent optimizations did not cause the E-core gap. Any claim that
+one logger is strongest must state the matched feature contract, output bytes,
+storage/recovery mode, CPU topology, and whether the comparison is raw or
+feature-normalized.
+
 These tools establish a reproducible starting point. A performance baseline and
 regression threshold should follow repeated runs on a controlled machine,
 including producer distributions, written completion, saturation, CPU/resource
