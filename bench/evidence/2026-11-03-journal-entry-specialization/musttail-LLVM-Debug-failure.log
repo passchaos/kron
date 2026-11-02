@@ -1,0 +1,7 @@
+.zig-cache/journal-entry-specialization/candidate/src/journal/journal.zig:360:16: error: unable to perform tail call: type of function being called 'fn (*journal.journal.Journal, usize, u64) @typeInfo(@typeInfo(@TypeOf(journal.journal.Journal.validateSlotFor__anon_44892)).@"fn".return_type.?).error_union.error_set!journal.journal.Record' does not match type of calling function 'fn (*journal.journal.Journal, usize, u64) @typeInfo(@typeInfo(@TypeOf(journal.journal.Journal.validateSlot)).@"fn".return_type.?).error_union.error_set!journal.journal.Record'
+        return @call(.always_tail, validateSlotFor, .{ self, false, index, marker });
+               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+referenced by:
+    scanRecovery: .zig-cache/journal-entry-specialization/candidate/src/journal/journal.zig:390:49
+    createWithMode: .zig-cache/journal-entry-specialization/candidate/src/journal/journal.zig:286:30
+    6 reference(s) hidden; use '-freference-trace=8' to see all references

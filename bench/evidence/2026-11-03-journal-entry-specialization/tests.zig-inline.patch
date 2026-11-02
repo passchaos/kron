@@ -1,0 +1,21 @@
+--- /home/passchaos/project-z/kron/.zig-cache/journal-entry-specialization/before/src/journal/tests.zig	2026-11-03 06:12:56.080713324 +0800
++++ /home/passchaos/project-z/kron/.zig-cache/journal-entry-specialization/candidate/src/journal/tests.zig	2026-11-03 06:14:00.404355196 +0800
+@@ -17,7 +17,7 @@
+ 
+ test "shared and single reserve coordinates preserve full width generations through nonpower wraps and aborts" {
+     if (@sizeOf(usize) != 8 or @import("builtin").cpu.arch.endian() != .little) return error.SkipZigTest;
+-    inline for (.{ journal.ProducerMode.shared, journal.ProducerMode.single }) |mode| for ([_]usize{ 1, 2, 3, 7, 255, 256, 257, 512 }) |capacity| {
++    inline for (.{ false, true }) |default_mode| inline for (.{ journal.ProducerMode.shared, journal.ProducerMode.single }) |mode| for ([_]usize{ 1, 2, 3, 7, 255, 256, 257, 512 }) |capacity| {
+         const rounds = capacity * 3 + 5;
+         for ([_]u64{ 0, (@as(u64, 1) << 32) - 3, format.max_sequence - rounds }) |start| {
+             const options: journal.Options = .{
+@@ -30,6 +30,9 @@
+             else
+                 try journal.Journal.createMemory(testing.allocator, testing.io, options);
+             defer store.deinit();
++            // A Journal initialized without cached coordinates must also run
++            // power capacities correctly; exercise that default over real rings.
++            if (default_mode) store.capacity_mode = .{};
+             const token: ?journal.SingleProducerToken = if (mode == .single) try store.singleProducerToken() else null;
+             // Seed a quiescent valid ring at an advanced cursor. Each slot's
+             // next turn belongs to the first future position with that index.

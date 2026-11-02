@@ -1,0 +1,2995 @@
+
+.zig-cache/journal-entry-specialization/after-reference:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000111ceb0 <core.runtime.Runtime.drainJournal>:
+ 111ceb0:	push   rbp
+ 111ceb1:	mov    rbp,rsp
+ 111ceb4:	push   r15
+ 111ceb6:	push   r14
+ 111ceb8:	push   r13
+ 111ceba:	push   r12
+ 111cebc:	push   rbx
+ 111cebd:	sub    rsp,0xa168
+ 111cec4:	mov    r12,QWORD PTR [rsi+0x3160]
+ 111cecb:	test   r12,r12
+ 111cece:	je     111f47c <core.runtime.Runtime.drainJournal+0x25cc>
+ 111ced4:	mov    r13,rdx
+ 111ced7:	lea    rax,[rsi+0x31c4]
+ 111cede:	mov    QWORD PTR [rbp-0xb0],rax
+ 111cee5:	lea    rax,[rdx+0x140]
+ 111ceec:	mov    QWORD PTR [rbp-0xa8],rax
+ 111cef3:	lea    rax,[rsi+0x31d4]
+ 111cefa:	mov    QWORD PTR [rbp-0x50],rax
+ 111cefe:	lea    rax,[rdx+0x208]
+ 111cf05:	mov    QWORD PTR [rbp-0x100],rax
+ 111cf0c:	lea    rax,[rdx+0x2f4]
+ 111cf13:	mov    QWORD PTR [rbp-0x60],rax
+ 111cf17:	lea    rax,[rsi+0x3000]
+ 111cf1e:	mov    QWORD PTR [rbp-0xf8],rax
+ 111cf25:	lea    rax,[rsi-0xc0]
+ 111cf2c:	mov    QWORD PTR [rbp-0xf0],rax
+ 111cf33:	lea    r9,[rbp-0x150]
+ 111cf3a:	xor    eax,eax
+ 111cf3c:	mov    QWORD PTR [rbp-0x98],r12
+ 111cf43:	mov    QWORD PTR [rbp-0x38],rsi
+ 111cf47:	mov    QWORD PTR [rbp-0x40],rdx
+ 111cf4b:	mov    QWORD PTR [rbp-0x58],rdi
+ 111cf4f:	mov    QWORD PTR [rbp-0xe8],r12
+ 111cf56:	test   BYTE PTR [r13+0x2ff],0x1
+ 111cf5e:	mov    QWORD PTR [rbp-0x48],rax
+ 111cf62:	je     111d030 <core.runtime.Runtime.drainJournal+0x180>
+ 111cf68:	mov    rax,QWORD PTR [r13+0x40]
+ 111cf6c:	mov    r14,QWORD PTR [r13+0x0]
+ 111cf70:	sub    r14,rax
+ 111cf73:	cmp    BYTE PTR [r13+0x2fd],0x1
+ 111cf7b:	mov    rcx,QWORD PTR [r13+0x2b0]
+ 111cf82:	mov    rax,QWORD PTR [r13+0x2b8]
+ 111cf89:	je     111d053 <core.runtime.Runtime.drainJournal+0x1a3>
+ 111cf8f:	cmp    rax,rcx
+ 111cf92:	jae    111d0ef <core.runtime.Runtime.drainJournal+0x23f>
+ 111cf98:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111cf9f:	mov    rdx,QWORD PTR [r13+0x2a0]
+ 111cfa6:	mov    rdx,QWORD PTR [rdx+rax*8]
+ 111cfaa:	mov    rax,QWORD PTR [r13+0x200]
+ 111cfb1:	imul   rax,rdx
+ 111cfb5:	mov    rcx,QWORD PTR [rcx+rax*1+0x1000]
+ 111cfbd:	mov    rdi,r9
+ 111cfc0:	mov    rsi,r13
+ 111cfc3:	call   11182c0 <journal.journal.Journal.validateSlotFor__anon_39279>
+ 111cfc8:	movzx  eax,WORD PTR [rbp-0x108]
+ 111cfcf:	test   ax,ax
+ 111cfd2:	jne    111f3d2 <core.runtime.Runtime.drainJournal+0x2522>
+ 111cfd8:	mov    rax,QWORD PTR [rbp-0x110]
+ 111cfdf:	mov    QWORD PTR [rbp-0x3d0],rax
+ 111cfe6:	vmovups ymm0,YMMWORD PTR [rbp-0x150]
+ 111cfee:	vmovups ymm1,YMMWORD PTR [rbp-0x130]
+ 111cff6:	vmovups YMMWORD PTR [rbp-0x3f0],ymm1
+ 111cffe:	vmovups YMMWORD PTR [rbp-0x410],ymm0
+ 111d006:	mov    WORD PTR [rbp-0x3c0],0x0
+ 111d00f:	mov    BYTE PTR [rbp-0x3c8],0x1
+ 111d016:	xor    eax,eax
+ 111d018:	lea    rdi,[rbp-0x3c0]
+ 111d01f:	lea    r9,[rbp-0x410]
+ 111d026:	jmp    111d487 <core.runtime.Runtime.drainJournal+0x5d7>
+ 111d02b:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111d030:	mov    r14,QWORD PTR [r13+0x2d0]
+ 111d037:	cmp    BYTE PTR [r13+0x2fd],0x1
+ 111d03f:	mov    rcx,QWORD PTR [r13+0x2b0]
+ 111d046:	mov    rax,QWORD PTR [r13+0x2b8]
+ 111d04d:	jne    111cf8f <core.runtime.Runtime.drainJournal+0xdf>
+ 111d053:	cmp    rax,rcx
+ 111d056:	jae    111d2cd <core.runtime.Runtime.drainJournal+0x41d>
+ 111d05c:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111d063:	mov    rdx,QWORD PTR [r13+0x2a0]
+ 111d06a:	mov    rdx,QWORD PTR [rdx+rax*8]
+ 111d06e:	mov    rax,QWORD PTR [r13+0x200]
+ 111d075:	imul   rax,rdx
+ 111d079:	mov    rcx,QWORD PTR [rcx+rax*1+0x1000]
+ 111d081:	mov    rdi,r9
+ 111d084:	mov    rsi,r13
+ 111d087:	call   1118050 <journal.journal.Journal.validateSlotFor__anon_39262>
+ 111d08c:	movzx  eax,WORD PTR [rbp-0x108]
+ 111d093:	test   ax,ax
+ 111d096:	jne    111f3f3 <core.runtime.Runtime.drainJournal+0x2543>
+ 111d09c:	mov    rax,QWORD PTR [rbp-0x110]
+ 111d0a3:	mov    QWORD PTR [rbp-0x480],rax
+ 111d0aa:	vmovups ymm0,YMMWORD PTR [rbp-0x150]
+ 111d0b2:	vmovups ymm1,YMMWORD PTR [rbp-0x130]
+ 111d0ba:	vmovups YMMWORD PTR [rbp-0x4a0],ymm1
+ 111d0c2:	vmovups YMMWORD PTR [rbp-0x4c0],ymm0
+ 111d0ca:	mov    WORD PTR [rbp-0x470],0x0
+ 111d0d3:	mov    BYTE PTR [rbp-0x478],0x1
+ 111d0da:	xor    eax,eax
+ 111d0dc:	lea    rdi,[rbp-0x470]
+ 111d0e3:	lea    r9,[rbp-0x4c0]
+ 111d0ea:	jmp    111d487 <core.runtime.Runtime.drainJournal+0x5d7>
+ 111d0ef:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d0f6:	mov    rax,QWORD PTR [rax+0x40]
+ 111d0fa:	mov    r9d,0x1067a60
+ 111d100:	mov    edi,0x1067ab0
+ 111d105:	mov    r10d,0x1067aa8
+ 111d10b:	cmp    QWORD PTR [r13+0x2c8],rax
+ 111d112:	jb     111d145 <core.runtime.Runtime.drainJournal+0x295>
+ 111d114:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d119:	nop    DWORD PTR [rax+0x0]
+ 111d120:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d127:	mov    rcx,QWORD PTR [r13+0x2c8]
+ 111d12e:	inc    rcx
+ 111d131:	mov    QWORD PTR [r13+0x2c8],rcx
+ 111d138:	mov    rax,QWORD PTR [rax+0x40]
+ 111d13c:	cmp    rcx,rax
+ 111d13f:	jae    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d145:	mov    rcx,QWORD PTR [r13+0x1f0]
+ 111d14c:	mov    rsi,QWORD PTR [r13+0x2c8]
+ 111d153:	mov    rax,rsi
+ 111d156:	or     rax,rcx
+ 111d159:	shr    rax,0x20
+ 111d15d:	je     111d170 <core.runtime.Runtime.drainJournal+0x2c0>
+ 111d15f:	mov    rax,rsi
+ 111d162:	xor    edx,edx
+ 111d164:	div    rcx
+ 111d167:	mov    r8,rdx
+ 111d16a:	jmp    111d179 <core.runtime.Runtime.drainJournal+0x2c9>
+ 111d16c:	nop    DWORD PTR [rax+0x0]
+ 111d170:	mov    eax,esi
+ 111d172:	xor    edx,edx
+ 111d174:	div    ecx
+ 111d176:	mov    r8d,edx
+ 111d179:	lea    r11,[rsi+0x1]
+ 111d17d:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d184:	mov    rcx,QWORD PTR [r13+0x200]
+ 111d18b:	imul   rcx,r8
+ 111d18f:	mov    rcx,QWORD PTR [rax+rcx*1+0x1000]
+ 111d197:	lea    rax,[r11*4+0x2]
+ 111d19f:	cmp    rcx,rax
+ 111d1a2:	je     111f105 <core.runtime.Runtime.drainJournal+0x2255>
+ 111d1a8:	test   rcx,rcx
+ 111d1ab:	je     111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d1b1:	lea    rax,[r11*4+0x0]
+ 111d1b9:	mov    rdx,rax
+ 111d1bc:	or     rdx,0x1
+ 111d1c0:	cmp    rcx,rdx
+ 111d1c3:	je     111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d1c9:	or     rax,0x3
+ 111d1cd:	cmp    rcx,rax
+ 111d1d0:	jne    111d464 <core.runtime.Runtime.drainJournal+0x5b4>
+ 111d1d6:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d1dd:	mov    rcx,QWORD PTR [r13+0x200]
+ 111d1e4:	imul   rcx,r8
+ 111d1e8:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111d1f4:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d1fc:	je     111d220 <core.runtime.Runtime.drainJournal+0x370>
+ 111d1fe:	inc    QWORD PTR [r13+0x40]
+ 111d202:	mov    rax,QWORD PTR [r13+0x80]
+ 111d209:	cmp    rsi,rax
+ 111d20c:	jb     111d252 <core.runtime.Runtime.drainJournal+0x3a2>
+ 111d20e:	mov    QWORD PTR [r13+0x80],r11
+ 111d215:	jmp    111d252 <core.runtime.Runtime.drainJournal+0x3a2>
+ 111d217:	nop    WORD PTR [rax+rax*1+0x0]
+ 111d220:	lock dec QWORD PTR [r13+0x2d0]
+ 111d228:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111d22f:	mov    rax,QWORD PTR [rcx+0x48]
+ 111d233:	data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111d240:	cmp    rax,r11
+ 111d243:	mov    rdx,r11
+ 111d246:	cmova  rdx,rax
+ 111d24a:	lock cmpxchg QWORD PTR [rcx+0x48],rdx
+ 111d250:	jne    111d240 <core.runtime.Runtime.drainJournal+0x390>
+ 111d252:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d259:	mov    rcx,QWORD PTR [r13+0x290]
+ 111d260:	mov    rsi,QWORD PTR [rax+0x40]
+ 111d264:	mov    r15,QWORD PTR [r13+0x1f0]
+ 111d26b:	mov    rax,rsi
+ 111d26e:	or     rax,r15
+ 111d271:	shr    rax,0x20
+ 111d275:	je     111d290 <core.runtime.Runtime.drainJournal+0x3e0>
+ 111d277:	mov    rax,rsi
+ 111d27a:	xor    edx,edx
+ 111d27c:	div    r15
+ 111d27f:	jmp    111d297 <core.runtime.Runtime.drainJournal+0x3e7>
+ 111d281:	data16 data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111d290:	mov    eax,esi
+ 111d292:	xor    edx,edx
+ 111d294:	div    r15d
+ 111d297:	mov    rax,rsi
+ 111d29a:	sub    rax,rdx
+ 111d29d:	add    rax,r8
+ 111d2a0:	cmp    rax,rsi
+ 111d2a3:	mov    edx,0x0
+ 111d2a8:	cmovae r15,rdx
+ 111d2ac:	add    r15,rax
+ 111d2af:	mov    QWORD PTR [rcx+r8*8],r15
+ 111d2b3:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d2bb:	je     111d120 <core.runtime.Runtime.drainJournal+0x270>
+ 111d2c1:	mov    QWORD PTR [r13+0xc0],r11
+ 111d2c8:	jmp    111d120 <core.runtime.Runtime.drainJournal+0x270>
+ 111d2cd:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d2d4:	mov    rax,QWORD PTR [rax+0x40]
+ 111d2d8:	mov    r9d,0x1067a60
+ 111d2de:	mov    edi,0x1067ab0
+ 111d2e3:	mov    r10d,0x1067aa8
+ 111d2e9:	cmp    QWORD PTR [r13+0x2c8],rax
+ 111d2f0:	jb     111d325 <core.runtime.Runtime.drainJournal+0x475>
+ 111d2f2:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d2f7:	nop    WORD PTR [rax+rax*1+0x0]
+ 111d300:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d307:	mov    rcx,QWORD PTR [r13+0x2c8]
+ 111d30e:	inc    rcx
+ 111d311:	mov    QWORD PTR [r13+0x2c8],rcx
+ 111d318:	mov    rax,QWORD PTR [rax+0x40]
+ 111d31c:	cmp    rcx,rax
+ 111d31f:	jae    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d325:	mov    rax,QWORD PTR [r13+0x2c8]
+ 111d32c:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111d333:	mov    rdx,QWORD PTR [r13+0x1f0]
+ 111d33a:	dec    rdx
+ 111d33d:	and    rdx,rax
+ 111d340:	mov    rsi,QWORD PTR [r13+0x200]
+ 111d347:	imul   rsi,rdx
+ 111d34b:	mov    rcx,QWORD PTR [rcx+rsi*1+0x1000]
+ 111d353:	lea    rsi,[rax*4+0x6]
+ 111d35b:	cmp    rcx,rsi
+ 111d35e:	je     111f17a <core.runtime.Runtime.drainJournal+0x22ca>
+ 111d364:	test   rcx,rcx
+ 111d367:	je     111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d36d:	lea    rsi,[rax*4+0x4]
+ 111d375:	mov    r8,rsi
+ 111d378:	or     r8,0x1
+ 111d37c:	cmp    rcx,r8
+ 111d37f:	je     111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111d385:	or     rsi,0x3
+ 111d389:	cmp    rcx,rsi
+ 111d38c:	jne    111d464 <core.runtime.Runtime.drainJournal+0x5b4>
+ 111d392:	lea    rcx,[rax+0x1]
+ 111d396:	mov    rsi,QWORD PTR [r13+0x1a0]
+ 111d39d:	mov    r8,QWORD PTR [r13+0x200]
+ 111d3a4:	imul   r8,rdx
+ 111d3a8:	mov    QWORD PTR [rsi+r8*1+0x1000],0x0
+ 111d3b4:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d3bc:	je     111d3e0 <core.runtime.Runtime.drainJournal+0x530>
+ 111d3be:	inc    QWORD PTR [r13+0x40]
+ 111d3c2:	mov    rsi,QWORD PTR [r13+0x80]
+ 111d3c9:	cmp    rax,rsi
+ 111d3cc:	jb     111d412 <core.runtime.Runtime.drainJournal+0x562>
+ 111d3ce:	mov    QWORD PTR [r13+0x80],rcx
+ 111d3d5:	jmp    111d412 <core.runtime.Runtime.drainJournal+0x562>
+ 111d3d7:	nop    WORD PTR [rax+rax*1+0x0]
+ 111d3e0:	lock dec QWORD PTR [r13+0x2d0]
+ 111d3e8:	mov    rsi,QWORD PTR [r13+0x1a0]
+ 111d3ef:	mov    rax,QWORD PTR [rsi+0x48]
+ 111d3f3:	data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111d400:	cmp    rax,rcx
+ 111d403:	mov    r8,rcx
+ 111d406:	cmova  r8,rax
+ 111d40a:	lock cmpxchg QWORD PTR [rsi+0x48],r8
+ 111d410:	jne    111d400 <core.runtime.Runtime.drainJournal+0x550>
+ 111d412:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111d419:	mov    rsi,QWORD PTR [r13+0x290]
+ 111d420:	mov    rax,QWORD PTR [rax+0x40]
+ 111d424:	mov    r8,QWORD PTR [r13+0x1f0]
+ 111d42b:	mov    r11,r8
+ 111d42e:	neg    r11
+ 111d431:	and    r11,rax
+ 111d434:	add    r11,rdx
+ 111d437:	cmp    r11,rax
+ 111d43a:	mov    eax,0x0
+ 111d43f:	cmovae r8,rax
+ 111d443:	add    r8,r11
+ 111d446:	mov    QWORD PTR [rsi+rdx*8],r8
+ 111d44a:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d452:	je     111d300 <core.runtime.Runtime.drainJournal+0x450>
+ 111d458:	mov    QWORD PTR [r13+0xc0],rcx
+ 111d45f:	jmp    111d300 <core.runtime.Runtime.drainJournal+0x450>
+ 111d464:	mov    r9d,0x1067ab8
+ 111d46a:	mov    edi,0x1067b08
+ 111d46f:	mov    r10d,0x1067b00
+ 111d475:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111d480:	cmp    BYTE PTR [r10],0x0
+ 111d484:	sete   al
+ 111d487:	mov    rcx,QWORD PTR [r9+0x40]
+ 111d48b:	mov    QWORD PTR [rbp-0x420],rcx
+ 111d492:	vmovups ymm0,YMMWORD PTR [r9+0x20]
+ 111d498:	vmovups YMMWORD PTR [rbp-0x440],ymm0
+ 111d4a0:	vmovups ymm0,YMMWORD PTR [r9]
+ 111d4a5:	vmovups YMMWORD PTR [rbp-0x460],ymm0
+ 111d4ad:	movzx  ecx,WORD PTR [rdi]
+ 111d4b0:	test   cx,cx
+ 111d4b3:	jne    111ffe9 <core.runtime.Runtime.drainJournal+0x3139>
+ 111d4b9:	test   al,al
+ 111d4bb:	je     111d4f0 <core.runtime.Runtime.drainJournal+0x640>
+ 111d4bd:	xor    r12d,r12d
+ 111d4c0:	mov    r15,QWORD PTR [rbp-0x38]
+ 111d4c4:	mov    r13,QWORD PTR [rbp-0x40]
+ 111d4c8:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d4d0:	je     111d600 <core.runtime.Runtime.drainJournal+0x750>
+ 111d4d6:	mov    rcx,QWORD PTR [r13+0x40]
+ 111d4da:	mov    rax,QWORD PTR [r13+0x0]
+ 111d4de:	sub    rax,rcx
+ 111d4e1:	cmp    rax,r14
+ 111d4e4:	jne    111d60c <core.runtime.Runtime.drainJournal+0x75c>
+ 111d4ea:	jmp    111d670 <core.runtime.Runtime.drainJournal+0x7c0>
+ 111d4ef:	nop
+ 111d4f0:	mov    r15,QWORD PTR [rbp-0x98]
+ 111d4f7:	shl    r15,0x6
+ 111d4fb:	mov    rax,QWORD PTR [rbp-0x420]
+ 111d502:	mov    QWORD PTR [rbp-0x7120],rax
+ 111d509:	vmovups ymm0,YMMWORD PTR [rbp-0x440]
+ 111d511:	vmovups YMMWORD PTR [rbp-0x7140],ymm0
+ 111d519:	vmovups ymm0,YMMWORD PTR [rbp-0x460]
+ 111d521:	vmovups YMMWORD PTR [rbp-0x7160],ymm0
+ 111d529:	mov    r13,QWORD PTR [rbp-0x40]
+ 111d52d:	mov    rax,QWORD PTR [r13+0x2b8]
+ 111d534:	cmp    rax,QWORD PTR [r13+0x2b0]
+ 111d53b:	jae    111efc4 <core.runtime.Runtime.drainJournal+0x2114>
+ 111d541:	mov    ecx,0x1
+ 111d546:	lea    r12,[rbp-0x7118]
+ 111d54d:	nop    DWORD PTR [rax]
+ 111d550:	mov    rax,QWORD PTR [r13+0x2b8]
+ 111d557:	mov    rbx,rcx
+ 111d55a:	add    rax,rcx
+ 111d55d:	cmp    rax,QWORD PTR [r13+0x2b0]
+ 111d564:	jae    111f0b2 <core.runtime.Runtime.drainJournal+0x2202>
+ 111d56a:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111d571:	mov    rdx,QWORD PTR [r13+0x2a0]
+ 111d578:	mov    rdx,QWORD PTR [rdx+rax*8]
+ 111d57c:	mov    rax,QWORD PTR [r13+0x200]
+ 111d583:	imul   rax,rdx
+ 111d587:	mov    rcx,QWORD PTR [rcx+rax*1+0x1000]
+ 111d58f:	lea    rdi,[rbp-0x640]
+ 111d596:	mov    rsi,r13
+ 111d599:	vzeroupper
+ 111d59c:	call   1081fb0 <journal.journal.Journal.validateSlot>
+ 111d5a1:	movzx  ecx,WORD PTR [rbp-0x5f8]
+ 111d5a8:	test   cx,cx
+ 111d5ab:	jne    111ffe9 <core.runtime.Runtime.drainJournal+0x3139>
+ 111d5b1:	mov    rax,QWORD PTR [rbp-0x600]
+ 111d5b8:	mov    QWORD PTR [r12+0x40],rax
+ 111d5bd:	vmovups ymm0,YMMWORD PTR [rbp-0x640]
+ 111d5c5:	vmovups ymm1,YMMWORD PTR [rbp-0x620]
+ 111d5cd:	vmovups YMMWORD PTR [r12+0x20],ymm1
+ 111d5d4:	vmovups YMMWORD PTR [r12],ymm0
+ 111d5da:	mov    rcx,rbx
+ 111d5dd:	inc    rcx
+ 111d5e0:	add    r12,0x48
+ 111d5e4:	cmp    r15,rcx
+ 111d5e7:	mov    r13,QWORD PTR [rbp-0x40]
+ 111d5eb:	jne    111d550 <core.runtime.Runtime.drainJournal+0x6a0>
+ 111d5f1:	mov    r12,r15
+ 111d5f4:	mov    r15,QWORD PTR [rbp-0x38]
+ 111d5f8:	jmp    111d4c8 <core.runtime.Runtime.drainJournal+0x618>
+ 111d5fd:	nop    DWORD PTR [rax]
+ 111d600:	mov    rax,QWORD PTR [r13+0x2d0]
+ 111d607:	cmp    rax,r14
+ 111d60a:	je     111d670 <core.runtime.Runtime.drainJournal+0x7c0>
+ 111d60c:	lock inc DWORD PTR [r15+0x31c4]
+ 111d614:	mov    rdi,QWORD PTR [r15+0x3110]
+ 111d61b:	mov    rax,QWORD PTR [r15+0x3118]
+ 111d622:	mov    rsi,QWORD PTR [rbp-0xb0]
+ 111d629:	mov    edx,0xffffffff
+ 111d62e:	vzeroupper
+ 111d631:	call   QWORD PTR [rax+0x70]
+ 111d634:	test   BYTE PTR [r13+0x2ff],0x1
+ 111d63c:	je     111d670 <core.runtime.Runtime.drainJournal+0x7c0>
+ 111d63e:	lock inc DWORD PTR [r13+0x140]
+ 111d646:	movzx  eax,BYTE PTR [r13+0x164]
+ 111d64e:	test   al,0x1
+ 111d650:	je     111d670 <core.runtime.Runtime.drainJournal+0x7c0>
+ 111d652:	mov    rdi,QWORD PTR [r15+0x3110]
+ 111d659:	mov    rax,QWORD PTR [r15+0x3118]
+ 111d660:	mov    rsi,QWORD PTR [rbp-0xa8]
+ 111d667:	mov    edx,0x1
+ 111d66c:	call   QWORD PTR [rax+0x70]
+ 111d66f:	nop
+ 111d670:	test   r12,r12
+ 111d673:	je     111fbd0 <core.runtime.Runtime.drainJournal+0x2d20>
+ 111d679:	mov    rbx,QWORD PTR [r15+0x3110]
+ 111d680:	mov    r14,QWORD PTR [r15+0x3118]
+ 111d687:	xor    eax,eax
+ 111d689:	mov    ecx,0x1
+ 111d68e:	lock cmpxchg DWORD PTR [r15+0x31d4],ecx
+ 111d697:	setne  BYTE PTR [rbp-0x260]
+ 111d69e:	setne  cl
+ 111d6a1:	test   cl,cl
+ 111d6a3:	jne    111f37c <core.runtime.Runtime.drainJournal+0x24cc>
+ 111d6a9:	lea    rax,[r12-0x1]
+ 111d6ae:	shr    rax,0x6
+ 111d6b2:	not    rax
+ 111d6b5:	add    QWORD PTR [rbp-0x98],rax
+ 111d6bc:	mov    rax,QWORD PTR [r15+0x3120]
+ 111d6c3:	mov    QWORD PTR [rbp-0x1a90],rax
+ 111d6ca:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111d6d5:	lea    r14,[rbp-0x7138]
+ 111d6dc:	xor    ecx,ecx
+ 111d6de:	mov    QWORD PTR [rbp-0xa0],r12
+ 111d6e5:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111d6f0:	mov    rsi,QWORD PTR [r14-0x18]
+ 111d6f4:	mov    rax,QWORD PTR [r14-0x10]
+ 111d6f8:	mov    QWORD PTR [rbp-0x48],rax
+ 111d6fc:	cmp    BYTE PTR [r14+0x18],0x0
+ 111d701:	mov    QWORD PTR [rbp-0x90],r14
+ 111d708:	mov    QWORD PTR [rbp-0x80],rcx
+ 111d70c:	mov    QWORD PTR [rbp-0x78],rsi
+ 111d710:	je     111da00 <core.runtime.Runtime.drainJournal+0xb50>
+ 111d716:	cmp    BYTE PTR [r13+0x288],0x0
+ 111d71e:	je     111f4b7 <core.runtime.Runtime.drainJournal+0x2607>
+ 111d724:	mov    ebx,DWORD PTR [r14]
+ 111d727:	mov    rdi,QWORD PTR [rbp-0x100]
+ 111d72e:	mov    rsi,r14
+ 111d731:	vzeroupper
+ 111d734:	call   1133b40 <journal.schema.Registry.validateReady>
+ 111d739:	test   ax,ax
+ 111d73c:	jne    111fff2 <core.runtime.Runtime.drainJournal+0x3142>
+ 111d742:	dec    ebx
+ 111d744:	imul   rax,rbx,0xd8
+ 111d74b:	mov    rcx,QWORD PTR [r13+0x270]
+ 111d752:	vmovups ymm0,YMMWORD PTR [rcx+rax*1+0xa8]
+ 111d75b:	vmovups YMMWORD PTR [rbp-0x550],ymm0
+ 111d763:	vmovups ymm0,YMMWORD PTR [rcx+rax*1+0x88]
+ 111d76c:	vmovups YMMWORD PTR [rbp-0x570],ymm0
+ 111d774:	vmovups ymm0,YMMWORD PTR [rcx+rax*1+0x8]
+ 111d77a:	vmovups ymm1,YMMWORD PTR [rcx+rax*1+0x28]
+ 111d780:	vmovups ymm2,YMMWORD PTR [rcx+rax*1+0x48]
+ 111d786:	vmovups ymm3,YMMWORD PTR [rcx+rax*1+0x68]
+ 111d78c:	vmovups YMMWORD PTR [rbp-0x590],ymm3
+ 111d794:	vmovups YMMWORD PTR [rbp-0x5b0],ymm2
+ 111d79c:	vmovups YMMWORD PTR [rbp-0x5d0],ymm1
+ 111d7a4:	vmovups YMMWORD PTR [rbp-0x5f0],ymm0
+ 111d7ac:	mov    BYTE PTR [rbp-0x530],0x1
+ 111d7b3:	lea    r14,[rbp-0x5f0]
+ 111d7ba:	cmp    r12,0x40
+ 111d7be:	jb     111dc3b <core.runtime.Runtime.drainJournal+0xd8b>
+ 111d7c4:	cmp    QWORD PTR [rbp-0x48],0x6
+ 111d7c9:	mov    rsi,QWORD PTR [rbp-0x78]
+ 111d7cd:	jb     111f720 <core.runtime.Runtime.drainJournal+0x2870>
+ 111d7d3:	movzx  ebx,BYTE PTR [rbp-0x598]
+ 111d7da:	mov    r12,QWORD PTR [rbp-0x590]
+ 111d7e1:	mov    r15,QWORD PTR [rbp-0x588]
+ 111d7e8:	movzx  r13d,BYTE PTR [rbp-0x538]
+ 111d7f0:	movzx  ecx,WORD PTR [rsi+0x4]
+ 111d7f4:	cmp    ecx,0x2
+ 111d7f7:	je     111d802 <core.runtime.Runtime.drainJournal+0x952>
+ 111d7f9:	cmp    ecx,0x5
+ 111d7fc:	jne    111fb21 <core.runtime.Runtime.drainJournal+0x2c71>
+ 111d802:	lea    rdi,[rbp-0x260]
+ 111d809:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111d80d:	vzeroupper
+ 111d810:	call   1131750 <core.codec.readHeader>
+ 111d815:	movzx  r14d,WORD PTR [rbp-0x160]
+ 111d81d:	test   r14w,r14w
+ 111d821:	jne    111f7c9 <core.runtime.Runtime.drainJournal+0x2919>
+ 111d827:	cmp    QWORD PTR [rbp-0x180],r12
+ 111d82e:	jne    111f4e2 <core.runtime.Runtime.drainJournal+0x2632>
+ 111d834:	cmp    QWORD PTR [rbp-0x178],r15
+ 111d83b:	jne    111f4e2 <core.runtime.Runtime.drainJournal+0x2632>
+ 111d841:	movzx  eax,BYTE PTR [rbp-0x1a3]
+ 111d848:	xor    r13b,al
+ 111d84b:	test   r13b,0x1
+ 111d84f:	jne    111f4e2 <core.runtime.Runtime.drainJournal+0x2632>
+ 111d855:	movzx  ecx,WORD PTR [rbp-0x168]
+ 111d85c:	mov    edx,ecx
+ 111d85e:	and    dl,0x1
+ 111d861:	test   bl,bl
+ 111d863:	setne  sil
+ 111d867:	cmp    sil,dl
+ 111d86a:	jne    111f4e2 <core.runtime.Runtime.drainJournal+0x2632>
+ 111d870:	mov    edx,0x100
+ 111d875:	sub    rdx,r12
+ 111d878:	jb     111f73e <core.runtime.Runtime.drainJournal+0x288e>
+ 111d87e:	cmp    r15,rdx
+ 111d881:	ja     111f73e <core.runtime.Runtime.drainJournal+0x288e>
+ 111d887:	vmovups ymm0,YMMWORD PTR [rbp-0x1c3]
+ 111d88f:	vmovups YMMWORD PTR [rbp-0x313],ymm0
+ 111d897:	vmovups ymm0,YMMWORD PTR [rbp-0x1e0]
+ 111d89f:	vmovups YMMWORD PTR [rbp-0x330],ymm0
+ 111d8a7:	vmovups ymm0,YMMWORD PTR [rbp-0x260]
+ 111d8af:	vmovups ymm1,YMMWORD PTR [rbp-0x220]
+ 111d8b7:	vmovups ymm2,YMMWORD PTR [rbp-0x200]
+ 111d8bf:	vmovups YMMWORD PTR [rbp-0x350],ymm2
+ 111d8c7:	vmovups YMMWORD PTR [rbp-0x370],ymm1
+ 111d8cf:	vmovups ymm1,YMMWORD PTR [rbp-0x240]
+ 111d8d7:	vmovups YMMWORD PTR [rbp-0x390],ymm1
+ 111d8df:	vmovups YMMWORD PTR [rbp-0x3b0],ymm0
+ 111d8e7:	lea    rsi,[rbp-0x210]
+ 111d8ee:	vmovups ymm0,YMMWORD PTR [rsi+0x6e]
+ 111d8f3:	vmovups YMMWORD PTR [rbp-0xe0],ymm0
+ 111d8fb:	movzx  edx,WORD PTR [rsi+0x8e]
+ 111d902:	mov    WORD PTR [rbp-0xc0],dx
+ 111d909:	mov    edx,DWORD PTR [rsi+0xaa]
+ 111d90f:	mov    DWORD PTR [rbp-0x70],edx
+ 111d912:	movzx  edx,WORD PTR [rsi+0xae]
+ 111d919:	mov    WORD PTR [rbp-0x6c],dx
+ 111d91d:	vmovups ymm0,YMMWORD PTR [rbp-0x313]
+ 111d925:	vmovups YMMWORD PTR [rbp-0x753],ymm0
+ 111d92d:	vmovups ymm0,YMMWORD PTR [rbp-0x330]
+ 111d935:	vmovups YMMWORD PTR [rbp-0x770],ymm0
+ 111d93d:	vmovups ymm0,YMMWORD PTR [rbp-0x3b0]
+ 111d945:	vmovups ymm1,YMMWORD PTR [rbp-0x390]
+ 111d94d:	vmovups ymm2,YMMWORD PTR [rbp-0x370]
+ 111d955:	vmovups ymm3,YMMWORD PTR [rbp-0x350]
+ 111d95d:	vmovups YMMWORD PTR [rbp-0x790],ymm3
+ 111d965:	vmovups YMMWORD PTR [rbp-0x7b0],ymm2
+ 111d96d:	vmovups YMMWORD PTR [rbp-0x7d0],ymm1
+ 111d975:	vmovups YMMWORD PTR [rbp-0x7f0],ymm0
+ 111d97d:	mov    BYTE PTR [rbp-0x733],al
+ 111d983:	mov    rdx,QWORD PTR [rbp-0x170]
+ 111d98a:	movzx  esi,WORD PTR [rbp-0xc0]
+ 111d991:	lea    rdi,[rbp-0x732]
+ 111d998:	mov    WORD PTR [rdi+0x20],si
+ 111d99c:	vmovups ymm0,YMMWORD PTR [rbp-0xe0]
+ 111d9a4:	vmovups YMMWORD PTR [rdi],ymm0
+ 111d9a8:	mov    QWORD PTR [rbp-0x710],r12
+ 111d9af:	mov    QWORD PTR [rbp-0x708],r15
+ 111d9b6:	mov    QWORD PTR [rbp-0x700],rdx
+ 111d9bd:	mov    WORD PTR [rbp-0x6f8],cx
+ 111d9c4:	movzx  ecx,WORD PTR [rbp-0x6c]
+ 111d9c8:	mov    WORD PTR [rdi+0x40],cx
+ 111d9cc:	mov    ecx,DWORD PTR [rbp-0x70]
+ 111d9cf:	mov    DWORD PTR [rdi+0x3c],ecx
+ 111d9d2:	lea    r13,[rbp-0x530]
+ 111d9d9:	lea    r14,[rbp-0x5f0]
+ 111d9e0:	lea    r12,[rbp-0x7f0]
+ 111d9e7:	test   al,0x1
+ 111d9e9:	je     111dad2 <core.runtime.Runtime.drainJournal+0xc22>
+ 111d9ef:	jmp    111dc30 <core.runtime.Runtime.drainJournal+0xd80>
+ 111d9f4:	data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111da00:	lea    rdi,[rbp-0xc78]
+ 111da07:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111da0b:	mov    ecx,0x4
+ 111da10:	vzeroupper
+ 111da13:	call   1131750 <core.codec.readHeader>
+ 111da18:	movzx  r14d,WORD PTR [rbp-0xb78]
+ 111da20:	test   r14d,r14d
+ 111da23:	jne    111dc14 <core.runtime.Runtime.drainJournal+0xd64>
+ 111da29:	vmovups ymm0,YMMWORD PTR [rbp-0xbd8]
+ 111da31:	vmovups YMMWORD PTR [rbp-0x900],ymm0
+ 111da39:	vmovups ymm0,YMMWORD PTR [rbp-0xb98]
+ 111da41:	vmovups YMMWORD PTR [rbp-0x8c0],ymm0
+ 111da49:	vmovups ymm0,YMMWORD PTR [rbp-0xbb8]
+ 111da51:	vmovups YMMWORD PTR [rbp-0x8e0],ymm0
+ 111da59:	vmovups ymm0,YMMWORD PTR [rbp-0xbf8]
+ 111da61:	vmovups YMMWORD PTR [rbp-0x920],ymm0
+ 111da69:	vmovups ymm0,YMMWORD PTR [rbp-0xc78]
+ 111da71:	vmovups ymm1,YMMWORD PTR [rbp-0xc58]
+ 111da79:	vmovups ymm2,YMMWORD PTR [rbp-0xc38]
+ 111da81:	vmovups ymm3,YMMWORD PTR [rbp-0xc18]
+ 111da89:	vmovups YMMWORD PTR [rbp-0x940],ymm3
+ 111da91:	vmovups YMMWORD PTR [rbp-0x960],ymm2
+ 111da99:	vmovups YMMWORD PTR [rbp-0x980],ymm1
+ 111daa1:	vmovups YMMWORD PTR [rbp-0x9a0],ymm0
+ 111daa9:	movzx  eax,BYTE PTR [rbp-0x8e3]
+ 111dab0:	mov    r14d,0x1066cb8
+ 111dab6:	mov    r13d,0x1066d78
+ 111dabc:	mov    r15,QWORD PTR [rbp-0x8b8]
+ 111dac3:	lea    r12,[rbp-0x9a0]
+ 111daca:	test   al,0x1
+ 111dacc:	jne    111dc30 <core.runtime.Runtime.drainJournal+0xd80>
+ 111dad2:	test   r15,r15
+ 111dad5:	jne    111dc30 <core.runtime.Runtime.drainJournal+0xd80>
+ 111dadb:	mov    r15,QWORD PTR [r12+0x58]
+ 111dae0:	mov    eax,DWORD PTR [r12+0xb8]
+ 111dae8:	mov    DWORD PTR [rbp-0x68],eax
+ 111daeb:	mov    rcx,QWORD PTR [r12+0x60]
+ 111daf0:	mov    rdx,QWORD PTR [r12+0x68]
+ 111daf5:	lea    rdi,[rbp-0x270]
+ 111dafc:	lea    rsi,[rbp-0x1a90]
+ 111db03:	vzeroupper
+ 111db06:	call   1118540 <core.delivery_batch.Configurations.select>
+ 111db0b:	movzx  r9d,WORD PTR [rbp-0x268]
+ 111db13:	test   r9w,r9w
+ 111db17:	jne    111f586 <core.runtime.Runtime.drainJournal+0x26d6>
+ 111db1d:	mov    rbx,QWORD PTR [rbp-0x270]
+ 111db24:	mov    rcx,QWORD PTR [rbx]
+ 111db27:	mov    rdx,QWORD PTR [rcx+0x7448]
+ 111db2e:	cmp    rdx,0x40
+ 111db32:	je     111db42 <core.runtime.Runtime.drainJournal+0xc92>
+ 111db34:	shrx   rax,r15,rdx
+ 111db39:	test   rax,rax
+ 111db3c:	jne    111f656 <core.runtime.Runtime.drainJournal+0x27a6>
+ 111db42:	mov    QWORD PTR [rbp-0x30],rbx
+ 111db46:	mov    rbx,rcx
+ 111db49:	mov    rsi,QWORD PTR [rcx+0x7440]
+ 111db50:	mov    rax,QWORD PTR [rbp-0x38]
+ 111db54:	vmovups xmm0,XMMWORD PTR [rax+0x3168]
+ 111db5c:	mov    QWORD PTR [rbp-0x280],rax
+ 111db63:	mov    QWORD PTR [rbp-0x278],0x10f5930
+ 111db6e:	lea    rax,[rbp-0x280]
+ 111db75:	mov    QWORD PTR [rsp+0x28],rax
+ 111db7a:	lea    rax,[rbp-0xa160]
+ 111db81:	mov    QWORD PTR [rsp+0x20],rax
+ 111db86:	vmovups XMMWORD PTR [rsp+0x10],xmm0
+ 111db8c:	mov    QWORD PTR [rsp+0x8],r14
+ 111db91:	mov    QWORD PTR [rsp],r12
+ 111db95:	lea    rdi,[rbp-0x84]
+ 111db9c:	mov    rcx,r15
+ 111db9f:	mov    r8,QWORD PTR [rbp-0x78]
+ 111dba3:	mov    r9,QWORD PTR [rbp-0x48]
+ 111dba7:	call   1118790 <core.delivery.emitWireFused>
+ 111dbac:	movzx  r12d,WORD PTR [rbp-0x84]
+ 111dbb4:	test   r12w,r12w
+ 111dbb8:	jne    11200bf <core.runtime.Runtime.drainJournal+0x320f>
+ 111dbbe:	cmp    BYTE PTR [rbp-0x82],0x1
+ 111dbc5:	mov    r12,QWORD PTR [rbp-0xa0]
+ 111dbcc:	jne    111dc30 <core.runtime.Runtime.drainJournal+0xd80>
+ 111dbce:	mov    rcx,QWORD PTR [rbp-0x80]
+ 111dbd2:	mov    eax,DWORD PTR [rbp-0x68]
+ 111dbd5:	mov    DWORD PTR [rbp+rcx*4-0x2160],eax
+ 111dbdc:	mov    QWORD PTR [rbp+rcx*8-0x2960],rbx
+ 111dbe4:	mov    rbx,QWORD PTR [rbp-0x30]
+ 111dbe8:	or     QWORD PTR [rbx+0x10],r15
+ 111dbec:	mov    rax,QWORD PTR [rbx+0x20]
+ 111dbf0:	test   rax,r15
+ 111dbf3:	je     111dbf9 <core.runtime.Runtime.drainJournal+0xd49>
+ 111dbf5:	or     QWORD PTR [rbx+0x18],r15
+ 111dbf9:	test   rax,r15
+ 111dbfc:	setne  BYTE PTR [rbp+rcx*1-0x1b90]
+ 111dc04:	mov    r14,QWORD PTR [rbp-0x90]
+ 111dc0b:	mov    r13,QWORD PTR [rbp-0x40]
+ 111dc0f:	jmp    111deba <core.runtime.Runtime.drainJournal+0x100a>
+ 111dc14:	cmp    r14d,0x8a
+ 111dc1b:	jne    11202cd <core.runtime.Runtime.drainJournal+0x341d>
+ 111dc21:	mov    r13d,0x1066d78
+ 111dc27:	mov    r14d,0x1066cb8
+ 111dc2d:	nop    DWORD PTR [rax]
+ 111dc30:	cmp    BYTE PTR [r13+0x0],0x0
+ 111dc35:	je     111dd4e <core.runtime.Runtime.drainJournal+0xe9e>
+ 111dc3b:	vmovups ymm0,YMMWORD PTR [r14+0xa0]
+ 111dc44:	vmovups YMMWORD PTR [rbp-0xe20],ymm0
+ 111dc4c:	vmovups ymm0,YMMWORD PTR [r14+0x80]
+ 111dc55:	vmovups YMMWORD PTR [rbp-0xe40],ymm0
+ 111dc5d:	vmovups ymm0,YMMWORD PTR [r14]
+ 111dc62:	vmovups ymm1,YMMWORD PTR [r14+0x20]
+ 111dc68:	vmovups ymm2,YMMWORD PTR [r14+0x40]
+ 111dc6e:	vmovups ymm3,YMMWORD PTR [r14+0x60]
+ 111dc74:	vmovups YMMWORD PTR [rbp-0xe60],ymm3
+ 111dc7c:	vmovups YMMWORD PTR [rbp-0xe80],ymm2
+ 111dc84:	vmovups YMMWORD PTR [rbp-0xea0],ymm1
+ 111dc8c:	vmovups YMMWORD PTR [rbp-0xec0],ymm0
+ 111dc94:	lea    rdi,[rbp-0xa88]
+ 111dc9b:	mov    rsi,QWORD PTR [rbp-0x78]
+ 111dc9f:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111dca3:	lea    rcx,[rbp-0xec0]
+ 111dcaa:	lea    r8,[rbp-0xa160]
+ 111dcb1:	vzeroupper
+ 111dcb4:	call   1132ce0 <core.schema_codec.resolve>
+ 111dcb9:	movzx  r14d,WORD PTR [rbp-0x9a8]
+ 111dcc1:	test   r14w,r14w
+ 111dcc5:	lea    rdi,[rbp-0x1a88]
+ 111dccc:	jne    112000a <core.runtime.Runtime.drainJournal+0x315a>
+ 111dcd2:	vmovups ymm0,YMMWORD PTR [rbp-0x9c8]
+ 111dcda:	vmovups YMMWORD PTR [rbp-0xee0],ymm0
+ 111dce2:	vmovups ymm0,YMMWORD PTR [rbp-0x9e8]
+ 111dcea:	vmovups YMMWORD PTR [rbp-0xf00],ymm0
+ 111dcf2:	vmovups ymm0,YMMWORD PTR [rbp-0xa08]
+ 111dcfa:	vmovups YMMWORD PTR [rbp-0xf20],ymm0
+ 111dd02:	vmovups ymm0,YMMWORD PTR [rbp-0xa88]
+ 111dd0a:	vmovups ymm1,YMMWORD PTR [rbp-0xa68]
+ 111dd12:	vmovups ymm2,YMMWORD PTR [rbp-0xa48]
+ 111dd1a:	vmovups ymm3,YMMWORD PTR [rbp-0xa28]
+ 111dd22:	vmovups YMMWORD PTR [rbp-0xf40],ymm3
+ 111dd2a:	vmovups YMMWORD PTR [rbp-0xf60],ymm2
+ 111dd32:	vmovups YMMWORD PTR [rbp-0xf80],ymm1
+ 111dd3a:	vmovups YMMWORD PTR [rbp-0xfa0],ymm0
+ 111dd42:	lea    r14,[rbp-0xfa0]
+ 111dd49:	jmp    111ddfc <core.runtime.Runtime.drainJournal+0xf4c>
+ 111dd4e:	lea    rdi,[rbp-0xb70]
+ 111dd55:	mov    rsi,QWORD PTR [rbp-0x78]
+ 111dd59:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111dd5d:	lea    rcx,[rbp-0xa160]
+ 111dd64:	vzeroupper
+ 111dd67:	call   1132260 <core.codec.decode>
+ 111dd6c:	movzx  r14d,WORD PTR [rbp-0xa90]
+ 111dd74:	test   r14w,r14w
+ 111dd78:	lea    rdi,[rbp-0x1a88]
+ 111dd7f:	jne    11203b6 <core.runtime.Runtime.drainJournal+0x3506>
+ 111dd85:	vmovups ymm0,YMMWORD PTR [rbp-0xab0]
+ 111dd8d:	vmovups YMMWORD PTR [rbp-0xfc0],ymm0
+ 111dd95:	vmovups ymm0,YMMWORD PTR [rbp-0xad0]
+ 111dd9d:	vmovups YMMWORD PTR [rbp-0xfe0],ymm0
+ 111dda5:	vmovups ymm0,YMMWORD PTR [rbp-0xaf0]
+ 111ddad:	vmovups YMMWORD PTR [rbp-0x1000],ymm0
+ 111ddb5:	vmovups ymm0,YMMWORD PTR [rbp-0xb70]
+ 111ddbd:	vmovups ymm1,YMMWORD PTR [rbp-0xb50]
+ 111ddc5:	vmovups ymm2,YMMWORD PTR [rbp-0xb30]
+ 111ddcd:	vmovups ymm3,YMMWORD PTR [rbp-0xb10]
+ 111ddd5:	vmovups YMMWORD PTR [rbp-0x1020],ymm3
+ 111dddd:	vmovups YMMWORD PTR [rbp-0x1040],ymm2
+ 111dde5:	vmovups YMMWORD PTR [rbp-0x1060],ymm1
+ 111dded:	vmovups YMMWORD PTR [rbp-0x1080],ymm0
+ 111ddf5:	lea    r14,[rbp-0x1080]
+ 111ddfc:	mov    r12,QWORD PTR [r14+0x58]
+ 111de00:	mov    rcx,QWORD PTR [r14+0x60]
+ 111de04:	mov    rdx,QWORD PTR [r14+0x68]
+ 111de08:	mov    r13d,DWORD PTR [r14+0xb8]
+ 111de0f:	lea    rdi,[rbp-0x290]
+ 111de16:	lea    rsi,[rbp-0x1a90]
+ 111de1d:	vzeroupper
+ 111de20:	call   1118540 <core.delivery_batch.Configurations.select>
+ 111de25:	movzx  r15d,WORD PTR [rbp-0x288]
+ 111de2d:	test   r15w,r15w
+ 111de31:	jne    111ff8c <core.runtime.Runtime.drainJournal+0x30dc>
+ 111de37:	mov    r15,QWORD PTR [rbp-0x290]
+ 111de3e:	mov    rbx,QWORD PTR [r15]
+ 111de41:	mov    rdx,QWORD PTR [rbx+0x7448]
+ 111de48:	cmp    rdx,0x40
+ 111de4c:	je     111de5c <core.runtime.Runtime.drainJournal+0xfac>
+ 111de4e:	shrx   rax,r12,rdx
+ 111de53:	test   rax,rax
+ 111de56:	jne    111f48d <core.runtime.Runtime.drainJournal+0x25dd>
+ 111de5c:	mov    rsi,QWORD PTR [rbx+0x7440]
+ 111de63:	mov    rdi,QWORD PTR [rbp-0x38]
+ 111de67:	mov    rcx,r14
+ 111de6a:	call   1100650 <core.runtime.Runtime.deliverWith>
+ 111de6f:	test   ax,ax
+ 111de72:	jne    111ffb2 <core.runtime.Runtime.drainJournal+0x3102>
+ 111de78:	mov    rcx,QWORD PTR [rbp-0x80]
+ 111de7c:	mov    DWORD PTR [rbp+rcx*4-0x2160],r13d
+ 111de84:	mov    QWORD PTR [rbp+rcx*8-0x2960],rbx
+ 111de8c:	or     QWORD PTR [r15+0x10],r12
+ 111de90:	mov    rax,QWORD PTR [r15+0x20]
+ 111de94:	test   rax,r12
+ 111de97:	je     111de9d <core.runtime.Runtime.drainJournal+0xfed>
+ 111de99:	or     QWORD PTR [r15+0x18],r12
+ 111de9d:	test   rax,r12
+ 111dea0:	setne  BYTE PTR [rbp+rcx*1-0x1b90]
+ 111dea8:	mov    r13,QWORD PTR [rbp-0x40]
+ 111deac:	mov    r12,QWORD PTR [rbp-0xa0]
+ 111deb3:	mov    r14,QWORD PTR [rbp-0x90]
+ 111deba:	inc    rcx
+ 111debd:	add    r14,0x48
+ 111dec1:	cmp    r12,rcx
+ 111dec4:	mov    r15,QWORD PTR [rbp-0x38]
+ 111dec8:	jne    111d6f0 <core.runtime.Runtime.drainJournal+0x840>
+ 111dece:	mov    rbx,QWORD PTR [rbp-0x1088]
+ 111ded5:	lea    r14,[rbp-0x1a88]
+ 111dedc:	test   rbx,rbx
+ 111dedf:	jne    111ef5d <core.runtime.Runtime.drainJournal+0x20ad>
+ 111dee5:	xor    ecx,ecx
+ 111dee7:	xor    r10d,r10d
+ 111deea:	xor    r12d,r12d
+ 111deed:	lea    rax,[rcx+rcx*8]
+ 111def1:	mov    rdx,QWORD PTR [rbp+rax*8-0x7160]
+ 111def9:	mov    QWORD PTR [rbp-0x48],rdx
+ 111defd:	mov    rsi,r13
+ 111df00:	mov    r14,QWORD PTR [rbp+rax*8-0x7158]
+ 111df08:	mov    r11,QWORD PTR [rbp+rax*8-0x7140]
+ 111df10:	mov    eax,DWORD PTR [rbp+rcx*4-0x2160]
+ 111df17:	mov    rdx,QWORD PTR [rbp+rcx*8-0x2960]
+ 111df1f:	mov    QWORD PTR [rbp-0x80],rdx
+ 111df23:	movzx  r15d,BYTE PTR [rbp+rcx*1-0x1b90]
+ 111df2c:	cmp    BYTE PTR [r13+0x2fd],0x1
+ 111df34:	mov    QWORD PTR [rbp-0x78],rcx
+ 111df38:	mov    QWORD PTR [rbp-0x90],rax
+ 111df3f:	jne    111dfd1 <core.runtime.Runtime.drainJournal+0x1121>
+ 111df45:	and    r15b,0x1
+ 111df49:	mov    BYTE PTR [rbp-0x6e8],r15b
+ 111df50:	mov    bx,0x151
+ 111df54:	cmp    r11,QWORD PTR [rsi+0x1f0]
+ 111df5b:	jae    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111df61:	mov    rax,QWORD PTR [rsi+0x2b8]
+ 111df68:	cmp    rax,QWORD PTR [rsi+0x2b0]
+ 111df6f:	jae    111e05d <core.runtime.Runtime.drainJournal+0x11ad>
+ 111df75:	mov    rbx,r11
+ 111df78:	mov    rcx,QWORD PTR [rsi+0x1a0]
+ 111df7f:	mov    rdx,QWORD PTR [rsi+0x2a0]
+ 111df86:	mov    rdx,QWORD PTR [rdx+rax*8]
+ 111df8a:	mov    rax,QWORD PTR [rsi+0x200]
+ 111df91:	imul   rax,rdx
+ 111df95:	mov    rcx,QWORD PTR [rcx+rax*1+0x1000]
+ 111df9d:	lea    rdi,[rbp-0x2e8]
+ 111dfa4:	mov    r13,r12
+ 111dfa7:	mov    r12,r10
+ 111dfaa:	call   1118050 <journal.journal.Journal.validateSlotFor__anon_39262>
+ 111dfaf:	mov    r10,r12
+ 111dfb2:	mov    r12,r13
+ 111dfb5:	movzx  eax,WORD PTR [rbp-0x2a0]
+ 111dfbc:	lea    rcx,[rbp-0x2e8]
+ 111dfc3:	test   ax,ax
+ 111dfc6:	je     111e81e <core.runtime.Runtime.drainJournal+0x196e>
+ 111dfcc:	jmp    111fbc9 <core.runtime.Runtime.drainJournal+0x2d19>
+ 111dfd1:	and    r15b,0x1
+ 111dfd5:	mov    BYTE PTR [rbp-0x410],r15b
+ 111dfdc:	mov    bx,0x151
+ 111dfe0:	cmp    r11,QWORD PTR [rsi+0x1f0]
+ 111dfe7:	jae    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111dfed:	mov    rax,QWORD PTR [rsi+0x2b8]
+ 111dff4:	cmp    rax,QWORD PTR [rsi+0x2b0]
+ 111dffb:	jae    111e1e8 <core.runtime.Runtime.drainJournal+0x1338>
+ 111e001:	mov    rbx,r11
+ 111e004:	mov    rcx,QWORD PTR [rsi+0x1a0]
+ 111e00b:	mov    rdx,QWORD PTR [rsi+0x2a0]
+ 111e012:	mov    rdx,QWORD PTR [rdx+rax*8]
+ 111e016:	mov    rax,QWORD PTR [rsi+0x200]
+ 111e01d:	imul   rax,rdx
+ 111e021:	mov    rcx,QWORD PTR [rcx+rax*1+0x1000]
+ 111e029:	lea    rdi,[rbp-0x2e8]
+ 111e030:	mov    r13,r12
+ 111e033:	mov    r12,r10
+ 111e036:	call   11182c0 <journal.journal.Journal.validateSlotFor__anon_39279>
+ 111e03b:	mov    r10,r12
+ 111e03e:	mov    r12,r13
+ 111e041:	movzx  eax,WORD PTR [rbp-0x2a0]
+ 111e048:	lea    rcx,[rbp-0x2e8]
+ 111e04f:	test   ax,ax
+ 111e052:	je     111e3ee <core.runtime.Runtime.drainJournal+0x153e>
+ 111e058:	jmp    111fbc9 <core.runtime.Runtime.drainJournal+0x2d19>
+ 111e05d:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 111e064:	mov    rax,QWORD PTR [rax+0x40]
+ 111e068:	cmp    QWORD PTR [rsi+0x2c8],rax
+ 111e06f:	jb     111e0a5 <core.runtime.Runtime.drainJournal+0x11f5>
+ 111e071:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e076:	cs nop WORD PTR [rax+rax*1+0x0]
+ 111e080:	mov    rax,QWORD PTR [r9+0x1a0]
+ 111e087:	mov    rcx,QWORD PTR [r9+0x2c8]
+ 111e08e:	inc    rcx
+ 111e091:	mov    QWORD PTR [r9+0x2c8],rcx
+ 111e098:	mov    rax,QWORD PTR [rax+0x40]
+ 111e09c:	cmp    rcx,rax
+ 111e09f:	jae    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e0a5:	mov    rsi,QWORD PTR [rbp-0x40]
+ 111e0a9:	mov    rax,QWORD PTR [rsi+0x2c8]
+ 111e0b0:	mov    rcx,QWORD PTR [rsi+0x1a0]
+ 111e0b7:	mov    rdx,QWORD PTR [rsi+0x1f0]
+ 111e0be:	dec    rdx
+ 111e0c1:	and    rdx,rax
+ 111e0c4:	mov    rsi,QWORD PTR [rsi+0x200]
+ 111e0cb:	imul   rsi,rdx
+ 111e0cf:	mov    rcx,QWORD PTR [rcx+rsi*1+0x1000]
+ 111e0d7:	lea    rsi,[rax*4+0x6]
+ 111e0df:	cmp    rcx,rsi
+ 111e0e2:	je     111e7e8 <core.runtime.Runtime.drainJournal+0x1938>
+ 111e0e8:	test   rcx,rcx
+ 111e0eb:	je     111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e0f1:	lea    rsi,[rax*4+0x4]
+ 111e0f9:	mov    rdi,rsi
+ 111e0fc:	or     rdi,0x1
+ 111e100:	cmp    rcx,rdi
+ 111e103:	je     111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e109:	or     rsi,0x3
+ 111e10d:	cmp    rcx,rsi
+ 111e110:	jne    111fbc5 <core.runtime.Runtime.drainJournal+0x2d15>
+ 111e116:	lea    rcx,[rax+0x1]
+ 111e11a:	mov    r8,QWORD PTR [rbp-0x40]
+ 111e11e:	mov    rsi,QWORD PTR [r8+0x1a0]
+ 111e125:	mov    rdi,QWORD PTR [r8+0x200]
+ 111e12c:	imul   rdi,rdx
+ 111e130:	mov    QWORD PTR [rsi+rdi*1+0x1000],0x0
+ 111e13c:	test   BYTE PTR [r8+0x2ff],0x1
+ 111e144:	je     111e163 <core.runtime.Runtime.drainJournal+0x12b3>
+ 111e146:	inc    QWORD PTR [r8+0x40]
+ 111e14a:	mov    rsi,QWORD PTR [r8+0x80]
+ 111e151:	cmp    rax,rsi
+ 111e154:	jb     111e192 <core.runtime.Runtime.drainJournal+0x12e2>
+ 111e156:	mov    rax,QWORD PTR [rbp-0x40]
+ 111e15a:	mov    QWORD PTR [rax+0x80],rcx
+ 111e161:	jmp    111e192 <core.runtime.Runtime.drainJournal+0x12e2>
+ 111e163:	lock dec QWORD PTR [r8+0x2d0]
+ 111e16b:	mov    rsi,QWORD PTR [r8+0x1a0]
+ 111e172:	mov    rax,QWORD PTR [rsi+0x48]
+ 111e176:	cs nop WORD PTR [rax+rax*1+0x0]
+ 111e180:	cmp    rax,rcx
+ 111e183:	mov    rdi,rcx
+ 111e186:	cmova  rdi,rax
+ 111e18a:	lock cmpxchg QWORD PTR [rsi+0x48],rdi
+ 111e190:	jne    111e180 <core.runtime.Runtime.drainJournal+0x12d0>
+ 111e192:	mov    r9,QWORD PTR [rbp-0x40]
+ 111e196:	mov    rax,QWORD PTR [r9+0x1a0]
+ 111e19d:	mov    rsi,QWORD PTR [r9+0x290]
+ 111e1a4:	mov    rax,QWORD PTR [rax+0x40]
+ 111e1a8:	mov    rdi,QWORD PTR [r9+0x1f0]
+ 111e1af:	mov    r8,rdi
+ 111e1b2:	neg    r8
+ 111e1b5:	and    r8,rax
+ 111e1b8:	add    r8,rdx
+ 111e1bb:	cmp    r8,rax
+ 111e1be:	mov    eax,0x0
+ 111e1c3:	cmovae rdi,rax
+ 111e1c7:	add    rdi,r8
+ 111e1ca:	mov    QWORD PTR [rsi+rdx*8],rdi
+ 111e1ce:	test   BYTE PTR [r9+0x2ff],0x1
+ 111e1d6:	je     111e080 <core.runtime.Runtime.drainJournal+0x11d0>
+ 111e1dc:	mov    QWORD PTR [r9+0xc0],rcx
+ 111e1e3:	jmp    111e080 <core.runtime.Runtime.drainJournal+0x11d0>
+ 111e1e8:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 111e1ef:	mov    rax,QWORD PTR [rax+0x40]
+ 111e1f3:	cmp    QWORD PTR [rsi+0x2c8],rax
+ 111e1fa:	jb     111e235 <core.runtime.Runtime.drainJournal+0x1385>
+ 111e1fc:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e201:	data16 data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111e210:	mov    rax,QWORD PTR [rdx+0x1a0]
+ 111e217:	mov    rcx,QWORD PTR [rdx+0x2c8]
+ 111e21e:	inc    rcx
+ 111e221:	mov    QWORD PTR [rdx+0x2c8],rcx
+ 111e228:	mov    rax,QWORD PTR [rax+0x40]
+ 111e22c:	cmp    rcx,rax
+ 111e22f:	jae    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e235:	mov    rax,QWORD PTR [rbp-0x40]
+ 111e239:	mov    rcx,QWORD PTR [rax+0x1f0]
+ 111e240:	mov    rsi,QWORD PTR [rax+0x2c8]
+ 111e247:	mov    rax,rsi
+ 111e24a:	or     rax,rcx
+ 111e24d:	shr    rax,0x20
+ 111e251:	je     111e260 <core.runtime.Runtime.drainJournal+0x13b0>
+ 111e253:	mov    rax,rsi
+ 111e256:	xor    edx,edx
+ 111e258:	div    rcx
+ 111e25b:	mov    r8,rdx
+ 111e25e:	jmp    111e269 <core.runtime.Runtime.drainJournal+0x13b9>
+ 111e260:	mov    eax,esi
+ 111e262:	xor    edx,edx
+ 111e264:	div    ecx
+ 111e266:	mov    r8d,edx
+ 111e269:	lea    rdi,[rsi+0x1]
+ 111e26d:	mov    rcx,QWORD PTR [rbp-0x40]
+ 111e271:	mov    rax,QWORD PTR [rcx+0x1a0]
+ 111e278:	mov    rcx,QWORD PTR [rcx+0x200]
+ 111e27f:	imul   rcx,r8
+ 111e283:	mov    rcx,QWORD PTR [rax+rcx*1+0x1000]
+ 111e28b:	lea    rax,[rdi*4+0x2]
+ 111e293:	cmp    rcx,rax
+ 111e296:	je     111e3b5 <core.runtime.Runtime.drainJournal+0x1505>
+ 111e29c:	test   rcx,rcx
+ 111e29f:	je     111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e2a5:	lea    rax,[rdi*4+0x0]
+ 111e2ad:	mov    rdx,rax
+ 111e2b0:	or     rdx,0x1
+ 111e2b4:	cmp    rcx,rdx
+ 111e2b7:	je     111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e2bd:	or     rax,0x3
+ 111e2c1:	cmp    rcx,rax
+ 111e2c4:	jne    111fbc5 <core.runtime.Runtime.drainJournal+0x2d15>
+ 111e2ca:	mov    rdx,QWORD PTR [rbp-0x40]
+ 111e2ce:	mov    rax,QWORD PTR [rdx+0x1a0]
+ 111e2d5:	mov    rcx,QWORD PTR [rdx+0x200]
+ 111e2dc:	imul   rcx,r8
+ 111e2e0:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111e2ec:	test   BYTE PTR [rdx+0x2ff],0x1
+ 111e2f3:	je     111e312 <core.runtime.Runtime.drainJournal+0x1462>
+ 111e2f5:	inc    QWORD PTR [rdx+0x40]
+ 111e2f9:	mov    rax,QWORD PTR [rdx+0x80]
+ 111e300:	cmp    rsi,rax
+ 111e303:	jb     111e342 <core.runtime.Runtime.drainJournal+0x1492>
+ 111e305:	mov    rax,QWORD PTR [rbp-0x40]
+ 111e309:	mov    QWORD PTR [rax+0x80],rdi
+ 111e310:	jmp    111e342 <core.runtime.Runtime.drainJournal+0x1492>
+ 111e312:	lock dec QWORD PTR [rdx+0x2d0]
+ 111e31a:	mov    rcx,QWORD PTR [rdx+0x1a0]
+ 111e321:	mov    rax,QWORD PTR [rcx+0x48]
+ 111e325:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111e330:	cmp    rax,rdi
+ 111e333:	mov    rdx,rdi
+ 111e336:	cmova  rdx,rax
+ 111e33a:	lock cmpxchg QWORD PTR [rcx+0x48],rdx
+ 111e340:	jne    111e330 <core.runtime.Runtime.drainJournal+0x1480>
+ 111e342:	mov    rdx,QWORD PTR [rbp-0x40]
+ 111e346:	mov    rax,QWORD PTR [rdx+0x1a0]
+ 111e34d:	mov    rcx,QWORD PTR [rdx+0x290]
+ 111e354:	mov    rsi,QWORD PTR [rax+0x40]
+ 111e358:	mov    r9,QWORD PTR [rdx+0x1f0]
+ 111e35f:	mov    rax,rsi
+ 111e362:	or     rax,r9
+ 111e365:	shr    rax,0x20
+ 111e369:	je     111e375 <core.runtime.Runtime.drainJournal+0x14c5>
+ 111e36b:	mov    rax,rsi
+ 111e36e:	xor    edx,edx
+ 111e370:	div    r9
+ 111e373:	jmp    111e37c <core.runtime.Runtime.drainJournal+0x14cc>
+ 111e375:	mov    eax,esi
+ 111e377:	xor    edx,edx
+ 111e379:	div    r9d
+ 111e37c:	mov    rax,rsi
+ 111e37f:	sub    rax,rdx
+ 111e382:	add    rax,r8
+ 111e385:	cmp    rax,rsi
+ 111e388:	mov    edx,0x0
+ 111e38d:	cmovae r9,rdx
+ 111e391:	add    r9,rax
+ 111e394:	mov    QWORD PTR [rcx+r8*8],r9
+ 111e398:	mov    rdx,QWORD PTR [rbp-0x40]
+ 111e39c:	test   BYTE PTR [rdx+0x2ff],0x1
+ 111e3a3:	je     111e210 <core.runtime.Runtime.drainJournal+0x1360>
+ 111e3a9:	mov    QWORD PTR [rdx+0xc0],rdi
+ 111e3b0:	jmp    111e210 <core.runtime.Runtime.drainJournal+0x1360>
+ 111e3b5:	mov    rbx,r11
+ 111e3b8:	lea    rdi,[rbp-0x260]
+ 111e3bf:	mov    rsi,QWORD PTR [rbp-0x40]
+ 111e3c3:	mov    rdx,r8
+ 111e3c6:	mov    r13,r12
+ 111e3c9:	mov    r12,r10
+ 111e3cc:	call   11182c0 <journal.journal.Journal.validateSlotFor__anon_39279>
+ 111e3d1:	mov    r10,r12
+ 111e3d4:	mov    r12,r13
+ 111e3d7:	movzx  eax,WORD PTR [rbp-0x218]
+ 111e3de:	lea    rcx,[rbp-0x260]
+ 111e3e5:	test   ax,ax
+ 111e3e8:	jne    111fbc9 <core.runtime.Runtime.drainJournal+0x2d19>
+ 111e3ee:	mov    r9,QWORD PTR [rbp-0x48]
+ 111e3f2:	cmp    QWORD PTR [rcx],r9
+ 111e3f5:	jne    112005a <core.runtime.Runtime.drainJournal+0x31aa>
+ 111e3fb:	mov    r8,rbx
+ 111e3fe:	cmp    QWORD PTR [rcx+0x20],rbx
+ 111e402:	mov    bx,0x151
+ 111e406:	jne    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e40c:	cmp    QWORD PTR [rcx+0x8],r14
+ 111e410:	jne    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e416:	test   r15b,r15b
+ 111e419:	mov    r13,QWORD PTR [rbp-0x40]
+ 111e41d:	je     111e743 <core.runtime.Runtime.drainJournal+0x1893>
+ 111e423:	mov    r14,QWORD PTR [r13+0x190]
+ 111e42a:	mov    r15,QWORD PTR [r13+0x198]
+ 111e431:	xor    eax,eax
+ 111e433:	mov    ecx,0x1
+ 111e438:	lock cmpxchg DWORD PTR [r13+0x2f4],ecx
+ 111e441:	setne  BYTE PTR [rbp-0x260]
+ 111e448:	setne  cl
+ 111e44b:	test   cl,cl
+ 111e44d:	jne    111ee37 <core.runtime.Runtime.drainJournal+0x1f87>
+ 111e453:	test   BYTE PTR [r13+0x1e0],0x1
+ 111e45b:	jne    111ffdc <core.runtime.Runtime.drainJournal+0x312c>
+ 111e461:	mov    QWORD PTR [rbp-0x68],r8
+ 111e465:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111e46c:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111e473:	xor    r8d,r8d
+ 111e476:	cs nop WORD PTR [rax+rax*1+0x0]
+ 111e480:	mov    eax,0x1a
+ 111e485:	mov    edx,0x4
+ 111e48a:	syscall
+ 111e48c:	mov    rcx,rax
+ 111e48f:	neg    rcx
+ 111e492:	cmp    rax,0xfffffffffffff001
+ 111e498:	cmovb  rcx,r8
+ 111e49c:	cmp    cx,0x4
+ 111e4a0:	je     111e480 <core.runtime.Runtime.drainJournal+0x15d0>
+ 111e4a2:	test   ecx,ecx
+ 111e4a4:	jne    111fae0 <core.runtime.Runtime.drainJournal+0x2c30>
+ 111e4aa:	mov    QWORD PTR [rbp-0x30],r10
+ 111e4ae:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e4b5:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e4bc:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111e4c3:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e4ca:	mov    QWORD PTR [rbp-0x260],rcx
+ 111e4d1:	lea    r15,[rbp-0x260]
+ 111e4d8:	mov    rsi,r15
+ 111e4db:	call   rax
+ 111e4dd:	test   ax,ax
+ 111e4e0:	jne    1120b33 <core.runtime.Runtime.drainJournal+0x3c83>
+ 111e4e6:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e4ed:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e4f4:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111e4fb:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e502:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111e509:	mov    DWORD PTR [rbp-0x260],ecx
+ 111e50f:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111e516:	mov    rsi,r15
+ 111e519:	call   rax
+ 111e51b:	test   ax,ax
+ 111e51e:	jne    1120b33 <core.runtime.Runtime.drainJournal+0x3c83>
+ 111e524:	mov    r15,QWORD PTR [r13+0x2e0]
+ 111e52b:	inc    r15
+ 111e52e:	sete   BYTE PTR [rbp-0x260]
+ 111e535:	mov    rcx,QWORD PTR [rbp-0x48]
+ 111e539:	je     1120063 <core.runtime.Runtime.drainJournal+0x31b3>
+ 111e53f:	mov    esi,r15d
+ 111e542:	not    esi
+ 111e544:	mov    rdi,QWORD PTR [r13+0x1a0]
+ 111e54b:	and    esi,0x1
+ 111e54e:	mov    rdx,r15
+ 111e551:	call   10f5b10 <journal.format.writeCheckpoint>
+ 111e556:	test   BYTE PTR [r13+0x1e0],0x1
+ 111e55e:	jne    1120090 <core.runtime.Runtime.drainJournal+0x31e0>
+ 111e564:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111e56b:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111e572:	xor    r8d,r8d
+ 111e575:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111e580:	mov    eax,0x1a
+ 111e585:	mov    edx,0x4
+ 111e58a:	syscall
+ 111e58c:	mov    rcx,rax
+ 111e58f:	neg    rcx
+ 111e592:	cmp    rax,0xfffffffffffff001
+ 111e598:	cmovb  rcx,r8
+ 111e59c:	cmp    cx,0x4
+ 111e5a0:	je     111e580 <core.runtime.Runtime.drainJournal+0x16d0>
+ 111e5a2:	test   ecx,ecx
+ 111e5a4:	jne    111fdef <core.runtime.Runtime.drainJournal+0x2f3f>
+ 111e5aa:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e5b1:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e5b8:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111e5bf:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e5c6:	mov    QWORD PTR [rbp-0x260],rcx
+ 111e5cd:	lea    rsi,[rbp-0x260]
+ 111e5d4:	mov    r14,rsi
+ 111e5d7:	call   rax
+ 111e5d9:	test   ax,ax
+ 111e5dc:	jne    1120b2c <core.runtime.Runtime.drainJournal+0x3c7c>
+ 111e5e2:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e5e9:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e5f0:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111e5f7:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e5fe:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111e605:	mov    DWORD PTR [rbp-0x260],ecx
+ 111e60b:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111e612:	mov    rsi,r14
+ 111e615:	call   rax
+ 111e617:	test   ax,ax
+ 111e61a:	jne    1120b2c <core.runtime.Runtime.drainJournal+0x3c7c>
+ 111e620:	mov    QWORD PTR [r13+0x2e0],r15
+ 111e627:	mov    rsi,QWORD PTR [rbp-0x48]
+ 111e62b:	mov    QWORD PTR [r13+0x2e8],rsi
+ 111e632:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111e639:	mov    rcx,QWORD PTR [r13+0x200]
+ 111e640:	mov    rdx,QWORD PTR [rbp-0x68]
+ 111e644:	imul   rcx,rdx
+ 111e648:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111e654:	test   BYTE PTR [r13+0x1e0],0x1
+ 111e65c:	mov    r10,QWORD PTR [rbp-0x30]
+ 111e660:	jne    11204aa <core.runtime.Runtime.drainJournal+0x35fa>
+ 111e666:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111e66d:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111e674:	xor    r8d,r8d
+ 111e677:	mov    eax,0x1a
+ 111e67c:	mov    edx,0x4
+ 111e681:	syscall
+ 111e683:	mov    rcx,rax
+ 111e686:	neg    rcx
+ 111e689:	cmp    rax,0xfffffffffffff001
+ 111e68f:	cmovb  rcx,r8
+ 111e693:	cmp    cx,0x4
+ 111e697:	je     111e677 <core.runtime.Runtime.drainJournal+0x17c7>
+ 111e699:	test   ecx,ecx
+ 111e69b:	jne    111fdf9 <core.runtime.Runtime.drainJournal+0x2f49>
+ 111e6a1:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e6a8:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e6af:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111e6b6:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e6bd:	mov    QWORD PTR [rbp-0x260],rcx
+ 111e6c4:	lea    r15,[rbp-0x260]
+ 111e6cb:	mov    rsi,r15
+ 111e6ce:	call   rax
+ 111e6d0:	test   ax,ax
+ 111e6d3:	jne    11206a4 <core.runtime.Runtime.drainJournal+0x37f4>
+ 111e6d9:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e6e0:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e6e7:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111e6ee:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e6f5:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111e6fc:	mov    DWORD PTR [rbp-0x260],ecx
+ 111e702:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111e709:	mov    rsi,r15
+ 111e70c:	call   rax
+ 111e70e:	test   ax,ax
+ 111e711:	jne    11206a4 <core.runtime.Runtime.drainJournal+0x37f4>
+ 111e717:	mov    rdi,QWORD PTR [r13+0x190]
+ 111e71e:	mov    rax,QWORD PTR [r13+0x198]
+ 111e725:	xor    ecx,ecx
+ 111e727:	xchg   DWORD PTR [r13+0x2f4],ecx
+ 111e72e:	cmp    ecx,0x2
+ 111e731:	mov    r10,QWORD PTR [rbp-0x30]
+ 111e735:	mov    r8,QWORD PTR [rbp-0x68]
+ 111e739:	mov    r9,QWORD PTR [rbp-0x48]
+ 111e73d:	je     111ef0b <core.runtime.Runtime.drainJournal+0x205b>
+ 111e743:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111e74a:	mov    rcx,QWORD PTR [r13+0x200]
+ 111e751:	imul   rcx,r8
+ 111e755:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111e761:	test   BYTE PTR [r13+0x2ff],0x1
+ 111e769:	je     111e788 <core.runtime.Runtime.drainJournal+0x18d8>
+ 111e76b:	inc    QWORD PTR [r13+0x40]
+ 111e76f:	mov    rax,QWORD PTR [r13+0x80]
+ 111e776:	cmp    r9,rax
+ 111e779:	mov    r14,QWORD PTR [rbp-0x38]
+ 111e77d:	jbe    111e7b2 <core.runtime.Runtime.drainJournal+0x1902>
+ 111e77f:	mov    QWORD PTR [r13+0x80],r9
+ 111e786:	jmp    111e7b2 <core.runtime.Runtime.drainJournal+0x1902>
+ 111e788:	lock dec QWORD PTR [r13+0x2d0]
+ 111e790:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111e797:	mov    rax,QWORD PTR [rcx+0x48]
+ 111e79b:	mov    r14,QWORD PTR [rbp-0x38]
+ 111e79f:	nop
+ 111e7a0:	cmp    rax,r9
+ 111e7a3:	mov    rdx,r9
+ 111e7a6:	cmova  rdx,rax
+ 111e7aa:	lock cmpxchg QWORD PTR [rcx+0x48],rdx
+ 111e7b0:	jne    111e7a0 <core.runtime.Runtime.drainJournal+0x18f0>
+ 111e7b2:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111e7b9:	mov    rsi,QWORD PTR [r13+0x290]
+ 111e7c0:	mov    rcx,QWORD PTR [rax+0x40]
+ 111e7c4:	mov    rdi,QWORD PTR [r13+0x1f0]
+ 111e7cb:	mov    rax,rcx
+ 111e7ce:	or     rax,rdi
+ 111e7d1:	shr    rax,0x20
+ 111e7d5:	je     111ec87 <core.runtime.Runtime.drainJournal+0x1dd7>
+ 111e7db:	mov    rax,rcx
+ 111e7de:	xor    edx,edx
+ 111e7e0:	div    rdi
+ 111e7e3:	jmp    111ec8d <core.runtime.Runtime.drainJournal+0x1ddd>
+ 111e7e8:	mov    rbx,r11
+ 111e7eb:	lea    rdi,[rbp-0x260]
+ 111e7f2:	mov    rsi,QWORD PTR [rbp-0x40]
+ 111e7f6:	mov    r13,r12
+ 111e7f9:	mov    r12,r10
+ 111e7fc:	call   1118050 <journal.journal.Journal.validateSlotFor__anon_39262>
+ 111e801:	mov    r10,r12
+ 111e804:	mov    r12,r13
+ 111e807:	movzx  eax,WORD PTR [rbp-0x218]
+ 111e80e:	lea    rcx,[rbp-0x260]
+ 111e815:	test   ax,ax
+ 111e818:	jne    111fbc9 <core.runtime.Runtime.drainJournal+0x2d19>
+ 111e81e:	mov    r9,QWORD PTR [rbp-0x48]
+ 111e822:	cmp    QWORD PTR [rcx],r9
+ 111e825:	jne    112005a <core.runtime.Runtime.drainJournal+0x31aa>
+ 111e82b:	mov    r8,rbx
+ 111e82e:	cmp    QWORD PTR [rcx+0x20],rbx
+ 111e832:	mov    bx,0x151
+ 111e836:	jne    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e83c:	cmp    QWORD PTR [rcx+0x8],r14
+ 111e840:	jne    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111e846:	test   r15b,r15b
+ 111e849:	mov    r13,QWORD PTR [rbp-0x40]
+ 111e84d:	je     111eb73 <core.runtime.Runtime.drainJournal+0x1cc3>
+ 111e853:	mov    r14,QWORD PTR [r13+0x190]
+ 111e85a:	mov    r15,QWORD PTR [r13+0x198]
+ 111e861:	xor    eax,eax
+ 111e863:	mov    ecx,0x1
+ 111e868:	lock cmpxchg DWORD PTR [r13+0x2f4],ecx
+ 111e871:	setne  BYTE PTR [rbp-0x260]
+ 111e878:	setne  cl
+ 111e87b:	test   cl,cl
+ 111e87d:	jne    111eea1 <core.runtime.Runtime.drainJournal+0x1ff1>
+ 111e883:	test   BYTE PTR [r13+0x1e0],0x1
+ 111e88b:	jne    111ffdc <core.runtime.Runtime.drainJournal+0x312c>
+ 111e891:	mov    QWORD PTR [rbp-0x68],r8
+ 111e895:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111e89c:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111e8a3:	xor    r8d,r8d
+ 111e8a6:	cs nop WORD PTR [rax+rax*1+0x0]
+ 111e8b0:	mov    eax,0x1a
+ 111e8b5:	mov    edx,0x4
+ 111e8ba:	syscall
+ 111e8bc:	mov    rcx,rax
+ 111e8bf:	neg    rcx
+ 111e8c2:	cmp    rax,0xfffffffffffff001
+ 111e8c8:	cmovb  rcx,r8
+ 111e8cc:	cmp    cx,0x4
+ 111e8d0:	je     111e8b0 <core.runtime.Runtime.drainJournal+0x1a00>
+ 111e8d2:	test   ecx,ecx
+ 111e8d4:	jne    111fae0 <core.runtime.Runtime.drainJournal+0x2c30>
+ 111e8da:	mov    QWORD PTR [rbp-0x30],r10
+ 111e8de:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e8e5:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e8ec:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111e8f3:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e8fa:	mov    QWORD PTR [rbp-0x260],rcx
+ 111e901:	lea    r15,[rbp-0x260]
+ 111e908:	mov    rsi,r15
+ 111e90b:	call   rax
+ 111e90d:	test   ax,ax
+ 111e910:	jne    1120b33 <core.runtime.Runtime.drainJournal+0x3c83>
+ 111e916:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e91d:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e924:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111e92b:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e932:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111e939:	mov    DWORD PTR [rbp-0x260],ecx
+ 111e93f:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111e946:	mov    rsi,r15
+ 111e949:	call   rax
+ 111e94b:	test   ax,ax
+ 111e94e:	jne    1120b33 <core.runtime.Runtime.drainJournal+0x3c83>
+ 111e954:	mov    r15,QWORD PTR [r13+0x2e0]
+ 111e95b:	inc    r15
+ 111e95e:	sete   BYTE PTR [rbp-0x260]
+ 111e965:	mov    rcx,QWORD PTR [rbp-0x48]
+ 111e969:	je     1120063 <core.runtime.Runtime.drainJournal+0x31b3>
+ 111e96f:	mov    esi,r15d
+ 111e972:	not    esi
+ 111e974:	mov    rdi,QWORD PTR [r13+0x1a0]
+ 111e97b:	and    esi,0x1
+ 111e97e:	mov    rdx,r15
+ 111e981:	call   10f5b10 <journal.format.writeCheckpoint>
+ 111e986:	test   BYTE PTR [r13+0x1e0],0x1
+ 111e98e:	jne    1120090 <core.runtime.Runtime.drainJournal+0x31e0>
+ 111e994:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111e99b:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111e9a2:	xor    r8d,r8d
+ 111e9a5:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111e9b0:	mov    eax,0x1a
+ 111e9b5:	mov    edx,0x4
+ 111e9ba:	syscall
+ 111e9bc:	mov    rcx,rax
+ 111e9bf:	neg    rcx
+ 111e9c2:	cmp    rax,0xfffffffffffff001
+ 111e9c8:	cmovb  rcx,r8
+ 111e9cc:	cmp    cx,0x4
+ 111e9d0:	je     111e9b0 <core.runtime.Runtime.drainJournal+0x1b00>
+ 111e9d2:	test   ecx,ecx
+ 111e9d4:	jne    111fdef <core.runtime.Runtime.drainJournal+0x2f3f>
+ 111e9da:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111e9e1:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111e9e8:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111e9ef:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111e9f6:	mov    QWORD PTR [rbp-0x260],rcx
+ 111e9fd:	lea    rsi,[rbp-0x260]
+ 111ea04:	mov    r14,rsi
+ 111ea07:	call   rax
+ 111ea09:	test   ax,ax
+ 111ea0c:	jne    1120b2c <core.runtime.Runtime.drainJournal+0x3c7c>
+ 111ea12:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111ea19:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111ea20:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111ea27:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111ea2e:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111ea35:	mov    DWORD PTR [rbp-0x260],ecx
+ 111ea3b:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111ea42:	mov    rsi,r14
+ 111ea45:	call   rax
+ 111ea47:	test   ax,ax
+ 111ea4a:	jne    1120b2c <core.runtime.Runtime.drainJournal+0x3c7c>
+ 111ea50:	mov    QWORD PTR [r13+0x2e0],r15
+ 111ea57:	mov    rsi,QWORD PTR [rbp-0x48]
+ 111ea5b:	mov    QWORD PTR [r13+0x2e8],rsi
+ 111ea62:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111ea69:	mov    rcx,QWORD PTR [r13+0x200]
+ 111ea70:	mov    rdx,QWORD PTR [rbp-0x68]
+ 111ea74:	imul   rcx,rdx
+ 111ea78:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111ea84:	test   BYTE PTR [r13+0x1e0],0x1
+ 111ea8c:	mov    r10,QWORD PTR [rbp-0x30]
+ 111ea90:	jne    11204aa <core.runtime.Runtime.drainJournal+0x35fa>
+ 111ea96:	mov    rdi,QWORD PTR [r13+0x1c0]
+ 111ea9d:	mov    rsi,QWORD PTR [r13+0x1c8]
+ 111eaa4:	xor    r8d,r8d
+ 111eaa7:	mov    eax,0x1a
+ 111eaac:	mov    edx,0x4
+ 111eab1:	syscall
+ 111eab3:	mov    rcx,rax
+ 111eab6:	neg    rcx
+ 111eab9:	cmp    rax,0xfffffffffffff001
+ 111eabf:	cmovb  rcx,r8
+ 111eac3:	cmp    cx,0x4
+ 111eac7:	je     111eaa7 <core.runtime.Runtime.drainJournal+0x1bf7>
+ 111eac9:	test   ecx,ecx
+ 111eacb:	jne    111fdf9 <core.runtime.Runtime.drainJournal+0x2f49>
+ 111ead1:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111ead8:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111eadf:	mov    rcx,QWORD PTR [r13+0x1d0]
+ 111eae6:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111eaed:	mov    QWORD PTR [rbp-0x260],rcx
+ 111eaf4:	lea    r15,[rbp-0x260]
+ 111eafb:	mov    rsi,r15
+ 111eafe:	call   rax
+ 111eb00:	test   ax,ax
+ 111eb03:	jne    11206a4 <core.runtime.Runtime.drainJournal+0x37f4>
+ 111eb09:	mov    rdi,QWORD PTR [r13+0x1b0]
+ 111eb10:	mov    rax,QWORD PTR [r13+0x1b8]
+ 111eb17:	mov    ecx,DWORD PTR [r13+0x1d8]
+ 111eb1e:	mov    rax,QWORD PTR [rax+0x1b0]
+ 111eb25:	mov    BYTE PTR [rbp-0x2e8],0x0
+ 111eb2c:	mov    DWORD PTR [rbp-0x260],ecx
+ 111eb32:	mov    BYTE PTR [rbp-0x25c],0x0
+ 111eb39:	mov    rsi,r15
+ 111eb3c:	call   rax
+ 111eb3e:	test   ax,ax
+ 111eb41:	jne    11206a4 <core.runtime.Runtime.drainJournal+0x37f4>
+ 111eb47:	mov    rdi,QWORD PTR [r13+0x190]
+ 111eb4e:	mov    rax,QWORD PTR [r13+0x198]
+ 111eb55:	xor    ecx,ecx
+ 111eb57:	xchg   DWORD PTR [r13+0x2f4],ecx
+ 111eb5e:	cmp    ecx,0x2
+ 111eb61:	mov    r10,QWORD PTR [rbp-0x30]
+ 111eb65:	mov    r8,QWORD PTR [rbp-0x68]
+ 111eb69:	mov    r9,QWORD PTR [rbp-0x48]
+ 111eb6d:	je     111ef28 <core.runtime.Runtime.drainJournal+0x2078>
+ 111eb73:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111eb7a:	mov    rcx,QWORD PTR [r13+0x200]
+ 111eb81:	imul   rcx,r8
+ 111eb85:	mov    QWORD PTR [rax+rcx*1+0x1000],0x0
+ 111eb91:	test   BYTE PTR [r13+0x2ff],0x1
+ 111eb99:	je     111ebb8 <core.runtime.Runtime.drainJournal+0x1d08>
+ 111eb9b:	inc    QWORD PTR [r13+0x40]
+ 111eb9f:	mov    rax,QWORD PTR [r13+0x80]
+ 111eba6:	cmp    r9,rax
+ 111eba9:	mov    r14,QWORD PTR [rbp-0x38]
+ 111ebad:	jbe    111ebe2 <core.runtime.Runtime.drainJournal+0x1d32>
+ 111ebaf:	mov    QWORD PTR [r13+0x80],r9
+ 111ebb6:	jmp    111ebe2 <core.runtime.Runtime.drainJournal+0x1d32>
+ 111ebb8:	lock dec QWORD PTR [r13+0x2d0]
+ 111ebc0:	mov    rcx,QWORD PTR [r13+0x1a0]
+ 111ebc7:	mov    rax,QWORD PTR [rcx+0x48]
+ 111ebcb:	mov    r14,QWORD PTR [rbp-0x38]
+ 111ebcf:	nop
+ 111ebd0:	cmp    rax,r9
+ 111ebd3:	mov    rdx,r9
+ 111ebd6:	cmova  rdx,rax
+ 111ebda:	lock cmpxchg QWORD PTR [rcx+0x48],rdx
+ 111ebe0:	jne    111ebd0 <core.runtime.Runtime.drainJournal+0x1d20>
+ 111ebe2:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111ebe9:	mov    rcx,QWORD PTR [r13+0x290]
+ 111ebf0:	mov    rax,QWORD PTR [rax+0x40]
+ 111ebf4:	mov    rdx,QWORD PTR [r13+0x1f0]
+ 111ebfb:	mov    rsi,rdx
+ 111ebfe:	neg    rsi
+ 111ec01:	and    rsi,rax
+ 111ec04:	add    rsi,r8
+ 111ec07:	cmp    rsi,rax
+ 111ec0a:	mov    eax,0x0
+ 111ec0f:	cmovae rdx,rax
+ 111ec13:	add    rdx,rsi
+ 111ec16:	mov    QWORD PTR [rcx+r8*8],rdx
+ 111ec1a:	movzx  eax,BYTE PTR [r13+0x2ff]
+ 111ec22:	test   al,0x1
+ 111ec24:	je     111ec2d <core.runtime.Runtime.drainJournal+0x1d7d>
+ 111ec26:	mov    QWORD PTR [r13+0xc0],r9
+ 111ec2d:	mov    rdx,QWORD PTR [r13+0x2b0]
+ 111ec34:	mov    rcx,QWORD PTR [r13+0x2b8]
+ 111ec3b:	cmp    rcx,rdx
+ 111ec3e:	jae    111ed12 <core.runtime.Runtime.drainJournal+0x1e62>
+ 111ec44:	lea    rsi,[rcx+0x1]
+ 111ec48:	mov    QWORD PTR [r13+0x2b8],rsi
+ 111ec4f:	cmp    rsi,rdx
+ 111ec52:	mov    r8,QWORD PTR [rbp-0x80]
+ 111ec56:	jae    111ede7 <core.runtime.Runtime.drainJournal+0x1f37>
+ 111ec5c:	mov    rdx,QWORD PTR [r13+0x2a0]
+ 111ec63:	mov    rsi,QWORD PTR [r13+0x1a0]
+ 111ec6a:	mov    rdi,QWORD PTR [r13+0x200]
+ 111ec71:	imul   rdi,QWORD PTR [rdx+rcx*8+0x8]
+ 111ec77:	mov    rcx,QWORD PTR [rsi+rdi*1+0x1008]
+ 111ec7f:	dec    rcx
+ 111ec82:	jmp    111edee <core.runtime.Runtime.drainJournal+0x1f3e>
+ 111ec87:	mov    eax,ecx
+ 111ec89:	xor    edx,edx
+ 111ec8b:	div    edi
+ 111ec8d:	mov    rax,rcx
+ 111ec90:	sub    rax,rdx
+ 111ec93:	add    rax,r8
+ 111ec96:	cmp    rax,rcx
+ 111ec99:	mov    ecx,0x0
+ 111ec9e:	cmovae rdi,rcx
+ 111eca2:	add    rdi,rax
+ 111eca5:	mov    QWORD PTR [rsi+r8*8],rdi
+ 111eca9:	movzx  eax,BYTE PTR [r13+0x2ff]
+ 111ecb1:	test   al,0x1
+ 111ecb3:	je     111ecbc <core.runtime.Runtime.drainJournal+0x1e0c>
+ 111ecb5:	mov    QWORD PTR [r13+0xc0],r9
+ 111ecbc:	mov    rdx,QWORD PTR [r13+0x2b0]
+ 111ecc3:	mov    rcx,QWORD PTR [r13+0x2b8]
+ 111ecca:	cmp    rcx,rdx
+ 111eccd:	jae    111ed12 <core.runtime.Runtime.drainJournal+0x1e62>
+ 111eccf:	lea    rsi,[rcx+0x1]
+ 111ecd3:	mov    QWORD PTR [r13+0x2b8],rsi
+ 111ecda:	cmp    rsi,rdx
+ 111ecdd:	mov    r8,QWORD PTR [rbp-0x80]
+ 111ece1:	jae    111edac <core.runtime.Runtime.drainJournal+0x1efc>
+ 111ece7:	mov    rdx,QWORD PTR [r13+0x2a0]
+ 111ecee:	mov    rsi,QWORD PTR [r13+0x1a0]
+ 111ecf5:	mov    rdi,QWORD PTR [r13+0x200]
+ 111ecfc:	imul   rdi,QWORD PTR [rdx+rcx*8+0x8]
+ 111ed02:	mov    rcx,QWORD PTR [rsi+rdi*1+0x1008]
+ 111ed0a:	dec    rcx
+ 111ed0d:	jmp    111edb3 <core.runtime.Runtime.drainJournal+0x1f03>
+ 111ed12:	inc    QWORD PTR [r13+0x2c8]
+ 111ed19:	mov    r8,QWORD PTR [rbp-0x80]
+ 111ed1d:	mov    rdx,QWORD PTR [rbp-0x90]
+ 111ed24:	test   edx,edx
+ 111ed26:	je     111ed38 <core.runtime.Runtime.drainJournal+0x1e88>
+ 111ed28:	mov    rax,rdx
+ 111ed2b:	shl    rax,0x6
+ 111ed2f:	add    r8,rax
+ 111ed32:	add    r8,0xffffffffffffffc0
+ 111ed36:	jmp    111ed3f <core.runtime.Runtime.drainJournal+0x1e8f>
+ 111ed38:	add    r8,0x9810
+ 111ed3f:	mov    rcx,QWORD PTR [rbp-0x78]
+ 111ed43:	movsxd rax,edx
+ 111ed46:	lock dec QWORD PTR [r8]
+ 111ed4a:	lea    rax,[rax+rax*2]
+ 111ed4e:	shl    rax,0x6
+ 111ed52:	add    rax,QWORD PTR [rbp-0xf0]
+ 111ed59:	test   rdx,rdx
+ 111ed5c:	cmove  rax,QWORD PTR [rbp-0xf8]
+ 111ed64:	add    rax,0x40
+ 111ed68:	cmp    r10,rax
+ 111ed6b:	je     111ed94 <core.runtime.Runtime.drainJournal+0x1ee4>
+ 111ed6d:	test   r12,r12
+ 111ed70:	je     111ed76 <core.runtime.Runtime.drainJournal+0x1ec6>
+ 111ed72:	lock add QWORD PTR [r10],r12
+ 111ed76:	mov    r10,rax
+ 111ed79:	mov    r12d,0x1
+ 111ed7f:	inc    rcx
+ 111ed82:	cmp    rcx,QWORD PTR [rbp-0xa0]
+ 111ed89:	jne    111deed <core.runtime.Runtime.drainJournal+0x103d>
+ 111ed8f:	jmp    111f1ec <core.runtime.Runtime.drainJournal+0x233c>
+ 111ed94:	inc    r12
+ 111ed97:	inc    rcx
+ 111ed9a:	cmp    rcx,QWORD PTR [rbp-0xa0]
+ 111eda1:	jne    111deed <core.runtime.Runtime.drainJournal+0x103d>
+ 111eda7:	jmp    111f1ec <core.runtime.Runtime.drainJournal+0x233c>
+ 111edac:	mov    rcx,QWORD PTR [r13+0x2c0]
+ 111edb3:	test   al,0x1
+ 111edb5:	jne    111edf2 <core.runtime.Runtime.drainJournal+0x1f42>
+ 111edb7:	mov    rdx,QWORD PTR [r13+0x1a0]
+ 111edbe:	mov    rax,QWORD PTR [rdx+0x48]
+ 111edc2:	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111edd0:	cmp    rax,rcx
+ 111edd3:	mov    rsi,rcx
+ 111edd6:	cmova  rsi,rax
+ 111edda:	lock cmpxchg QWORD PTR [rdx+0x48],rsi
+ 111ede0:	jne    111edd0 <core.runtime.Runtime.drainJournal+0x1f20>
+ 111ede2:	jmp    111ed1d <core.runtime.Runtime.drainJournal+0x1e6d>
+ 111ede7:	mov    rcx,QWORD PTR [r13+0x2c0]
+ 111edee:	test   al,0x1
+ 111edf0:	je     111ee0e <core.runtime.Runtime.drainJournal+0x1f5e>
+ 111edf2:	mov    rax,QWORD PTR [r13+0x80]
+ 111edf9:	cmp    rcx,rax
+ 111edfc:	jbe    111ed1d <core.runtime.Runtime.drainJournal+0x1e6d>
+ 111ee02:	mov    QWORD PTR [r13+0x80],rcx
+ 111ee09:	jmp    111ed1d <core.runtime.Runtime.drainJournal+0x1e6d>
+ 111ee0e:	mov    rdx,QWORD PTR [r13+0x1a0]
+ 111ee15:	mov    rax,QWORD PTR [rdx+0x48]
+ 111ee19:	nop    DWORD PTR [rax+0x0]
+ 111ee20:	cmp    rax,rcx
+ 111ee23:	mov    rsi,rcx
+ 111ee26:	cmova  rsi,rax
+ 111ee2a:	lock cmpxchg QWORD PTR [rdx+0x48],rsi
+ 111ee30:	jne    111ee20 <core.runtime.Runtime.drainJournal+0x1f70>
+ 111ee32:	jmp    111ed1d <core.runtime.Runtime.drainJournal+0x1e6d>
+ 111ee37:	mov    rbx,r8
+ 111ee3a:	mov    QWORD PTR [rbp-0x30],r10
+ 111ee3e:	cmp    eax,0x2
+ 111ee41:	jne    111ee53 <core.runtime.Runtime.drainJournal+0x1fa3>
+ 111ee43:	mov    rdi,r14
+ 111ee46:	mov    rsi,QWORD PTR [rbp-0x60]
+ 111ee4a:	mov    edx,0x2
+ 111ee4f:	call   QWORD PTR [r15+0x68]
+ 111ee53:	mov    eax,0x2
+ 111ee58:	mov    rcx,QWORD PTR [rbp-0x60]
+ 111ee5c:	xchg   DWORD PTR [rcx],eax
+ 111ee5e:	test   eax,eax
+ 111ee60:	mov    r13,QWORD PTR [rbp-0x40]
+ 111ee64:	mov    r10,QWORD PTR [rbp-0x30]
+ 111ee68:	mov    r8,rbx
+ 111ee6b:	je     111e453 <core.runtime.Runtime.drainJournal+0x15a3>
+ 111ee71:	mov    rdi,r14
+ 111ee74:	mov    r13,QWORD PTR [rbp-0x60]
+ 111ee78:	mov    rsi,r13
+ 111ee7b:	mov    edx,0x2
+ 111ee80:	call   QWORD PTR [r15+0x68]
+ 111ee84:	mov    r8,rbx
+ 111ee87:	mov    r10,QWORD PTR [rbp-0x30]
+ 111ee8b:	mov    eax,0x2
+ 111ee90:	xchg   DWORD PTR [r13+0x0],eax
+ 111ee94:	mov    r13,QWORD PTR [rbp-0x40]
+ 111ee98:	test   eax,eax
+ 111ee9a:	jne    111ee71 <core.runtime.Runtime.drainJournal+0x1fc1>
+ 111ee9c:	jmp    111e453 <core.runtime.Runtime.drainJournal+0x15a3>
+ 111eea1:	mov    rbx,r8
+ 111eea4:	mov    QWORD PTR [rbp-0x30],r10
+ 111eea8:	cmp    eax,0x2
+ 111eeab:	jne    111eebd <core.runtime.Runtime.drainJournal+0x200d>
+ 111eead:	mov    rdi,r14
+ 111eeb0:	mov    rsi,QWORD PTR [rbp-0x60]
+ 111eeb4:	mov    edx,0x2
+ 111eeb9:	call   QWORD PTR [r15+0x68]
+ 111eebd:	mov    eax,0x2
+ 111eec2:	mov    rcx,QWORD PTR [rbp-0x60]
+ 111eec6:	xchg   DWORD PTR [rcx],eax
+ 111eec8:	test   eax,eax
+ 111eeca:	mov    r13,QWORD PTR [rbp-0x40]
+ 111eece:	mov    r10,QWORD PTR [rbp-0x30]
+ 111eed2:	mov    r8,rbx
+ 111eed5:	je     111e883 <core.runtime.Runtime.drainJournal+0x19d3>
+ 111eedb:	mov    rdi,r14
+ 111eede:	mov    r13,QWORD PTR [rbp-0x60]
+ 111eee2:	mov    rsi,r13
+ 111eee5:	mov    edx,0x2
+ 111eeea:	call   QWORD PTR [r15+0x68]
+ 111eeee:	mov    r8,rbx
+ 111eef1:	mov    r10,QWORD PTR [rbp-0x30]
+ 111eef5:	mov    eax,0x2
+ 111eefa:	xchg   DWORD PTR [r13+0x0],eax
+ 111eefe:	mov    r13,QWORD PTR [rbp-0x40]
+ 111ef02:	test   eax,eax
+ 111ef04:	jne    111eedb <core.runtime.Runtime.drainJournal+0x202b>
+ 111ef06:	jmp    111e883 <core.runtime.Runtime.drainJournal+0x19d3>
+ 111ef0b:	mov    rsi,QWORD PTR [rbp-0x60]
+ 111ef0f:	mov    edx,0x1
+ 111ef14:	call   QWORD PTR [rax+0x70]
+ 111ef17:	mov    r9,QWORD PTR [rbp-0x48]
+ 111ef1b:	mov    r8,QWORD PTR [rbp-0x68]
+ 111ef1f:	mov    r10,QWORD PTR [rbp-0x30]
+ 111ef23:	jmp    111e743 <core.runtime.Runtime.drainJournal+0x1893>
+ 111ef28:	mov    rsi,QWORD PTR [rbp-0x60]
+ 111ef2c:	mov    edx,0x1
+ 111ef31:	call   QWORD PTR [rax+0x70]
+ 111ef34:	mov    r9,QWORD PTR [rbp-0x48]
+ 111ef38:	mov    r8,QWORD PTR [rbp-0x68]
+ 111ef3c:	mov    r10,QWORD PTR [rbp-0x30]
+ 111ef40:	jmp    111eb73 <core.runtime.Runtime.drainJournal+0x1cc3>
+ 111ef45:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111ef50:	add    r14,0x28
+ 111ef54:	dec    rbx
+ 111ef57:	je     111dee5 <core.runtime.Runtime.drainJournal+0x1035>
+ 111ef5d:	mov    rax,QWORD PTR [r14]
+ 111ef60:	mov    rcx,QWORD PTR [r14+0x10]
+ 111ef64:	mov    rsi,QWORD PTR [rax+0x7440]
+ 111ef6b:	mov    rdx,QWORD PTR [rax+0x7448]
+ 111ef72:	mov    rdi,r15
+ 111ef75:	mov    r8d,0x1
+ 111ef7b:	xor    r9d,r9d
+ 111ef7e:	call   10898b0 <core.runtime.Runtime.flushWith>
+ 111ef83:	test   ax,ax
+ 111ef86:	jne    1120034 <core.runtime.Runtime.drainJournal+0x3184>
+ 111ef8c:	mov    rcx,QWORD PTR [r14+0x18]
+ 111ef90:	test   rcx,rcx
+ 111ef93:	je     111ef50 <core.runtime.Runtime.drainJournal+0x20a0>
+ 111ef95:	mov    rax,QWORD PTR [r14]
+ 111ef98:	mov    rsi,QWORD PTR [rax+0x7440]
+ 111ef9f:	mov    rdx,QWORD PTR [rax+0x7448]
+ 111efa6:	mov    rdi,r15
+ 111efa9:	mov    r8d,0x2
+ 111efaf:	mov    r9d,0x1
+ 111efb5:	call   10898b0 <core.runtime.Runtime.flushWith>
+ 111efba:	test   ax,ax
+ 111efbd:	je     111ef50 <core.runtime.Runtime.drainJournal+0x20a0>
+ 111efbf:	jmp    1120099 <core.runtime.Runtime.drainJournal+0x31e9>
+ 111efc4:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111efcb:	mov    rbx,QWORD PTR [rax+0x40]
+ 111efcf:	mov    ecx,0x1
+ 111efd4:	lea    r13,[rbp-0x7118]
+ 111efdb:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111efe0:	mov    rax,QWORD PTR [rbp-0x40]
+ 111efe4:	mov    rdi,QWORD PTR [rax+0x2c8]
+ 111efeb:	mov    r12,rcx
+ 111efee:	add    rdi,rcx
+ 111eff1:	cmp    rdi,rbx
+ 111eff4:	jae    111f0be <core.runtime.Runtime.drainJournal+0x220e>
+ 111effa:	mov    rcx,QWORD PTR [rax+0x1f0]
+ 111f001:	mov    rax,rdi
+ 111f004:	or     rax,rcx
+ 111f007:	shr    rax,0x20
+ 111f00b:	je     111f020 <core.runtime.Runtime.drainJournal+0x2170>
+ 111f00d:	mov    rax,rdi
+ 111f010:	xor    edx,edx
+ 111f012:	div    rcx
+ 111f015:	jmp    111f026 <core.runtime.Runtime.drainJournal+0x2176>
+ 111f017:	nop    WORD PTR [rax+rax*1+0x0]
+ 111f020:	mov    eax,edi
+ 111f022:	xor    edx,edx
+ 111f024:	div    ecx
+ 111f026:	mov    rsi,QWORD PTR [rbp-0x40]
+ 111f02a:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 111f031:	mov    rcx,QWORD PTR [rsi+0x200]
+ 111f038:	imul   rcx,rdx
+ 111f03c:	mov    rcx,QWORD PTR [rax+rcx*1+0x1000]
+ 111f044:	lea    rax,[rdi*4+0x6]
+ 111f04c:	cmp    rcx,rax
+ 111f04f:	jne    111f0ca <core.runtime.Runtime.drainJournal+0x221a>
+ 111f051:	lea    rdi,[rbp-0x690]
+ 111f058:	vzeroupper
+ 111f05b:	call   1081fb0 <journal.journal.Journal.validateSlot>
+ 111f060:	movzx  ecx,WORD PTR [rbp-0x648]
+ 111f067:	test   cx,cx
+ 111f06a:	jne    111ffe9 <core.runtime.Runtime.drainJournal+0x3139>
+ 111f070:	mov    rax,QWORD PTR [rbp-0x650]
+ 111f077:	mov    QWORD PTR [r13+0x40],rax
+ 111f07b:	vmovups ymm0,YMMWORD PTR [rbp-0x690]
+ 111f083:	vmovups ymm1,YMMWORD PTR [rbp-0x670]
+ 111f08b:	vmovups YMMWORD PTR [r13+0x20],ymm1
+ 111f091:	vmovups YMMWORD PTR [r13+0x0],ymm0
+ 111f097:	mov    rcx,r12
+ 111f09a:	inc    rcx
+ 111f09d:	add    r13,0x48
+ 111f0a1:	cmp    r15,rcx
+ 111f0a4:	jne    111efe0 <core.runtime.Runtime.drainJournal+0x2130>
+ 111f0aa:	mov    r12,r15
+ 111f0ad:	jmp    111d4c0 <core.runtime.Runtime.drainJournal+0x610>
+ 111f0b2:	mov    r15,QWORD PTR [rbp-0x38]
+ 111f0b6:	mov    r12,rbx
+ 111f0b9:	jmp    111d4c8 <core.runtime.Runtime.drainJournal+0x618>
+ 111f0be:	mov    r15,QWORD PTR [rbp-0x38]
+ 111f0c2:	mov    r13,rax
+ 111f0c5:	jmp    111d4c8 <core.runtime.Runtime.drainJournal+0x618>
+ 111f0ca:	test   rcx,rcx
+ 111f0cd:	je     111d4c0 <core.runtime.Runtime.drainJournal+0x610>
+ 111f0d3:	lea    rax,[rdi*4+0x4]
+ 111f0db:	mov    rdx,rax
+ 111f0de:	or     rdx,0x1
+ 111f0e2:	cmp    rcx,rdx
+ 111f0e5:	mov    r15,QWORD PTR [rbp-0x38]
+ 111f0e9:	mov    r13,QWORD PTR [rbp-0x40]
+ 111f0ed:	je     111d4c8 <core.runtime.Runtime.drainJournal+0x618>
+ 111f0f3:	or     rax,0x3
+ 111f0f7:	cmp    rcx,rax
+ 111f0fa:	je     111d4c8 <core.runtime.Runtime.drainJournal+0x618>
+ 111f100:	jmp    111ffe5 <core.runtime.Runtime.drainJournal+0x3135>
+ 111f105:	lea    rdi,[rbp-0x150]
+ 111f10c:	mov    rsi,r13
+ 111f10f:	mov    rdx,r8
+ 111f112:	call   11182c0 <journal.journal.Journal.validateSlotFor__anon_39279>
+ 111f117:	movzx  eax,WORD PTR [rbp-0x108]
+ 111f11e:	test   ax,ax
+ 111f121:	jne    111f414 <core.runtime.Runtime.drainJournal+0x2564>
+ 111f127:	mov    rax,QWORD PTR [rbp-0x110]
+ 111f12e:	mov    QWORD PTR [rbp-0x220],rax
+ 111f135:	vmovups ymm0,YMMWORD PTR [rbp-0x150]
+ 111f13d:	vmovups ymm1,YMMWORD PTR [rbp-0x130]
+ 111f145:	vmovups YMMWORD PTR [rbp-0x240],ymm1
+ 111f14d:	vmovups YMMWORD PTR [rbp-0x260],ymm0
+ 111f155:	mov    WORD PTR [rbp-0x210],0x0
+ 111f15e:	mov    BYTE PTR [rbp-0x218],0x1
+ 111f165:	xor    eax,eax
+ 111f167:	lea    rdi,[rbp-0x210]
+ 111f16e:	lea    r9,[rbp-0x260]
+ 111f175:	jmp    111d487 <core.runtime.Runtime.drainJournal+0x5d7>
+ 111f17a:	lea    rdi,[rbp-0x150]
+ 111f181:	mov    rsi,r13
+ 111f184:	call   1118050 <journal.journal.Journal.validateSlotFor__anon_39262>
+ 111f189:	movzx  eax,WORD PTR [rbp-0x108]
+ 111f190:	test   ax,ax
+ 111f193:	jne    111f435 <core.runtime.Runtime.drainJournal+0x2585>
+ 111f199:	mov    rax,QWORD PTR [rbp-0x110]
+ 111f1a0:	mov    QWORD PTR [rbp-0x4e0],rax
+ 111f1a7:	vmovups ymm0,YMMWORD PTR [rbp-0x150]
+ 111f1af:	vmovups ymm1,YMMWORD PTR [rbp-0x130]
+ 111f1b7:	vmovups YMMWORD PTR [rbp-0x500],ymm1
+ 111f1bf:	vmovups YMMWORD PTR [rbp-0x520],ymm0
+ 111f1c7:	mov    WORD PTR [rbp-0x4d0],0x0
+ 111f1d0:	mov    BYTE PTR [rbp-0x4d8],0x1
+ 111f1d7:	xor    eax,eax
+ 111f1d9:	lea    rdi,[rbp-0x4d0]
+ 111f1e0:	lea    r9,[rbp-0x520]
+ 111f1e7:	jmp    111d487 <core.runtime.Runtime.drainJournal+0x5d7>
+ 111f1ec:	lock add QWORD PTR [r10],r12
+ 111f1f0:	lock inc DWORD PTR [r14+0x31c4]
+ 111f1f8:	mov    rdi,QWORD PTR [r14+0x3110]
+ 111f1ff:	mov    rax,QWORD PTR [r14+0x3118]
+ 111f206:	mov    rsi,QWORD PTR [rbp-0xb0]
+ 111f20d:	mov    edx,0xffffffff
+ 111f212:	call   QWORD PTR [rax+0x70]
+ 111f215:	test   BYTE PTR [r13+0x2ff],0x1
+ 111f21d:	je     111f250 <core.runtime.Runtime.drainJournal+0x23a0>
+ 111f21f:	lock inc DWORD PTR [r13+0x140]
+ 111f227:	movzx  eax,BYTE PTR [r13+0x164]
+ 111f22f:	test   al,0x1
+ 111f231:	je     111f250 <core.runtime.Runtime.drainJournal+0x23a0>
+ 111f233:	mov    rdi,QWORD PTR [r14+0x3110]
+ 111f23a:	mov    rax,QWORD PTR [r14+0x3118]
+ 111f241:	mov    rsi,QWORD PTR [rbp-0xa8]
+ 111f248:	mov    edx,0x1
+ 111f24d:	call   QWORD PTR [rax+0x70]
+ 111f250:	mov    rax,QWORD PTR [rbp-0x1088]
+ 111f257:	test   rax,rax
+ 111f25a:	lea    r8,[rbp-0x1a88]
+ 111f261:	mov    r12,QWORD PTR [rbp-0xe8]
+ 111f268:	lea    r9,[rbp-0x150]
+ 111f26f:	je     111f338 <core.runtime.Runtime.drainJournal+0x2488>
+ 111f275:	cmp    rax,0x8
+ 111f279:	jae    111f282 <core.runtime.Runtime.drainJournal+0x23d2>
+ 111f27b:	xor    ecx,ecx
+ 111f27d:	jmp    111f30d <core.runtime.Runtime.drainJournal+0x245d>
+ 111f282:	mov    rdx,rax
+ 111f285:	and    rdx,0xfffffffffffffff8
+ 111f289:	lea    rsi,[rbp-0x1970]
+ 111f290:	xor    ecx,ecx
+ 111f292:	mov    rdi,QWORD PTR [rsi-0x118]
+ 111f299:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2a1:	mov    rdi,QWORD PTR [rsi-0xf0]
+ 111f2a8:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2b0:	mov    rdi,QWORD PTR [rsi-0xc8]
+ 111f2b7:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2bf:	mov    rdi,QWORD PTR [rsi-0xa0]
+ 111f2c6:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2ce:	mov    rdi,QWORD PTR [rsi-0x78]
+ 111f2d2:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2da:	mov    rdi,QWORD PTR [rsi-0x50]
+ 111f2de:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2e6:	mov    rdi,QWORD PTR [rsi-0x28]
+ 111f2ea:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2f2:	mov    rdi,QWORD PTR [rsi]
+ 111f2f5:	lock dec QWORD PTR [rdi+0x9808]
+ 111f2fd:	add    rcx,0x8
+ 111f301:	add    rsi,0x140
+ 111f308:	cmp    rdx,rcx
+ 111f30b:	jne    111f292 <core.runtime.Runtime.drainJournal+0x23e2>
+ 111f30d:	and    eax,0x7
+ 111f310:	je     111f338 <core.runtime.Runtime.drainJournal+0x2488>
+ 111f312:	lea    rcx,[rcx+rcx*4]
+ 111f316:	lea    rcx,[r8+rcx*8]
+ 111f31a:	shl    eax,0x3
+ 111f31d:	lea    rax,[rax+rax*4]
+ 111f321:	xor    edx,edx
+ 111f323:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111f327:	lock dec QWORD PTR [rsi+0x9808]
+ 111f32f:	add    rdx,0x28
+ 111f333:	cmp    rax,rdx
+ 111f336:	jne    111f323 <core.runtime.Runtime.drainJournal+0x2473>
+ 111f338:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111f343:	mov    rdi,QWORD PTR [r14+0x3110]
+ 111f34a:	mov    rax,QWORD PTR [r14+0x3118]
+ 111f351:	xor    ecx,ecx
+ 111f353:	xchg   DWORD PTR [r14+0x31d4],ecx
+ 111f35a:	cmp    ecx,0x2
+ 111f35d:	je     111f456 <core.runtime.Runtime.drainJournal+0x25a6>
+ 111f363:	mov    al,0x1
+ 111f365:	cmp    QWORD PTR [rbp-0x98],0x0
+ 111f36d:	mov    rdi,QWORD PTR [rbp-0x58]
+ 111f371:	jne    111cf56 <core.runtime.Runtime.drainJournal+0xa6>
+ 111f377:	jmp    111f47c <core.runtime.Runtime.drainJournal+0x25cc>
+ 111f37c:	cmp    eax,0x2
+ 111f37f:	jne    111f394 <core.runtime.Runtime.drainJournal+0x24e4>
+ 111f381:	mov    rdi,rbx
+ 111f384:	mov    rsi,QWORD PTR [rbp-0x50]
+ 111f388:	mov    edx,0x2
+ 111f38d:	vzeroupper
+ 111f390:	call   QWORD PTR [r14+0x68]
+ 111f394:	mov    eax,0x2
+ 111f399:	mov    rcx,QWORD PTR [rbp-0x50]
+ 111f39d:	xchg   DWORD PTR [rcx],eax
+ 111f39f:	test   eax,eax
+ 111f3a1:	je     111d6a9 <core.runtime.Runtime.drainJournal+0x7f9>
+ 111f3a7:	mov    rdi,rbx
+ 111f3aa:	mov    r15,QWORD PTR [rbp-0x50]
+ 111f3ae:	mov    rsi,r15
+ 111f3b1:	mov    edx,0x2
+ 111f3b6:	vzeroupper
+ 111f3b9:	call   QWORD PTR [r14+0x68]
+ 111f3bd:	mov    eax,0x2
+ 111f3c2:	xchg   DWORD PTR [r15],eax
+ 111f3c5:	mov    r15,QWORD PTR [rbp-0x38]
+ 111f3c9:	test   eax,eax
+ 111f3cb:	jne    111f3a7 <core.runtime.Runtime.drainJournal+0x24f7>
+ 111f3cd:	jmp    111d6a9 <core.runtime.Runtime.drainJournal+0x7f9>
+ 111f3d2:	mov    WORD PTR [rbp-0x698],ax
+ 111f3d9:	lea    r10,[rbp-0x6a0]
+ 111f3e0:	lea    rdi,[rbp-0x698]
+ 111f3e7:	lea    r9,[rbp-0x6e8]
+ 111f3ee:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111f3f3:	mov    WORD PTR [rbp-0x7f8],ax
+ 111f3fa:	lea    r10,[rbp-0x800]
+ 111f401:	lea    rdi,[rbp-0x7f8]
+ 111f408:	lea    r9,[rbp-0x848]
+ 111f40f:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111f414:	mov    WORD PTR [rbp-0x298],ax
+ 111f41b:	lea    r10,[rbp-0x2a0]
+ 111f422:	lea    rdi,[rbp-0x298]
+ 111f429:	lea    r9,[rbp-0x2e8]
+ 111f430:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111f435:	mov    WORD PTR [rbp-0x850],ax
+ 111f43c:	lea    r10,[rbp-0x858]
+ 111f443:	lea    rdi,[rbp-0x850]
+ 111f44a:	lea    r9,[rbp-0x8a0]
+ 111f451:	jmp    111d480 <core.runtime.Runtime.drainJournal+0x5d0>
+ 111f456:	mov    rsi,QWORD PTR [rbp-0x50]
+ 111f45a:	mov    edx,0x1
+ 111f45f:	mov    rbx,r9
+ 111f462:	call   QWORD PTR [rax+0x70]
+ 111f465:	mov    r9,rbx
+ 111f468:	mov    al,0x1
+ 111f46a:	cmp    QWORD PTR [rbp-0x98],0x0
+ 111f472:	mov    rdi,QWORD PTR [rbp-0x58]
+ 111f476:	jne    111cf56 <core.runtime.Runtime.drainJournal+0xa6>
+ 111f47c:	test   r12,r12
+ 111f47f:	mov    WORD PTR [rdi],0x0
+ 111f484:	setne  BYTE PTR [rdi+0x2]
+ 111f488:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111f48d:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f494:	test   rcx,rcx
+ 111f497:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f49b:	je     111fdb5 <core.runtime.Runtime.drainJournal+0x2f05>
+ 111f4a1:	mov    eax,ecx
+ 111f4a3:	and    eax,0x7
+ 111f4a6:	cmp    rcx,0x8
+ 111f4aa:	jae    111f8fd <core.runtime.Runtime.drainJournal+0x2a4d>
+ 111f4b0:	xor    edx,edx
+ 111f4b2:	jmp    111f99b <core.runtime.Runtime.drainJournal+0x2aeb>
+ 111f4b7:	mov    r8w,0x90
+ 111f4bc:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f4c3:	test   rcx,rcx
+ 111f4c6:	je     111faa5 <core.runtime.Runtime.drainJournal+0x2bf5>
+ 111f4cc:	mov    eax,ecx
+ 111f4ce:	and    eax,0x7
+ 111f4d1:	cmp    rcx,0x8
+ 111f4d5:	jae    111f9da <core.runtime.Runtime.drainJournal+0x2b2a>
+ 111f4db:	xor    edx,edx
+ 111f4dd:	jmp    111fa6b <core.runtime.Runtime.drainJournal+0x2bbb>
+ 111f4e2:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48c33]        # 106811d <__anon_40098+0x9d>
+ 111f4ea:	vmovups YMMWORD PTR [rbp-0x313],ymm0
+ 111f4f2:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48c06]        # 1068100 <__anon_40098+0x80>
+ 111f4fa:	vmovups YMMWORD PTR [rbp-0x330],ymm0
+ 111f502:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48bd6]        # 10680e0 <__anon_40098+0x60>
+ 111f50a:	vmovups YMMWORD PTR [rbp-0x350],ymm0
+ 111f512:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48ba6]        # 10680c0 <__anon_40098+0x40>
+ 111f51a:	vmovups YMMWORD PTR [rbp-0x370],ymm0
+ 111f522:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48b76]        # 10680a0 <__anon_40098+0x20>
+ 111f52a:	vmovups YMMWORD PTR [rbp-0x390],ymm0
+ 111f532:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48b46]        # 1068080 <__anon_40098>
+ 111f53a:	vmovups YMMWORD PTR [rbp-0x3b0],ymm0
+ 111f542:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48bf4]        # 106813e <__anon_40098+0xbe>
+ 111f54a:	vmovups YMMWORD PTR [rbp-0xe0],ymm0
+ 111f552:	mov    WORD PTR [rbp-0xc0],0x0
+ 111f55b:	mov    DWORD PTR [rbp-0x70],0x0
+ 111f562:	mov    WORD PTR [rbp-0x6c],0x0
+ 111f568:	mov    r14w,0xa0
+ 111f56d:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f574:	test   rcx,rcx
+ 111f577:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f57b:	jne    111f7dd <core.runtime.Runtime.drainJournal+0x292d>
+ 111f581:	jmp    111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 111f586:	cmp    BYTE PTR [r13+0x0],0x0
+ 111f58b:	je     111f625 <core.runtime.Runtime.drainJournal+0x2775>
+ 111f591:	vmovups ymm0,YMMWORD PTR [r14+0xa0]
+ 111f59a:	vmovups YMMWORD PTR [rbp-0xca0],ymm0
+ 111f5a2:	vmovups ymm0,YMMWORD PTR [r14+0x80]
+ 111f5ab:	vmovups YMMWORD PTR [rbp-0xcc0],ymm0
+ 111f5b3:	vmovups ymm0,YMMWORD PTR [r14]
+ 111f5b8:	vmovups ymm1,YMMWORD PTR [r14+0x20]
+ 111f5be:	vmovups ymm2,YMMWORD PTR [r14+0x40]
+ 111f5c4:	vmovups ymm3,YMMWORD PTR [r14+0x60]
+ 111f5ca:	vmovups YMMWORD PTR [rbp-0xce0],ymm3
+ 111f5d2:	vmovups YMMWORD PTR [rbp-0xd00],ymm2
+ 111f5da:	vmovups YMMWORD PTR [rbp-0xd20],ymm1
+ 111f5e2:	vmovups YMMWORD PTR [rbp-0xd40],ymm0
+ 111f5ea:	lea    rdi,[rbp-0x1c78]
+ 111f5f1:	lea    rcx,[rbp-0xd40]
+ 111f5f8:	lea    r8,[rbp-0xa160]
+ 111f5ff:	mov    rsi,QWORD PTR [rbp-0x78]
+ 111f603:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111f607:	mov    ebx,r9d
+ 111f60a:	vzeroupper
+ 111f60d:	call   1132ce0 <core.schema_codec.resolve>
+ 111f612:	mov    r9d,ebx
+ 111f615:	movzx  ebx,WORD PTR [rbp-0x1b98]
+ 111f61c:	test   bx,bx
+ 111f61f:	jne    11208c1 <core.runtime.Runtime.drainJournal+0x3a11>
+ 111f625:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f62c:	test   rcx,rcx
+ 111f62f:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f633:	lea    rdi,[rbp-0x1a88]
+ 111f63a:	je     111fcb5 <core.runtime.Runtime.drainJournal+0x2e05>
+ 111f640:	mov    eax,ecx
+ 111f642:	and    eax,0x7
+ 111f645:	cmp    rcx,0x8
+ 111f649:	jae    111fbe8 <core.runtime.Runtime.drainJournal+0x2d38>
+ 111f64f:	xor    edx,edx
+ 111f651:	jmp    111fc7b <core.runtime.Runtime.drainJournal+0x2dcb>
+ 111f656:	cmp    BYTE PTR [r13+0x0],0x0
+ 111f65b:	lea    r15,[rbp-0x1a88]
+ 111f662:	je     111f6f6 <core.runtime.Runtime.drainJournal+0x2846>
+ 111f668:	vmovups ymm0,YMMWORD PTR [r14+0xa0]
+ 111f671:	vmovups YMMWORD PTR [rbp-0xd60],ymm0
+ 111f679:	vmovups ymm0,YMMWORD PTR [r14+0x80]
+ 111f682:	vmovups YMMWORD PTR [rbp-0xd80],ymm0
+ 111f68a:	vmovups ymm0,YMMWORD PTR [r14]
+ 111f68f:	vmovups ymm1,YMMWORD PTR [r14+0x20]
+ 111f695:	vmovups ymm2,YMMWORD PTR [r14+0x40]
+ 111f69b:	vmovups ymm3,YMMWORD PTR [r14+0x60]
+ 111f6a1:	vmovups YMMWORD PTR [rbp-0xda0],ymm3
+ 111f6a9:	vmovups YMMWORD PTR [rbp-0xdc0],ymm2
+ 111f6b1:	vmovups YMMWORD PTR [rbp-0xde0],ymm1
+ 111f6b9:	vmovups YMMWORD PTR [rbp-0xe00],ymm0
+ 111f6c1:	lea    rdi,[rbp-0x1d60]
+ 111f6c8:	lea    rcx,[rbp-0xe00]
+ 111f6cf:	lea    r8,[rbp-0xa160]
+ 111f6d6:	mov    rsi,QWORD PTR [rbp-0x78]
+ 111f6da:	mov    rdx,QWORD PTR [rbp-0x48]
+ 111f6de:	vzeroupper
+ 111f6e1:	call   1132ce0 <core.schema_codec.resolve>
+ 111f6e6:	movzx  ebx,WORD PTR [rbp-0x1c80]
+ 111f6ed:	test   bx,bx
+ 111f6f0:	jne    11208e3 <core.runtime.Runtime.drainJournal+0x3a33>
+ 111f6f6:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f6fd:	test   rcx,rcx
+ 111f700:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f704:	je     111fdb5 <core.runtime.Runtime.drainJournal+0x2f05>
+ 111f70a:	mov    eax,ecx
+ 111f70c:	and    eax,0x7
+ 111f70f:	cmp    rcx,0x8
+ 111f713:	jae    111fced <core.runtime.Runtime.drainJournal+0x2e3d>
+ 111f719:	xor    edx,edx
+ 111f71b:	jmp    111fd7b <core.runtime.Runtime.drainJournal+0x2ecb>
+ 111f720:	mov    r14w,0x98
+ 111f725:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f72c:	test   rcx,rcx
+ 111f72f:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f733:	jne    111f7dd <core.runtime.Runtime.drainJournal+0x292d>
+ 111f739:	jmp    111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 111f73e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48adf]        # 1068225 <__anon_40100+0x9d>
+ 111f746:	vmovups YMMWORD PTR [rbp-0x313],ymm0
+ 111f74e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48ab2]        # 1068208 <__anon_40100+0x80>
+ 111f756:	vmovups YMMWORD PTR [rbp-0x330],ymm0
+ 111f75e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48a82]        # 10681e8 <__anon_40100+0x60>
+ 111f766:	vmovups YMMWORD PTR [rbp-0x350],ymm0
+ 111f76e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48a52]        # 10681c8 <__anon_40100+0x40>
+ 111f776:	vmovups YMMWORD PTR [rbp-0x370],ymm0
+ 111f77e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48a22]        # 10681a8 <__anon_40100+0x20>
+ 111f786:	vmovups YMMWORD PTR [rbp-0x390],ymm0
+ 111f78e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff489f2]        # 1068188 <__anon_40100>
+ 111f796:	vmovups YMMWORD PTR [rbp-0x3b0],ymm0
+ 111f79e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff48aa0]        # 1068246 <__anon_40100+0xbe>
+ 111f7a6:	vmovups YMMWORD PTR [rbp-0xe0],ymm0
+ 111f7ae:	mov    WORD PTR [rbp-0xc0],0x0
+ 111f7b7:	mov    DWORD PTR [rbp-0x70],0x0
+ 111f7be:	mov    WORD PTR [rbp-0x6c],0x0
+ 111f7c4:	mov    r14w,0x6a
+ 111f7c9:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111f7d0:	test   rcx,rcx
+ 111f7d3:	mov    r8,QWORD PTR [rbp-0x38]
+ 111f7d7:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 111f7dd:	mov    eax,ecx
+ 111f7df:	and    eax,0x7
+ 111f7e2:	cmp    rcx,0x8
+ 111f7e6:	jae    111f7ef <core.runtime.Runtime.drainJournal+0x293f>
+ 111f7e8:	xor    edx,edx
+ 111f7ea:	jmp    111f88b <core.runtime.Runtime.drainJournal+0x29db>
+ 111f7ef:	and    rcx,0xfffffffffffffff8
+ 111f7f3:	lea    rdi,[rbp-0x1a88]
+ 111f7fa:	add    rdi,0x118
+ 111f801:	xor    edx,edx
+ 111f803:	data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111f810:	mov    rsi,QWORD PTR [rdi-0x118]
+ 111f817:	lock dec QWORD PTR [rsi+0x9808]
+ 111f81f:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 111f826:	lock dec QWORD PTR [rsi+0x9808]
+ 111f82e:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 111f835:	lock dec QWORD PTR [rsi+0x9808]
+ 111f83d:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 111f844:	lock dec QWORD PTR [rsi+0x9808]
+ 111f84c:	mov    rsi,QWORD PTR [rdi-0x78]
+ 111f850:	lock dec QWORD PTR [rsi+0x9808]
+ 111f858:	mov    rsi,QWORD PTR [rdi-0x50]
+ 111f85c:	lock dec QWORD PTR [rsi+0x9808]
+ 111f864:	mov    rsi,QWORD PTR [rdi-0x28]
+ 111f868:	lock dec QWORD PTR [rsi+0x9808]
+ 111f870:	mov    rsi,QWORD PTR [rdi]
+ 111f873:	lock dec QWORD PTR [rsi+0x9808]
+ 111f87b:	add    rdx,0x8
+ 111f87f:	add    rdi,0x140
+ 111f886:	cmp    rcx,rdx
+ 111f889:	jne    111f810 <core.runtime.Runtime.drainJournal+0x2960>
+ 111f88b:	test   rax,rax
+ 111f88e:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 111f890:	lea    rcx,[rdx+rdx*4]
+ 111f894:	lea    rcx,[rcx*8-0x1a88]
+ 111f89c:	add    rcx,rbp
+ 111f89f:	shl    eax,0x3
+ 111f8a2:	lea    rax,[rax+rax*4]
+ 111f8a6:	xor    edx,edx
+ 111f8a8:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111f8b0:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111f8b4:	lock dec QWORD PTR [rsi+0x9808]
+ 111f8bc:	add    rdx,0x28
+ 111f8c0:	cmp    rax,rdx
+ 111f8c3:	jne    111f8b0 <core.runtime.Runtime.drainJournal+0x2a00>
+ 111f8c5:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111f8d0:	mov    rdi,QWORD PTR [r8+0x3110]
+ 111f8d7:	mov    rax,QWORD PTR [r8+0x3118]
+ 111f8de:	xor    ecx,ecx
+ 111f8e0:	xchg   DWORD PTR [r8+0x31d4],ecx
+ 111f8e7:	cmp    ecx,0x2
+ 111f8ea:	je     112086b <core.runtime.Runtime.drainJournal+0x39bb>
+ 111f8f0:	mov    rax,QWORD PTR [rbp-0x58]
+ 111f8f4:	mov    WORD PTR [rax],r14w
+ 111f8f8:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111f8fd:	and    rcx,0xfffffffffffffff8
+ 111f901:	lea    rdi,[rbp-0x1a88]
+ 111f908:	add    rdi,0x118
+ 111f90f:	xor    edx,edx
+ 111f911:	data16 data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111f920:	mov    rsi,QWORD PTR [rdi-0x118]
+ 111f927:	lock dec QWORD PTR [rsi+0x9808]
+ 111f92f:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 111f936:	lock dec QWORD PTR [rsi+0x9808]
+ 111f93e:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 111f945:	lock dec QWORD PTR [rsi+0x9808]
+ 111f94d:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 111f954:	lock dec QWORD PTR [rsi+0x9808]
+ 111f95c:	mov    rsi,QWORD PTR [rdi-0x78]
+ 111f960:	lock dec QWORD PTR [rsi+0x9808]
+ 111f968:	mov    rsi,QWORD PTR [rdi-0x50]
+ 111f96c:	lock dec QWORD PTR [rsi+0x9808]
+ 111f974:	mov    rsi,QWORD PTR [rdi-0x28]
+ 111f978:	lock dec QWORD PTR [rsi+0x9808]
+ 111f980:	mov    rsi,QWORD PTR [rdi]
+ 111f983:	lock dec QWORD PTR [rsi+0x9808]
+ 111f98b:	add    rdx,0x8
+ 111f98f:	add    rdi,0x140
+ 111f996:	cmp    rcx,rdx
+ 111f999:	jne    111f920 <core.runtime.Runtime.drainJournal+0x2a70>
+ 111f99b:	test   rax,rax
+ 111f99e:	je     111fdb5 <core.runtime.Runtime.drainJournal+0x2f05>
+ 111f9a4:	lea    rcx,[rdx+rdx*4]
+ 111f9a8:	lea    rcx,[rcx*8-0x1a88]
+ 111f9b0:	add    rcx,rbp
+ 111f9b3:	shl    eax,0x3
+ 111f9b6:	lea    rax,[rax+rax*4]
+ 111f9ba:	xor    edx,edx
+ 111f9bc:	nop    DWORD PTR [rax+0x0]
+ 111f9c0:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111f9c4:	lock dec QWORD PTR [rsi+0x9808]
+ 111f9cc:	add    rdx,0x28
+ 111f9d0:	cmp    rax,rdx
+ 111f9d3:	jne    111f9c0 <core.runtime.Runtime.drainJournal+0x2b10>
+ 111f9d5:	jmp    111fdb5 <core.runtime.Runtime.drainJournal+0x2f05>
+ 111f9da:	and    rcx,0xfffffffffffffff8
+ 111f9de:	lea    rdi,[rbp-0x1a88]
+ 111f9e5:	add    rdi,0x118
+ 111f9ec:	xor    edx,edx
+ 111f9ee:	xchg   ax,ax
+ 111f9f0:	mov    rsi,QWORD PTR [rdi-0x118]
+ 111f9f7:	lock dec QWORD PTR [rsi+0x9808]
+ 111f9ff:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 111fa06:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa0e:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 111fa15:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa1d:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 111fa24:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa2c:	mov    rsi,QWORD PTR [rdi-0x78]
+ 111fa30:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa38:	mov    rsi,QWORD PTR [rdi-0x50]
+ 111fa3c:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa44:	mov    rsi,QWORD PTR [rdi-0x28]
+ 111fa48:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa50:	mov    rsi,QWORD PTR [rdi]
+ 111fa53:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa5b:	add    rdx,0x8
+ 111fa5f:	add    rdi,0x140
+ 111fa66:	cmp    rcx,rdx
+ 111fa69:	jne    111f9f0 <core.runtime.Runtime.drainJournal+0x2b40>
+ 111fa6b:	test   rax,rax
+ 111fa6e:	je     111faa5 <core.runtime.Runtime.drainJournal+0x2bf5>
+ 111fa70:	lea    rcx,[rdx+rdx*4]
+ 111fa74:	lea    rcx,[rcx*8-0x1a88]
+ 111fa7c:	add    rcx,rbp
+ 111fa7f:	shl    eax,0x3
+ 111fa82:	lea    rax,[rax+rax*4]
+ 111fa86:	xor    edx,edx
+ 111fa88:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111fa90:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111fa94:	lock dec QWORD PTR [rsi+0x9808]
+ 111fa9c:	add    rdx,0x28
+ 111faa0:	cmp    rax,rdx
+ 111faa3:	jne    111fa90 <core.runtime.Runtime.drainJournal+0x2be0>
+ 111faa5:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111fab0:	mov    rdx,QWORD PTR [rbp-0x38]
+ 111fab4:	mov    rdi,QWORD PTR [rdx+0x3110]
+ 111fabb:	mov    rax,QWORD PTR [rdx+0x3118]
+ 111fac2:	xor    ecx,ecx
+ 111fac4:	xchg   DWORD PTR [rdx+0x31d4],ecx
+ 111faca:	cmp    ecx,0x2
+ 111facd:	je     1120890 <core.runtime.Runtime.drainJournal+0x39e0>
+ 111fad3:	mov    rax,QWORD PTR [rbp-0x58]
+ 111fad7:	mov    WORD PTR [rax],r8w
+ 111fadb:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111fae0:	mov    bx,0xb1
+ 111fae4:	mov    rdi,QWORD PTR [r13+0x190]
+ 111faeb:	mov    rax,QWORD PTR [r13+0x198]
+ 111faf2:	xor    ecx,ecx
+ 111faf4:	xchg   DWORD PTR [r13+0x2f4],ecx
+ 111fafb:	cmp    ecx,0x2
+ 111fafe:	jne    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111fb04:	mov    rsi,QWORD PTR [rbp-0x60]
+ 111fb08:	mov    edx,0x1
+ 111fb0d:	mov    r14d,ebx
+ 111fb10:	mov    rbx,r10
+ 111fb13:	call   QWORD PTR [rax+0x70]
+ 111fb16:	mov    r10,rbx
+ 111fb19:	mov    ebx,r14d
+ 111fb1c:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111fb21:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff484ec]        # 1068015 <__anon_40096+0x9d>
+ 111fb29:	vmovups YMMWORD PTR [rbp-0x313],ymm0
+ 111fb31:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff484bf]        # 1067ff8 <__anon_40096+0x80>
+ 111fb39:	vmovups YMMWORD PTR [rbp-0x330],ymm0
+ 111fb41:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff4848f]        # 1067fd8 <__anon_40096+0x60>
+ 111fb49:	vmovups YMMWORD PTR [rbp-0x350],ymm0
+ 111fb51:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff4845f]        # 1067fb8 <__anon_40096+0x40>
+ 111fb59:	vmovups YMMWORD PTR [rbp-0x370],ymm0
+ 111fb61:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff4842f]        # 1067f98 <__anon_40096+0x20>
+ 111fb69:	vmovups YMMWORD PTR [rbp-0x390],ymm0
+ 111fb71:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff483ff]        # 1067f78 <__anon_40096>
+ 111fb79:	vmovups YMMWORD PTR [rbp-0x3b0],ymm0
+ 111fb81:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff484ad]        # 1068036 <__anon_40096+0xbe>
+ 111fb89:	vmovups YMMWORD PTR [rbp-0xe0],ymm0
+ 111fb91:	mov    WORD PTR [rbp-0xc0],0x0
+ 111fb9a:	mov    DWORD PTR [rbp-0x70],0x0
+ 111fba1:	mov    WORD PTR [rbp-0x6c],0x0
+ 111fba7:	mov    r14w,0x8a
+ 111fbac:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111fbb3:	test   rcx,rcx
+ 111fbb6:	mov    r8,QWORD PTR [rbp-0x38]
+ 111fbba:	jne    111f7dd <core.runtime.Runtime.drainJournal+0x292d>
+ 111fbc0:	jmp    111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 111fbc5:	mov    ax,0x8e
+ 111fbc9:	mov    ebx,eax
+ 111fbcb:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 111fbd0:	mov    rax,QWORD PTR [rbp-0x58]
+ 111fbd4:	mov    WORD PTR [rax],0x0
+ 111fbd9:	mov    rcx,QWORD PTR [rbp-0x48]
+ 111fbdd:	and    cl,0x1
+ 111fbe0:	mov    BYTE PTR [rax+0x2],cl
+ 111fbe3:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111fbe8:	and    rcx,0xfffffffffffffff8
+ 111fbec:	add    rdi,0x118
+ 111fbf3:	xor    edx,edx
+ 111fbf5:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 111fc00:	mov    rsi,QWORD PTR [rdi-0x118]
+ 111fc07:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc0f:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 111fc16:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc1e:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 111fc25:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc2d:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 111fc34:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc3c:	mov    rsi,QWORD PTR [rdi-0x78]
+ 111fc40:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc48:	mov    rsi,QWORD PTR [rdi-0x50]
+ 111fc4c:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc54:	mov    rsi,QWORD PTR [rdi-0x28]
+ 111fc58:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc60:	mov    rsi,QWORD PTR [rdi]
+ 111fc63:	lock dec QWORD PTR [rsi+0x9808]
+ 111fc6b:	add    rdx,0x8
+ 111fc6f:	add    rdi,0x140
+ 111fc76:	cmp    rcx,rdx
+ 111fc79:	jne    111fc00 <core.runtime.Runtime.drainJournal+0x2d50>
+ 111fc7b:	test   rax,rax
+ 111fc7e:	je     111fcb5 <core.runtime.Runtime.drainJournal+0x2e05>
+ 111fc80:	lea    rcx,[rdx+rdx*4]
+ 111fc84:	lea    rcx,[rcx*8-0x1a88]
+ 111fc8c:	add    rcx,rbp
+ 111fc8f:	shl    eax,0x3
+ 111fc92:	lea    rax,[rax+rax*4]
+ 111fc96:	xor    edx,edx
+ 111fc98:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111fca0:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111fca4:	lock dec QWORD PTR [rsi+0x9808]
+ 111fcac:	add    rdx,0x28
+ 111fcb0:	cmp    rax,rdx
+ 111fcb3:	jne    111fca0 <core.runtime.Runtime.drainJournal+0x2df0>
+ 111fcb5:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111fcc0:	mov    rdi,QWORD PTR [r8+0x3110]
+ 111fcc7:	mov    rax,QWORD PTR [r8+0x3118]
+ 111fcce:	xor    ecx,ecx
+ 111fcd0:	xchg   DWORD PTR [r8+0x31d4],ecx
+ 111fcd7:	cmp    ecx,0x2
+ 111fcda:	je     11208aa <core.runtime.Runtime.drainJournal+0x39fa>
+ 111fce0:	mov    rax,QWORD PTR [rbp-0x58]
+ 111fce4:	mov    WORD PTR [rax],r9w
+ 111fce8:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111fced:	and    rcx,0xfffffffffffffff8
+ 111fcf1:	add    r15,0x118
+ 111fcf8:	xor    edx,edx
+ 111fcfa:	nop    WORD PTR [rax+rax*1+0x0]
+ 111fd00:	mov    rsi,QWORD PTR [r15-0x118]
+ 111fd07:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd0f:	mov    rsi,QWORD PTR [r15-0xf0]
+ 111fd16:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd1e:	mov    rsi,QWORD PTR [r15-0xc8]
+ 111fd25:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd2d:	mov    rsi,QWORD PTR [r15-0xa0]
+ 111fd34:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd3c:	mov    rsi,QWORD PTR [r15-0x78]
+ 111fd40:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd48:	mov    rsi,QWORD PTR [r15-0x50]
+ 111fd4c:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd54:	mov    rsi,QWORD PTR [r15-0x28]
+ 111fd58:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd60:	mov    rsi,QWORD PTR [r15]
+ 111fd63:	lock dec QWORD PTR [rsi+0x9808]
+ 111fd6b:	add    rdx,0x8
+ 111fd6f:	add    r15,0x140
+ 111fd76:	cmp    rcx,rdx
+ 111fd79:	jne    111fd00 <core.runtime.Runtime.drainJournal+0x2e50>
+ 111fd7b:	test   rax,rax
+ 111fd7e:	je     111fdb5 <core.runtime.Runtime.drainJournal+0x2f05>
+ 111fd80:	lea    rcx,[rdx+rdx*4]
+ 111fd84:	lea    rcx,[rcx*8-0x1a88]
+ 111fd8c:	add    rcx,rbp
+ 111fd8f:	shl    eax,0x3
+ 111fd92:	lea    rax,[rax+rax*4]
+ 111fd96:	xor    edx,edx
+ 111fd98:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111fda0:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111fda4:	lock dec QWORD PTR [rsi+0x9808]
+ 111fdac:	add    rdx,0x28
+ 111fdb0:	cmp    rax,rdx
+ 111fdb3:	jne    111fda0 <core.runtime.Runtime.drainJournal+0x2ef0>
+ 111fdb5:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111fdc0:	mov    rdi,QWORD PTR [r8+0x3110]
+ 111fdc7:	mov    rax,QWORD PTR [r8+0x3118]
+ 111fdce:	xor    ecx,ecx
+ 111fdd0:	xchg   DWORD PTR [r8+0x31d4],ecx
+ 111fdd7:	cmp    ecx,0x2
+ 111fdda:	je     112087f <core.runtime.Runtime.drainJournal+0x39cf>
+ 111fde0:	mov    rax,QWORD PTR [rbp-0x58]
+ 111fde4:	mov    DWORD PTR [rax],0x14f
+ 111fdea:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111fdef:	mov    bx,0xb1
+ 111fdf3:	mov    r10,QWORD PTR [rbp-0x30]
+ 111fdf7:	jmp    111fe24 <core.runtime.Runtime.drainJournal+0x2f74>
+ 111fdf9:	mov    bx,0xb1
+ 111fdfd:	mov    rdx,QWORD PTR [rbp-0x68]
+ 111fe01:	mov    rsi,QWORD PTR [rbp-0x48]
+ 111fe05:	mov    rax,QWORD PTR [r13+0x1a0]
+ 111fe0c:	imul   rdx,QWORD PTR [r13+0x200]
+ 111fe14:	lea    rcx,[rsi*4+0x2]
+ 111fe1c:	mov    QWORD PTR [rax+rdx*1+0x1000],rcx
+ 111fe24:	mov    rdi,QWORD PTR [r13+0x190]
+ 111fe2b:	mov    rax,QWORD PTR [r13+0x198]
+ 111fe32:	xor    ecx,ecx
+ 111fe34:	xchg   DWORD PTR [r13+0x2f4],ecx
+ 111fe3b:	cmp    ecx,0x2
+ 111fe3e:	je     1120909 <core.runtime.Runtime.drainJournal+0x3a59>
+ 111fe44:	test   r12,r12
+ 111fe47:	je     111fe4d <core.runtime.Runtime.drainJournal+0x2f9d>
+ 111fe49:	lock add QWORD PTR [r10],r12
+ 111fe4d:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111fe54:	test   rcx,rcx
+ 111fe57:	mov    r8,QWORD PTR [rbp-0x38]
+ 111fe5b:	lea    rdi,[rbp-0x1a88]
+ 111fe62:	je     111ff45 <core.runtime.Runtime.drainJournal+0x3095>
+ 111fe68:	mov    eax,ecx
+ 111fe6a:	and    eax,0x7
+ 111fe6d:	cmp    rcx,0x8
+ 111fe71:	jae    111fe7a <core.runtime.Runtime.drainJournal+0x2fca>
+ 111fe73:	xor    edx,edx
+ 111fe75:	jmp    111ff0b <core.runtime.Runtime.drainJournal+0x305b>
+ 111fe7a:	and    rcx,0xfffffffffffffff8
+ 111fe7e:	add    rdi,0x118
+ 111fe85:	xor    edx,edx
+ 111fe87:	nop    WORD PTR [rax+rax*1+0x0]
+ 111fe90:	mov    rsi,QWORD PTR [rdi-0x118]
+ 111fe97:	lock dec QWORD PTR [rsi+0x9808]
+ 111fe9f:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 111fea6:	lock dec QWORD PTR [rsi+0x9808]
+ 111feae:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 111feb5:	lock dec QWORD PTR [rsi+0x9808]
+ 111febd:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 111fec4:	lock dec QWORD PTR [rsi+0x9808]
+ 111fecc:	mov    rsi,QWORD PTR [rdi-0x78]
+ 111fed0:	lock dec QWORD PTR [rsi+0x9808]
+ 111fed8:	mov    rsi,QWORD PTR [rdi-0x50]
+ 111fedc:	lock dec QWORD PTR [rsi+0x9808]
+ 111fee4:	mov    rsi,QWORD PTR [rdi-0x28]
+ 111fee8:	lock dec QWORD PTR [rsi+0x9808]
+ 111fef0:	mov    rsi,QWORD PTR [rdi]
+ 111fef3:	lock dec QWORD PTR [rsi+0x9808]
+ 111fefb:	add    rdx,0x8
+ 111feff:	add    rdi,0x140
+ 111ff06:	cmp    rcx,rdx
+ 111ff09:	jne    111fe90 <core.runtime.Runtime.drainJournal+0x2fe0>
+ 111ff0b:	test   rax,rax
+ 111ff0e:	je     111ff45 <core.runtime.Runtime.drainJournal+0x3095>
+ 111ff10:	lea    rcx,[rdx+rdx*4]
+ 111ff14:	lea    rcx,[rcx*8-0x1a88]
+ 111ff1c:	add    rcx,rbp
+ 111ff1f:	shl    eax,0x3
+ 111ff22:	lea    rax,[rax+rax*4]
+ 111ff26:	xor    edx,edx
+ 111ff28:	nop    DWORD PTR [rax+rax*1+0x0]
+ 111ff30:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 111ff34:	lock dec QWORD PTR [rsi+0x9808]
+ 111ff3c:	add    rdx,0x28
+ 111ff40:	cmp    rax,rdx
+ 111ff43:	jne    111ff30 <core.runtime.Runtime.drainJournal+0x3080>
+ 111ff45:	mov    QWORD PTR [rbp-0x1088],0x0
+ 111ff50:	mov    rdi,QWORD PTR [r8+0x3110]
+ 111ff57:	mov    rax,QWORD PTR [r8+0x3118]
+ 111ff5e:	xor    ecx,ecx
+ 111ff60:	xchg   DWORD PTR [r8+0x31d4],ecx
+ 111ff67:	cmp    ecx,0x2
+ 111ff6a:	je     1120ad3 <core.runtime.Runtime.drainJournal+0x3c23>
+ 111ff70:	mov    rax,QWORD PTR [rbp-0x58]
+ 111ff74:	mov    WORD PTR [rax],bx
+ 111ff77:	add    rsp,0xa168
+ 111ff7e:	pop    rbx
+ 111ff7f:	pop    r12
+ 111ff81:	pop    r13
+ 111ff83:	pop    r14
+ 111ff85:	pop    r15
+ 111ff87:	pop    rbp
+ 111ff88:	vzeroupper
+ 111ff8b:	ret
+ 111ff8c:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111ff93:	test   rcx,rcx
+ 111ff96:	je     11201aa <core.runtime.Runtime.drainJournal+0x32fa>
+ 111ff9c:	mov    eax,ecx
+ 111ff9e:	and    eax,0x7
+ 111ffa1:	cmp    rcx,0x8
+ 111ffa5:	jae    11200e9 <core.runtime.Runtime.drainJournal+0x3239>
+ 111ffab:	xor    edx,edx
+ 111ffad:	jmp    1120178 <core.runtime.Runtime.drainJournal+0x32c8>
+ 111ffb2:	mov    rdx,QWORD PTR [rbp-0x1088]
+ 111ffb9:	test   rdx,rdx
+ 111ffbc:	mov    r8,QWORD PTR [rbp-0x38]
+ 111ffc0:	je     11202a6 <core.runtime.Runtime.drainJournal+0x33f6>
+ 111ffc6:	mov    ecx,edx
+ 111ffc8:	and    ecx,0x7
+ 111ffcb:	cmp    rdx,0x8
+ 111ffcf:	jae    11201e5 <core.runtime.Runtime.drainJournal+0x3335>
+ 111ffd5:	xor    esi,esi
+ 111ffd7:	jmp    1120274 <core.runtime.Runtime.drainJournal+0x33c4>
+ 111ffdc:	mov    bx,0x75
+ 111ffe0:	jmp    111fae4 <core.runtime.Runtime.drainJournal+0x2c34>
+ 111ffe5:	mov    cx,0x8e
+ 111ffe9:	mov    rax,QWORD PTR [rbp-0x58]
+ 111ffed:	mov    WORD PTR [rax],cx
+ 111fff0:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 111fff2:	mov    r8d,eax
+ 111fff5:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 111fffc:	test   rcx,rcx
+ 111ffff:	jne    111f4cc <core.runtime.Runtime.drainJournal+0x261c>
+ 1120005:	jmp    111faa5 <core.runtime.Runtime.drainJournal+0x2bf5>
+ 112000a:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 1120011:	test   rcx,rcx
+ 1120014:	mov    r8,QWORD PTR [rbp-0x38]
+ 1120018:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 112001e:	mov    eax,ecx
+ 1120020:	and    eax,0x7
+ 1120023:	cmp    rcx,0x8
+ 1120027:	jae    11202f3 <core.runtime.Runtime.drainJournal+0x3443>
+ 112002d:	xor    edx,edx
+ 112002f:	jmp    112037b <core.runtime.Runtime.drainJournal+0x34cb>
+ 1120034:	mov    rdx,QWORD PTR [rbp-0x1088]
+ 112003b:	test   rdx,rdx
+ 112003e:	je     1120574 <core.runtime.Runtime.drainJournal+0x36c4>
+ 1120044:	mov    ecx,edx
+ 1120046:	and    ecx,0x7
+ 1120049:	cmp    rdx,0x8
+ 112004d:	jae    11203e0 <core.runtime.Runtime.drainJournal+0x3530>
+ 1120053:	xor    esi,esi
+ 1120055:	jmp    112046f <core.runtime.Runtime.drainJournal+0x35bf>
+ 112005a:	mov    bx,0x151
+ 112005e:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 1120063:	mov    rdi,QWORD PTR [r13+0x190]
+ 112006a:	mov    rax,QWORD PTR [r13+0x198]
+ 1120071:	xor    ecx,ecx
+ 1120073:	xchg   DWORD PTR [r13+0x2f4],ecx
+ 112007a:	mov    bx,0xb2
+ 112007e:	cmp    ecx,0x2
+ 1120081:	je     1120909 <core.runtime.Runtime.drainJournal+0x3a59>
+ 1120087:	mov    r10,QWORD PTR [rbp-0x30]
+ 112008b:	jmp    111fe44 <core.runtime.Runtime.drainJournal+0x2f94>
+ 1120090:	mov    bx,0x75
+ 1120094:	jmp    111fdf3 <core.runtime.Runtime.drainJournal+0x2f43>
+ 1120099:	mov    rdx,QWORD PTR [rbp-0x1088]
+ 11200a0:	test   rdx,rdx
+ 11200a3:	je     1120574 <core.runtime.Runtime.drainJournal+0x36c4>
+ 11200a9:	mov    ecx,edx
+ 11200ab:	and    ecx,0x7
+ 11200ae:	cmp    rdx,0x8
+ 11200b2:	jae    11204b3 <core.runtime.Runtime.drainJournal+0x3603>
+ 11200b8:	xor    esi,esi
+ 11200ba:	jmp    1120542 <core.runtime.Runtime.drainJournal+0x3692>
+ 11200bf:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 11200c6:	test   rcx,rcx
+ 11200c9:	mov    r8,QWORD PTR [rbp-0x38]
+ 11200cd:	je     112066c <core.runtime.Runtime.drainJournal+0x37bc>
+ 11200d3:	mov    eax,ecx
+ 11200d5:	and    eax,0x7
+ 11200d8:	cmp    rcx,0x8
+ 11200dc:	jae    11205ab <core.runtime.Runtime.drainJournal+0x36fb>
+ 11200e2:	xor    edx,edx
+ 11200e4:	jmp    112063a <core.runtime.Runtime.drainJournal+0x378a>
+ 11200e9:	and    rcx,0xfffffffffffffff8
+ 11200ed:	lea    rdi,[rbp-0x1a88]
+ 11200f4:	add    rdi,0x118
+ 11200fb:	xor    edx,edx
+ 11200fd:	mov    rsi,QWORD PTR [rdi-0x118]
+ 1120104:	lock dec QWORD PTR [rsi+0x9808]
+ 112010c:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 1120113:	lock dec QWORD PTR [rsi+0x9808]
+ 112011b:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 1120122:	lock dec QWORD PTR [rsi+0x9808]
+ 112012a:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 1120131:	lock dec QWORD PTR [rsi+0x9808]
+ 1120139:	mov    rsi,QWORD PTR [rdi-0x78]
+ 112013d:	lock dec QWORD PTR [rsi+0x9808]
+ 1120145:	mov    rsi,QWORD PTR [rdi-0x50]
+ 1120149:	lock dec QWORD PTR [rsi+0x9808]
+ 1120151:	mov    rsi,QWORD PTR [rdi-0x28]
+ 1120155:	lock dec QWORD PTR [rsi+0x9808]
+ 112015d:	mov    rsi,QWORD PTR [rdi]
+ 1120160:	lock dec QWORD PTR [rsi+0x9808]
+ 1120168:	add    rdx,0x8
+ 112016c:	add    rdi,0x140
+ 1120173:	cmp    rcx,rdx
+ 1120176:	jne    11200fd <core.runtime.Runtime.drainJournal+0x324d>
+ 1120178:	test   rax,rax
+ 112017b:	je     11201aa <core.runtime.Runtime.drainJournal+0x32fa>
+ 112017d:	lea    rcx,[rdx+rdx*4]
+ 1120181:	lea    rcx,[rcx*8-0x1a88]
+ 1120189:	add    rcx,rbp
+ 112018c:	shl    eax,0x3
+ 112018f:	lea    rax,[rax+rax*4]
+ 1120193:	xor    edx,edx
+ 1120195:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 1120199:	lock dec QWORD PTR [rsi+0x9808]
+ 11201a1:	add    rdx,0x28
+ 11201a5:	cmp    rax,rdx
+ 11201a8:	jne    1120195 <core.runtime.Runtime.drainJournal+0x32e5>
+ 11201aa:	mov    QWORD PTR [rbp-0x1088],0x0
+ 11201b5:	mov    rdx,QWORD PTR [rbp-0x38]
+ 11201b9:	mov    rdi,QWORD PTR [rdx+0x3110]
+ 11201c0:	mov    rax,QWORD PTR [rdx+0x3118]
+ 11201c7:	xor    ecx,ecx
+ 11201c9:	xchg   DWORD PTR [rdx+0x31d4],ecx
+ 11201cf:	cmp    ecx,0x2
+ 11201d2:	je     1120af9 <core.runtime.Runtime.drainJournal+0x3c49>
+ 11201d8:	mov    rax,QWORD PTR [rbp-0x58]
+ 11201dc:	mov    WORD PTR [rax],r15w
+ 11201e0:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 11201e5:	and    rdx,0xfffffffffffffff8
+ 11201e9:	lea    r9,[rbp-0x1a88]
+ 11201f0:	add    r9,0x118
+ 11201f7:	xor    esi,esi
+ 11201f9:	mov    rdi,QWORD PTR [r9-0x118]
+ 1120200:	lock dec QWORD PTR [rdi+0x9808]
+ 1120208:	mov    rdi,QWORD PTR [r9-0xf0]
+ 112020f:	lock dec QWORD PTR [rdi+0x9808]
+ 1120217:	mov    rdi,QWORD PTR [r9-0xc8]
+ 112021e:	lock dec QWORD PTR [rdi+0x9808]
+ 1120226:	mov    rdi,QWORD PTR [r9-0xa0]
+ 112022d:	lock dec QWORD PTR [rdi+0x9808]
+ 1120235:	mov    rdi,QWORD PTR [r9-0x78]
+ 1120239:	lock dec QWORD PTR [rdi+0x9808]
+ 1120241:	mov    rdi,QWORD PTR [r9-0x50]
+ 1120245:	lock dec QWORD PTR [rdi+0x9808]
+ 112024d:	mov    rdi,QWORD PTR [r9-0x28]
+ 1120251:	lock dec QWORD PTR [rdi+0x9808]
+ 1120259:	mov    rdi,QWORD PTR [r9]
+ 112025c:	lock dec QWORD PTR [rdi+0x9808]
+ 1120264:	add    rsi,0x8
+ 1120268:	add    r9,0x140
+ 112026f:	cmp    rdx,rsi
+ 1120272:	jne    11201f9 <core.runtime.Runtime.drainJournal+0x3349>
+ 1120274:	test   rcx,rcx
+ 1120277:	je     11202a6 <core.runtime.Runtime.drainJournal+0x33f6>
+ 1120279:	lea    rdx,[rsi+rsi*4]
+ 112027d:	lea    rdx,[rdx*8-0x1a88]
+ 1120285:	add    rdx,rbp
+ 1120288:	shl    ecx,0x3
+ 112028b:	lea    rcx,[rcx+rcx*4]
+ 112028f:	xor    esi,esi
+ 1120291:	mov    rdi,QWORD PTR [rdx+rsi*1]
+ 1120295:	lock dec QWORD PTR [rdi+0x9808]
+ 112029d:	add    rsi,0x28
+ 11202a1:	cmp    rcx,rsi
+ 11202a4:	jne    1120291 <core.runtime.Runtime.drainJournal+0x33e1>
+ 11202a6:	mov    QWORD PTR [rbp-0x1088],0x0
+ 11202b1:	mov    rdi,QWORD PTR [r8+0x3110]
+ 11202b8:	mov    rcx,QWORD PTR [r8+0x3118]
+ 11202bf:	xor    edx,edx
+ 11202c1:	xchg   DWORD PTR [r8+0x31d4],edx
+ 11202c8:	jmp    1120596 <core.runtime.Runtime.drainJournal+0x36e6>
+ 11202cd:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 11202d4:	test   rcx,rcx
+ 11202d7:	je     1120770 <core.runtime.Runtime.drainJournal+0x38c0>
+ 11202dd:	mov    eax,ecx
+ 11202df:	and    eax,0x7
+ 11202e2:	cmp    rcx,0x8
+ 11202e6:	jae    11206af <core.runtime.Runtime.drainJournal+0x37ff>
+ 11202ec:	xor    edx,edx
+ 11202ee:	jmp    112073e <core.runtime.Runtime.drainJournal+0x388e>
+ 11202f3:	and    rcx,0xfffffffffffffff8
+ 11202f7:	add    rdi,0x118
+ 11202fe:	xor    edx,edx
+ 1120300:	mov    rsi,QWORD PTR [rdi-0x118]
+ 1120307:	lock dec QWORD PTR [rsi+0x9808]
+ 112030f:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 1120316:	lock dec QWORD PTR [rsi+0x9808]
+ 112031e:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 1120325:	lock dec QWORD PTR [rsi+0x9808]
+ 112032d:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 1120334:	lock dec QWORD PTR [rsi+0x9808]
+ 112033c:	mov    rsi,QWORD PTR [rdi-0x78]
+ 1120340:	lock dec QWORD PTR [rsi+0x9808]
+ 1120348:	mov    rsi,QWORD PTR [rdi-0x50]
+ 112034c:	lock dec QWORD PTR [rsi+0x9808]
+ 1120354:	mov    rsi,QWORD PTR [rdi-0x28]
+ 1120358:	lock dec QWORD PTR [rsi+0x9808]
+ 1120360:	mov    rsi,QWORD PTR [rdi]
+ 1120363:	lock dec QWORD PTR [rsi+0x9808]
+ 112036b:	add    rdx,0x8
+ 112036f:	add    rdi,0x140
+ 1120376:	cmp    rcx,rdx
+ 1120379:	jne    1120300 <core.runtime.Runtime.drainJournal+0x3450>
+ 112037b:	test   rax,rax
+ 112037e:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 1120384:	lea    rcx,[rdx+rdx*4]
+ 1120388:	lea    rcx,[rcx*8-0x1a88]
+ 1120390:	add    rcx,rbp
+ 1120393:	shl    eax,0x3
+ 1120396:	lea    rax,[rax+rax*4]
+ 112039a:	xor    edx,edx
+ 112039c:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 11203a0:	lock dec QWORD PTR [rsi+0x9808]
+ 11203a8:	add    rdx,0x28
+ 11203ac:	cmp    rax,rdx
+ 11203af:	jne    112039c <core.runtime.Runtime.drainJournal+0x34ec>
+ 11203b1:	jmp    111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 11203b6:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 11203bd:	test   rcx,rcx
+ 11203c0:	mov    r8,QWORD PTR [rbp-0x38]
+ 11203c4:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 11203ca:	mov    eax,ecx
+ 11203cc:	and    eax,0x7
+ 11203cf:	cmp    rcx,0x8
+ 11203d3:	jae    11207a8 <core.runtime.Runtime.drainJournal+0x38f8>
+ 11203d9:	xor    edx,edx
+ 11203db:	jmp    1120830 <core.runtime.Runtime.drainJournal+0x3980>
+ 11203e0:	and    rdx,0xfffffffffffffff8
+ 11203e4:	lea    r8,[rbp-0x1a88]
+ 11203eb:	add    r8,0x118
+ 11203f2:	xor    esi,esi
+ 11203f4:	mov    rdi,QWORD PTR [r8-0x118]
+ 11203fb:	lock dec QWORD PTR [rdi+0x9808]
+ 1120403:	mov    rdi,QWORD PTR [r8-0xf0]
+ 112040a:	lock dec QWORD PTR [rdi+0x9808]
+ 1120412:	mov    rdi,QWORD PTR [r8-0xc8]
+ 1120419:	lock dec QWORD PTR [rdi+0x9808]
+ 1120421:	mov    rdi,QWORD PTR [r8-0xa0]
+ 1120428:	lock dec QWORD PTR [rdi+0x9808]
+ 1120430:	mov    rdi,QWORD PTR [r8-0x78]
+ 1120434:	lock dec QWORD PTR [rdi+0x9808]
+ 112043c:	mov    rdi,QWORD PTR [r8-0x50]
+ 1120440:	lock dec QWORD PTR [rdi+0x9808]
+ 1120448:	mov    rdi,QWORD PTR [r8-0x28]
+ 112044c:	lock dec QWORD PTR [rdi+0x9808]
+ 1120454:	mov    rdi,QWORD PTR [r8]
+ 1120457:	lock dec QWORD PTR [rdi+0x9808]
+ 112045f:	add    rsi,0x8
+ 1120463:	add    r8,0x140
+ 112046a:	cmp    rdx,rsi
+ 112046d:	jne    11203f4 <core.runtime.Runtime.drainJournal+0x3544>
+ 112046f:	test   rcx,rcx
+ 1120472:	je     1120574 <core.runtime.Runtime.drainJournal+0x36c4>
+ 1120478:	lea    rdx,[rsi+rsi*4]
+ 112047c:	lea    rdx,[rdx*8-0x1a88]
+ 1120484:	add    rdx,rbp
+ 1120487:	shl    ecx,0x3
+ 112048a:	lea    rcx,[rcx+rcx*4]
+ 112048e:	xor    esi,esi
+ 1120490:	mov    rdi,QWORD PTR [rdx+rsi*1]
+ 1120494:	lock dec QWORD PTR [rdi+0x9808]
+ 112049c:	add    rsi,0x28
+ 11204a0:	cmp    rcx,rsi
+ 11204a3:	jne    1120490 <core.runtime.Runtime.drainJournal+0x35e0>
+ 11204a5:	jmp    1120574 <core.runtime.Runtime.drainJournal+0x36c4>
+ 11204aa:	mov    bx,0x75
+ 11204ae:	jmp    111fe05 <core.runtime.Runtime.drainJournal+0x2f55>
+ 11204b3:	and    rdx,0xfffffffffffffff8
+ 11204b7:	lea    r8,[rbp-0x1a88]
+ 11204be:	add    r8,0x118
+ 11204c5:	xor    esi,esi
+ 11204c7:	mov    rdi,QWORD PTR [r8-0x118]
+ 11204ce:	lock dec QWORD PTR [rdi+0x9808]
+ 11204d6:	mov    rdi,QWORD PTR [r8-0xf0]
+ 11204dd:	lock dec QWORD PTR [rdi+0x9808]
+ 11204e5:	mov    rdi,QWORD PTR [r8-0xc8]
+ 11204ec:	lock dec QWORD PTR [rdi+0x9808]
+ 11204f4:	mov    rdi,QWORD PTR [r8-0xa0]
+ 11204fb:	lock dec QWORD PTR [rdi+0x9808]
+ 1120503:	mov    rdi,QWORD PTR [r8-0x78]
+ 1120507:	lock dec QWORD PTR [rdi+0x9808]
+ 112050f:	mov    rdi,QWORD PTR [r8-0x50]
+ 1120513:	lock dec QWORD PTR [rdi+0x9808]
+ 112051b:	mov    rdi,QWORD PTR [r8-0x28]
+ 112051f:	lock dec QWORD PTR [rdi+0x9808]
+ 1120527:	mov    rdi,QWORD PTR [r8]
+ 112052a:	lock dec QWORD PTR [rdi+0x9808]
+ 1120532:	add    rsi,0x8
+ 1120536:	add    r8,0x140
+ 112053d:	cmp    rdx,rsi
+ 1120540:	jne    11204c7 <core.runtime.Runtime.drainJournal+0x3617>
+ 1120542:	test   rcx,rcx
+ 1120545:	je     1120574 <core.runtime.Runtime.drainJournal+0x36c4>
+ 1120547:	lea    rdx,[rsi+rsi*4]
+ 112054b:	lea    rdx,[rdx*8-0x1a88]
+ 1120553:	add    rdx,rbp
+ 1120556:	shl    ecx,0x3
+ 1120559:	lea    rcx,[rcx+rcx*4]
+ 112055d:	xor    esi,esi
+ 112055f:	mov    rdi,QWORD PTR [rdx+rsi*1]
+ 1120563:	lock dec QWORD PTR [rdi+0x9808]
+ 112056b:	add    rsi,0x28
+ 112056f:	cmp    rcx,rsi
+ 1120572:	jne    112055f <core.runtime.Runtime.drainJournal+0x36af>
+ 1120574:	mov    QWORD PTR [rbp-0x1088],0x0
+ 112057f:	mov    rdi,QWORD PTR [r15+0x3110]
+ 1120586:	mov    rcx,QWORD PTR [r15+0x3118]
+ 112058d:	xor    edx,edx
+ 112058f:	xchg   DWORD PTR [r15+0x31d4],edx
+ 1120596:	cmp    edx,0x2
+ 1120599:	je     1120ae4 <core.runtime.Runtime.drainJournal+0x3c34>
+ 112059f:	mov    rcx,QWORD PTR [rbp-0x58]
+ 11205a3:	mov    WORD PTR [rcx],ax
+ 11205a6:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 11205ab:	and    rcx,0xfffffffffffffff8
+ 11205af:	lea    rdi,[rbp-0x1a88]
+ 11205b6:	add    rdi,0x118
+ 11205bd:	xor    edx,edx
+ 11205bf:	mov    rsi,QWORD PTR [rdi-0x118]
+ 11205c6:	lock dec QWORD PTR [rsi+0x9808]
+ 11205ce:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 11205d5:	lock dec QWORD PTR [rsi+0x9808]
+ 11205dd:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 11205e4:	lock dec QWORD PTR [rsi+0x9808]
+ 11205ec:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 11205f3:	lock dec QWORD PTR [rsi+0x9808]
+ 11205fb:	mov    rsi,QWORD PTR [rdi-0x78]
+ 11205ff:	lock dec QWORD PTR [rsi+0x9808]
+ 1120607:	mov    rsi,QWORD PTR [rdi-0x50]
+ 112060b:	lock dec QWORD PTR [rsi+0x9808]
+ 1120613:	mov    rsi,QWORD PTR [rdi-0x28]
+ 1120617:	lock dec QWORD PTR [rsi+0x9808]
+ 112061f:	mov    rsi,QWORD PTR [rdi]
+ 1120622:	lock dec QWORD PTR [rsi+0x9808]
+ 112062a:	add    rdx,0x8
+ 112062e:	add    rdi,0x140
+ 1120635:	cmp    rcx,rdx
+ 1120638:	jne    11205bf <core.runtime.Runtime.drainJournal+0x370f>
+ 112063a:	test   rax,rax
+ 112063d:	je     112066c <core.runtime.Runtime.drainJournal+0x37bc>
+ 112063f:	lea    rcx,[rdx+rdx*4]
+ 1120643:	lea    rcx,[rcx*8-0x1a88]
+ 112064b:	add    rcx,rbp
+ 112064e:	shl    eax,0x3
+ 1120651:	lea    rax,[rax+rax*4]
+ 1120655:	xor    edx,edx
+ 1120657:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 112065b:	lock dec QWORD PTR [rsi+0x9808]
+ 1120663:	add    rdx,0x28
+ 1120667:	cmp    rax,rdx
+ 112066a:	jne    1120657 <core.runtime.Runtime.drainJournal+0x37a7>
+ 112066c:	mov    QWORD PTR [rbp-0x1088],0x0
+ 1120677:	mov    rdi,QWORD PTR [r8+0x3110]
+ 112067e:	mov    rax,QWORD PTR [r8+0x3118]
+ 1120685:	xor    ecx,ecx
+ 1120687:	xchg   DWORD PTR [r8+0x31d4],ecx
+ 112068e:	cmp    ecx,0x2
+ 1120691:	je     1120b0a <core.runtime.Runtime.drainJournal+0x3c5a>
+ 1120697:	mov    rax,QWORD PTR [rbp-0x58]
+ 112069b:	mov    WORD PTR [rax],r12w
+ 112069f:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 11206a4:	mov    ebx,eax
+ 11206a6:	mov    r10,QWORD PTR [rbp-0x30]
+ 11206aa:	jmp    111fdfd <core.runtime.Runtime.drainJournal+0x2f4d>
+ 11206af:	and    rcx,0xfffffffffffffff8
+ 11206b3:	lea    rdi,[rbp-0x1a88]
+ 11206ba:	add    rdi,0x118
+ 11206c1:	xor    edx,edx
+ 11206c3:	mov    rsi,QWORD PTR [rdi-0x118]
+ 11206ca:	lock dec QWORD PTR [rsi+0x9808]
+ 11206d2:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 11206d9:	lock dec QWORD PTR [rsi+0x9808]
+ 11206e1:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 11206e8:	lock dec QWORD PTR [rsi+0x9808]
+ 11206f0:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 11206f7:	lock dec QWORD PTR [rsi+0x9808]
+ 11206ff:	mov    rsi,QWORD PTR [rdi-0x78]
+ 1120703:	lock dec QWORD PTR [rsi+0x9808]
+ 112070b:	mov    rsi,QWORD PTR [rdi-0x50]
+ 112070f:	lock dec QWORD PTR [rsi+0x9808]
+ 1120717:	mov    rsi,QWORD PTR [rdi-0x28]
+ 112071b:	lock dec QWORD PTR [rsi+0x9808]
+ 1120723:	mov    rsi,QWORD PTR [rdi]
+ 1120726:	lock dec QWORD PTR [rsi+0x9808]
+ 112072e:	add    rdx,0x8
+ 1120732:	add    rdi,0x140
+ 1120739:	cmp    rcx,rdx
+ 112073c:	jne    11206c3 <core.runtime.Runtime.drainJournal+0x3813>
+ 112073e:	test   rax,rax
+ 1120741:	je     1120770 <core.runtime.Runtime.drainJournal+0x38c0>
+ 1120743:	lea    rcx,[rdx+rdx*4]
+ 1120747:	lea    rcx,[rcx*8-0x1a88]
+ 112074f:	add    rcx,rbp
+ 1120752:	shl    eax,0x3
+ 1120755:	lea    rax,[rax+rax*4]
+ 1120759:	xor    edx,edx
+ 112075b:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 112075f:	lock dec QWORD PTR [rsi+0x9808]
+ 1120767:	add    rdx,0x28
+ 112076b:	cmp    rax,rdx
+ 112076e:	jne    112075b <core.runtime.Runtime.drainJournal+0x38ab>
+ 1120770:	mov    QWORD PTR [rbp-0x1088],0x0
+ 112077b:	mov    rdi,QWORD PTR [r15+0x3110]
+ 1120782:	mov    rax,QWORD PTR [r15+0x3118]
+ 1120789:	xor    ecx,ecx
+ 112078b:	xchg   DWORD PTR [r15+0x31d4],ecx
+ 1120792:	cmp    ecx,0x2
+ 1120795:	je     1120b1b <core.runtime.Runtime.drainJournal+0x3c6b>
+ 112079b:	mov    rax,QWORD PTR [rbp-0x58]
+ 112079f:	mov    WORD PTR [rax],r14w
+ 11207a3:	jmp    111ff77 <core.runtime.Runtime.drainJournal+0x30c7>
+ 11207a8:	and    rcx,0xfffffffffffffff8
+ 11207ac:	add    rdi,0x118
+ 11207b3:	xor    edx,edx
+ 11207b5:	mov    rsi,QWORD PTR [rdi-0x118]
+ 11207bc:	lock dec QWORD PTR [rsi+0x9808]
+ 11207c4:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 11207cb:	lock dec QWORD PTR [rsi+0x9808]
+ 11207d3:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 11207da:	lock dec QWORD PTR [rsi+0x9808]
+ 11207e2:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 11207e9:	lock dec QWORD PTR [rsi+0x9808]
+ 11207f1:	mov    rsi,QWORD PTR [rdi-0x78]
+ 11207f5:	lock dec QWORD PTR [rsi+0x9808]
+ 11207fd:	mov    rsi,QWORD PTR [rdi-0x50]
+ 1120801:	lock dec QWORD PTR [rsi+0x9808]
+ 1120809:	mov    rsi,QWORD PTR [rdi-0x28]
+ 112080d:	lock dec QWORD PTR [rsi+0x9808]
+ 1120815:	mov    rsi,QWORD PTR [rdi]
+ 1120818:	lock dec QWORD PTR [rsi+0x9808]
+ 1120820:	add    rdx,0x8
+ 1120824:	add    rdi,0x140
+ 112082b:	cmp    rcx,rdx
+ 112082e:	jne    11207b5 <core.runtime.Runtime.drainJournal+0x3905>
+ 1120830:	test   rax,rax
+ 1120833:	je     111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 1120839:	lea    rcx,[rdx+rdx*4]
+ 112083d:	lea    rcx,[rcx*8-0x1a88]
+ 1120845:	add    rcx,rbp
+ 1120848:	shl    eax,0x3
+ 112084b:	lea    rax,[rax+rax*4]
+ 112084f:	xor    edx,edx
+ 1120851:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 1120855:	lock dec QWORD PTR [rsi+0x9808]
+ 112085d:	add    rdx,0x28
+ 1120861:	cmp    rax,rdx
+ 1120864:	jne    1120851 <core.runtime.Runtime.drainJournal+0x39a1>
+ 1120866:	jmp    111f8c5 <core.runtime.Runtime.drainJournal+0x2a15>
+ 112086b:	mov    rsi,QWORD PTR [rbp-0x50]
+ 112086f:	mov    edx,0x1
+ 1120874:	vzeroupper
+ 1120877:	call   QWORD PTR [rax+0x70]
+ 112087a:	jmp    111f8f0 <core.runtime.Runtime.drainJournal+0x2a40>
+ 112087f:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120883:	mov    edx,0x1
+ 1120888:	call   QWORD PTR [rax+0x70]
+ 112088b:	jmp    111fde0 <core.runtime.Runtime.drainJournal+0x2f30>
+ 1120890:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120894:	mov    edx,0x1
+ 1120899:	mov    ebx,r8d
+ 112089c:	vzeroupper
+ 112089f:	call   QWORD PTR [rax+0x70]
+ 11208a2:	mov    r8d,ebx
+ 11208a5:	jmp    111fad3 <core.runtime.Runtime.drainJournal+0x2c23>
+ 11208aa:	mov    rsi,QWORD PTR [rbp-0x50]
+ 11208ae:	mov    edx,0x1
+ 11208b3:	mov    ebx,r9d
+ 11208b6:	call   QWORD PTR [rax+0x70]
+ 11208b9:	mov    r9d,ebx
+ 11208bc:	jmp    111fce0 <core.runtime.Runtime.drainJournal+0x2e30>
+ 11208c1:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 11208c8:	test   rcx,rcx
+ 11208cb:	je     1120aa5 <core.runtime.Runtime.drainJournal+0x3bf5>
+ 11208d1:	mov    eax,ecx
+ 11208d3:	and    eax,0x7
+ 11208d6:	cmp    rcx,0x8
+ 11208da:	jae    112091a <core.runtime.Runtime.drainJournal+0x3a6a>
+ 11208dc:	xor    edx,edx
+ 11208de:	jmp    11209a9 <core.runtime.Runtime.drainJournal+0x3af9>
+ 11208e3:	mov    rcx,QWORD PTR [rbp-0x1088]
+ 11208ea:	test   rcx,rcx
+ 11208ed:	je     1120aa5 <core.runtime.Runtime.drainJournal+0x3bf5>
+ 11208f3:	mov    eax,ecx
+ 11208f5:	and    eax,0x7
+ 11208f8:	cmp    rcx,0x8
+ 11208fc:	jae    11209e4 <core.runtime.Runtime.drainJournal+0x3b34>
+ 1120902:	xor    edx,edx
+ 1120904:	jmp    1120a73 <core.runtime.Runtime.drainJournal+0x3bc3>
+ 1120909:	mov    rsi,QWORD PTR [rbp-0x60]
+ 112090d:	mov    edx,0x1
+ 1120912:	call   QWORD PTR [rax+0x70]
+ 1120915:	jmp    1120087 <core.runtime.Runtime.drainJournal+0x31d7>
+ 112091a:	and    rcx,0xfffffffffffffff8
+ 112091e:	lea    rdi,[rbp-0x1a88]
+ 1120925:	add    rdi,0x118
+ 112092c:	xor    edx,edx
+ 112092e:	mov    rsi,QWORD PTR [rdi-0x118]
+ 1120935:	lock dec QWORD PTR [rsi+0x9808]
+ 112093d:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 1120944:	lock dec QWORD PTR [rsi+0x9808]
+ 112094c:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 1120953:	lock dec QWORD PTR [rsi+0x9808]
+ 112095b:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 1120962:	lock dec QWORD PTR [rsi+0x9808]
+ 112096a:	mov    rsi,QWORD PTR [rdi-0x78]
+ 112096e:	lock dec QWORD PTR [rsi+0x9808]
+ 1120976:	mov    rsi,QWORD PTR [rdi-0x50]
+ 112097a:	lock dec QWORD PTR [rsi+0x9808]
+ 1120982:	mov    rsi,QWORD PTR [rdi-0x28]
+ 1120986:	lock dec QWORD PTR [rsi+0x9808]
+ 112098e:	mov    rsi,QWORD PTR [rdi]
+ 1120991:	lock dec QWORD PTR [rsi+0x9808]
+ 1120999:	add    rdx,0x8
+ 112099d:	add    rdi,0x140
+ 11209a4:	cmp    rcx,rdx
+ 11209a7:	jne    112092e <core.runtime.Runtime.drainJournal+0x3a7e>
+ 11209a9:	test   rax,rax
+ 11209ac:	je     1120aa5 <core.runtime.Runtime.drainJournal+0x3bf5>
+ 11209b2:	lea    rcx,[rdx+rdx*4]
+ 11209b6:	lea    rcx,[rcx*8-0x1a88]
+ 11209be:	add    rcx,rbp
+ 11209c1:	shl    eax,0x3
+ 11209c4:	lea    rax,[rax+rax*4]
+ 11209c8:	xor    edx,edx
+ 11209ca:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 11209ce:	lock dec QWORD PTR [rsi+0x9808]
+ 11209d6:	add    rdx,0x28
+ 11209da:	cmp    rax,rdx
+ 11209dd:	jne    11209ca <core.runtime.Runtime.drainJournal+0x3b1a>
+ 11209df:	jmp    1120aa5 <core.runtime.Runtime.drainJournal+0x3bf5>
+ 11209e4:	and    rcx,0xfffffffffffffff8
+ 11209e8:	lea    rdi,[rbp-0x1a88]
+ 11209ef:	add    rdi,0x118
+ 11209f6:	xor    edx,edx
+ 11209f8:	mov    rsi,QWORD PTR [rdi-0x118]
+ 11209ff:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a07:	mov    rsi,QWORD PTR [rdi-0xf0]
+ 1120a0e:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a16:	mov    rsi,QWORD PTR [rdi-0xc8]
+ 1120a1d:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a25:	mov    rsi,QWORD PTR [rdi-0xa0]
+ 1120a2c:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a34:	mov    rsi,QWORD PTR [rdi-0x78]
+ 1120a38:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a40:	mov    rsi,QWORD PTR [rdi-0x50]
+ 1120a44:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a4c:	mov    rsi,QWORD PTR [rdi-0x28]
+ 1120a50:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a58:	mov    rsi,QWORD PTR [rdi]
+ 1120a5b:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a63:	add    rdx,0x8
+ 1120a67:	add    rdi,0x140
+ 1120a6e:	cmp    rcx,rdx
+ 1120a71:	jne    11209f8 <core.runtime.Runtime.drainJournal+0x3b48>
+ 1120a73:	test   rax,rax
+ 1120a76:	je     1120aa5 <core.runtime.Runtime.drainJournal+0x3bf5>
+ 1120a78:	lea    rcx,[rdx+rdx*4]
+ 1120a7c:	lea    rcx,[rcx*8-0x1a88]
+ 1120a84:	add    rcx,rbp
+ 1120a87:	shl    eax,0x3
+ 1120a8a:	lea    rax,[rax+rax*4]
+ 1120a8e:	xor    edx,edx
+ 1120a90:	mov    rsi,QWORD PTR [rcx+rdx*1]
+ 1120a94:	lock dec QWORD PTR [rsi+0x9808]
+ 1120a9c:	add    rdx,0x28
+ 1120aa0:	cmp    rax,rdx
+ 1120aa3:	jne    1120a90 <core.runtime.Runtime.drainJournal+0x3be0>
+ 1120aa5:	mov    QWORD PTR [rbp-0x1088],0x0
+ 1120ab0:	mov    rdx,QWORD PTR [rbp-0x38]
+ 1120ab4:	mov    rdi,QWORD PTR [rdx+0x3110]
+ 1120abb:	mov    rax,QWORD PTR [rdx+0x3118]
+ 1120ac2:	xor    ecx,ecx
+ 1120ac4:	xchg   DWORD PTR [rdx+0x31d4],ecx
+ 1120aca:	cmp    ecx,0x2
+ 1120acd:	jne    111ff70 <core.runtime.Runtime.drainJournal+0x30c0>
+ 1120ad3:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120ad7:	mov    edx,0x1
+ 1120adc:	call   QWORD PTR [rax+0x70]
+ 1120adf:	jmp    111ff70 <core.runtime.Runtime.drainJournal+0x30c0>
+ 1120ae4:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120ae8:	mov    edx,0x1
+ 1120aed:	mov    ebx,eax
+ 1120aef:	call   QWORD PTR [rcx+0x70]
+ 1120af2:	mov    eax,ebx
+ 1120af4:	jmp    112059f <core.runtime.Runtime.drainJournal+0x36ef>
+ 1120af9:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120afd:	mov    edx,0x1
+ 1120b02:	call   QWORD PTR [rax+0x70]
+ 1120b05:	jmp    11201d8 <core.runtime.Runtime.drainJournal+0x3328>
+ 1120b0a:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120b0e:	mov    edx,0x1
+ 1120b13:	call   QWORD PTR [rax+0x70]
+ 1120b16:	jmp    1120697 <core.runtime.Runtime.drainJournal+0x37e7>
+ 1120b1b:	mov    rsi,QWORD PTR [rbp-0x50]
+ 1120b1f:	mov    edx,0x1
+ 1120b24:	call   QWORD PTR [rax+0x70]
+ 1120b27:	jmp    112079b <core.runtime.Runtime.drainJournal+0x38eb>
+ 1120b2c:	mov    ebx,eax
+ 1120b2e:	jmp    111fdf3 <core.runtime.Runtime.drainJournal+0x2f43>
+ 1120b33:	mov    ebx,eax
+ 1120b35:	mov    r10,QWORD PTR [rbp-0x30]
+ 1120b39:	jmp    111fae4 <core.runtime.Runtime.drainJournal+0x2c34>

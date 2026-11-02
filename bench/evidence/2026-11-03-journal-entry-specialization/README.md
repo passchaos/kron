@@ -1,0 +1,31 @@
+# Journal 入口容量特化实验
+
+当前候选尚未实现/验证，baseline61222f5，productionJournal与之前原4e35989一致，只含新两项回归。前序runtime逐坐标分支、checksum-boundary恢复的queue负向不成为本轮收益基线。
+
+首阶段仅reserveSingleProducer、peekChecked、releaseAfter三个owner入口按immutablecapacitykind选privatecomptime实现，调用子图内不再重复kind判断。privateCapacityMode为rawshift+kind两字节，默认arbitrary，constructorlayout非零/上限验证后赋值。Journal新field仍publicreflection可观察，ABI/size必须实际证实。
+
+任意capacity实现保持原%和/、原shortcircuit/errororder与调用边界，不混divrem求商缓存；pow2实现用validatedshift/mask，nextTurn保当前tail/releaseturn，不省CRC/schema/实际gen/slot/length/marker/head校验。入口wrapper必须tailjump或完全消除，不新增call/return；validator仍原slotChecksum+ready两call/0x58frame。@call.always_tail与aggregateerror返回ABI必须实际编译证明，不失败后悄悄降门槛。
+
+peekBatchChecked、sharedreserve、commit、coldscanRecovery/unchecked入口保持原路径，首三个子图zeroDIV不能宣传完整queuecyclezeroDIV。releaseAfter内部直接same-mode checkedpeek，仍重新CRC/identity检查后durable/rollback/reclaim，不能用validateReclaimIdentity替代。
+
+原shared/SPSC八capacity×0/2^32/max/abort及checksum-valid错误generation拒绝回归首先baseline/new实际发现执行；所有代码编译/测试结束后才冻结binary/runqueuegate。arbitrarybody应除dispatch/reloc外与原code一致，没有newspill/call。两topology8capqueuestable负向则停止，保留源码/失败/原始signedevidence。通过才完整JSON/written/flush/shutdown/cleanup对照及更广门禁，最终Foundation两个前端性能目标不缩窄。
+
+## 首版编译门槛失败
+
+直接journal.zig测试根首次因相对import越界失败，first-module-root-failure.log不是行为覆盖。正确root的默认Debug(stage2_x86_64)拒绝tailcalls；LLVM Debug也失败，因为arbitraryvalidateSlot和For的inferred错误集合形成不同intern函数type，即便运行时参数相同。原始日志分别在musttail-stage2-Debug-failure.log和musttail-LLVM-Debug-failure.log，源码musttail-source.tar.xz冻结。该版本零性能试验，不可推广。
+
+第二variant保留public普通函数/inferrederrorAPI，所有wrapper用always_inline显式消除包装层，For源码泛型仍复用，不偷偷变普通call，不宣称musttail通过。默认Debug/Safe/Fast/generic与实际call/frame/code-sizegate重新判断；inline可能扩大caller/重排layout，任何失败/negative都保留。原tailcall的前置来源只为诊断，不冒充本机compiler精确源码身份。
+
+范围补充：N条正常livebatch只有首record的peek和release子图特化，第2..N条原peekBatchChecked selector+validator各保留两DIV，consumer仍2(N−1)DIV，不是整batch零DIV；sharedreserve仍2DIV，commitgen仍1DIV。baseline新defaultmode测试轴只将mode字段reset改unuseddiscard，原数学全部arbitrary且所有断言相同，beforeperformance/archive未变。原样加不存在字段会编译失败，适配scope在baseline-default-mode-test-note.json。
+
+## 第二版静态否决
+
+alwaysinline版通过默认Debug/Safe/Fast/generic的真实两项回归和78项journal；原baseline相同断言/defaultmode轴适配Safe17项通过。所有source/archive/完整exe/probe/hash及编译失败原始日志均保留。
+
+但实际SPSC reserve574→1046B、133→223指令，原无显式局部rspframe变0xa8，生成多个aggregate返回temp/copy。drain11132→15502B、2132→2988指令，frame0x9e28→0xa168增加832B，静态栈引用448→591。arbitraryvalidatorForfalse本体保持636B/154/frame0x58，但强制inline的arbitrarywrapper变717B/frame0x148；wrapper消除不代表没有成本。
+
+queueprobe也出现明显膨胀：peek744→1508B/frame0xa8→0x420，writtenrelease466→3295B/frame0x60→0xb8，静态calls因复制增长（不代表每record执行全部call）。这些违反预设no-new-frame/spill/copy门槛，因此在静态阶段拒绝，不运行任何queue/fullJSON性能试验，不虚构速度下降百分比。
+
+公开infer错误仍原样，两个musttail失败版本与sretbrokenmodule另保存；不把always_inline当musttail修复。当前生产workspace未应用candidate，源码/CRC/format/预算仍原基线。下一精确固定容量算术研究有独立数学与performance gate，不继承这些产物的比值。
+
+CRC表 identity按实际42个load引用对应的16份1KiB row逐项hash/bytes核对一致；链接器拆分row0与后15row并重排，row1−row0 before5976/after6144，不能从min地址连续取16KiB来宣称table hash相同。物理rodata布局有变化、CRC310条/20VEX算术不变，详情inline-binary-review.json。恢复生产和既有tests逐文件与HEAD61222f5相同，qualification.json记录scope；本轮只有docs/evidence保留，不重复未变生产的全库故障gate。
