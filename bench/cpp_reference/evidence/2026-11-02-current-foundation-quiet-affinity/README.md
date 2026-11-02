@@ -37,6 +37,8 @@
 
 CRC、journal reserve/validate、measure+encode的双遍历合计占显著比例；这些是kron结构化journal/恢复协议的一部分，Foundation + spdlog Memory入口没有等价的CRC/恢复工作。因此E-core差距不能简单归因于单一“慢函数”，也不能通过删除CRC或恢复边界来换取排名。后续应分别研究measure+encode重复遍历、E-core CRC实现和consumer格式化/调度；保留全部recovery、CRC与错误边界。原始`self.txt`/`run.log`与binary身份在`ecore-profile/`。
 
+另在相同E-core上对`consumer_idle=sleep|spin`做5次batch对照：Memory P1中位1.670M→1.691M（+1.2%），P4 1.590M→1.584M（−0.4%）。spin没有改变整体量级，说明当前差距主要不是consumer唤醒策略；原始结果在`ecore-profile/idle-comparison.json`。
+
 ## 复现
 
 ```sh
