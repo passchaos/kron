@@ -1,0 +1,14 @@
+test-fuzz
++- run test kron-fuzz-smoke w
+decoder matrix inline_v1: 353 truncations, 2048 mutations, 1120 valid reencodes
+decoder matrix inline_v3: 361 truncations, 2048 mutations, 1157 valid reencodes
+decoder matrix inline_v4: 369 truncations, 2048 mutations, 1152 valid reencodes
+decoder matrix inline_nested: 340 truncations, 2048 mutations, 1112 valid reencodes
+decoder matrix reference_v2: 205 truncations, 2048 mutations, 1272 valid reencodes
+decoder matrix reference_v5: 213 truncations, 2048 mutations, 1250 valid reencodes
+decoder matrix reference_nested: 265 truncations, 2048 mutations, 1139 valid reencodes
+decoder matrix reference_template: 276 truncations, 2048 mutations, 1117 valid reencodes
+schema refreshed integrity matrix: 54 structural rejections, 93 valid definitions
+persistent Reader matrix: 8 file fixtures, two independent exports each, original bytes unchanged
+failed command: ./.zig-cache/o/3e8f692e284b8dde9b4f35eeeb31f49a/kron-fuzz-smoke --cache-dir=./.zig-cache --seed=0x35cd8e40 --listen=-
+

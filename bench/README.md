@@ -42,6 +42,7 @@
 | [JSON severity固定字面量](evidence/2026-11-02-json-severity-literal/README.md) | 保留优化；JSON probe instructions −2.05%，40项完整shared四组指令中位减少1.68%–1.70%；workflow吞吐正负混合 |
 | [fd4e941与当前源码A/B](evidence/2026-11-02-fd4e941-current-ab/README.md) | E-core 5次batch：current比fd4e941快7.2%–14.6%；P-core窗口噪声大；近期优化未造成E-core回退 |
 | [慢sink过载尾部诊断](evidence/2026-11-02-overload-tail/README.md) | 合成200µs慢sink、64槽；block P1/P4 p99约15–16ms、P16约59–81ms且无丢失；drop p99亚微秒但大量丢弃；fallback p50约0.24ms |
+| [Decoder fuzz重复campaign](evidence/2026-11-02-fuzz-campaign/README.md) | 20次ReleaseSafe test-fuzz、20个唯一seed全部exit0；覆盖truncation/mutation/schema/persistent Reader；非长期sanitizer |
 | [Memory journal单次清零初始化](evidence/2026-11-02-memory-init-zeroing/README.md) | 保留优化；16.8MB journal batch init 9.13→6.64ms（5/5配对下降），sampled区间仍重叠；512B小队列低于噪声 |
 | [Fresh Linux mmap只写header初始化](evidence/2026-11-02-mmap-fresh-zero-init/README.md) | 保留优化；16.8MB journal init 54.2/53.8ms→8.2/6.9ms，5/5配对下降、区间不重叠；ext4 zero契约探针通过，非白名单文件系统完整清零 |
 
