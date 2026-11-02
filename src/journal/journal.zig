@@ -423,7 +423,15 @@ pub const Journal = struct {
                 continue;
             }
             const count_now = self.occupied.fetchAdd(1, .monotonic) + 1;
-            _ = self.high_water.fetchMax(count_now, .monotonic);
+            // The peak only increases after publication. An observed peak
+            // already covering this count needs no contended RMW; a stale
+            // lower observation uses the CAS failure value to preserve concurrent maxima.
+            var peak = self.high_water.load(.monotonic);
+            while (count_now > peak) {
+                if (self.high_water.cmpxchgWeak(peak, count_now, .monotonic, .monotonic)) |current| {
+                    peak = current;
+                } else break;
+            }
             const sequence = position + 1;
             const bytes = self.slotBytes(index);
             // Slots remain unavailable through their in-memory turn even if the

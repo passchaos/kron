@@ -77,6 +77,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-field-keys", "Verify byte equality, duplicate precedence and guarded key slices").dependOn(&run_field_keys.step);
     test_step.dependOn(&run_field_keys.step);
 
+    const journal_peak_module = b.createModule(.{ .root_source_file = b.path("tests/journal_peak.zig"), .target = target, .optimize = optimize });
+    journal_peak_module.addImport("kron", module);
+    const journal_peak_tests = b.addTest(.{ .name = "kron-journal-peak", .root_module = journal_peak_module });
+    const run_journal_peak = b.addRunArtifact(journal_peak_tests);
+    b.step("test-journal-peak", "Verify exact shared peak occupancy across concurrent reservations and recovery").dependOn(&run_journal_peak.step);
+    test_step.dependOn(&run_journal_peak.step);
+
     const single_kron = b.createModule(.{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize, .single_threaded = true, .link_libc = switch (target.result.os.tag) {
         .macos, .ios => true,
         else => if (target.result.abi == .android or (target.result.os.tag == .linux and system_local_time)) true else null,

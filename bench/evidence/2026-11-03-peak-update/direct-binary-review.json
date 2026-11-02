@@ -1,0 +1,35 @@
+{
+  "binary_sha256": "c3fe33c0ba9f2a7d42fca7c274a70ef27862faecf08559db292b2e53a604b683",
+  "scope": "Direct CAS actual full Logger static proof, no timing inference",
+  "ordinary_bytes": {
+    "before": 540,
+    "conditional": 556,
+    "direct": 546
+  },
+  "direct_algorithm": "firstload re-used by CAS, secondload/cmova removed; q>=c exits after failedCAS; first c=old+1 after nogrowth branch",
+  "growth_tag": "setne to rbp-16 and optional tag test on growth only; no new sub-rsp but new realstack store",
+  "schema_bytes": {
+    "before": 665,
+    "conditional": 665,
+    "direct": 296
+  },
+  "schema_cost": "new call ordinary reserve, temporary64B Reservation/error then return assembly; frame0x38->0x78, order schema-ready/reserve/write unchanged",
+  "elf_text_bytes": {
+    "before": 876557,
+    "conditional": 876573,
+    "direct": 876205
+  },
+  "normalized_unchanged": [
+    "reserveSingleProducer",
+    "slotChecksum",
+    "validateSlot",
+    "Crc32.update",
+    "submitSafeDestination"
+  ],
+  "unchanged_sizes": {
+    "SPSC": 574,
+    "slotChecksum": 156,
+    "validateSlot": 636,
+    "CRC": 1412
+  }
+}

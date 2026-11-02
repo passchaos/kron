@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+当前shared high_water用monotonic直接weakCAS，仅在captured count超过已观察peak时更新；发布后峰值只增，因此保持精确历史最大值，occupied/CRC/slot/实时written/SPSC/预算不变。条件包装版因完整负向撤回，direct增长tag栈写与schema新增调用成本保留记录。最终Safe/分发/随机SIGKILL/九目标gate155/155步骤、648/649测试通过（1默认local能力skip，专项执行）；8项public峰值回归覆盖Memory/Mmap普通/schema、60并发wave/648完整记录、失败与重开。930项版本对照核对1.3893亿JSON，百万条吞吐与尾部仍inconclusive，没有普遍提速承诺。最新Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/5组peer领先，对tracing11组peer领先；P-core对spdlog7组、对tracing4组kron领先，其余不确定，目标未达到。精确源码与全部限制见[峰值报告](../bench/evidence/2026-11-03-peak-update/README.md)。
+
 短key两个u32比较、noinline长fallback、显式helper/std包装内联四个候选全部撤回。默认完整流程E-core5组/P-core2组局部收益被1–3字节及9–64字节公共encoder的多组4%–12%回退否决，没有更新Foundation排名。360项实际文件核对3636万JSON、180项encoder控制核对2.43亿次完整输出；全部source、代码审查与正负见[短键报告](../bench/evidence/2026-11-03-short-keys/README.md)。生产field恢复原实现；保留9项公共byte oracle/guard/错误顺序测试和test-field-keys入口。恢复后Safe相关9步骤46项、独立Debug/Fast9项通过，源码分发验证另保留；未因纯测试/文档变化重复整库故障gate。
 
 当前AVX目标的CRC使用128位三操作数PCLMUL，legacy/non-x86 fallback保留；实际Logger更新函数少9次SIMD寄存器复制、无新spill/call，default CRC与三个校验点不变。400项版本对照核对7640万JSON，完整PMU四组instructions约减少0.7%，吞吐/周期/尾部仍正负或不确定，短PMU负向及百万条复测全部保留。Safe/分发/真实SIGKILL/九目标gate151/151步骤、631/632测试通过（1默认local能力skip，六时区专项实际执行）。最终Foundation双拓扑320项核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先，对tracing10组peer领先；P-core对spdlog5组kron领先、对tracing5组kron领先/1组peer领先，其余不确定，目标仍未达到。精确源码、默认校验审查和限制见[CRC VEX报告](../bench/evidence/2026-11-03-crc-pure/README.md)。

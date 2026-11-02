@@ -4,7 +4,9 @@
 
 性能验收目标是同时超过 Foundation/logging + spdlog 和 Foundation/logging + tracing。`analyze.py` 对新的公共 full JSON 报告生成 `foundation_qualification`：按 repetition 配对，不混合 Memory/Mmap、producer 数、batch/sampled 或 CPU 拓扑；至少5轮、两侧与配对比值 spread 均≤10%、95%配对bootstrap区间不跨1才判断该组领先。written flush/close、初始化、完整生命周期与调用 p99/p99.9 独立判定。缺少任一前端或任一选定组的配对不能宣告同时超过；关闭吞吐全部领先也只证明这次选定负载，其他性能轴仍需自己的证据。历史报告保留原统计结果，不批量重写。
 
-当前CRC VEX源码双拓扑320项同轮核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先/7组不确定，对tracing10组peer领先/6组不确定；P-core对spdlog5组kron领先/11组不确定，对tracing5组kron领先/1组peer领先/10组不确定。两个窗口均为`target_not_met_in_selected_cases`，P-core对tracing的SPSC Memory P1 batch约0.928×取得局部负向资格。默认CRC、所有三个校验点和完整输出保持。CRC局部少指令不能推导排名，所有阶段、尾部、负向和资格见[当前CRC报告](../bench/evidence/2026-11-03-crc-pure/README.md)、[E-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-ecore/README.md)与[P-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-pcore/README.md)。
+最新direct shared峰值源码双拓扑320项核对3232万物理JSON：E-core对spdlog3组kron领先/5组peer领先/8组不确定，对tracing11组peer领先/5组不确定；P-core对spdlog7组kron领先/9组不确定，对tracing4组kron领先/12组不确定。E-core为`target_not_met_in_selected_cases`，P-core为`inconclusive`，没有全面超越。默认CRC、精确峰值与所有完成边界保持；少原子更新不能继承为跨库提速。源码身份、负向/复测、阶段和尾部见[峰值报告](../bench/evidence/2026-11-03-peak-update/README.md)、[E-core](../bench/cpp_reference/evidence/2026-11-03-peak-direct-ecore/README.md)与[P-core](../bench/cpp_reference/evidence/2026-11-03-peak-direct-pcore/README.md)。
+
+此前CRC VEX源码双拓扑320项同轮核对3232万JSON：E-core对spdlog3组kron领先/6组peer领先/7组不确定，对tracing10组peer领先/6组不确定；P-core对spdlog5组kron领先/11组不确定，对tracing5组kron领先/1组peer领先/10组不确定。两个窗口均为`target_not_met_in_selected_cases`，P-core对tracing的SPSC Memory P1 batch约0.928×取得局部负向资格。默认CRC、所有三个校验点和完整输出保持。CRC局部少指令不能推导排名，所有阶段、尾部、负向和资格见[当前CRC报告](../bench/evidence/2026-11-03-crc-pure/README.md)、[E-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-ecore/README.md)与[P-core](../bench/cpp_reference/evidence/2026-11-03-crc-vex-pcore/README.md)。
 
 此前Runtime内部提交借用源码的同轮双拓扑320项核对3232万JSON：P-core对spdlog4组、对tracing2组kron局部领先，其余不确定；E-core对spdlog3组peer领先、tracing16组全部不确定，未全面超越。局部栈/指令减少、public caller snapshot与prepared回归和所有正负见[提交报告](../bench/evidence/2026-11-02-submit-abi/README.md)。未确认差距不能被当作已经超过。
 

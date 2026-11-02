@@ -18,6 +18,7 @@
 
 | 证据 | 范围与边界 |
 | --- | --- |
+| [Shared峰值更新](evidence/2026-11-03-peak-update/README.md) | 保留精确directCAS，条件版撤回；930项版本对照/1.3893亿JSON、155步骤完整gate；Foundation双拓扑3232万JSON仍未全面超过，所有负向/复测保留 |
 | [短字段名比较实验](evidence/2026-11-03-short-keys/README.md) | 四候选撤回；默认file可局部赢，但一般小键/长键稳定回退；360项文件/3636万JSON、180项encoder控制/2.43亿完整输出，公共guard/order测试保留 |
 | [CRC纯汇编/VEX实验](evidence/2026-11-03-crc-pure/README.md) | 保留AVX三操作数更新；PMU instructions约−0.7%，400项版本对照/7640万JSON和完整151步骤gate；当前Foundation双拓扑仍未达目标，全部负向/复测保留 |
 | [私有typed capture实验](evidence/2026-11-03-typed-capture/README.md) | 候选撤回；默认PMU instructions约−8.1%，完整E-core吞吐重复负向；metadata别名与clock修改deferred参数回归保留，无新的Foundation排名 |

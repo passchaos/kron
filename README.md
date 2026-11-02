@@ -4,6 +4,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 性能验收目标是超过 **Foundation/logging + spdlog** 和 **Foundation/logging + tracing**，在相同完整输出与完成边界下验证吞吐、生命周期和尾延迟；P-core/E-core分别测量。当前尚未全面达到，逐组结果与资格见 [前端对照](docs/cpp-comparison.md)。
 
+当前共享队列只在峰值增长时更新 `high_water`，直接 CAS 循环保留精确最大值、默认 CRC 和实时 written。完整 Safe/分发/恢复/九目标门禁155步骤成功；百万条复测未确认回退，也未取得普遍吞吐收益。最新双拓扑 Foundation 对照核对3232万 JSON：P-core 对 spdlog 7组、对 tracing 4组局部领先，E-core 仍有明显差距，目标未达到。全部负向、调用成本与资格见[峰值报告](bench/evidence/2026-11-03-peak-update/README.md)。
+
 短字段名比较的四个候选已撤回：默认完整流程有局部收益，但 1–3 字节及长键输入出现稳定回退。生产保持原比较，新增公共字节 oracle、真实 guard page 和错误顺序回归；全部控制组、原始正负与限制见[短键报告](bench/evidence/2026-11-03-short-keys/README.md)。
 
 当前CRC在AVX目标使用三操作数PCLMUL，实际更新函数少9次寄存器复制、完整PMU指令约减少0.7%；默认CRC、三个校验点和恢复保持。完整Safe/分发/SIGKILL/九目标门禁151步骤成功。最新双拓扑Foundation对照核对3232万JSON：P-core对spdlog5组、对tracing5组局部领先，但E-core仍有差距、P-core也有1组对tracing落后，目标未达到；全部负向与复测见[CRC报告](bench/evidence/2026-11-03-crc-pure/README.md)。typed capture候选因完整吞吐回退已撤回，边界回归与[证据](bench/evidence/2026-11-03-typed-capture/README.md)保留。

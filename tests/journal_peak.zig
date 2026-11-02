@@ -1,0 +1,431 @@
+//! Observable peak occupancy contracts through the public Journal API.
+const std = @import("std");
+const builtin = @import("builtin");
+const kron = @import("kron");
+const testing = std.testing;
+const Options = @typeInfo(@TypeOf(kron.Journal.createMemory)).@"fn".params[2].type.?;
+const Reservation = @typeInfo(@TypeOf(kron.Journal.reserve(undefined))).error_union.payload;
+const Record = @typeInfo(@typeInfo(@TypeOf(kron.Journal.peekChecked(undefined))).error_union.payload).optional.child;
+const payload_length = 24;
+
+fn optionsFor(tmp: *const testing.TmpDir, path_buffer: []u8, capacity: usize) !Options {
+    return .{
+        .path = try std.fmt.bufPrint(path_buffer, ".zig-cache/tmp/{s}/peak.journal", .{tmp.sub_path}),
+        .capacity = capacity,
+        .max_record_bytes = payload_length,
+    };
+}
+
+fn expectState(journal: *const kron.Journal, pending: usize, peak: usize) !void {
+    try testing.expectEqual(pending, journal.pending());
+    try testing.expectEqual(pending, journal.count());
+    try testing.expectEqual(peak, journal.highWater());
+}
+
+fn writePayload(buffer: []u8, wave: u32, producer: u32, index: u32, sequence: u64) void {
+    std.mem.writeInt(u32, buffer[0..4], wave, .little);
+    std.mem.writeInt(u32, buffer[4..8], producer, .little);
+    std.mem.writeInt(u32, buffer[8..12], index, .little);
+    std.mem.writeInt(u64, buffer[12..20], sequence, .little);
+    std.mem.writeInt(u32, buffer[20..24], std.hash.Crc32.hash(buffer[0..20]), .little);
+}
+
+fn expectRecord(record: Record, capacity: usize, sequence: u64, wave: u32) !void {
+    try testing.expectEqual(sequence, record.sequence);
+    try testing.expectEqual((sequence - 1) / capacity + 1, record.generation);
+    try testing.expectEqual(@as(usize, payload_length), record.payload.len);
+    try testing.expectEqual(wave, std.mem.readInt(u32, record.payload[0..4], .little));
+    try testing.expectEqual(sequence, std.mem.readInt(u64, record.payload[12..20], .little));
+    // Independent application CRC covers the payload content, while every
+    // peekChecked also verifies the journal's length/generation/slot checksum.
+    try testing.expectEqual(std.hash.Crc32.hash(record.payload[0..20]), std.mem.readInt(u32, record.payload[20..24], .little));
+}
+
+fn append(journal: *kron.Journal, wave: u32, index: u32) !u64 {
+    var reservation = try journal.reserve();
+    defer reservation.abort();
+    writePayload(reservation.buffer(), wave, 0, index, reservation.sequence);
+    try reservation.commit(payload_length);
+    return reservation.sequence;
+}
+
+fn fillDrainRefill(journal: *kron.Journal) !void {
+    const capacity = 4;
+    try expectState(journal, 0, 0);
+    try testing.expectEqual(@as(u64, 0), journal.reservationTarget());
+    var cancelled = try journal.reserve();
+    defer cancelled.abort();
+    try testing.expectEqual(@as(u64, 1), cancelled.sequence);
+    try expectState(journal, 1, 1);
+    for (0..2) |_| {
+        try testing.expectError(error.RecordTooLarge, cancelled.commit(payload_length + 1));
+        try expectState(journal, 1, 1);
+        try testing.expectEqual(@as(u64, 1), journal.reservationTarget());
+        try testing.expectEqual(@as(u64, 0), journal.writtenTarget());
+    }
+    try testing.expectEqual(@as(u64, 2), try append(journal, 0, 0));
+    try expectState(journal, 2, 2);
+    var middle_gap = try journal.reserve();
+    defer middle_gap.abort();
+    try testing.expectEqual(@as(u64, 3), middle_gap.sequence);
+    try expectState(journal, 3, 3);
+    try testing.expectEqual(@as(u64, 4), try append(journal, 0, 1));
+    try expectState(journal, 4, 4);
+    for (0..3) |_| {
+        try testing.expectError(error.Full, journal.reserve());
+        try expectState(journal, 4, 4);
+        try testing.expectEqual(@as(u64, 4), journal.reservationTarget());
+    }
+    // A live gap hides later commits. Abort marks a tombstone; it does not
+    // lower occupancy until the consumer crosses that sequence.
+    try testing.expect((try journal.peekChecked()) == null);
+    cancelled.abort();
+    cancelled.abort();
+    try testing.expectError(error.InvalidReservation, cancelled.commit(0));
+    try expectState(journal, 4, 4);
+    var record = (try journal.peekChecked()) orelse return error.MissingRecord;
+    try expectRecord(record, capacity, 2, 0);
+    try expectState(journal, 3, 4);
+    middle_gap.abort();
+    middle_gap.abort();
+    try expectState(journal, 3, 4);
+    try journal.release(record);
+    try expectState(journal, 2, 4);
+    record = (try journal.peekChecked()) orelse return error.MissingRecord;
+    try expectRecord(record, capacity, 4, 0);
+    try expectState(journal, 1, 4);
+    try testing.expectEqual(@as(u64, 3), journal.writtenTarget());
+    try journal.release(record);
+    try expectState(journal, 0, 4);
+    try testing.expectEqual(@as(u64, 4), journal.writtenTarget());
+
+    var next_sequence: u64 = 5;
+    for ([_]usize{ 1, 2, 4, 3, 4, 1 }, 0..) |wave_size, wave_index| {
+        const wave: u32 = @intCast(wave_index + 1);
+        const wave_start = next_sequence;
+        for (0..wave_size) |index| {
+            var reservation = try journal.reserve();
+            defer reservation.abort();
+            try testing.expectEqual(next_sequence, reservation.sequence);
+            next_sequence += 1;
+            try expectState(journal, index + 1, 4);
+            writePayload(reservation.buffer(), wave, 0, @intCast(index), reservation.sequence);
+            // An oversize commit leaves this same reservation retryable.
+            try testing.expectError(error.RecordTooLarge, reservation.commit(payload_length + 1));
+            try expectState(journal, index + 1, 4);
+            try reservation.commit(payload_length);
+            try testing.expectError(error.InvalidReservation, reservation.commit(payload_length));
+            reservation.abort();
+            try expectState(journal, index + 1, 4);
+        }
+        if (wave_size == capacity) {
+            try testing.expectError(error.Full, journal.reserve());
+            try expectState(journal, wave_size, 4);
+        }
+        for (0..wave_size) |index| {
+            record = (try journal.peekChecked()) orelse return error.MissingRecord;
+            try expectRecord(record, capacity, wave_start + index, wave);
+            try testing.expectEqual(@as(u32, 0), std.mem.readInt(u32, record.payload[4..8], .little));
+            try testing.expectEqual(@as(u32, @intCast(index)), std.mem.readInt(u32, record.payload[8..12], .little));
+            try journal.release(record);
+            try expectState(journal, wave_size - index - 1, 4);
+        }
+        try testing.expect((try journal.peekChecked()) == null);
+        try testing.expectEqual(next_sequence - 1, journal.reservationTarget());
+        try testing.expectEqual(next_sequence - 1, journal.writtenTarget());
+    }
+}
+
+const per_producer = 3;
+const max_producers = 8;
+const Producer = struct {
+    journal: *kron.Journal,
+    reference: ?kron.schema.Ref = null,
+    start: *std.Io.Event,
+    commit: *std.Io.Event,
+    held: std.Io.Event = .unset,
+    wave: u32,
+    id: u32,
+    reserved: usize = 0,
+    committed: usize = 0,
+    failure: ?anyerror = null,
+
+    fn run(self: *@This()) void {
+        self.start.waitUncancelable(testing.io);
+        var reservations: [per_producer]Reservation = undefined;
+        defer for (reservations[0..self.reserved]) |*reservation| reservation.abort();
+        for (&reservations, 0..) |*reservation, index| {
+            reservation.* = (if (self.reference) |reference| self.journal.reserveWithSchema(reference) else self.journal.reserve()) catch |err| {
+                self.failure = err;
+                self.held.set(testing.io);
+                return;
+            };
+            self.reserved += 1;
+            writePayload(reservation.buffer(), self.wave, self.id, @intCast(index), reservation.sequence);
+        }
+        self.held.set(testing.io);
+        self.commit.waitUncancelable(testing.io);
+        for (&reservations) |*reservation| {
+            reservation.commit(payload_length) catch |err| {
+                self.failure = err;
+                return;
+            };
+            self.committed += 1;
+        }
+    }
+};
+
+fn waitHeld(event: *std.Io.Event) !void {
+    const deadline = kron.Deadline.after(testing.io, 5 * std.time.ns_per_s);
+    while (!event.isSet()) event.waitTimeout(testing.io, .{ .deadline = deadline.timestamp }) catch |err| {
+        if (err != error.Timeout) return err;
+        if (deadline.expired(testing.io) and !event.isSet()) return error.TestHandshakeTimeout;
+    };
+}
+
+fn producerWaves(journal: *kron.Journal) !void {
+    return producerWavesWithSchema(journal, null);
+}
+
+fn producerWavesWithSchema(journal: *kron.Journal, reference: ?kron.schema.Ref) !void {
+    const capacity = max_producers * per_producer;
+    const wave_sizes = [_]usize{ 1, 4, 2, 8, 3 };
+    var exact_peak: usize = 0;
+    var next_sequence: u64 = 1;
+    try expectState(journal, 0, exact_peak);
+    for (0..3) |round| {
+        for (wave_sizes, 0..) |producer_count, wave_index| {
+            const wave: u32 = @intCast(round * wave_sizes.len + wave_index);
+            var start: std.Io.Event = .unset;
+            var commit: std.Io.Event = .unset;
+            var producers: [max_producers]Producer = undefined;
+            var threads: [max_producers]std.Thread = undefined;
+            var spawned: usize = 0;
+            // On spawn/assertion failure, unblock and join every owner before
+            // stack data or the journal can be destroyed.
+            defer {
+                start.set(testing.io);
+                commit.set(testing.io);
+                for (threads[0..spawned]) |thread| thread.join();
+            }
+            for (0..producer_count) |id| {
+                producers[id] = .{ .journal = journal, .reference = reference, .start = &start, .commit = &commit, .wave = wave, .id = @intCast(id) };
+                threads[id] = try std.Thread.spawn(.{}, Producer.run, .{&producers[id]});
+                spawned += 1;
+            }
+            start.set(testing.io);
+            for (producers[0..producer_count]) |*producer| try waitHeld(&producer.held);
+            var held_total: usize = 0;
+            for (producers[0..producer_count]) |producer| {
+                if (producer.failure) |err| return err;
+                held_total += producer.reserved;
+                try testing.expectEqual(@as(usize, 0), producer.committed);
+            }
+            try testing.expectEqual(producer_count * per_producer, held_total);
+            // Every successful reservation is still held and no consumer has
+            // run: this observable total fixes the exact peak independently
+            // of the implementation's atomic update strategy.
+            exact_peak = @max(exact_peak, held_total);
+            try expectState(journal, held_total, exact_peak);
+            try testing.expectEqual(next_sequence + held_total - 1, journal.reservationTarget());
+            if (held_total == capacity) {
+                try testing.expectError(error.Full, journal.reserve());
+                try expectState(journal, held_total, exact_peak);
+            }
+            commit.set(testing.io);
+            for (threads[0..spawned]) |thread| thread.join();
+            spawned = 0;
+            var committed_total: usize = 0;
+            for (producers[0..producer_count]) |producer| {
+                if (producer.failure) |err| return err;
+                committed_total += producer.committed;
+            }
+            try testing.expectEqual(held_total, committed_total);
+            try expectState(journal, held_total, exact_peak);
+            // Drain only after ALL joins. Producer scheduling may permute the
+            // ids, but public reservation sequences must be contiguous.
+            var seen: [max_producers][per_producer]bool = @splat(@splat(false));
+            for (0..committed_total) |index| {
+                const record = (try journal.peekChecked()) orelse return error.MissingRecord;
+                try testing.expectEqualDeep(reference, record.schema_ref);
+                try expectRecord(record, capacity, next_sequence, wave);
+                next_sequence += 1;
+                const producer = std.mem.readInt(u32, record.payload[4..8], .little);
+                const item = std.mem.readInt(u32, record.payload[8..12], .little);
+                try testing.expect(producer < producer_count and item < per_producer);
+                try testing.expect(!seen[producer][item]);
+                seen[producer][item] = true;
+                try journal.release(record);
+                try expectState(journal, committed_total - index - 1, exact_peak);
+            }
+            for (seen[0..producer_count]) |items| try testing.expect(std.mem.allEqual(bool, &items, true));
+            try testing.expect((try journal.peekChecked()) == null);
+            try expectState(journal, 0, exact_peak);
+            try testing.expectEqual(next_sequence - 1, journal.writtenTarget());
+        }
+    }
+    try testing.expectEqual(@as(usize, capacity), exact_peak);
+    try testing.expectEqual(@as(u64, 3 * 18 * per_producer), next_sequence - 1);
+}
+
+fn crcRetainsOccupancy(journal: *kron.Journal) !void {
+    try testing.expectEqual(@as(u64, 1), try append(journal, 7, 0));
+    try testing.expectEqual(@as(u64, 2), try append(journal, 7, 1));
+    try expectState(journal, 2, 2);
+    const first = (try journal.peekChecked()) orelse return error.MissingRecord;
+    try expectRecord(first, 2, 1, 7);
+    // Deliberately inject a storage fault through a public borrowed payload;
+    // these fixtures own writable backing. Normal consumers never mutate it.
+    const payload = @constCast(first.payload);
+    payload[0] ^= 0x80;
+    try testing.expectError(error.CorruptRecord, journal.peekChecked());
+    try testing.expectError(error.CorruptRecord, journal.release(first));
+    try expectState(journal, 2, 2);
+    try testing.expectEqual(@as(u64, 0), journal.writtenTarget());
+    try testing.expectError(error.Full, journal.reserve());
+    payload[0] ^= 0x80;
+    for (1..3) |sequence| {
+        const record = (try journal.peekChecked()) orelse return error.MissingRecord;
+        try expectRecord(record, 2, sequence, 7);
+        try journal.release(record);
+        try expectState(journal, 2 - sequence, 2);
+    }
+    try testing.expect((try journal.peekChecked()) == null);
+}
+
+test "memory journal peak: fill drain refill and failed full oversize abort preserve occupancy" {
+    if (!kron.platform.memory_queue) return error.SkipZigTest;
+    const journal = try kron.Journal.createMemory(testing.allocator, testing.io, .{ .path = "", .capacity = 4, .max_record_bytes = payload_length });
+    defer journal.deinit();
+    try testing.expect(!journal.isPersistent());
+    try fillDrainRefill(journal);
+}
+
+test "mmap journal peak: fill drain refill and failed full oversize abort preserve occupancy" {
+    if (!kron.platform.shared_journal) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [160]u8 = undefined;
+    const journal = try kron.Journal.create(testing.allocator, testing.io, try optionsFor(&tmp, &path_buffer, 4));
+    defer journal.deinit();
+    try testing.expect(journal.isPersistent());
+    try fillDrainRefill(journal);
+}
+
+test "memory journal peak: simultaneous producer waves retain exact maximum after all joins" {
+    if (!kron.platform.memory_queue or builtin.single_threaded) return error.SkipZigTest;
+    const journal = try kron.Journal.createMemory(testing.allocator, testing.io, .{ .path = "", .capacity = max_producers * per_producer, .max_record_bytes = payload_length });
+    defer journal.deinit();
+    try producerWaves(journal);
+}
+
+test "mmap journal peak: simultaneous producer waves retain exact maximum after all joins" {
+    if (!kron.platform.shared_journal or builtin.single_threaded) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [160]u8 = undefined;
+    const journal = try kron.Journal.create(testing.allocator, testing.io, try optionsFor(&tmp, &path_buffer, max_producers * per_producer));
+    defer journal.deinit();
+    try producerWaves(journal);
+}
+
+test "schema journal peak: concurrent memory and mmap reservations preserve exact maximum and reference" {
+    if (builtin.single_threaded) return error.SkipZigTest;
+    inline for (.{ false, true }) |persistent| {
+        if (persistent and !kron.platform.shared_journal) continue;
+        if (!persistent and !kron.platform.memory_queue) continue;
+        var tmp = testing.tmpDir(.{});
+        defer tmp.cleanup();
+        var path_buffer: [160]u8 = undefined;
+        var options = try optionsFor(&tmp, &path_buffer, max_producers * per_producer);
+        options.schema_capacity = 2;
+        options.max_schema_bytes = 1024;
+        const journal = if (persistent)
+            try kron.Journal.create(testing.allocator, testing.io, options)
+        else
+            try kron.Journal.createMemory(testing.allocator, testing.io, options);
+        defer journal.deinit();
+        const reference = try journal.registerSchema(.{ .scope = "peak.schema", .message = "held record" });
+        try producerWavesWithSchema(journal, reference);
+    }
+}
+
+test "memory journal peak: CRC failure retains pending records and peak" {
+    if (!kron.platform.memory_queue) return error.SkipZigTest;
+    const journal = try kron.Journal.createMemory(testing.allocator, testing.io, .{ .path = "", .capacity = 2, .max_record_bytes = payload_length });
+    defer journal.deinit();
+    try crcRetainsOccupancy(journal);
+}
+
+test "mmap journal peak: CRC failure retains pending records and peak" {
+    if (!kron.platform.shared_journal) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [160]u8 = undefined;
+    const journal = try kron.Journal.create(testing.allocator, testing.io, try optionsFor(&tmp, &path_buffer, 2));
+    defer journal.deinit();
+    try crcRetainsOccupancy(journal);
+}
+
+test "mmap journal peak: reopen rebuilds peak from pending commits across gaps and resets an empty journal" {
+    if (!kron.platform.shared_journal) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [160]u8 = undefined;
+    const options = try optionsFor(&tmp, &path_buffer, 8);
+    const first = try kron.Journal.create(testing.allocator, testing.io, options);
+    var first_live = true;
+    defer if (first_live) first.deinit();
+    for (0..4) |index| try testing.expectEqual(@as(u64, index + 1), try append(first, 9, @intCast(index)));
+    _ = try first.reserve(); // Deliberately abandoned at this opening's close.
+    var aborted = try first.reserve();
+    aborted.abort();
+    try expectState(first, 6, 6);
+    for (1..3) |sequence| {
+        const record = (try first.peekChecked()) orelse return error.MissingRecord;
+        try expectRecord(record, 8, sequence, 9);
+        try first.release(record);
+    }
+    try expectState(first, 4, 6);
+    const identity = first.sessionIdentity();
+    first.deinit();
+    first_live = false;
+
+    const second = try kron.Journal.create(testing.allocator, testing.io, options);
+    var second_live = true;
+    defer if (second_live) second.deinit();
+    try testing.expectEqual(identity, second.sessionIdentity());
+    try expectState(second, 2, 2);
+    try testing.expectEqual(@as(u64, 6), second.reservationTarget());
+    try testing.expectEqual(@as(u64, 2), second.writtenTarget());
+    for (0..2) |index| {
+        const record = (try second.recoveryRecordAt(index)) orelse return error.MissingRecord;
+        try expectRecord(record, 8, index + 3, 9);
+        try expectState(second, 2, 2);
+    }
+    try testing.expect((try second.recoveryRecordAt(2)) == null);
+    try testing.expectEqual(@as(u64, 7), try append(second, 10, 0));
+    try expectState(second, 3, 3);
+    for ([_]u64{ 3, 4, 7 }, 0..) |sequence, index| {
+        const record = (try second.peekChecked()) orelse return error.MissingRecord;
+        try expectRecord(record, 8, sequence, if (sequence == 7) 10 else 9);
+        try second.release(record);
+        try expectState(second, 2 - index, 3);
+    }
+    try testing.expectEqual(@as(u64, 7), second.writtenTarget());
+    second.deinit();
+    second_live = false;
+
+    const third = try kron.Journal.create(testing.allocator, testing.io, options);
+    defer third.deinit();
+    try expectState(third, 0, 0);
+    try testing.expectEqual(@as(u64, 7), third.reservationTarget());
+    try testing.expectEqual(@as(u64, 7), third.writtenTarget());
+    try testing.expect((try third.peekChecked()) == null);
+    try testing.expectEqual(@as(u64, 8), try append(third, 11, 0));
+    try expectState(third, 1, 1);
+    const record = (try third.peekChecked()) orelse return error.MissingRecord;
+    try expectRecord(record, 8, 8, 11);
+    try third.release(record);
+    try expectState(third, 0, 1);
+}

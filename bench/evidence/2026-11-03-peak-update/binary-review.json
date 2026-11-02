@@ -1,0 +1,59 @@
+{
+  "scope": "read-only full reference binary and normalized relocation audit, no throughput claim",
+  "binary_sha256": {
+    "before-reference": "d038139eaab1b02e0ef21b6df441bd2e9a8e0ea7f770c0710b6323f154c0f47c",
+    "after-reference": "b4502bcb11362c812a1a0e016aa01248ceb81481ada4d84df69a0b2dffa12216"
+  },
+  "layout": {
+    "Journal_bytes": 768,
+    "occupied": 720,
+    "high_water": 728,
+    "before_equals_after": true
+  },
+  "before": {
+    "ordinary_reserve_bytes": 540,
+    "schema_reserve_bytes": 665,
+    "spsc_reserve_bytes": 574,
+    "crc_update_bytes": 1412
+  },
+  "after": {
+    "ordinary_reserve_bytes": 556,
+    "schema_reserve_bytes": 665,
+    "spsc_reserve_bytes": 574,
+    "crc_update_bytes": 1412
+  },
+  "guards": {
+    "ordinary": [
+      "0x10fb6dd",
+      "0x10fb6e4",
+      "0x10fb6e7",
+      "0x10fb715"
+    ],
+    "schema": [
+      "0x10fb8f9",
+      "0x10fb900",
+      "0x10fb903",
+      "0x10fb925"
+    ],
+    "condition": "compare uses occupied old=c-1; old<peak iff c<=peak, skips locked CAS"
+  },
+  "normalized_unchanged": [
+    "reserveSingleProducer",
+    "Crc32.update",
+    "slotChecksum",
+    "validateSlot",
+    "peekChecked",
+    "submitSafeDestination",
+    "drainJournal"
+  ],
+  "crc_retained": [
+    "producer0x10fd008/0x10fd01a/0x10fd02a",
+    "initial checked batch0x111cc01",
+    "reclaim checked peek0x111d7f6"
+  ],
+  "no_new": [
+    "calls",
+    "stack_accesses",
+    "heap_allocations"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "source_verified_before": true,
+  "source_verified_after": true,
+  "results": [
+    {
+      "name": "direct-final-debug",
+      "command": [
+        "zig",
+        "test",
+        "-O",
+        "Debug",
+        "--dep",
+        "kron",
+        "-Mroot=tests/journal_peak.zig",
+        "-O",
+        "Debug",
+        "-Mkron=src/root.zig"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "baseline-extended-safe",
+      "command": [
+        "zig",
+        "test",
+        "-O",
+        "ReleaseSafe",
+        "--dep",
+        "kron",
+        "-Mroot=tests/journal_peak.zig",
+        "-O",
+        "ReleaseSafe",
+        "-Mkron=.zig-cache/peak-update/before/src/root.zig"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "full-safe",
+      "command": [
+        "zig",
+        "build",
+        "verify-local",
+        "test-package-distribution",
+        "check-platforms",
+        "-Doptimize=ReleaseSafe",
+        "-j1",
+        "--summary",
+        "all"
+      ],
+      "exit_code": 0
+    }
+  ]
+}
