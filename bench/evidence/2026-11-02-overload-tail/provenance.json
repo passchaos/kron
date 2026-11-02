@@ -1,0 +1,19 @@
+{
+  "binary_path": ".zig-cache/kron-overload-probe",
+  "binary_sha256": "0e49cc6beeb2eb4928ceace027d4d7650c28153e37179120af0660ff8325a79c",
+  "probe_source_sha256": "2a4c7b5bda4ae43e03294ccd0957cef5711dbb9d40ed7bfdc9c7e6e4c728b49c",
+  "build_command": [
+    "zig",
+    "build-exe",
+    "-O",
+    "ReleaseFast",
+    "--dep",
+    "kron",
+    "-Mroot=bench/evidence/2026-11-02-overload-tail/probe.zig",
+    "-O",
+    "ReleaseFast",
+    "-Mkron=src/root.zig",
+    "-femit-bin=.zig-cache/kron-overload-probe"
+  ],
+  "scope": "Slow sink sleeps 200us per record; queue 64 slots/512B; 1000 events; block/drop_newest/fallback_sync; P1/P4; 5 trials; E-core CPU16/18/20/22/24/26."
+}
