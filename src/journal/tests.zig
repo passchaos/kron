@@ -1,6 +1,7 @@
 const std = @import("std");
 const journal = @import("journal.zig");
 const format = @import("format.zig");
+const mapping = @import("../platform/mapping.zig");
 const testing = std.testing;
 
 fn pathFor(tmp: *const testing.TmpDir, buffer: []u8) ![]const u8 {
@@ -469,4 +470,15 @@ test "parallel producers wrap without duplicates or payload damage" {
         received += 1;
     }
     try testing.expectEqual(@as(usize, 0), j.pending());
+}
+test "fresh mapped zero capability implies zero body" {
+    if (!mapping.supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [192]u8 = undefined;
+    const path = try std.fmt.bufPrint(&path_buffer, ".zig-cache/tmp/{s}/fresh.journal", .{tmp.sub_path});
+    var map = mapping.Mapping.open(testing.io, path, 4 * 4096) catch return error.SkipZigTest;
+    defer map.deinit();
+    if (!map.fresh_zeroed) return error.SkipZigTest;
+    try testing.expect(std.mem.allEqual(u8, map.bytes, 0));
 }

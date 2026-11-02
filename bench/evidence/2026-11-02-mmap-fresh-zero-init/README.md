@@ -24,8 +24,9 @@
 ## 正确性
 
 - 现有journal roundtrip、mmap恢复、schema、CRC、真实SIGKILL和平台对象测试全部执行。
+- 新增`fresh mapped zero capability implies zero body`测试：平台报告`fresh_zeroed`时检查新映射body全零；非白名单/非支持平台skip。
 - Debug与ReleaseFast测试通过。
-- ReleaseSafe完整门禁151/151步骤、641/642项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL、单线程、时间oracle与全部示例；日志中的compression/tsc诊断带Zig build的“failed command”字样，但对应step success、整个命令exit0。
+- ReleaseSafe完整门禁151/151步骤、642/643项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL、单线程、时间oracle与全部示例；日志中的compression/tsc诊断带Zig build的“failed command”字样，但对应step success、整个命令exit0。
 - 未做Windows/macOS/Android/iOS设备运行声明；这些平台继续完整清零，只有prefault读替换。
 
 ## 初始化测量
