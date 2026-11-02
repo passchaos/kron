@@ -2,6 +2,8 @@
 
 Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交、普通文本/JSON、文件轮转、动态过滤与配置、脱敏、归档和明确的恢复边界。目标是同时降低应用开销、保持输出可读性并验证可靠性。
 
+性能验收目标是超过 **Foundation/logging + spdlog** 和 **Foundation/logging + tracing**，在相同完整输出与完成边界下验证吞吐、生命周期和尾延迟；P-core/E-core分别测量。当前尚未全面达到，逐组结果与资格见 [前端对照](docs/cpp-comparison.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始

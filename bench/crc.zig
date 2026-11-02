@@ -14,10 +14,20 @@ pub fn main(init: std.process.Init) !void {
     var output_bytes: [4096]u8 = undefined;
     var output = std.Io.File.stdout().writerStreaming(init.io, &output_bytes);
     const iterations = 10000;
-    for ([_]usize{ 64, 256, 512, 2048, 16384 }) |length| for ([_]bool{ false, true }) |schema| {
+    for ([_]usize{ 0, 19, 20, 21, 43, 44, 45, 63, 64, 65, 76, 79, 80, 81, 127, 128, 129, 255, 256, 257, 511, 512, 513, 2048, 16384 }) |length| for ([_]bool{ false, true }) |schema| {
         for (0..16) |offset| {
             const payload = data[offset..][0..length];
             try std.testing.expectEqual(std.hash.Crc32.hash(payload), Crc32.hash(payload));
+            @memset(&header, 0);
+            var oracle = std.hash.Crc32.init();
+            oracle.update(&header);
+            if (schema) oracle.update(&reference);
+            oracle.update(payload);
+            var checked = Crc32.init();
+            checked.update(&header);
+            if (schema) checked.update(&reference);
+            checked.update(payload);
+            try std.testing.expectEqual(oracle.final(), checked.final());
         }
         for (0..5) |repetition| {
             var checksum: u64 = 0;
@@ -27,9 +37,10 @@ pub fn main(init: std.process.Init) !void {
                 std.mem.writeInt(u64, header[8..16], iteration / 256 + 1, .little);
                 std.mem.writeInt(u32, header[16..20], @intCast(length), .little);
                 var crc = Crc32.init();
+                const payload = data[iteration % 16 ..][0..length];
                 crc.update(&header);
                 if (schema) crc.update(&reference);
-                crc.update(data[iteration % 16 ..][0..length]);
+                crc.update(payload);
                 const result = crc.final();
                 std.mem.doNotOptimizeAway(result);
                 checksum +%= result;

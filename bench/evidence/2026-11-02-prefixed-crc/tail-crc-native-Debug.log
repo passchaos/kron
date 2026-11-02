@@ -1,0 +1,7 @@
+zig test src/platform/crc32.zig -O Debug
+1/5 crc32.test.sliced IEEE CRC32 standard vectors match the persisted polynomial...OK
+2/5 crc32.test.sliced CRC matches standard oracle across lengths alignments and incremental partitions...OK
+3/5 crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
+4/5 crc32.test.compile-time PCLMUL path matches the portable oracle across block and partition boundaries...OK
+5/5 crc32.test.prefixed CRC matches independent oracle for journal boundaries alignments and arbitrary states...OK
+All 5 tests passed.

@@ -264,12 +264,13 @@ def main():
     pins = json.loads((HERE / "versions.json").read_text())
     manifest = {
         "captured_unix_seconds": time.time(), "host": dict(platform.uname()._asdict()),
+        "loadavg_before": os.getloadavg(),
         "logical_cpus": os.cpu_count(), "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "child_affinity": chosen_cpus, "configuration": vars(options),
         "compiler": command_metadata([options.compiler, "--version"]), "zig": command_metadata([options.zig, "version"]),
         "filesystem": command_metadata(["findmnt", "-T", str(output), "-o", "SOURCE,FSTYPE,OPTIONS", "--json"]),
         "cpu_topology": command_metadata(["lscpu", "--json"]),
-        "dependencies": {}, "builds": {}, "source_sha256": {name: sha256(HERE / name) for name in ("reference.cpp", "kron_reference.zig", "foundation_tracing_reference.rs", "versions.json", "run.py")},
+        "dependencies": {}, "builds": {}, "source_sha256": {name: sha256(HERE / name) for name in ("reference.cpp", "kron_reference.zig", "foundation_tracing_reference.rs", "versions.json", "run.py", "analyze.py", "qualification.py")},
         "notes": ["Identical logical event and five numeric attributes; kron adds structured event metadata.",
                   "C++ volatile queues lack mmap process-crash recovery; these results are not a universal ranking.",
                   "Queue bounds use different units and include separately reported backend transit storage."]}
@@ -371,6 +372,8 @@ def main():
                         journal.unlink()
                     for spool in artifacts.glob(artifact.name + "*.spool"):
                         spool.unlink()
+    manifest["loadavg_after"] = os.getloadavg()
+    (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     groups = collections.defaultdict(list)
     for row in rows:
         if row["status"] == "ok":

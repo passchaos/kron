@@ -181,6 +181,8 @@ SIGKILL 测试不是断电测试。durable 保证必须通过虚拟机/块设备
 
 比较 kron、spdlog、Quill、fmtlog、NanoLog、Binlog 等时固定消息、输出格式、时钟、queue/memory 预算、丢弃策略、最终 drain 和持久化边界。无法对齐的测试分别展示，不能用二进制吞吐给文本输出排名。
 
+当前明确的性能验收目标是超过本地 Foundation/logging + spdlog 和 Foundation/logging + tracing 两个真实前端组合。公共完整 JSON 的 shared/SPSC、Memory/Mmap、P1/P4、batch/sampled 在 P-core 与 E-core 分别同轮重复；written flush、关闭、初始化、完整生命周期与 p99/p99.9 分别报告。默认 CRC 和恢复协议继续保留，可选 Memory CRC opt-out 独立列出。只有配对轮次完整、两侧与比值波动达标、区间证明领先时才认定该组超过；局部结果不能替代全部验收。
+
 基线目标：内建热路径零 allocator 调用；scope filter 稳态为少量原子读取/比较；低延迟 producer 不格式化、不逐条系统调用、不抢全局提交锁。mmap fault 和背压成本单独报告。
 
 绝对纳秒/吞吐指标在实现后固定机器建立。稳定基线后设同环境 5%–10% 回归门限；噪声和样本不足不能被误判为优化收益。

@@ -313,6 +313,8 @@ pub fn build(b: *std.Build) void {
     const cpp_reference_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_reference.py" });
     const cpp_reference_report = b.step("test-cpp-reference-report", "Reject incomplete workflow output, backend fallback and changed workload budgets");
     cpp_reference_report.dependOn(&cpp_reference_report_tests.step);
+    const foundation_qualification_tests = b.addSystemCommand(&.{ "python3", "tests/test_foundation_qualification.py" });
+    cpp_reference_report.dependOn(&foundation_qualification_tests.step);
     const cpp_backend_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_backend_comparison.py" });
     cpp_reference_report.dependOn(&cpp_backend_report_tests.step);
     const initialization_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_initialization_compare.py" });

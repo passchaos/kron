@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 import statistics
+from qualification import foundation_comparisons
 
 
 def distribution(values):
@@ -37,10 +38,24 @@ def analyze(folder):
         assert row["drop"] == row["final_pending"] == 0 and row["metadata"] == options["metadata"]
         assert row["lifecycle_ns"] == row["init_ns"] + row["preparation_ns"] + row["total_ns"]
         assert row["total_ns"] == sum(row[key] for key in ("producer_wall_ns", "flush_ns", "shutdown_ns", "cleanup_ns"))
+        row["written_flush_records_per_sec"] = row["events"] * 1e9 / (row["producer_wall_ns"] + row["flush_ns"])
         grouped[(row["library"], row["case"], row["producers"], row["phase"])].append(row)
+    expected_keys = set()
+    for library in options["libraries"].split(","):
+        cases = ["producer_format"]
+        if library in {"foundation", "foundation_tracing"}:
+            cases = options["kron_storages"].split(",")
+        elif library == "quill":
+            cases = ["producer_format", "deferred_format"]
+        elif library == "kron":
+            schemas = (False, True) if options["kron_schema"] == "both" else (options["kron_schema"] == "on",)
+            cases = [f"{mode}-{storage}-{'schema' if schema else 'inline'}" for mode in options["kron_modes"].split(",") for storage in options["kron_storages"].split(",") for schema in schemas]
+        expected_keys.update((library, case, int(producers), phase) for case in cases for producers in options["producers"].split(",") for phase in ("batch", "sampled"))
+    assert set(grouped) == expected_keys, "missing or unexpected comparison group"
     groups = []
     for key, selected in sorted(grouped.items()):
         assert len(selected) == options["repeats"], key
+        assert {row["repetition"] for row in selected} == set(range(options["repeats"])), "missing or duplicated repetition"
         metrics = {metric: distribution([row[metric] for row in selected]) for metric in
                    ("init_ns", "preparation_ns", "producer_wall_ns", "flush_ns", "shutdown_ns", "cleanup_ns", "total_ns", "lifecycle_ns", "written_bytes", "written_records_per_sec", "lifecycle_records_per_sec")}
         metrics["written_flush_records_per_sec"] = distribution([row["events"] * 1e9 / (row["producer_wall_ns"] + row["flush_ns"]) for row in selected])
@@ -59,6 +74,8 @@ def analyze(folder):
               "configuration": options, "affinity": manifest["child_affinity"], "groups": groups,
               "scope": ("Native build_tracing text, five numeric event fields, UTC time/file/line/thread metadata. This is a separate control, not the common JSON comparison." if options["metadata"] == "native_tracing" else "Full JSON fields and system-clock capture, with all file records independently verified.") + " Written flush, final close and initialization are separate metrics; no durable media synchronization.",
               "noise_limit": .10}
+    if options["metadata"] == "full":
+        report["foundation_qualification"] = foundation_comparisons(grouped)
     return report
 
 
@@ -73,23 +90,34 @@ def markdown(report):
              "| --- | ---: | ---: | ---: | ---: | --- |"]
     names = sorted({item[0] for item in batch})
     for label in names:
-        one, four = batch[(label, 1)], batch[(label, 4)]
-        values = [group["metrics"][metric]["median"] / 1e6 for metric in ("written_flush_records_per_sec", "written_close_records_per_sec") for group in (one, four)]
-        lines.append(f"| {label} | {values[0]:.3f} | {values[1]:.3f} | {values[2]:.3f} | {values[3]:.3f} | {'有' if one['process_crash_recovery'] else '无'} |")
+        one, four = batch.get((label, 1)), batch.get((label, 4))
+        values = [f"{group['metrics'][metric]['median'] / 1e6:.3f}" if group else "—" for metric in ("written_flush_records_per_sec", "written_close_records_per_sec") for group in (one, four)]
+        lines.append(f"| {label} | {values[0]} | {values[1]} | {values[2]} | {values[3]} | {'有' if (one or four)['process_crash_recovery'] else '无'} |")
     lines += ["", "| 配置 | 1线程调用 p50/p99 ns | 4线程调用 p50/p99 ns | 1线程初始化 ms | 4线程初始化 ms |",
               "| --- | ---: | ---: | ---: | ---: |"]
     for label in names:
-        one, four = sampled[(label, 1)], sampled[(label, 4)]
-        quantiles = [f"{group['metrics']['p50_ns']['median']:,.0f} / {group['metrics']['p99_ns']['median']:,.0f}" for group in (one, four)]
-        init = [batch[(label, p)]["metrics"]["init_ns"]["median"] / 1e6 for p in (1, 4)]
-        lines.append(f"| {label} | {quantiles[0]} | {quantiles[1]} | {init[0]:.3f} | {init[1]:.3f} |")
+        one, four = sampled.get((label, 1)), sampled.get((label, 4))
+        quantiles = [f"{group['metrics']['p50_ns']['median']:,.0f} / {group['metrics']['p99_ns']['median']:,.0f}" if group else "—" for group in (one, four)]
+        init = [f"{batch[(label, p)]['metrics']['init_ns']['median'] / 1e6:.3f}" if (label, p) in batch else "—" for p in (1, 4)]
+        lines.append(f"| {label} | {quantiles[0]} | {quantiles[1]} | {init[0]} | {init[1]} |")
     lines += ["", "| 配置 | 1线程100k完整生命周期 ms | 4线程100k完整生命周期 ms | 1线程shutdown ms | 4线程shutdown ms | 4线程输出 bytes/event |",
               "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for label in names:
-        values = [batch[(label, p)]["metrics"][metric]["median"] / 1e6 for metric in ("lifecycle_ns", "shutdown_ns") for p in (1, 4)]
-        size = batch[(label, 4)]["metrics"]["bytes_per_event"]["median"]
-        lines.append(f"| {label} | {values[0]:.3f} | {values[1]:.3f} | {values[2]:.3f} | {values[3]:.3f} | {size:.2f} |")
+        values = [f"{batch[(label, p)]['metrics'][metric]['median'] / 1e6:.3f}" if (label, p) in batch else "—" for metric in ("lifecycle_ns", "shutdown_ns") for p in (1, 4)]
+        size = f"{batch[(label, 4)]['metrics']['bytes_per_event']['median']:.2f}" if (label, 4) in batch else "—"
+        lines.append(f"| {label} | {values[0]} | {values[1]} | {values[2]} | {values[3]} | {size} |")
     lines += ["", "各指标的min/max、relative spread和10%噪声门限结论在analysis.json中；不要用这张中位数表替代稳定性资格。输出文件逐条核验后可被驱动清理，原始试验报告保留文件哈希和物理字节/记录数。", ""]
+    if "foundation_qualification" in report:
+        qualification = report["foundation_qualification"]
+        lines += ["Foundation 配对资格：`" + qualification["written_close_assessment"] + "`。比值大于1表示kron更快；至少5轮、两侧和配对比值spread均≤10%、95%配对bootstrap区间不跨1才判断领先。初始化、完整生命周期与p99/p99.9单独判定。", "",
+                  "| kron配置 | Foundation前端 | producers | phase | 包含关闭速度比 | 95%区间 | 资格 |",
+                  "| --- | --- | ---: | --- | ---: | --- | --- |"]
+        for item in qualification["comparisons"]:
+            metric = item["metrics"]["written_records_per_sec"]
+            ratio = metric.get("paired_speed_ratio", float("nan"))
+            interval = metric.get("paired_ratio_ci95", [float("nan"), float("nan")])
+            lines.append(f"| {item['kron_configuration']} | {item['peer']} | {item['producers']} | {item['phase']} | {ratio:.3f} | {interval[0]:.3f}..{interval[1]:.3f} | {metric['assessment']} |")
+        lines.append("")
     return "\n".join(lines)
 
 

@@ -1,0 +1,35 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 10K of event 'cpu_atom/cycles/u'
+# Event count (approx.): 5161225529
+#
+# Overhead  Command         Shared Object     Symbol                                                       
+# ........  ..............  ................  .............................................................
+#
+    13.45%  reference-kron  reference-kron    [.] core.runtime.Runtime.submitSafeDestination
+    12.61%  reference-kron  reference-kron    [.] core.runtime.Runtime.begin
+    10.67%  reference-kron  reference-kron    [.] journal.journal.Journal.reserve
+     9.50%  reference-kron  reference-kron    [.] platform.crc32.Crc32.update
+     7.16%  reference-kron  reference-kron    [.] encoder.common.encodeJsonWithAttributes__anon_39896
+     5.34%  reference-kron  reference-kron    [.] core.runtime.Runtime.drainJournal
+     3.92%  reference-kron  reference-kron    [.] kron_reference.Worker.emit__anon_38248
+     3.56%  reference-kron  reference-kron    [.] compiler_rt.memcpy.memcpyFast
+     3.50%  reference-kron  reference-kron    [.] encoder.decimal.writeNative
+     3.41%  reference-kron  reference-kron    [.] core.runtime.Runtime.end
+     3.28%  reference-kron  reference-kron    [.] core.runtime.Runtime.releaseAdmissionView
+     3.17%  reference-kron  reference-kron    [.] core.runtime.Runtime.notify
+     2.60%  reference-kron  reference-kron    [.] core.codec.encodeSized
+     2.23%  reference-kron  reference-kron    [.] core.codec.measure
+     2.23%  reference-kron  reference-kron    [.] encoder.escaping.quotedAscii
+     1.74%  reference-kron  reference-kron    [.] encoder.decimal.writeLargeNative
+     1.70%  reference-kron  reference-kron    [.] journal.journal.Journal.validateSlot
+     1.46%  reference-kron  reference-kron    [.] core.runtime.Runtime.submitDestination
+     1.39%  reference-kron  reference-kron    [.] encoder.escaping.jsonKey
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

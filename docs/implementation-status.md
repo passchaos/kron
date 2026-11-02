@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+2026-11-02前缀CRC候选完成240项完整shared before/after、2424万条JSON核对，第二候选16组配对中位全部提高、11组通过局部门限；但扩展CRC长度出现明显负向，全部候选已撤回，生产CRC恢复97353ff。候选另完成P-core/E-core各160项Foundation spdlog/tracing对照，总核对3232万条JSON；E-core对tracing 12组peer领先、对spdlog 9组peer领先/3组kron领先，P-core多数不确定，未证明同时超过两个前端。该候选结果不作为当前生产源码新排名。保留完整配对资格、manifest组/轮次校验与原分段扩展CRC基准，12项资格/矩阵测试和相关报告gate通过；源码、原始正负值与撤回见[实验报告](../bench/evidence/2026-11-02-prefixed-crc/README.md)。
+
 当前源码在7480598之后保留native八位十进制分块与冷buffered输出。ReleaseSafe完整验证151步骤成功、639项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；数字模块Debug/Safe/Fast与generic CPU各6项、encoder重点52项通过，AArch64另完成编译。140项真实文件核对4214万JSON，shared Memory/Mmap P1/P4的完整用户态指令稳定减少3.43%–3.47%；完整速度与尾部保持inconclusive。精确源码、正负版本、风险复测与验证见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。非Linux对象编译不替代设备运行。
 
 随后保留 checked wire typed visitor 与内联 scalar 渲染：`WireInput.valueWith` 在完成同一套树检查后直接回调 typed payload，融合 renderer 跳过中间 `Value` 和通用二次分派；公开 API、aggregate 验证边界和错误优先级不变。40项完整 shared 真实文件核对1204万JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，四组CV/spread达标且中位区间不重叠；80项workflow与20项P4 sampled复测的完整吞吐/尾部仍正负混合或inconclusive。独立before/after差分17527次比较、9769个valid mutation三格式逐字节一致；ReleaseSafe完整门禁151/151步骤、640/641项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL和示例。源码、被否决的outlined版本和全部原始数据见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
@@ -72,7 +74,7 @@ shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS 
 
 | 优先级 | 差距 | 后续验收 |
 | --- | --- | --- |
-| 1 | 稳定完整流程与跨库性能 | 对明确源码在低噪声环境建立同语义基线，包括 init/warmup/producer/written/shutdown/cleanup；不叠加历史百分比 |
+| 1 | 超过 Foundation/logging + spdlog 与 Foundation/logging + tracing | 对明确源码在低噪声环境建立同语义基线，P-core/E-core分别覆盖 shared/SPSC、Memory/Mmap、P1/P4 与 batch/sampled，独立判断 init/warmup/producer/written/shutdown/cleanup 与 p99/p99.9；完整配对和噪声门限必须达标，不叠加历史百分比 |
 | 1 | 尾延迟和过载对应用的影响 | 合成200µs慢sink/64槽诊断已记录：block P1/P4 p99约15–16ms且无丢失，P16 p99约59–81ms；drop p99亚微秒但丢936/1000或1535/1600，fallback p50约0.24ms；仍需burst、积压年龄、CPU/cache/调度竞争及无logger基线。见 [过载尾部诊断](../bench/evidence/2026-11-02-overload-tail/README.md) |
 | 1 | Mmap 启动与资源成本 | fresh Linux mmap只写header初始化已把16.8MB journal init中位54.2/53.8ms降到8.2/6.9ms；仍需更广文件系统/设备、dirty-page与持久化边界验证。见 [fresh mmap证据](../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)与 [启动诊断](../bench/evidence/2026-11-02-current-init-profile/README.md) |
 | 2 | 更广业务/durable 回归覆盖 | 0/5/10 fields、长短字符串、P1/P4/P16、warm/cold、attach/detach、reload/rolling 与独立 durable 测量 |

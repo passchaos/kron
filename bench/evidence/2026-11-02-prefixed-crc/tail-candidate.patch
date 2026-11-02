@@ -1,0 +1,252 @@
+diff --git a/src/journal/format.zig b/src/journal/format.zig
+index 6f79d77..0716fc7 100644
+--- a/src/journal/format.zig
++++ b/src/journal/format.zig
+@@ -32,21 +32,19 @@ pub fn checksum(sequence: u64, generation: u64, payload: []const u8) u32 {
+     put(u64, &header, 8, generation);
+     put(u32, &header, 16, @intCast(payload.len));
+     var crc = Crc32.init();
+-    crc.update(&header);
+-    crc.update(payload);
++    crc.updatePrefixed(header.len, &header, payload);
+     return crc.final();
+ }
+ 
+ pub fn checksumV2(sequence: u64, generation: u64, reference_bytes: []const u8, payload: []const u8) u32 {
+     std.debug.assert(reference_bytes.len == 24);
+-    var header: [20]u8 = undefined;
+-    put(u64, &header, 0, sequence);
+-    put(u64, &header, 8, generation);
+-    put(u32, &header, 16, @intCast(payload.len));
++    var prefix: [44]u8 = undefined;
++    put(u64, &prefix, 0, sequence);
++    put(u64, &prefix, 8, generation);
++    put(u32, &prefix, 16, @intCast(payload.len));
++    @memcpy(prefix[20..44], reference_bytes);
+     var crc = Crc32.init();
+-    crc.update(&header);
+-    crc.update(reference_bytes);
+-    crc.update(payload);
++    crc.updatePrefixed(prefix.len, &prefix, payload);
+     return crc.final();
+ }
+ 
+@@ -60,6 +58,31 @@ test "slot CRC v1 and v2 preserve independent golden byte order and schema bindi
+     try std.testing.expectEqual(@as(u32, 0x530df33b), checksumV2(0x0102030405060708, 0x1122334455667788, &reference, payload));
+ }
+ 
++test "slot CRC prefixed blocks match independent contiguous v1 v2 streams" {
++    var payload_bytes: [1025 + 32]u8 = undefined;
++    var reference: [24]u8 = undefined;
++    var contiguous: [44 + 1025]u8 = undefined;
++    var random = std.Random.DefaultPrng.init(0x6a6e6c7072656669);
++    random.random().bytes(&payload_bytes);
++    random.random().bytes(&reference);
++    const lengths = [_]usize{ 0, 1, 19, 20, 21, 43, 44, 45, 59, 60, 61, 63, 64, 65, 75, 76, 77, 79, 80, 81, 95, 96, 97, 111, 112, 113, 127, 128, 129, 255, 256, 257, 1023, 1024, 1025 };
++    for (0..32) |alignment| for (lengths) |length| {
++        const payload = payload_bytes[alignment..][0..length];
++        const sequence = random.random().int(u64);
++        const generation = random.random().int(u64);
++        // Assemble the protocol independently, without either checksum helper
++        // or the custom CRC module, then hash the complete contiguous stream.
++        std.mem.writeInt(u64, contiguous[0..8], sequence, .little);
++        std.mem.writeInt(u64, contiguous[8..16], generation, .little);
++        std.mem.writeInt(u32, contiguous[16..20], @intCast(length), .little);
++        @memcpy(contiguous[20..][0..length], payload);
++        try std.testing.expectEqual(std.hash.Crc32.hash(contiguous[0 .. 20 + length]), checksum(sequence, generation, payload));
++        @memcpy(contiguous[20..44], &reference);
++        @memcpy(contiguous[44..][0..length], payload);
++        try std.testing.expectEqual(std.hash.Crc32.hash(contiguous[0 .. 44 + length]), checksumV2(sequence, generation, &reference, payload));
++    };
++}
++
+ test "zeroed initialization matches full clear for memory-backed journals" {
+     const capacity = 2;
+     const stride = 128;
+diff --git a/src/platform/crc32.zig b/src/platform/crc32.zig
+index d19be85..8420e6b 100644
+--- a/src/platform/crc32.zig
++++ b/src/platform/crc32.zig
+@@ -28,31 +28,35 @@ pub const Crc32 = struct {
+                 // <16-byte tail with the identical portable state machine.
+                 const bulk = bytes.len - bytes.len % 16;
+                 var crc = pclmul.update(self.state, bytes[0..bulk]);
+-                for (bytes[bulk..]) |byte| crc = tables[0][@as(u8, @truncate(crc)) ^ byte] ^ (crc >> 8);
++                crc = updateTable(crc, bytes[bulk..]);
+                 self.state = crc;
+                 return;
+             }
+         }
+-        var crc = self.state;
+-        var offset: usize = 0;
+-        while (bytes.len - offset >= 16) : (offset += 16) {
+-            const first = std.mem.readInt(u32, bytes[offset..][0..4], .little) ^ crc;
+-            const second = std.mem.readInt(u32, bytes[offset + 4 ..][0..4], .little);
+-            const third = std.mem.readInt(u32, bytes[offset + 8 ..][0..4], .little);
+-            const fourth = std.mem.readInt(u32, bytes[offset + 12 ..][0..4], .little);
+-            crc = tables[15][first & 255] ^ tables[14][(first >> 8) & 255] ^ tables[13][(first >> 16) & 255] ^ tables[12][first >> 24] ^
+-                tables[11][second & 255] ^ tables[10][(second >> 8) & 255] ^ tables[9][(second >> 16) & 255] ^ tables[8][second >> 24] ^
+-                tables[7][third & 255] ^ tables[6][(third >> 8) & 255] ^ tables[5][(third >> 16) & 255] ^ tables[4][third >> 24] ^
+-                tables[3][fourth & 255] ^ tables[2][(fourth >> 8) & 255] ^ tables[1][(fourth >> 16) & 255] ^ tables[0][fourth >> 24];
+-        }
+-        while (bytes.len - offset >= 8) : (offset += 8) {
+-            const lo = std.mem.readInt(u32, bytes[offset..][0..4], .little) ^ crc;
+-            const hi = std.mem.readInt(u32, bytes[offset + 4 ..][0..4], .little);
+-            crc = tables[7][lo & 255] ^ tables[6][(lo >> 8) & 255] ^ tables[5][(lo >> 16) & 255] ^ tables[4][lo >> 24] ^
+-                tables[3][hi & 255] ^ tables[2][(hi >> 8) & 255] ^ tables[1][(hi >> 16) & 255] ^ tables[0][hi >> 24];
++        self.state = updateTable(self.state, bytes);
++    }
++
++    /// Updates with `prefix` followed by `bytes`. A short fixed prefix can join
++    /// the payload's first native block, avoiding a separate table update.
++    /// The byte stream and incremental register state match two `update` calls.
++    pub fn updatePrefixed(self: *Crc32, comptime prefix_len: usize, prefix: *const [prefix_len]u8, bytes: []const u8) void {
++        if (prefix_len > 64) @compileError("CRC prefix must fit the first 64-byte block");
++        if (comptime use_pclmul) {
++            const first_payload_len = 64 - prefix_len;
++            if (bytes.len >= first_payload_len) {
++                var first: [64]u8 = undefined;
++                @memcpy(first[0..prefix_len], prefix);
++                @memcpy(first[prefix_len..], bytes[0..first_payload_len]);
++                const continuation = bytes[first_payload_len..];
++                const bulk = continuation.len - continuation.len % 16;
++                var crc = pclmul.updateWithFirstBlock(self.state, &first, continuation[0..bulk]);
++                crc = updateTable(crc, continuation[bulk..]);
++                self.state = crc;
++                return;
++            }
+         }
+-        for (bytes[offset..]) |byte| crc = tables[0][@as(u8, @truncate(crc)) ^ byte] ^ (crc >> 8);
+-        self.state = crc;
++        self.update(prefix);
++        self.update(bytes);
+     }
+ 
+     pub fn final(self: Crc32) u32 {
+@@ -66,6 +70,36 @@ pub const Crc32 = struct {
+     }
+ };
+ 
++// Native tails and portable input use the same reflected-state update.
++// Four-byte slicing leaves at most three dependent byte lookups.
++fn updateTable(state: u32, bytes: []const u8) u32 {
++    var crc = state;
++    var offset: usize = 0;
++    while (bytes.len - offset >= 16) : (offset += 16) {
++        const first = std.mem.readInt(u32, bytes[offset..][0..4], .little) ^ crc;
++        const second = std.mem.readInt(u32, bytes[offset + 4 ..][0..4], .little);
++        const third = std.mem.readInt(u32, bytes[offset + 8 ..][0..4], .little);
++        const fourth = std.mem.readInt(u32, bytes[offset + 12 ..][0..4], .little);
++        crc = tables[15][first & 255] ^ tables[14][(first >> 8) & 255] ^ tables[13][(first >> 16) & 255] ^ tables[12][first >> 24] ^
++            tables[11][second & 255] ^ tables[10][(second >> 8) & 255] ^ tables[9][(second >> 16) & 255] ^ tables[8][second >> 24] ^
++            tables[7][third & 255] ^ tables[6][(third >> 8) & 255] ^ tables[5][(third >> 16) & 255] ^ tables[4][third >> 24] ^
++            tables[3][fourth & 255] ^ tables[2][(fourth >> 8) & 255] ^ tables[1][(fourth >> 16) & 255] ^ tables[0][fourth >> 24];
++    }
++    while (bytes.len - offset >= 8) : (offset += 8) {
++        const lo = std.mem.readInt(u32, bytes[offset..][0..4], .little) ^ crc;
++        const hi = std.mem.readInt(u32, bytes[offset + 4 ..][0..4], .little);
++        crc = tables[7][lo & 255] ^ tables[6][(lo >> 8) & 255] ^ tables[5][(lo >> 16) & 255] ^ tables[4][lo >> 24] ^
++            tables[3][hi & 255] ^ tables[2][(hi >> 8) & 255] ^ tables[1][(hi >> 16) & 255] ^ tables[0][hi >> 24];
++    }
++    if (bytes.len - offset >= 4) {
++        const word = std.mem.readInt(u32, bytes[offset..][0..4], .little) ^ crc;
++        crc = tables[3][word & 255] ^ tables[2][(word >> 8) & 255] ^ tables[1][(word >> 16) & 255] ^ tables[0][word >> 24];
++        offset += 4;
++    }
++    for (bytes[offset..]) |byte| crc = tables[0][@as(u8, @truncate(crc)) ^ byte] ^ (crc >> 8);
++    return crc;
++}
++
+ fn makeTables() [16][256]u32 {
+     @setEvalBranchQuota(80_000);
+     var result: [16][256]u32 = undefined;
+@@ -149,3 +183,32 @@ test "compile-time PCLMUL path matches the portable oracle across block and part
+         }
+     };
+ }
++
++test "prefixed CRC matches independent oracle for journal boundaries alignments and arbitrary states" {
++    var bytes: [4096 + 32]u8 = undefined;
++    var prefix_bytes: [64]u8 = undefined;
++    var random = std.Random.DefaultPrng.init(0x7072656669786372);
++    random.random().bytes(&bytes);
++    random.random().bytes(&prefix_bytes);
++    const lengths = [_]usize{ 0, 1, 3, 4, 7, 8, 15, 16, 17, 19, 20, 21, 31, 32, 33, 43, 44, 45, 47, 48, 49, 63, 64, 65, 79, 80, 81, 95, 96, 97, 111, 112, 113, 127, 128, 129, 255, 256, 257, 511, 512, 513, 1023, 1024, 1025, 4095, 4096 };
++    inline for ([_]usize{ 0, 1, 16, 20, 44, 64 }) |prefix_len| {
++        const prefix = prefix_bytes[0..prefix_len];
++        for (0..32) |alignment| for (lengths) |length| {
++            const payload = bytes[alignment..][0..length];
++            const arbitrary_state = random.random().int(u32);
++            for ([_]u32{ 0, 0xffffffff, arbitrary_state }) |state| {
++                var oracle: std.hash.Crc32 = .{ .crc = state };
++                oracle.update(prefix);
++                oracle.update(payload);
++                var crc: Crc32 = .{ .state = state };
++                crc.updatePrefixed(prefix_len, prefix, payload);
++                try std.testing.expectEqual(oracle.final(), crc.final());
++                // Continue after the prefixed block to verify its register
++                // state remains valid for the ordinary incremental API.
++                oracle.update("continued\x00\xff");
++                crc.update("continued\x00\xff");
++                try std.testing.expectEqual(oracle.final(), crc.final());
++            }
++        };
++    }
++}
+diff --git a/src/platform/crc32_pclmul.zig b/src/platform/crc32_pclmul.zig
+index 80460b0..7db200e 100644
+--- a/src/platform/crc32_pclmul.zig
++++ b/src/platform/crc32_pclmul.zig
+@@ -21,9 +21,18 @@ inline fn load16(p: [*]const u8) V2 {
+ inline fn clmul(a: V2, b: V2, comptime imm: u8) V2 {
+     var x = a;
+     switch (imm) {
+-        0x00 => asm volatile ("pclmulqdq $0, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
+-        0x10 => asm volatile ("pclmulqdq $16, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
+-        0x11 => asm volatile ("pclmulqdq $17, %[b], %[a]" : [a] "+x" (x) : [b] "x" (b)),
++        0x00 => asm volatile ("pclmulqdq $0, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
++        0x10 => asm volatile ("pclmulqdq $16, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
++        0x11 => asm volatile ("pclmulqdq $17, %[b], %[a]"
++            : [a] "+x" (x),
++            : [b] "x" (b),
++        ),
+         else => @compileError("unsupported pclmul immediate"),
+     }
+     return x;
+@@ -43,15 +52,22 @@ inline fn shiftRight4(v: V2) V2 {
+ /// portable table path does.
+ pub fn update(state: u32, bytes: []const u8) u32 {
+     std.debug.assert(bytes.len >= 64 and bytes.len % 16 == 0);
+-    var p = bytes.ptr;
+-    var len = bytes.len;
+-    var x1 = load16(p);
++    return updateWithFirstBlock(state, bytes[0..64], bytes[64..]);
++}
++
++/// Folds a separately assembled first block and the directly borrowed
++/// continuation without reducing between them. The continuation may be empty
++/// and must contain only complete sixteen-byte blocks.
++pub fn updateWithFirstBlock(state: u32, first: *const [64]u8, continuation: []const u8) u32 {
++    std.debug.assert(continuation.len % 16 == 0);
++    const p0 = first.ptr;
++    var p = continuation.ptr;
++    var len = continuation.len;
++    var x1 = load16(p0);
+     x1 ^= V2{ @as(u64, state), 0 };
+-    var x2 = load16(p + 16);
+-    var x3 = load16(p + 32);
+-    var x4 = load16(p + 48);
+-    p += 64;
+-    len -= 64;
++    var x2 = load16(p0 + 16);
++    var x3 = load16(p0 + 32);
++    var x4 = load16(p0 + 48);
+     while (len >= 64) {
+         const x5 = clmul(x1, k1k2, 0x00);
+         const x6 = clmul(x2, k1k2, 0x00);
