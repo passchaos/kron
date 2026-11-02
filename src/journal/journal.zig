@@ -43,6 +43,8 @@ pub const Options = struct {
     recover: bool = true,
     schema_capacity: usize = 0,
     max_schema_bytes: usize = 8192,
+    /// Volatile-memory-only opt-out. Mapped/recoverable journals reject it.
+    verify_crc: bool = true,
 };
 pub const ReclaimBoundary = enum { written, durable };
 pub const ProducerMode = enum { shared, single };
@@ -119,7 +121,10 @@ pub const Reservation = struct {
         const generation = self.journal.generation(self.sequence);
         self.journal.writeSlotSchema(bytes, self.schema_ref);
         format.put(u32, bytes, 24, @intCast(length));
-        format.put(u32, bytes, 28, self.journal.slotChecksum(self.sequence, generation, bytes, self.buffer()[0..length]));
+        format.put(u32, bytes, 28, if (self.journal.verify_crc)
+            self.journal.slotChecksum(self.sequence, generation, bytes, self.buffer()[0..length])
+        else
+            0);
         state.store(format.tag(self.sequence, .committed), .release);
         if (self.producer_generation != 0) self.journal.completeSingleReservation();
         self.completed = true;
@@ -143,6 +148,7 @@ pub const Journal = struct {
     max_record_bytes: usize,
     stride: usize,
     file_version: u32,
+    verify_crc: bool,
     schema: ?schema_format.Registry,
     producer_mode: ProducerMode,
     single: SingleProducerControl,
@@ -186,6 +192,7 @@ pub const Journal = struct {
 
     fn createWithMode(allocator: std.mem.Allocator, io: std.Io, options: Options, mode: ProducerMode, memory: bool) !*Journal {
         if (@import("builtin").cpu.arch.endian() != .little or @sizeOf(usize) != 8) return error.UnsupportedPlatform;
+        if (!options.verify_crc and !memory) return error.CrcRequiredForRecovery;
         const layout = try format.layout(options.capacity, options.max_record_bytes);
         var schema_layout: ?schema_format.Layout = if (options.schema_capacity == 0) null else try schema_format.layout(layout.size, options.schema_capacity, options.max_schema_bytes);
         const file_size = if (schema_layout) |table| table.size else layout.size;
@@ -243,6 +250,7 @@ pub const Journal = struct {
             .max_record_bytes = options.max_record_bytes,
             .stride = layout.stride,
             .file_version = if (schema_layout == null) format.version else format.schema_version,
+            .verify_crc = options.verify_crc,
             .schema = registry,
             .producer_mode = mode,
             .single = .{
@@ -330,7 +338,7 @@ pub const Journal = struct {
         if (sequence == 0 or sequence > format.max_sequence or marker != format.tag(sequence, .committed)) return error.CorruptRecord;
         if ((sequence - 1) % self.capacity != index or gen != self.generation(sequence) or length > self.max_record_bytes) return error.CorruptRecord;
         const payload = bytes[format.slot_header_bytes..][0..length];
-        if (format.get(u32, bytes, 28) != self.slotChecksum(sequence, gen, bytes, payload)) return error.CorruptRecord;
+        if (self.verify_crc and format.get(u32, bytes, 28) != self.slotChecksum(sequence, gen, bytes, payload)) return error.CorruptRecord;
         const reference = try self.readSlotSchema(bytes);
         if (reference) |ref| try self.validateSchemaReady(ref);
         return .{ .sequence = sequence, .generation = gen, .payload = payload, .slot = index, .schema_ref = reference };
@@ -837,4 +845,20 @@ pub const Journal = struct {
 test {
     _ = @import("tests.zig");
     _ = @import("schema_journal_tests.zig");
+}
+
+test "memory journal can opt out of slot CRC" {
+    var journal = try Journal.createMemory(std.testing.allocator, std.testing.io, .{
+        .path = "",
+        .capacity = 2,
+        .max_record_bytes = 64,
+        .verify_crc = false,
+    });
+    defer journal.deinit();
+    var reservation = try journal.reserve();
+    @memcpy(reservation.buffer()[0..7], "payload");
+    try reservation.commit(7);
+    format.put(u32, journal.slotBytes(reservation.slot), 28, 0xdeadbeef);
+    const record = journal.peek() orelse return error.MissingRecord;
+    try std.testing.expectEqualSlices(u8, "payload", record.payload);
 }

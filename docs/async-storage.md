@@ -37,6 +37,8 @@ mmap模式的accepted/written/durable边界沿用原协议，详见 [生命周�
 
 慢sink诊断（200µs/record、64槽、1000事件）显示策略取舍：block无丢失但P1/P4 emit p99约15–16ms、P16约59–81ms；drop_newest的p99保持亚微秒级，但只保留consumer能处理的64条（P16仅65/1600）；fallback_sync无丢失，但满队列时producer同步慢写，p50约0.24ms、P16 p99约59ms。应用必须按可接受的阻塞尾部或记录丢失选择策略，不能只按稳态吞吐选择。原始数据见 [过载尾部诊断](../bench/evidence/2026-11-02-overload-tail/README.md)。
 
+`MemoryQueueOptions.verify_crc`默认`true`。显式设为`false`是**仅volatile memory queue**的opt-out：producer不写slot CRC、consumer不校验；mmap/可恢复journal拒绝该配置。E-core生产build 5次诊断显示Memory P1/P4吞吐约+20.0%/+23.1%，但只适合能接受未检测内存损坏/部分payload的应用，不推荐不可信或易损坏环境。原始数据见 [memory fast mode证据](../bench/evidence/2026-11-02-memory-fast-mode/README.md)。
+
 ## 验证
 
 `test-async-storage`覆盖两种frontend的内存队列、禁止文件open/create的I/O trap、源覆写快照、热配置/脱敏、初始化后零分配、满队列drop、关闭唤醒阻塞producer、schema预注册和输出文件durable。`test-async-crash`使用真实子进程SIGKILL：三条accepted/unwritten记录在内存模式丢失、mmap模式全部恢复；先前写出的三条输出在两模式都保留，正常drain也是accepted=written。

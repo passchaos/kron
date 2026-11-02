@@ -106,6 +106,7 @@ fn runPhase(allocator: std.mem.Allocator, io: std.Io, options: Options, phase: P
             .max_record_bytes = options.max_record_bytes,
             .schema_capacity = if (options.schema) 2 else 0,
             .max_schema_bytes = 4096,
+            .verify_crc = !options.no_verify_crc,
         } else null,
         .max_thread_channels = if (options.mode == .spsc) options.producers else 0,
         .thread_channel_capacity = options.channel_slots,

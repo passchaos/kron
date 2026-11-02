@@ -26,6 +26,7 @@ pub const Options = struct {
     payload: Payload = .numeric,
     string_bytes: usize = 256,
     filtered: bool = false,
+    no_verify_crc: bool = false,
     temperature: Temperature = .warm,
     warmup_events: usize = 1_000,
     samples: usize = 10_000,
@@ -56,6 +57,7 @@ pub const Options = struct {
 
     pub fn validate(self: Options) !void {
         if (self.mode == .sync and self.storage == .memory) return error.InvalidConfiguration;
+        if (self.no_verify_crc and (self.mode == .sync or self.storage != .memory)) return error.InvalidConfiguration;
         if (self.schema and (self.mode == .sync or self.clock != .dynamic)) return error.InvalidConfiguration;
         if (self.events == 0 or self.events > 10_000_000) return error.InvalidEventBudget;
         if (self.producers != 1 and self.producers != 4 and self.producers != 16) return error.InvalidProducerCount;
@@ -115,6 +117,7 @@ pub const usage =
     \\  --idle auto|sleep|spin          Auto uses runtime defaults.
     \\  --clock dynamic|std_io|native|none  Event timestamp path; default dynamic.
     \\  --schema                       Prepared metadata v2; async/SPSC + dynamic clock.
+    \\  --no-verify-crc                Memory-only opt-out: skip slot CRC write/validation.
     \\  --max-record-bytes N           Journal/runtime record bound; default 16384.
     \\  --buffer-bytes N               File staging/batch budget; default 65536.
     \\  --queue-depth N                Power of two, <=256; default 4.
@@ -145,6 +148,10 @@ pub fn parse(arguments: []const []const u8) !Options {
         }
         if (std.mem.eql(u8, argument, "--schema")) {
             options.schema = true;
+            continue;
+        }
+        if (std.mem.eql(u8, argument, "--no-verify-crc")) {
+            options.no_verify_crc = true;
             continue;
         }
         if (!std.mem.startsWith(u8, argument, "--")) return error.UnknownArgument;

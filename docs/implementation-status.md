@@ -43,7 +43,7 @@ owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍�
 
 同一源码的P-core 160项完整JSON矩阵（16,160,000条）在默认CPU0/2/4/6/8/10窗口运行，但宿主负载使大多数组spread超10%，配对比较保持inconclusive。方向上kron async/SPSC对spdlog多数≥1；对tracing在Memory P1/Mmap P1落后、在P4部分领先；没有全面胜者。P-core与E-core的拓扑反差必须分别记录，不能合并成单一排名；数据见 [P-core完整矩阵](../bench/cpp_reference/evidence/2026-11-02-managed-frontends-pcore-full/README.md)。
 
-另用复制源码做禁用CRC诊断（非生产、不可恢复）：E-core Memory P1/P4吞吐从1.669/1.564M提升到2.108/2.050M（+26.3%/+31.1%）。这量化了CRC producer/consumer校验是E-core差距的主要组成；生产默认保留CRC/generation/reserve/commit/recovery，不提供未验证的fast mode。诊断源码与数据见 [nocrc证据](../bench/evidence/2026-11-02-nocrc-diagnostic/README.md)。
+另用复制源码做禁用CRC诊断（非生产、不可恢复）：E-core Memory P1/P4吞吐从1.669/1.564M提升到2.108/2.050M（+26.3%/+31.1%）。这量化了CRC producer/consumer校验是E-core差距的主要组成。随后新增显式opt-in `MemoryQueueOptions.verify_crc=false`：默认仍为true，仅volatile memory queue生效，mmap/可恢复journal返回`CrcRequiredForRecovery`；生产build E-core P1/P4提升20.0%/23.1%。该模式只适合明确接受未检测内存损坏风险的应用，不改变默认可靠性契约；测试覆盖memory opt-out与可恢复journal拒绝。数据见 [nocrc诊断](../bench/evidence/2026-11-02-nocrc-diagnostic/README.md)与 [memory fast mode](../bench/evidence/2026-11-02-memory-fast-mode/README.md)。
 
 常规应用继续以shared Memory/Mmap为主要路径，SPSC保留为高级可选。按channel预算分配counter/cache的后续实验能让普通Runtime少请求15KiB，但100项正式managed完整流程核对3010万条JSON后，P1 batch仍存在负向中位，主路径代价未排除，已恢复e40313f生产源码。资源probe、候选源码、全部慢值及撤回决策见 [线程预算实验](../bench/evidence/2026-11-02-thread-state-budget/README.md)；不据此更新跨库排名。
 

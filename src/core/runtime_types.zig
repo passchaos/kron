@@ -22,6 +22,10 @@ pub const MemoryQueueOptions = struct {
     max_record_bytes: usize = 8192,
     schema_capacity: usize = 0,
     max_schema_bytes: usize = 8192,
+    /// Opt-in diagnostic/performance mode for volatile memory queues. When
+    /// false, the journal neither writes nor validates slot CRC. Recovery and
+    /// durable paths reject this option; the default keeps full checksums.
+    verify_crc: bool = true,
 };
 pub const Overflow = enum { block, drop_newest, fallback_sync };
 pub const Flush = enum { drain, written, durable };

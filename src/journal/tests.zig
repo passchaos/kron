@@ -482,3 +482,17 @@ test "fresh mapped zero capability implies zero body" {
     if (!map.fresh_zeroed) return error.SkipZigTest;
     try testing.expect(std.mem.allEqual(u8, map.bytes, 0));
 }
+
+test "recoverable journals reject verify_crc false" {
+    if (!mapping.supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [192]u8 = undefined;
+    const path = try pathFor(&tmp, &path_buffer);
+    try testing.expectError(error.CrcRequiredForRecovery, journal.Journal.create(testing.allocator, testing.io, .{
+        .path = path,
+        .capacity = 8,
+        .max_record_bytes = 512,
+        .verify_crc = false,
+    }));
+}

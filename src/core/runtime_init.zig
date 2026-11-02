@@ -24,7 +24,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     for (options.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
     if (options.consumer_batches_per_queue == 0 or options.consumer_batches_per_queue > 4) return error.InvalidOptions;
     if (options.journal != null and options.memory_queue != null) return error.ConflictingQueueStorage;
-    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false } else options.journal;
+    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false, .verify_crc = memory.verify_crc } else options.journal;
     if (options.submission != .sync and queue_options == null) return error.JournalRequired;
     if (options.submission == .sync and queue_options != null) return error.InvalidOptions;
     if (options.max_thread_channels > 64 or (options.max_thread_channels != 0 and queue_options == null)) return error.InvalidOptions;
@@ -100,6 +100,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
             .schema_capacity = queue_options.?.schema_capacity,
             .max_schema_bytes = queue_options.?.max_schema_bytes,
             .memory = options.memory_queue != null,
+            .verify_crc = queue_options.?.verify_crc,
         });
     }
     errdefer if (self.thread_registry) |registry| registry.destroy();
