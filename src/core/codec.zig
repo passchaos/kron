@@ -377,34 +377,50 @@ pub const WireInput = struct {
     }
 
     pub fn value(self: *Input) DecodeError!field.Value {
+        const Materializer = struct {
+            pub const Error = error{};
+            result: field.Value = .null_value,
+            pub fn accept(receiver: *@This(), comptime tag: Tag, data: anytype) Error!void {
+                receiver.result = if (tag == .null_value) .null_value else @unionInit(field.Value, @tagName(tag), data);
+            }
+        };
+        var receiver: Materializer = .{};
+        try self.valueWith(&receiver);
+        return receiver.result;
+    }
+
+    /// Read and validate one complete value, then pass its typed payload to
+    /// receiver.accept(comptime tag, data). Containers remain materialized;
+    /// callbacks cannot observe a partially validated aggregate.
+    pub fn valueWith(self: *Input, receiver: anytype) (DecodeError || @TypeOf(receiver.*).Error)!void {
         if (self.nodes == field.max_value_nodes) return error.TooManyValueNodes;
         self.nodes += 1;
         const raw = try self.int(u8);
         const tag = std.enums.fromInt(Tag, raw) orelse return error.InvalidTag;
         if (!self.allow_nested and (tag == .array or tag == .group)) return error.InvalidTag;
-        const decoded: field.Value = switch (tag) {
-            .null_value => .null_value,
-            .boolean => blk: {
+        switch (tag) {
+            .null_value => try receiver.accept(.null_value, {}),
+            .boolean => {
                 const raw_boolean = try self.int(u8);
                 if (raw_boolean > 1) return error.InvalidValue;
-                break :blk .{ .boolean = raw_boolean == 1 };
+                try receiver.accept(.boolean, raw_boolean == 1);
             },
-            .signed => .{ .signed = try self.int(i128) },
-            .unsigned => .{ .unsigned = try self.int(u128) },
-            .float => .{ .float = @bitCast(try self.int(u64)) },
-            .string => .{ .string = try self.blob() },
-            .bytes => .{ .bytes = try self.blob() },
-            .duration_ns => .{ .duration_ns = try self.int(i64) },
-            .timestamp_ns => .{ .timestamp_ns = try self.int(i64) },
-            .array => blk: {
+            .signed => try receiver.accept(.signed, try self.int(i128)),
+            .unsigned => try receiver.accept(.unsigned, try self.int(u128)),
+            .float => try receiver.accept(.float, @as(f64, @bitCast(try self.int(u64)))),
+            .string => try receiver.accept(.string, try self.blob()),
+            .bytes => try receiver.accept(.bytes, try self.blob()),
+            .duration_ns => try receiver.accept(.duration_ns, try self.int(i64)),
+            .timestamp_ns => try receiver.accept(.timestamp_ns, try self.int(i64)),
+            .array => {
                 const count = try self.containerCount();
                 defer self.depth -= 1;
                 const arena = self.arena orelse return error.TooManyFields;
                 const values = try arena.allocate(field.Value, count);
                 for (values) |*child| child.* = try self.value();
-                break :blk .{ .array = values };
+                try receiver.accept(.array, values);
             },
-            .group => blk: {
+            .group => {
                 const count = try self.containerCount();
                 defer self.depth -= 1;
                 const arena = self.arena orelse return error.TooManyFields;
@@ -413,10 +429,9 @@ pub const WireInput = struct {
                     entry.* = try self.fieldValue();
                     try field.checkUnique(entries[0..i], entry.key);
                 }
-                break :blk .{ .group = entries };
+                try receiver.accept(.group, entries);
             },
-        };
-        return decoded;
+        }
     }
 
     fn containerCount(self: *Input) DecodeError!usize {

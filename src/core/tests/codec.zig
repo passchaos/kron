@@ -588,3 +588,41 @@ test "full node budget fits fixed scratch for the largest group descriptor layou
     var short: [decode_scratch_fields - 1]field.Field = undefined;
     try std.testing.expectError(error.TooManyFields, decode(payload, &short));
 }
+
+test "wire typed visitor rejects damaged values before invoking its receiver" {
+    const Receiver = struct {
+        pub const Error = error{};
+        calls: usize = 0,
+        pub fn accept(self: *@This(), comptime tag: ValueTag, data: anytype) Error!void {
+            _ = tag;
+            _ = data;
+            self.calls += 1;
+        }
+    };
+    var receiver: Receiver = .{};
+    var malformed_boolean: codec.WireInput = .{ .bytes = &.{ @intFromEnum(ValueTag.boolean), 2 } };
+    try std.testing.expectError(error.InvalidValue, malformed_boolean.valueWith(&receiver));
+    try std.testing.expectEqual(@as(usize, 0), receiver.calls);
+    var truncated_integer: codec.WireInput = .{ .bytes = &.{ @intFromEnum(ValueTag.unsigned), 0 } };
+    try std.testing.expectError(error.Truncated, truncated_integer.valueWith(&receiver));
+    try std.testing.expectEqual(@as(usize, 0), receiver.calls);
+    var exhausted: codec.WireInput = .{ .bytes = &.{}, .nodes = field.max_value_nodes };
+    try std.testing.expectError(error.TooManyValueNodes, exhausted.valueWith(&receiver));
+    try std.testing.expectEqual(@as(usize, 0), receiver.calls);
+
+    var bytes: [128]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&bytes);
+    try codec.writeValue(&writer, .{ .group = &.{ field.kv("a", true), field.kv("b", false) } });
+    const second_key = std.mem.lastIndexOf(u8, writer.buffered(), "b").?;
+    bytes[second_key] = 'a';
+    var scratch: [8]field.Field = undefined;
+    var arena = codec.DescriptorArena.init(&scratch);
+    var duplicate: codec.WireInput = .{ .bytes = writer.buffered(), .arena = &arena, .allow_nested = true };
+    try std.testing.expectError(error.DuplicateKey, duplicate.valueWith(&receiver));
+    try std.testing.expectEqual(@as(usize, 0), receiver.calls);
+    bytes[second_key] = 'b';
+    arena = codec.DescriptorArena.init(&scratch);
+    var valid: codec.WireInput = .{ .bytes = writer.buffered(), .arena = &arena, .allow_nested = true };
+    try valid.valueWith(&receiver);
+    try std.testing.expectEqual(@as(usize, 1), receiver.calls);
+}

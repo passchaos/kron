@@ -1,0 +1,24 @@
+src/core/codec.zig:403:25: error: unused block label
+            .boolean => blk: {
+                        ^~~
+src/core/codec.zig:415:23: error: unused block label
+            .array => blk: {
+                      ^~~
+src/core/codec.zig:423:23: error: unused block label
+            .group => blk: {
+                      ^~~
+src/encoder/wire_json.zig:35:84: error: ambiguous reference
+        pub fn accept(self: *@This(), comptime tag: codec.ValueTag, data: anytype) Error!void {
+                                                                                   ^~~~~
+src/encoder/wire_json.zig:29:13: note: declared here
+        pub const Error = @import("wire_json.zig").Error;
+        ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/wire_json.zig:15:5: note: also declared here
+pub const Error = schema_codec.DecodeError || std.Io.Writer.Error || error{Fallback};
+~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/encoder/wire_json.zig:27:50: error: unused function parameter
+fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
+                                                 ^~~~~~~~~~
+src/encoder/wire_json.zig:27:25: error: unused function parameter
+fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
+                        ^~~~~~

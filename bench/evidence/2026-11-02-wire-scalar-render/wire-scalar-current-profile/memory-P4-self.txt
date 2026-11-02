@@ -1,0 +1,45 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/u'
+# Event count (approx.): 5112001470
+#
+# Overhead  Command          Shared Object     Symbol                                                       
+# ........  ...............  ................  .............................................................
+#
+    16.45%  reference-after  reference-after   [.] core.runtime.Runtime.submitSafeDestination
+    16.30%  reference-after  reference-after   [.] core.runtime.Runtime.begin
+    10.59%  reference-after  reference-after   [.] journal.journal.Journal.reserve
+     4.97%  reference-after  reference-after   [.] encoder.wire_json.render
+     4.69%  reference-after  reference-after   [.] core.runtime.Runtime.end
+     4.44%  reference-after  reference-after   [.] core.runtime.Runtime.drainJournal
+     4.36%  reference-after  reference-after   [.] platform.crc32.Crc32.update
+     4.26%  reference-after  reference-after   [.] kron_reference.Worker.emit__anon_38184
+     3.79%  reference-after  reference-after   [.] core.runtime.Runtime.notify
+     3.36%  reference-after  reference-after   [.] core.runtime.Runtime.releaseAdmissionView
+     2.96%  reference-after  reference-after   [.] core.wire_write.writeValueTo__anon_33769
+     2.82%  reference-after  reference-after   [.] encoder.decimal.writeNative
+     2.07%  reference-after  reference-after   [.] core.codec.measure
+     2.00%  reference-after  reference-after   [.] compiler_rt.memcpy.memcpyFast
+     1.84%  reference-after  reference-after   [.] core.codec.encodeSized
+     1.69%  reference-after  reference-after   [.] encoder.escaping.quotedAscii
+     1.53%  reference-after  reference-after   [.] core.codec.WireInput.value
+     1.46%  reference-after  reference-after   [.] encoder.escaping.jsonKey
+     1.45%  reference-after  reference-after   [.] encoder.common.valueInner
+     0.94%  reference-after  reference-after   [.] encoder.decimal.writeLargeNative
+     0.92%  reference-after  reference-after   [.] core.runtime.Runtime.submitDestination
+     0.91%  reference-after  reference-after   [.] core.field.ValueValidator.valueWith__anon_37645
+     0.79%  reference-after  [vdso]            [.] 0x0000000000000b03
+     0.77%  reference-after  reference-after   [.] journal.journal.Journal.validateSlot
+     0.74%  reference-after  reference-after   [.] journal.journal.Journal.peekChecked
+     0.68%  reference-after  reference-after   [.] encoder.escaping.quoted
+     0.51%  reference-after  reference-after   [.] Thread.LinuxThreadImpl.spawn__anon_32592.Instance.entryFn
+     0.42%  reference-after  reference-after   [.] logging.handle.Owner.submitOne
+     0.30%  reference-after  reference-after   [.] mem.eql__anon_2586
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

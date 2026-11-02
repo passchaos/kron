@@ -92,4 +92,6 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 当前数字输出优化完成140项真实文件、4214万条JSON核对，shared Memory/Mmap P1/P4完整用户态指令稳定减少3.43%–3.47%；完整吞吐/尾延迟仍未取得一般资格，未据此更新跨库排名。最新源码、验证与所有正负结果见 [数字输出证据](bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。
 
+随后 checked wire typed visitor 将已验证 scalar 直接交给按 tag 编译的 writer，跳过中间 `Value` 物化和通用二次分派；40项完整 shared 真实文件核对1204万条JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，完整吞吐/尾部仍未取得一般资格。源码、独立差分和全部正负结果见 [wire scalar证据](bench/evidence/2026-11-02-wire-scalar-render/README.md)。
+
 原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](docs/history/readme-before-reorganization.md)。完整目标的剩余工作由 [当前验收状态](docs/implementation-status.md) 跟踪。

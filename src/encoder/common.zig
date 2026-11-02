@@ -309,50 +309,62 @@ test "record encoding standalone values still reject invalid trees before output
 
 fn valueInner(writer: *std.Io.Writer, typed: Value, escaping: Escaping) std.Io.Writer.Error!void {
     switch (typed) {
+        inline else => |data, tag| try writeTaggedValue(writer, tag, data, escaping),
+    }
+}
+
+/// Internal renderer for a payload whose tag/tree was checked by its caller.
+/// Public value/event APIs continue validating their complete borrowed trees.
+pub inline fn writeTaggedValue(writer: *std.Io.Writer, comptime tag: std.meta.Tag(Value), data: anytype, escaping: Escaping) std.Io.Writer.Error!void {
+    switch (tag) {
         .null_value => try writer.writeAll("null"),
-        .boolean => |v| try writer.writeAll(if (v) "true" else "false"),
-        .signed => |v| {
+        .boolean => try writer.writeAll(if (data) "true" else "false"),
+        .signed => {
+            const v = data;
             const quote = escaping == .json and (v < -9007199254740991 or v > 9007199254740991);
             if (quote) try writer.writeByte('"');
             try decimal.write(writer, v);
             if (quote) try writer.writeByte('"');
         },
-        .unsigned => |v| {
+        .unsigned => {
+            const v = data;
             const quote = escaping == .json and v > 9007199254740991;
             if (quote) try writer.writeByte('"');
             try decimal.write(writer, v);
             if (quote) try writer.writeByte('"');
         },
-        .float => |v| {
+        .float => {
+            const v = data;
             if (std.math.isFinite(v)) {
                 try writer.print("{d}", .{v});
             } else if (escaping == .json) {
                 try writer.writeAll("null");
             } else try quoted(writer, if (std.math.isNan(v)) "NaN" else if (v < 0) "-Inf" else "Inf", escaping);
         },
-        .string => |v| try quoted(writer, v, escaping),
-        .bytes => |v| {
+        .string => try quoted(writer, data, escaping),
+        .bytes => {
             try writer.writeAll("\"hex:");
-            try hex(writer, v);
+            try hex(writer, data);
             try writer.writeByte('"');
         },
-        .duration_ns, .timestamp_ns => |v| {
+        .duration_ns, .timestamp_ns => {
+            const v = data;
             const quote = escaping == .json and (v < -9007199254740991 or v > 9007199254740991);
             if (quote) try writer.writeByte('"');
             try decimal.write(writer, v);
             if (quote) try writer.writeByte('"');
         },
-        .array => |items| {
+        .array => {
             try writer.writeByte('[');
-            for (items, 0..) |item, index| {
+            for (data, 0..) |item, index| {
                 if (index != 0) try writer.writeByte(',');
                 try valueInner(writer, item, escaping);
             }
             try writer.writeByte(']');
         },
-        .group => |members| {
+        .group => {
             try writer.writeByte('{');
-            for (members, 0..) |member, index| {
+            for (data, 0..) |member, index| {
                 if (index != 0) try writer.writeByte(',');
                 if (escaping == .json) {
                     try jsonKey(writer, member.key);

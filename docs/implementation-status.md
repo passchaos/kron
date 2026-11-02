@@ -15,6 +15,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 当前源码在7480598之后保留native八位十进制分块与冷buffered输出。ReleaseSafe完整验证151步骤成功、639项通过/1项系统local能力skip，包含独立源码分发、九目标对象、真实SIGKILL和全部示例；数字模块Debug/Safe/Fast与generic CPU各6项、encoder重点52项通过，AArch64另完成编译。140项真实文件核对4214万JSON，shared Memory/Mmap P1/P4的完整用户态指令稳定减少3.43%–3.47%；完整速度与尾部保持inconclusive。精确源码、正负版本、风险复测与验证见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。非Linux对象编译不替代设备运行。
 
+随后保留 checked wire typed visitor 与内联 scalar 渲染：`WireInput.valueWith` 在完成同一套树检查后直接回调 typed payload，融合 renderer 跳过中间 `Value` 和通用二次分派；公开 API、aggregate 验证边界和错误优先级不变。40项完整 shared 真实文件核对1204万JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，四组CV/spread达标且中位区间不重叠；80项workflow与20项P4 sampled复测的完整吞吐/尾部仍正负混合或inconclusive。独立before/after差分17527次比较、9769个valid mutation三格式逐字节一致；ReleaseSafe完整门禁151/151步骤、640/641项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL和示例。源码、被否决的outlined版本和全部原始数据见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
+
 owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍绑定当时源码，见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)；当前完整门禁继续保留lazy provider修改caller时的scope/trace快照和多输出所有权边界。
 
 最近一次同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。最新数字输出优化不推导该比较的新排名，完整阶段和资格见 [前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。

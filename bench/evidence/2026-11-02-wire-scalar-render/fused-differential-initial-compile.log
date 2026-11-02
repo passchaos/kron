@@ -1,0 +1,10 @@
+bench/evidence/2026-11-02-wire-scalar-render/differential.zig:19:17: error: comptime control flow inside runtime block
+                continue;
+                ^~~~~~~~
+bench/evidence/2026-11-02-wire-scalar-render/differential.zig:17:121: note: runtime control flow here
+            _ = after_wire.render(@field(after_wire.Format, name), payload, new_header, &new_bytes, &new_scratch, null) catch |new_error| {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+referenced by:
+    compare: bench/evidence/2026-11-02-wire-scalar-render/differential.zig:29:20
+    main: bench/evidence/2026-11-02-wire-scalar-render/differential.zig:74:24
+    5 reference(s) hidden; use '-freference-trace=7' to see all references

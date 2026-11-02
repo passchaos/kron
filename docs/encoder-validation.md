@@ -4,6 +4,8 @@ text、JSON、logfmt的公开encode入口保留相同签名与输出布局。每
 
 完整编码入口不返回校验凭证，不导出可绕过验证的value writer，也不允许把校验结果保留到另一次调用。独立common.value继续完整验证自己的输入，延迟格式化中的nested参数仍通过这个安全入口渲染。所有descriptor、key和借用bytes必须在整个编码调用期间保持有效且不变，writer回调也必须遵守这个借用条件。
 
+checked wire parser 的 `valueWith(receiver)` 复用同一套 tag、长度、节点、深度、nested、重复key 与 arena 检查，成功后以 comptime tag 和 typed payload 回调；公开 `value()` 仍构造原 `Value`，array/group 仍完整解析后才交给 callback。融合 renderer 因此跳过中间 `Value` 和通用二次分派，但没有放宽验证或错误优先级；独立差分和完整门禁见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
+
 结构上把UTF-8流式转义、hex和可逆key表示拆到escaping.zig；common.zig拥有完整记录校验、三种布局和私有value输出，json/text/logfmt模块保留公开入口与各自golden测试。独立格式入口以comptime选择布局，不增加运行时格式分发。没有生产依赖、堆分配、完整消息scratch或新wire格式。
 
 这一步对应Foundation formatter减少重复工作与集中处理的方向。当前仍保留原std.Io.Writer写入顺序和输出片段，没有加入两遍输出长度计算或缓存格式模板；Foundation的日历日期缓存不适用于保持完整timestamp_ns的JSON输出。

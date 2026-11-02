@@ -24,6 +24,46 @@ fn Context(comptime referenced: bool) type {
     };
 }
 
+fn ValueWriter(comptime format: Format, comptime referenced: bool) type {
+    return struct {
+        pub const Error = @import("wire_json.zig").Error;
+        writer: *std.Io.Writer,
+        key: []const u8,
+        index: usize,
+        kind_mask: u16,
+
+        pub fn accept(self: *@This(), comptime tag: codec.ValueTag, data: anytype) @This().Error!void {
+            if (referenced and self.kind_mask & schema_codec.schema.kindMask(tag) == 0) return error.SchemaMismatch;
+            const writer = self.writer;
+            const value_tag = @field(std.meta.Tag(field.Value), @tagName(tag));
+            switch (format) {
+                .json => {
+                    if (self.index != 0) try writer.writeByte(',');
+                    try common.jsonKey(writer, self.key);
+                    try writer.writeByte(':');
+                    try common.writeTaggedValue(writer, value_tag, data, .json);
+                },
+                .text => {
+                    try writer.writeByte(' ');
+                    try common.quoted(writer, self.key, .text);
+                    try writer.writeAll("= ");
+                    try common.writeTaggedValue(writer, value_tag, data, .text);
+                },
+                .logfmt => {
+                    try writer.writeAll(" attr.");
+                    try common.logfmtKey(writer, self.key);
+                    try writer.writeByte('=');
+                    if (tag == .array or tag == .group) {
+                        var nested = try common.QuotedWriter.init(writer, .text);
+                        try common.writeTaggedValue(&nested.interface, value_tag, data, .text);
+                        try nested.finish();
+                    } else try common.writeTaggedValue(writer, value_tag, data, .text);
+                },
+            }
+        }
+    };
+}
+
 fn writeAttributesFallible(comptime format: Format, comptime referenced: bool, ctx: *Context(referenced), writer: *std.Io.Writer) Error!void {
     for (0..ctx.count) |index| {
         const metadata = if (referenced) (try ctx.keys.next()) orelse return error.SchemaMismatch else {};
@@ -32,32 +72,8 @@ fn writeAttributesFallible(comptime format: Format, comptime referenced: bool, c
             try field.checkUnique(ctx.keys[0..index], key);
             ctx.keys[index] = .{ .key = key, .value = .null_value };
         }
-        const value = try ctx.input.value();
-        if (referenced and metadata.kind_mask & schema_codec.schema.kindMask(codec.valueTag(value)) == 0) return error.SchemaMismatch;
-        switch (format) {
-            .json => {
-                if (index != 0) try writer.writeByte(',');
-                try common.jsonKey(writer, key);
-                try writer.writeByte(':');
-                try common.writeWireValue(writer, value, .json);
-            },
-            .text => {
-                try writer.writeByte(' ');
-                try common.quoted(writer, key, .text);
-                try writer.writeAll("= ");
-                try common.writeWireValue(writer, value, .text);
-            },
-            .logfmt => {
-                try writer.writeAll(" attr.");
-                try common.logfmtKey(writer, key);
-                try writer.writeByte('=');
-                if (value == .array or value == .group) {
-                    var nested = try common.QuotedWriter.init(writer, .text);
-                    try common.writeWireValue(&nested.interface, value, .text);
-                    try nested.finish();
-                } else try common.writeWireValue(writer, value, .text);
-            },
-        }
+        var receiver: ValueWriter(format, referenced) = .{ .writer = writer, .key = key, .index = index, .kind_mask = if (referenced) metadata.kind_mask else 0 };
+        try ctx.input.valueWith(&receiver);
     }
     if (ctx.input.position != ctx.input.bytes.len) return error.InvalidLength;
 }

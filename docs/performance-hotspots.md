@@ -72,6 +72,18 @@ CRC与decoded-delivery之后，consumer剩余成本主要是`decodeRecord`的Eve
 
 该路径刻意收窄：legacy payload、schema reference、template/args、多route和binary继续走原路径；nested attributes已支持；公开encoder仍独立校验，融合路径只在完整记录验证成功后写入scratch。
 
+## 2026-11-02 checked wire typed visitor与内联scalar渲染
+
+基线`5b72254`的shared Memory/Mmap P1/P4完整profile核对400.4万条JSON，`wire.render`自占约11.1%/5.0%，`WireInput.value`约3.4%/1.5%，`valueInner`约2.8%/1.5%；样本约1K、零lost，profile包含初始化/清理并排除kernel，不能把采样比例换算成精确周期或吞吐。
+
+`WireInput.valueWith(receiver)`沿用同一tag、长度、节点、深度、nested、重复key与arena预算检查，成功后以comptime tag和typed payload调用`receiver.accept`；公开`value()`用内部Materializer构造原`Value`，外部API与错误集合不变。array/group仍完整解析后才交给callback，不允许callback观察部分验证的aggregate。融合JSON/text/logfmt的`ValueWriter`按tag编译scalar写出，跳过中间`Value`物化和通用二次分派；schema kind mask在payload完整验证后检查，malformed/truncated优先级和“只有完整scratch记录才交给sink”保持不变。公开value/event仍完整校验借用树，没有导出unchecked writer、复用凭证或删除CRC。
+
+独立before/after模块差分对flat all-scalar/UTF8/bytes/extrema、nested与最大256-node fixture执行17527次比较；9769个valid mutation在JSON/text/logfmt中逐字节一致，原decoder和原fused renderer各自作为独立oracle。新增测试确认damaged bool、截断整数、节点预算和重复group在callback前失败且调用次数为零，合法complete group只调用一次。Root Debug 20/20、Safe 59/59、最终Fast 60/60通过；ReleaseSafe完整门禁151/151步骤、640/641项通过（1项系统local能力skip），包含源码分发、九目标对象、真实SIGKILL和示例。
+
+最初typed writer生成多个独立调用，40项完整PMU指令中位只减少约0.15%，没有cycle/速度资格，源码和原始数据保留在`outlined-writers/`。改为comptime-tag内联后，40项完整shared真实文件核对1204万条JSON，用户态instruction中位：Memory P1/P4 −1.686%/−1.664%，Mmap P1/P4 −1.652%/−1.656%；四组CV/spread达标且中位95%区间不重叠。cycles与该PMU窗口的written速度仍区间重叠，不能作为一般throughput/latency收益。80项未插桩workflow核对2408万条JSON，八组吞吐正负混合；20项P4 sampled复测核对602万条JSON，Memory −0.12%、Mmap +2.85%，后者仍inconclusive。`valueInner` code size约0x641→0xfbc属于被测候选取舍，不假定inlining一定更快。
+
+保留依据是完整校验/错误优先级/独立差分/完整门禁兼容，以及四组完整shared指令稳定减少；不据此更新Foundation/tracing排名。源码、二进制、全部CSV/慢值、被否决版本和复现脚本见`bench/evidence/2026-11-02-wire-scalar-render/`。
+
 ## 2026-11-01批次合并后的schema融合
 
 基线`366adc3`的六组百万条完整JSON profile核对600.6万条物理记录，SPSC Memory inline的consumer约占52%用户态core周期采样；prepared SPSC Memory仍有约11%含子调用的decodeRecord和约15%自占的memcpy采样，后者也含producer复制。shared Memory的begin另有显著采样。profile包含setup/preparation/cleanup、排除kernel，不能从这些比例直接计算吞吐或归因某个锁。

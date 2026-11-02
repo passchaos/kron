@@ -1,0 +1,137 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/u'
+# Event count (approx.): 5112001470
+#
+# Children      Self  Command          Shared Object     Symbol                                                                                                      
+# ........  ........  ...............  ................  ............................................................................................................
+#
+    73.72%     0.51%  reference-after  reference-after   [.] Thread.LinuxThreadImpl.spawn__anon_32592.Instance.entryFn
+    73.72%     0.00%  reference-after  reference-after   [.] Thread.callFn__anon_32611 (inlined)
+    73.72%     0.00%  reference-after  reference-after   [.] kron_reference.Worker.run (inlined)
+    73.72%     0.00%  reference-after  reference-after   [.] kron_reference.Worker.runLogger__anon_33190 (inlined)
+    73.72%     0.00%  reference-after  reference-after   [.] os.linux.x86_64.clone
+    73.27%     4.26%  reference-after  reference-after   [.] kron_reference.Worker.emit__anon_38184
+    73.23%     0.00%  reference-after  reference-after   [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).tryEmitAt__anon_38206 (inlined)
+    73.23%     0.00%  reference-after  reference-after   [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).tryEmit__anon_38193 (inlined)
+    47.38%     0.00%  reference-after  reference-after   [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).captureAndSubmit__anon_38225 (inlined)
+    42.24%     0.42%  reference-after  reference-after   [.] logging.handle.Owner.submitOne
+    42.24%     0.00%  reference-after  reference-after   [.] logging.handle.Owner.submit (inlined)
+    42.02%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.submit (inlined)
+    41.83%     0.92%  reference-after  reference-after   [.] core.runtime.Runtime.submitDestination
+    37.98%    16.45%  reference-after  reference-after   [.] core.runtime.Runtime.submitSafeDestination
+    25.68%     0.00%  reference-after  [unknown]         [k] 0xffffffffffffffff
+    25.66%     4.44%  reference-after  reference-after   [.] core.runtime.Runtime.drainJournal
+    17.46%     0.00%  reference-after  reference-after   [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).begin (inlined)
+    17.46%     0.00%  reference-after  reference-after   [.] logging.handle.Owner.begin (inlined)
+    17.23%     0.00%  reference-after  reference-after   [.] logging.handle.Owner.beginOne (inlined)
+    17.06%     0.00%  reference-after  reference-after   [.] core.delivery.emitWireFused (inlined)
+    16.87%    16.30%  reference-after  reference-after   [.] core.runtime.Runtime.begin
+    16.40%     4.97%  reference-after  reference-after   [.] encoder.wire_json.render
+    16.16%     0.00%  reference-after  reference-after   [.] encoder.wire_json.renderFormat__anon_39332 (inlined)
+    14.98%     0.00%  reference-after  reference-after   [.] encoder.common.encodeJsonWithAttributes__anon_39597 (inlined)
+    10.59%    10.59%  reference-after  reference-after   [.] journal.journal.Journal.reserve
+     8.95%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.beginDecision (inlined)
+     8.40%     0.00%  reference-after  reference-after   [.] encoder.wire_json.Attributes(.json,false).write (inlined)
+     8.40%     0.00%  reference-after  reference-after   [.] encoder.wire_json.writeAttributesFallible__anon_39599 (inlined)
+     8.23%     0.00%  reference-after  reference-after   [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).finish (inlined)
+     8.23%     0.00%  reference-after  reference-after   [.] logging.handle.Owner.endAdmission (inlined)
+     8.06%     4.69%  reference-after  reference-after   [.] core.runtime.Runtime.end
+     7.87%     0.00%  reference-after  reference-after   [.] atomic.Value(u64).load (inlined)
+     7.74%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.acquireAdmission (inlined)
+     5.35%     0.00%  reference-after  reference-after   [.] config.routes.Snapshot.retainChannel (inlined)
+     5.27%     1.84%  reference-after  reference-after   [.] core.codec.encodeSized
+     5.04%     0.00%  reference-after  reference-after   [.] core.codec.writeEvent__anon_33712 (inlined)
+     5.03%     1.45%  reference-after  reference-after   [.] encoder.common.valueInner
+     4.59%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.nowNs (inlined)
+     4.59%     0.00%  reference-after  reference-after   [.] logging.handle.Owner.nowNs (inlined)
+     4.52%     0.00%  reference-after  reference-after   [.] core.admission.acquire (inlined)
+     4.36%     4.36%  reference-after  reference-after   [.] platform.crc32.Crc32.update
+     4.26%     0.00%  reference-after  reference-after   [.] config.routes.Manager.acquire (inlined)
+     4.21%     0.00%  reference-after  reference-after   [.] core.admission.release (inlined)
+     3.96%     0.00%  reference-after  reference-after   [.] config.reload.DynamicFilter.boundDecision (inlined)
+     3.94%     0.00%  reference-after  reference-after   [.] encoder.decimal.writeMagnitude__anon_34565 (inlined)
+     3.93%     0.00%  reference-after  reference-after   [.] journal.journal.Reservation.commit (inlined)
+     3.87%     0.00%  reference-after  reference-after   [.] core.wire_write.writeField__anon_33751 (inlined)
+     3.79%     3.79%  reference-after  reference-after   [.] core.runtime.Runtime.notify
+     3.78%     0.00%  reference-after  reference-after   [.] encoder.decimal.write__anon_34436 (inlined)
+     3.42%     0.00%  reference-after  reference-after   [.] core.admission.leave (inlined)
+     3.38%     0.77%  reference-after  reference-after   [.] journal.journal.Journal.validateSlot
+     3.36%     3.36%  reference-after  reference-after   [.] core.runtime.Runtime.releaseAdmissionView
+     3.00%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.peekBatchChecked (inlined)
+     2.98%     2.07%  reference-after  reference-after   [.] core.codec.measure
+     2.96%     2.96%  reference-after  reference-after   [.] core.wire_write.writeValueTo__anon_33769
+     2.88%     0.00%  reference-after  reference-after   [.] Thread.LinuxThreadImpl.getCurrentId (inlined)
+     2.88%     0.00%  reference-after  reference-after   [.] Thread.getCurrentId (inlined)
+     2.84%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.releaseAfter (inlined)
+     2.82%     2.82%  reference-after  reference-after   [.] encoder.decimal.writeNative
+     2.66%     0.00%  reference-after  reference-after   [.] atomic.Value(bool).load (inlined)
+     2.64%     0.00%  reference-after  reference-after   [.] core.field.ValueValidator.fieldsWith__anon_37624 (inlined)
+     2.61%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.slotChecksum (inlined)
+     2.44%     0.00%  reference-after  reference-after   [.] platform.crc32_pclmul.update (inlined)
+     2.20%     0.00%  reference-after  reference-after   [.] atomic.Value(u64).cmpxchgWeak (inlined)
+     2.05%     1.69%  reference-after  reference-after   [.] encoder.escaping.quotedAscii
+     2.00%     2.00%  reference-after  reference-after   [.] compiler_rt.memcpy.memcpyFast
+     1.96%     0.00%  reference-after  reference-after   [.] encoder.common.writeWireValue (inlined)
+     1.89%     0.74%  reference-after  reference-after   [.] journal.journal.Journal.peekChecked
+     1.87%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.slotChecksum (inlined)
+     1.72%     0.21%  reference-after  reference-after   [.] platform.clock.realDefault
+     1.72%     0.00%  reference-after  reference-after   [.] platform.clock.Clock.realNow (inlined)
+     1.67%     0.00%  reference-after  reference-after   [.] Io.Clock.now (inlined)
+     1.54%     0.09%  reference-after  reference-after   [.] Io.Threaded.now
+     1.53%     1.53%  reference-after  reference-after   [.] core.codec.WireInput.value
+     1.51%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.writeSlotSchema (inlined)
+     1.46%     0.00%  reference-after  reference-after   [.] encoder.decimal.digits (inlined)
+     1.46%     1.46%  reference-after  reference-after   [.] encoder.escaping.jsonKey
+     1.45%     0.00%  reference-after  reference-after   [.] Io.Threaded.nowPosix (inlined)
+     1.45%     0.00%  reference-after  reference-after   [.] os.linux.clock_gettime (inlined)
+     1.29%     0.00%  reference-after  reference-after   [.] atomic.Value(u64).load (inlined)
+     1.23%     0.00%  reference-after  reference-after   [.] compiler_rt.memcpy.copySmallLength (inlined)
+     1.17%     0.00%  reference-after  reference-after   [.] compiler_rt.memcpy.copyRange4 (inlined)
+     1.11%     0.00%  reference-after  reference-after   [.] compiler_rt.memcpy.copyLessThan16 (inlined)
+     1.10%     0.00%  reference-after  reference-after   [.] core.field.checkUnique (inlined)
+     1.05%     0.00%  reference-after  reference-after   [.] atomic.Value(u64).cmpxchgWeak (inlined)
+     0.99%     0.00%  reference-after  reference-after   [.] Io.Writer.writeAll (inlined)
+     0.97%     0.00%  reference-after  reference-after   [.] Io.Writer.writeAll (inlined)
+     0.94%     0.94%  reference-after  reference-after   [.] encoder.decimal.writeLargeNative
+     0.94%     0.00%  reference-after  reference-after   [.] atomic.Value(usize).fetchMax (inlined)
+     0.93%     0.00%  reference-after  reference-after   [.] core.wire_write.writeBlob__anon_33728 (inlined)
+     0.91%     0.91%  reference-after  reference-after   [.] core.field.ValueValidator.valueWith__anon_37645
+     0.86%     0.00%  reference-after  reference-after   [.] Io.Writer.write (inlined)
+     0.85%     0.00%  reference-after  reference-after   [.] core.field.checkUnique (inlined)
+     0.84%     0.00%  reference-after  reference-after   [.] journal.format.checksum (inlined)
+     0.83%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.reclaim (inlined)
+     0.82%     0.00%  reference-after  reference-after   [.] core.codec.Output.put (inlined)
+     0.81%     0.00%  reference-after  reference-after   [.] encoder.decimal.nativeDigits (inlined)
+     0.79%     0.79%  reference-after  [vdso]            [.] 0x0000000000000b03
+     0.79%     0.00%  reference-after  [vdso]            [.] 0x00007ffc621ceb03
+     0.77%     0.00%  reference-after  reference-after   [.] compiler_rt.memcpy.copyFixedLength (inlined)
+     0.72%     0.00%  reference-after  reference-after   [.] encoder.escaping.asciiRun (inlined)
+     0.68%     0.00%  reference-after  reference-after   [.] platform.crc32_pclmul.clmul (inlined)
+     0.68%     0.68%  reference-after  reference-after   [.] encoder.escaping.quoted
+     0.66%     0.00%  reference-after  reference-after   [.] encoder.decimal.digitsChunked (inlined)
+     0.59%     0.00%  reference-after  reference-after   [.] journal.journal.Journal.advanceWritten (inlined)
+     0.59%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.countersFor (inlined)
+     0.48%     0.00%  reference-after  reference-after   [.] Io.Writer.write (inlined)
+     0.48%     0.00%  reference-after  reference-after   [.] sink.file.FileSink.writeErased
+     0.48%     0.00%  reference-after  reference-after   [.] sink.file.FileSink.writeRecord (inlined)
+     0.43%     0.00%  reference-after  reference-after   [.] mem.eqlBytes (inlined)
+     0.43%     0.00%  reference-after  reference-after   [.] mem.eql__anon_2586 (inlined)
+     0.41%     0.00%  reference-after  reference-after   [.] compiler_rt.memcpy.copyForwards (inlined)
+     0.41%     0.00%  reference-after  reference-after   [.] sink.interface.Sink.writeRecord (inlined)
+     0.38%     0.00%  reference-after  reference-after   [.] core.wire_size.SizeVisitor.onValue (inlined)
+     0.37%     0.00%  reference-after  reference-after   [.] encoder.escaping.asciiRun (inlined)
+     0.36%     0.06%  reference-after  reference-after   [.] core.codec.readHeader
+     0.33%     0.00%  reference-after  reference-after   [.] mem.eqlBytes (inlined)
+     0.33%     0.00%  reference-after  reference-after   [.] mem.eql__anon_2586 (inlined)
+     0.33%     0.00%  reference-after  reference-after   [.] core.codec.Output.int__anon_33781 (inlined)
+     0.30%     0.00%  reference-after  reference-after   [.] core.runtime.Runtime.dispatchDiagnostics (inlined)
+     0.30%     0.30%  reference-after  reference-after   [.] mem.eql__anon_2586
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

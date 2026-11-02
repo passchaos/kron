@@ -1,0 +1,61 @@
+1/60 root.test_0...OK
+2/60 logging.root.test_0...OK
+3/60 encoder.root.test_0...OK
+4/60 encoder.root.test_1...OK
+5/60 core.runtime.test_0...OK
+6/60 config.routes.test_0...OK
+7/60 sink.rolling_file.test_0...OK
+8/60 pipeline.flight_recorder.test.flight recorder captured codec frame contains no original secret...OK
+9/60 core.codec.test_0...OK
+10/60 core.schema_codec.test.referenced event omits static metadata and survives copied schema plus values...OK
+11/60 core.schema_codec.test.ordinary dynamic message and optional typed metadata roundtrip...OK
+12/60 core.schema_codec.test.reference codec rejects malformed lengths counts tags and wrong versions...OK
+13/60 core.schema_codec.test.reference values retain integer extremes float bits bytes and time wrappers...OK
+14/60 core.schema_codec.test.nested references keep one schema while values sizes and nested keys change...OK
+15/60 core.schema_codec.test.schema metadata and reference encoding reject invalid nested values...OK
+16/60 core.schema_codec.test.historical schema payload v2 reads scalar definitions with zero route generation...OK
+17/60 core.schema_codec.test.reference size and encoding validate each node once and count only payload keys...OK
+18/60 core.schema_codec.test.reference single-pass validation preserves shared node depth and duplicate budgets...OK
+19/60 core.schema_codec.test.reference length overflow follows tree shape and level errors with zero output...OK
+20/60 journal.journal.test_0...OK
+21/60 journal.spsc.test_0...OK
+22/60 time.root.test_0...OK
+23/60 core.tests.codec.test.wire measurement rejects logical oversized slices only after full tree validation...OK
+24/60 core.tests.codec.test.public value writer still validates invalid nested input before output...OK
+25/60 core.tests.codec.test.codec roundtrip copies all metadata and values without source pointers...OK
+26/60 core.tests.codec.test.codec deferred arguments are copied after attributes and never contain secret values...OK
+27/60 core.tests.codec.test.codec rejects every truncated prefix, unknown version and malformed lengths...OK
+28/60 core.tests.codec.test.codec validates boolean, tag, duplicate keys and bounded output...OK
+29/60 core.tests.codec.test.codec wire golden is little endian and independent of struct padding...OK
+30/60 core.tests.codec.test.codec route fingerprint spans the appended header and both output paths...OK
+31/60 core.tests.codec.test.codec rejects corrupt source string terminators and reserved header bits...OK
+32/60 core.tests.codec.test.codec single byte corruption cannot bypass bounds validation...OK
+33/60 core.tests.codec.test.codec preserves float bits in an unaligned payload...OK
+34/60 core.tests.codec.test.historical self-contained v1 68-byte fixture decodes and reencodes as v4...OK
+35/60 core.tests.codec.test.legacy header offsets preserve source trace and deferred arguments...OK
+36/60 core.tests.codec.test.standalone decoder rejects v2 references and unversioned extended v1 headers...OK
+37/60 core.tests.codec.test.nested wire copies source bytes and descriptors into caller scratch only...OK
+38/60 core.tests.codec.test.nested input rejects cycles depth nodes and duplicate group keys before writing...OK
+39/60 core.tests.codec.test.size overflow retains complete validation priority and never touches output...OK
+40/60 core.tests.codec.test.admission measurement skips level validation and sized writes stay byte-identical...OK
+41/60 core.tests.codec.test.size encode and streaming visit values once while preserving all scalar and nested wire sizes...OK
+42/60 core.tests.codec.test.nested decoder rejects malformed child counts depth keys and legacy tags...OK
+43/60 core.tests.codec.test.historical v3 header migrates route generation and preserves scalar body...OK
+44/60 core.tests.codec.test.full node budget fits fixed scratch for the largest group descriptor layout...OK
+45/60 core.tests.codec.test.wire typed visitor rejects damaged values before invoking its receiver...OK
+46/60 core.tests.runtime.test_0...OK
+47/60 core.tests.runtime_prepared_measure.test.prepared runtime measure visits the final tree once while public reference codecs always validate...OK
+48/60 core.thread_registry.test_0...OK
+49/60 encoder.common.test.record encoding validates every value tag once with one shared attribute and argument budget...OK
+50/60 encoder.common.test.record encoding standalone values still reject invalid trees before output...OK
+51/60 encoder.wire_json.test.fused wire JSON matches decoded encoder for flat scalar events...OK
+52/60 encoder.wire_json.test.fused wire JSON matches decoded encoder for nested attributes...OK
+53/60 encoder.wire_json.test.fused wire JSON declines deferred messages...OK
+54/60 encoder.wire_json.test.fused wire JSON matches readable timestamp formatting...OK
+55/60 encoder.wire_json.test.fused wire text and logfmt match decoded encoders...OK
+56/60 encoder.wire_json.test_0...OK
+57/60 encoder.wire_reference_tests.test.fused reference matches materialized all tags nested static dynamic and historical records...OK
+58/60 encoder.wire_reference_tests.test.fused reference has identical checked errors on truncation mutation type mismatch and scratch exhaustion...OK
+59/60 encoder.wire_reference_tests.test.fused reference declines deferred including unused arguments for the authoritative materialized renderer...OK
+60/60 encoder.wire_reference_tests.test.fused reference runtime rejects checked schema damage before output and retains exact pins...OK
+All 60 tests passed.
