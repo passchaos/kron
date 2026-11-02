@@ -46,16 +46,15 @@ kron的mmap init在本轮fresh-zero优化后低于tracing；memory init仍约高
 | Mmap P4 batch | 1.110 | 1.084..1.120 | 3.3% | 4.0% / 2.4% | local repeatability：kron领先约11% |
 | Mmap P4 sampled | 1.059 | 0.834..1.081 | 23.3% | 4.1% / 23.7% | inconclusive |
 
-## 结论
+## 结论与复测
 
-当前同轮窗口不是“全面领先”：
+首轮窗口曾出现三个局部资格：Memory P1 sampled tracing领先约11%，Memory P4 sampled与Mmap P4 batch kron领先约12%/11%。但相同配置、相同源码的第二轮80项复测没有复现这些资格：
 
-- **Memory P1 sampled**：tracing中位领先约11%，两侧spread达标且区间不跨1。
-- **Memory P4 sampled**：kron中位领先约12%，两侧spread达标且区间不跨1。
-- **Mmap P4 batch**：kron中位领先约11%，两侧spread达标且区间不跨1。
-- 其余组因spread或区间跨1保持inconclusive；Mmap P1 sampled中位kron高约15%，但spread 12.2%超门限。
+- Memory P1 sampled：第二轮0.839，方向一致但spread 18.3%，inconclusive。
+- Memory P4 sampled：第二轮1.016，接近持平，spread 14.3%，inconclusive。
+- Mmap P4 batch：第二轮0.894，方向翻转为tracing领先，spread 26.5%，inconclusive。
 
-因此当前结论是**互有胜负**：tracing在Memory P1更强，kron在Memory P4 sampled与Mmap P4 batch更强；不能宣称任一入口在所有配置全面领先。该缩减窗口不替代完整200项Foundation/tracing矩阵，也不更新历史排名。
+因此本页首轮资格只能作为该窗口的局部观察，**不能作为当前跨库排名**。当前Foundation + Rust tracing对照保持inconclusive；Memory P1的tracing中位方向在两次都领先，但第二轮不达标；Memory P4与Mmap P4方向翻转。完整200项安静窗口矩阵仍需重跑。复测数据见 [tracing复测](../2026-11-02-current-tracing-spotcheck-2/README.md)。
 
 ## 复现
 
