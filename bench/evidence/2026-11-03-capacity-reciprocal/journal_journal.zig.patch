@@ -1,0 +1,160 @@
+--- /home/passchaos/project-z/kron/.zig-cache/capacity-reciprocal/before/src/journal/journal.zig	2026-11-03 06:25:06.590213221 +0800
++++ /home/passchaos/project-z/kron/.zig-cache/capacity-reciprocal/candidate/src/journal/journal.zig	2026-11-03 06:26:55.070351198 +0800
+@@ -6,6 +6,7 @@
+ const Storage = @import("storage.zig").Storage;
+ const format = @import("format.zig");
+ const schema_format = @import("schema.zig");
++const capacity_divider = @import("capacity_divider.zig");
+ const Atomic = std.atomic.Value;
+ pub const SchemaRef = schema_format.Ref;
+ pub const SchemaDefinition = schema_format.Definition;
+@@ -145,6 +146,7 @@
+     io: std.Io,
+     mapping: Storage,
+     capacity: usize,
++    divider: capacity_divider.Divider = .{ .multiplier = 0 },
+     max_record_bytes: usize,
+     stride: usize,
+     file_version: u32,
+@@ -247,6 +249,7 @@
+             .io = io,
+             .mapping = mapping,
+             .capacity = options.capacity,
++            .divider = capacity_divider.Divider.init(options.capacity) catch unreachable,
+             .max_record_bytes = options.max_record_bytes,
+             .stride = layout.stride,
+             .file_version = if (schema_layout == null) format.version else format.schema_version,
+@@ -289,8 +292,17 @@
+     fn slotState(self: *const Journal, index: usize) *Atomic(u64) {
+         return @ptrCast(@alignCast(self.slotBytes(index).ptr));
+     }
+-    fn generation(self: *const Journal, sequence: u64) u64 {
+-        return (sequence - 1) / self.capacity + 1;
++    // Creation validates capacity and prepares the exact reciprocal. An explicit
++    // Journal value that omits it retains the original division path.
++    inline fn coordinates(self: *const Journal, position: u64) capacity_divider.Division {
++        if (self.divider.multiplier != 0) return self.divider.divide(position, self.capacity);
++        return .{ .quotient = position / self.capacity, .remainder = position % self.capacity };
++    }
++    inline fn slotIndex(self: *const Journal, position: u64) usize {
++        return @intCast(self.coordinates(position).remainder);
++    }
++    inline fn generation(self: *const Journal, sequence: u64) u64 {
++        return self.coordinates(sequence - 1).quotient + 1;
+     }
+ 
+     fn writeSlotSchema(self: *const Journal, bytes: []u8, reference: ?SchemaRef) void {
+@@ -325,7 +337,7 @@
+         return error.SchemasDisabled;
+     }
+     fn nextTurn(self: *const Journal, position: u64, index: usize) u64 {
+-        const base = position - position % self.capacity;
++        const base = position - self.coordinates(position).remainder;
+         const candidate = base + index;
+         return if (candidate < position) candidate + self.capacity else candidate;
+     }
+@@ -336,9 +348,10 @@
+         const gen = format.get(u64, bytes, 16);
+         const length = format.get(u32, bytes, 24);
+         if (sequence == 0 or sequence > format.max_sequence or marker != format.tag(sequence, .committed)) return error.CorruptRecord;
+-        if ((sequence - 1) % self.capacity != index or gen != self.generation(sequence) or length > self.max_record_bytes) return error.CorruptRecord;
++        const actual = self.coordinates(sequence - 1);
++        if (actual.remainder != index or gen != actual.quotient + 1 or length > self.max_record_bytes) return error.CorruptRecord;
+         const payload = bytes[format.slot_header_bytes..][0..length];
+-        if (self.verify_crc and format.get(u32, bytes, 28) != self.slotChecksum(sequence, gen, bytes, payload)) return error.CorruptRecord;
++        if (self.verify_crc and format.get(u32, bytes, 28) != @call(.never_inline, slotChecksum, .{ self, sequence, gen, bytes, payload })) return error.CorruptRecord;
+         const reference = try self.readSlotSchema(bytes);
+         if (reference) |ref| try self.validateSchemaReady(ref);
+         return .{ .sequence = sequence, .generation = gen, .payload = payload, .slot = index, .schema_ref = reference };
+@@ -355,7 +368,7 @@
+             if (marker == 0) continue;
+             const state: format.State = @enumFromInt(@as(u2, @truncate(marker)));
+             const sequence = marker >> 2;
+-            if (state == .empty or sequence == 0 or (sequence - 1) % self.capacity != index) return error.CorruptRecord;
++            if (state == .empty or sequence == 0 or self.slotIndex(sequence - 1) != index) return error.CorruptRecord;
+             position = @max(position, sequence);
+             if (state != .committed) continue;
+             const record = try self.validateSlot(index, marker);
+@@ -404,7 +417,8 @@
+         var position = self.tail().load(.monotonic);
+         while (true) {
+             if (position >= format.max_sequence) return error.SequenceExhausted;
+-            const index: usize = @intCast(position % self.capacity);
++            const actual = self.coordinates(position);
++            const index: usize = @intCast(actual.remainder);
+             const turn = self.turns[index].load(.acquire);
+             if (turn < position) {
+                 const current = self.tail().load(.monotonic);
+@@ -438,7 +452,7 @@
+             // process is paused before publishing this reservation marker.
+             self.slotState(index).store(format.tag(sequence, .reserved), .release);
+             format.put(u64, bytes, 8, sequence);
+-            format.put(u64, bytes, 16, self.generation(sequence));
++            format.put(u64, bytes, 16, actual.quotient + 1);
+             self.writeSlotSchema(bytes, null);
+             return .{ .journal = self, .sequence = sequence, .slot = index };
+         }
+@@ -520,7 +534,8 @@
+         try self.validateSingleProducer(token);
+         const position = self.tail().load(.monotonic);
+         if (position >= format.max_sequence) return error.SequenceExhausted;
+-        const index: usize = @intCast(position % self.capacity);
++        const actual = self.coordinates(position);
++        const index: usize = @intCast(actual.remainder);
+         if (position >= self.single.cached_producer_limit) {
+             self.single.cached_producer_limit = self.single.consumer_free_position.load(.acquire) + self.capacity;
+             if (position >= self.single.cached_producer_limit and self.turns[index].load(.acquire) != position) return error.Full;
+@@ -536,7 +551,7 @@
+         const bytes = self.slotBytes(index);
+         self.slotState(index).store(format.tag(sequence, .reserved), .release);
+         format.put(u64, bytes, 8, sequence);
+-        format.put(u64, bytes, 16, self.generation(sequence));
++        format.put(u64, bytes, 16, actual.quotient + 1);
+         self.writeSlotSchema(bytes, null);
+         return .{ .journal = self, .sequence = sequence, .slot = index, .producer_generation = token.generation };
+     }
+@@ -589,7 +604,7 @@
+         }
+         while (self.head < self.tail().load(.acquire)) {
+             const sequence = self.head + 1;
+-            const index: usize = @intCast(self.head % self.capacity);
++            const index = self.slotIndex(self.head);
+             const marker = self.slotState(index).load(.acquire);
+             if (marker == format.tag(sequence, .committed)) return self.liveRecord(index);
+             if (marker != format.tag(sequence, .aborted)) return null;
+@@ -619,7 +634,7 @@
+         }
+         while (self.head < self.tail().load(.acquire)) {
+             const sequence = self.head + 1;
+-            const index: usize = @intCast(self.head % self.capacity);
++            const index = self.slotIndex(self.head);
+             const marker = self.slotState(index).load(.acquire);
+             if (marker == format.tag(sequence, .committed)) return try self.validateSlot(index, marker);
+             if (marker == 0 or marker == format.tag(sequence, .reserved)) return null;
+@@ -646,7 +661,7 @@
+             const target = self.tail().load(.acquire);
+             while (length < destination.len and self.head + length < target) : (length += 1) {
+                 const position = self.head + length;
+-                const index: usize = @intCast(position % self.capacity);
++                const index = self.slotIndex(position);
+                 if (self.slotState(index).load(.acquire) != format.tag(position + 1, .committed)) break;
+                 destination[length] = self.liveRecord(index);
+             }
+@@ -669,7 +684,7 @@
+             const target = self.tail().load(.acquire);
+             while (length < destination.len and self.head + length < target) : (length += 1) {
+                 const position = self.head + length;
+-                const index: usize = @intCast(position % self.capacity);
++                const index = self.slotIndex(position);
+                 const marker = self.slotState(index).load(.acquire);
+                 if (marker != format.tag(position + 1, .committed)) {
+                     if (marker != 0 and marker != format.tag(position + 1, .reserved) and marker != format.tag(position + 1, .aborted)) return error.CorruptRecord;
+@@ -744,7 +759,7 @@
+     /// write-protected for producers until reclaim.
+     fn validateReclaimIdentity(self: *Journal, record: Record) !void {
+         if (record.sequence == 0 or record.sequence > format.max_sequence) return error.InvalidRecord;
+-        if ((record.sequence - 1) % self.capacity != record.slot) return error.InvalidRecord;
++        if (self.slotIndex(record.sequence - 1) != record.slot) return error.InvalidRecord;
+         if (record.generation != self.generation(record.sequence)) return error.InvalidRecord;
+         const bytes = self.slotBytes(record.slot);
+         if (format.get(u64, bytes, 8) != record.sequence or format.get(u64, bytes, 16) != record.generation) return error.InvalidRecord;

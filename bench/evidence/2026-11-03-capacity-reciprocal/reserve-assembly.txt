@@ -1,0 +1,149 @@
+
+.zig-cache/capacity-reciprocal/after-reference:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000010fb420 <journal.journal.Journal.reserve>:
+ 10fb420:	push   rbp
+ 10fb421:	mov    rbp,rsp
+ 10fb424:	push   rbx
+ 10fb425:	test   BYTE PTR [rsi+0x305],0x1
+ 10fb42c:	je     10fb455 <journal.journal.Journal.reserve+0x35>
+ 10fb42e:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b80a]        # 1066c40 <__anon_33624+0x20>
+ 10fb436:	vmovups YMMWORD PTR [rdi+0x20],ymm0
+ 10fb43b:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b7dd]        # 1066c20 <__anon_33624>
+ 10fb443:	vmovups YMMWORD PTR [rdi],ymm0
+ 10fb447:	mov    QWORD PTR [rdi+0x40],0x13b
+ 10fb44f:	pop    rbx
+ 10fb450:	pop    rbp
+ 10fb451:	vzeroupper
+ 10fb454:	ret
+ 10fb455:	movabs r9,0x3ffffffffffffffe
+ 10fb45f:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 10fb466:	mov    rcx,QWORD PTR [rax+0x40]
+ 10fb46a:	cmp    rcx,r9
+ 10fb46d:	jbe    10fb496 <journal.journal.Journal.reserve+0x76>
+ 10fb46f:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b831]        # 1066ca8 <__anon_33651+0x20>
+ 10fb477:	vmovups YMMWORD PTR [rdi+0x20],ymm0
+ 10fb47c:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b804]        # 1066c88 <__anon_33651>
+ 10fb484:	vmovups YMMWORD PTR [rdi],ymm0
+ 10fb488:	mov    QWORD PTR [rdi+0x40],0xb3
+ 10fb490:	pop    rbx
+ 10fb491:	pop    rbp
+ 10fb492:	vzeroupper
+ 10fb495:	ret
+ 10fb496:	xor    r10d,r10d
+ 10fb499:	jmp    10fb4bc <journal.journal.Journal.reserve+0x9c>
+ 10fb49b:	nop    DWORD PTR [rax+rax*1+0x0]
+ 10fb4a0:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 10fb4a7:	mov    rax,QWORD PTR [rax+0x40]
+ 10fb4ab:	cmp    rax,rcx
+ 10fb4ae:	mov    rcx,rax
+ 10fb4b1:	je     10fb5a0 <journal.journal.Journal.reserve+0x180>
+ 10fb4b7:	cmp    rcx,r9
+ 10fb4ba:	ja     10fb46f <journal.journal.Journal.reserve+0x4f>
+ 10fb4bc:	mov    r11,QWORD PTR [rsi+0x1f0]
+ 10fb4c3:	mov    rdx,QWORD PTR [rsi+0x1f8]
+ 10fb4ca:	test   rdx,rdx
+ 10fb4cd:	je     10fb510 <journal.journal.Journal.reserve+0xf0>
+ 10fb4cf:	mulx   r8,r8,rcx
+ 10fb4d4:	mov    rax,r11
+ 10fb4d7:	imul   rax,r8
+ 10fb4db:	mov    rdx,rcx
+ 10fb4de:	sub    rdx,rax
+ 10fb4e1:	cmp    rdx,r11
+ 10fb4e4:	sbb    r8,0xffffffffffffffff
+ 10fb4e8:	cmp    rdx,r11
+ 10fb4eb:	cmovb  r11,r10
+ 10fb4ef:	sub    rdx,r11
+ 10fb4f2:	mov    rax,QWORD PTR [rsi+0x298]
+ 10fb4f9:	mov    rax,QWORD PTR [rax+rdx*8]
+ 10fb4fd:	cmp    rax,rcx
+ 10fb500:	jb     10fb4a0 <journal.journal.Journal.reserve+0x80>
+ 10fb502:	jmp    10fb560 <journal.journal.Journal.reserve+0x140>
+ 10fb504:	data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 10fb510:	mov    rax,rcx
+ 10fb513:	or     rax,r11
+ 10fb516:	shr    rax,0x20
+ 10fb51a:	je     10fb53d <journal.journal.Journal.reserve+0x11d>
+ 10fb51c:	mov    rax,rcx
+ 10fb51f:	xor    edx,edx
+ 10fb521:	div    r11
+ 10fb524:	mov    r8,rax
+ 10fb527:	mov    rax,QWORD PTR [rsi+0x298]
+ 10fb52e:	mov    rax,QWORD PTR [rax+rdx*8]
+ 10fb532:	cmp    rax,rcx
+ 10fb535:	jb     10fb4a0 <journal.journal.Journal.reserve+0x80>
+ 10fb53b:	jmp    10fb560 <journal.journal.Journal.reserve+0x140>
+ 10fb53d:	mov    eax,ecx
+ 10fb53f:	xor    edx,edx
+ 10fb541:	div    r11d
+ 10fb544:	mov    r8d,eax
+ 10fb547:	mov    rax,QWORD PTR [rsi+0x298]
+ 10fb54e:	mov    rax,QWORD PTR [rax+rdx*8]
+ 10fb552:	cmp    rax,rcx
+ 10fb555:	jb     10fb4a0 <journal.journal.Journal.reserve+0x80>
+ 10fb55b:	nop    DWORD PTR [rax+rax*1+0x0]
+ 10fb560:	mov    rbx,QWORD PTR [rsi+0x1a0]
+ 10fb567:	jbe    10fb580 <journal.journal.Journal.reserve+0x160>
+ 10fb569:	mov    rcx,QWORD PTR [rbx+0x40]
+ 10fb56d:	jmp    10fb4b7 <journal.journal.Journal.reserve+0x97>
+ 10fb572:	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 10fb580:	lea    r11,[rcx+0x1]
+ 10fb584:	mov    rax,rcx
+ 10fb587:	lock cmpxchg QWORD PTR [rbx+0x40],r11
+ 10fb58d:	setne  BYTE PTR [rbp-0x10]
+ 10fb591:	setne  bl
+ 10fb594:	test   bl,bl
+ 10fb596:	je     10fb5c7 <journal.journal.Journal.reserve+0x1a7>
+ 10fb598:	mov    rcx,rax
+ 10fb59b:	jmp    10fb4b7 <journal.journal.Journal.reserve+0x97>
+ 10fb5a0:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b748]        # 1066cf0 <__anon_33653+0x20>
+ 10fb5a8:	vmovups YMMWORD PTR [rdi+0x20],ymm0
+ 10fb5ad:	vmovups ymm0,YMMWORD PTR [rip+0xfffffffffff6b71b]        # 1066cd0 <__anon_33653>
+ 10fb5b5:	vmovups YMMWORD PTR [rdi],ymm0
+ 10fb5b9:	mov    QWORD PTR [rdi+0x40],0x13c
+ 10fb5c1:	pop    rbx
+ 10fb5c2:	pop    rbp
+ 10fb5c3:	vzeroupper
+ 10fb5c6:	ret
+ 10fb5c7:	mov    ecx,0x1
+ 10fb5cc:	lock xadd QWORD PTR [rsi+0x2d8],rcx
+ 10fb5d5:	mov    rax,QWORD PTR [rsi+0x2e0]
+ 10fb5dc:	cmp    rcx,rax
+ 10fb5df:	jb     10fb60b <journal.journal.Journal.reserve+0x1eb>
+ 10fb5e1:	lea    r9,[rcx+0x1]
+ 10fb5e5:	data16 cs nop WORD PTR [rax+rax*1+0x0]
+ 10fb5f0:	lock cmpxchg QWORD PTR [rsi+0x2e0],r9
+ 10fb5f9:	setne  BYTE PTR [rbp-0x18]
+ 10fb5fd:	setne  r10b
+ 10fb601:	test   r10b,r10b
+ 10fb604:	je     10fb60b <journal.journal.Journal.reserve+0x1eb>
+ 10fb606:	cmp    rcx,rax
+ 10fb609:	jae    10fb5f0 <journal.journal.Journal.reserve+0x1d0>
+ 10fb60b:	mov    rax,QWORD PTR [rsi+0x1a0]
+ 10fb612:	mov    rcx,QWORD PTR [rsi+0x208]
+ 10fb619:	imul   rcx,rdx
+ 10fb61d:	lea    r9,[r11*4+0x1]
+ 10fb625:	mov    QWORD PTR [rax+rcx*1+0x1000],r9
+ 10fb62d:	mov    QWORD PTR [rax+rcx*1+0x1008],r11
+ 10fb635:	inc    r8
+ 10fb638:	mov    QWORD PTR [rax+rcx*1+0x1010],r8
+ 10fb640:	cmp    DWORD PTR [rsi+0x2f8],0x1
+ 10fb647:	je     10fb663 <journal.journal.Journal.reserve+0x243>
+ 10fb649:	add    rax,rcx
+ 10fb64c:	vxorps xmm0,xmm0,xmm0
+ 10fb650:	vmovups XMMWORD PTR [rax+0x1020],xmm0
+ 10fb658:	mov    QWORD PTR [rax+0x1030],0x0
+ 10fb663:	mov    WORD PTR [rdi+0x40],0x0
+ 10fb669:	mov    QWORD PTR [rdi],rsi
+ 10fb66c:	mov    QWORD PTR [rdi+0x8],r11
+ 10fb670:	mov    QWORD PTR [rdi+0x10],rdx
+ 10fb674:	vxorps xmm0,xmm0,xmm0
+ 10fb678:	vmovups YMMWORD PTR [rdi+0x18],ymm0
+ 10fb67d:	mov    QWORD PTR [rdi+0x35],0x0
+ 10fb685:	pop    rbx
+ 10fb686:	pop    rbp
+ 10fb687:	vzeroupper
+ 10fb68a:	ret

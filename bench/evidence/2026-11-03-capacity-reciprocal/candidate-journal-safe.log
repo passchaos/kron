@@ -1,0 +1,82 @@
+1/81 root.test_0...OK
+2/81 core.admission.test_0...OK
+3/81 journal.capacity_divider.test.capacity divider rejects zero and corrects divisor one across the full numerator range...OK
+4/81 journal.capacity_divider.test.capacity divider exact boundaries include every power of two and adjacent divisors...OK
+5/81 journal.capacity_divider.test.capacity divider matches native quotient remainder and reciprocal bounds for 200000 seeded pairs...OK
+6/81 platform.crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
+7/81 logging.root.test_0...OK
+8/81 encoder.root.test_0...OK
+9/81 encoder.root.test_1...OK
+10/81 core.runtime.test_0...OK
+11/81 config.routes.test_0...OK
+12/81 sink.rolling_file.test_0...OK
+13/81 core.codec.test_0...OK
+14/81 journal.schema.test.schema extension roundtrip validates version layout checksum and budgets...OK
+15/81 journal.schema.test.registry deduplicates metadata keeps types source and requires sync after restart...OK
+16/81 journal.schema.test.unfinished schema slots do not hide later entries or get reused...OK
+17/81 journal.schema.test.content hash collisions still compare complete metadata before deduplication...OK
+18/81 journal.schema.test.metadata hash covers source keys kinds and scope but never event values...OK
+19/81 journal.schema.test.schema registration deeply copies keys source format and scope once...OK
+20/81 journal.schema.test.concurrent registration publishes one definition and readiness remains local...OK
+21/81 journal.schema.test.invalid refs lengths and all committed definitions are checked without mutation...OK
+22/81 journal.schema.test.ready resolution uses validated cached definitions and rejects tampered references...OK
+23/81 journal.schema.test.nested definition masks use version two while scalar definitions stay byte compatible...OK
+24/81 journal.journal.test_0...OK
+25/81 journal.journal.test.memory journal can opt out of slot CRC...OK
+26/81 journal.spsc.test_0...OK
+27/81 time.root.test_0...OK
+28/81 journal.spsc_tests.test.SPSC full wrap and exclusive producer mode preserve MPSC API...OK
+29/81 journal.spsc_tests.test.SPSC validates owner thread on reserve commit and retirement...OK
+30/81 journal.spsc_tests.test.SPSC rejects a reused thread id with an unregistered or different TLS cookie...OK
+31/81 journal.spsc_tests.test.SPSC retire reactivate invalidates old generation and retains pending data...OK
+32/81 journal.spsc_tests.test.SPSC retired channel can transfer ownership to another thread...OK
+33/81 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK
+34/81 journal.spsc_tests.test.SPSC reserve commit retire reactivate allocate nothing after creation...OK
+35/81 journal.spsc_tests.test.SPSC written durable checkpoint confirms consumer progress without reclaiming pending data...OK
+36/81 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK
+37/81 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK
+38/81 journal.format.test.zeroed initialization matches full clear for memory-backed journals...OK
+39/81 journal.storage.test.memory Storage is aligned zeroed and uses only caller memory...OK
+40/81 journal.storage.test.memory Storage publication and durability errors allocate nothing after creation...OK
+41/81 journal.storage.test.memory Storage invalid size and OOM leave no owned allocation...OK
+42/81 journal.tests.test.shared and single reserve coordinates preserve full width generations through nonpower wraps and aborts...OK
+43/81 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK
+44/81 journal.tests.test.mmap reopen replays committed payload and session without msync...OK
+45/81 journal.tests.test.normal consumer waits at reservation gap but recovery scans later commits...OK
+46/81 journal.tests.test.recovery completion includes abandoned trailing reservation but excludes new live work...OK
+47/81 journal.tests.test.recovery ignores stale high written cursor while retaining pending commits...OK
+48/81 journal.tests.test.recovery without commits completes abandoned tail immediately...OK
+49/81 journal.tests.test.recoveryRecordAt enumerates every remaining commit across gaps without consuming...OK
+50/81 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK
+51/81 journal.tests.test.abort, full, oversize, wrap reuse and generation...OK
+52/81 journal.tests.test.lock, layout, recovery opt out, checksum corruption retain evidence...OK
+53/81 journal.tests.test.durable acknowledgement and alternating checkpoint recovery...OK
+54/81 journal.tests.test.durable written checkpoint does not pass pending commits or regress...OK
+55/81 journal.tests.test.invalid options, header version and checkpoint integrity...OK
+56/81 journal.tests.test.recovery validates generation, length and commit sequence...OK
+57/81 journal.tests.test.producer hot path uses no allocator after create...OK
+58/81 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK
+59/81 journal.tests.test.checked live peek retains corrupt records instead of exposing invalid length...OK
+60/81 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK
+61/81 journal.tests.test.fresh mapped zero capability implies zero body...OK
+62/81 journal.tests.test.recoverable journals reject verify_crc false...OK
+63/81 journal.schema_journal_tests.test.schema disabled preserves v1 file size framing and bytes...OK
+64/81 journal.schema_journal_tests.test.v2 schema ref and ordinary self-contained records survive reopen across reserve gap...OK
+65/81 journal.schema_journal_tests.test.v1 v2 and schema layout mismatches leave the existing journal intact...OK
+66/81 journal.schema_journal_tests.test.Linux file and directory publication failures reject creation and release the journal lock...OK
+67/81 journal.schema_journal_tests.test.Linux directory sync failure after file sync keeps a schema unready until full retry...OK
+68/81 journal.schema_journal_tests.test.failed cold schema sync retains definition and forbids event commit until retry...OK
+69/81 journal.schema_journal_tests.test.failed schema sync definition can reopen and become ready after successful sync...OK
+70/81 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK
+71/81 journal.schema_journal_tests.test.schema table corruption is rejected even when no event refers to that definition...OK
+72/81 journal.schema_journal_tests.test.missing schema definition retains committed event and unknown schema versions are rejected...OK
+73/81 journal.schema_journal_tests.test.registered schema metadata strings keys source and format persist independently of caller buffers...OK
+74/81 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK
+75/81 core.tests.codec.test_0...OK
+76/81 core.tests.runtime_queue_progress.test.queue progress worker failure on another journal broadcasts the original error to SPSC waiter...OK
+77/81 core.tests.runtime.test_0...OK
+78/81 core.tests.runtime.test.runtime asynchronous journal drains and snapshots borrowed inputs...OK
+79/81 core.thread_registry.test_0...OK
+80/81 encoder.wire_json.test_0...OK
+81/81 core.tests.thread_registry.test.registry forwards the fixed schema budget to every preallocated journal...OK
+All 81 tests passed.

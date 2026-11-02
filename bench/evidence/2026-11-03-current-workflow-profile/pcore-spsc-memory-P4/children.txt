@@ -1,0 +1,117 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/u'
+# Event count (approx.): 2162797114
+#
+# Children      Self  Command          Shared Object     Symbol                                                                                                        IPC   [IPC Coverage]
+# ........  ........  ...............  ................  ............................................................................................................  ....................
+#
+    50.05%     0.51%  before-referenc  before-reference  [.] Thread.LinuxThreadImpl.spawn__anon_32622.Instance.entryFn                                                 -      -            
+    50.05%     0.00%  before-referenc  before-reference  [.] Thread.callFn__anon_32641 (inlined)                                                                       -      -            
+    50.05%     0.00%  before-referenc  before-reference  [.] kron_reference.Worker.run (inlined)                                                                       -      -            
+    50.05%     0.00%  before-referenc  before-reference  [.] kron_reference.Worker.runLogger__anon_33220 (inlined)                                                     -      -            
+    50.05%     0.00%  before-referenc  before-reference  [.] os.linux.x86_64.clone                                                                                     -      -            
+    49.60%     1.82%  before-referenc  before-reference  [.] kron_reference.Worker.emit__anon_38259                                                                    -      -            
+    49.38%     0.00%  before-referenc  before-reference  [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).tryEmitAt__anon_38281 (inlined)  -      -            
+    49.38%     0.00%  before-referenc  before-reference  [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).tryEmit__anon_38268 (inlined)  -      -            
+    49.29%     0.00%  before-referenc  [unknown]         [.] 0xffffffffffffffff                                                                                        -      -            
+    49.00%     7.10%  before-referenc  before-reference  [.] core.runtime.Runtime.drainJournal                                                                         -      -            
+    37.42%     0.00%  before-referenc  before-reference  [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).captureAndSubmit__anon_38300 (inlined)  -      -            
+    33.48%     1.14%  before-referenc  before-reference  [.] logging.handle.Owner.submitOne                                                                            -      -            
+    33.48%     0.00%  before-referenc  before-reference  [.] logging.handle.Owner.submit (inlined)                                                                     -      -            
+    32.34%     2.32%  before-referenc  before-reference  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).submit                                             -      -            
+    32.20%     3.10%  before-referenc  before-reference  [.] core.delivery.emitWireFused                                                                               -      -            
+    30.41%     0.00%  before-referenc  before-reference  [.] encoder.wire_json.render (inlined)                                                                        -      -            
+    30.41%     0.00%  before-referenc  before-reference  [.] encoder.wire_json.renderFormat__anon_39408 (inlined)                                                      -      -            
+    30.01%     0.00%  before-referenc  before-reference  [.] core.runtime.Runtime.submitToJournal (inlined)                                                            -      -            
+    23.87%     1.45%  before-referenc  before-reference  [.] core.runtime.Runtime.submitDestination                                                                    -      -            
+    23.86%    10.97%  before-referenc  before-reference  [.] encoder.common.encodeJsonWithAttributes__anon_39908                                                       -      -            
+    18.62%     8.02%  before-referenc  before-reference  [.] core.runtime.Runtime.submitSafeDestination                                                                -      -            
+    15.79%     0.00%  before-referenc  before-reference  [.] encoder.wire_json.Attributes(.json,false).write (inlined)                                                 -      -            
+    15.79%     0.00%  before-referenc  before-reference  [.] encoder.wire_json.writeAttributesFallible__anon_39910 (inlined)                                           -      -            
+    10.22%     0.00%  before-referenc  before-reference  [.] core.codec.WireInput.valueWith__anon_39924 (inlined)                                                      -      -            
+     9.85%     0.00%  before-referenc  before-reference  [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).begin (inlined)               -      -            
+     9.85%     0.00%  before-referenc  before-reference  [.] logging.handle.Owner.begin (inlined)                                                                      -      -            
+     8.95%     0.00%  before-referenc  before-reference  [.] logging.handle.Owner.beginOne (inlined)                                                                   -      -            
+     8.81%     3.50%  before-referenc  before-reference  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).begin                                              -      -            
+     8.59%     0.00%  before-referenc  before-reference  [.] encoder.decimal.writeMagnitude__anon_34669 (inlined)                                                      -      -            
+     8.13%     0.00%  before-referenc  before-reference  [.] encoder.common.writeTaggedValue (inlined)                                                                 -      -            
+     8.06%     8.06%  before-referenc  before-reference  [.] platform.crc32.Crc32.update                                                                               -      -            
+     7.88%     0.00%  before-referenc  before-reference  [.] encoder.wire_json.ValueWriter(.json,false).accept__anon_39964 (inlined)                                   -      -            
+     7.71%     0.00%  before-referenc  before-reference  [.] core.codec.writeEvent__anon_33748 (inlined)                                                               -      -            
+     6.71%     0.00%  before-referenc  before-reference  [.] core.wire_write.writeField__anon_33787 (inlined)                                                          -      -            
+     6.47%     0.00%  before-referenc  before-reference  [.] journal.journal.Journal.peekBatchChecked (inlined)                                                        -      -            
+     6.36%     1.93%  before-referenc  before-reference  [.] core.codec.encodeSized                                                                                    -      -            
+     6.14%     0.57%  before-referenc  before-reference  [.] core.runtime.Runtime.submitDestination                                                                    -      -            
+     5.98%     1.10%  before-referenc  before-reference  [.] journal.journal.Journal.validateSlot                                                                      -      -            
+     5.72%     5.72%  before-referenc  before-reference  [.] compiler_rt.memcpy.memcpyFast                                                                             -      -            
+     5.27%     0.81%  before-referenc  before-reference  [.] journal.journal.Journal.slotChecksum                                                                      -      -            
+     4.94%     2.63%  before-referenc  before-reference  [.] core.runtime.Runtime.submitSafeDestination                                                                -      -            
+     4.60%     0.00%  before-referenc  before-reference  [.] journal.journal.Reservation.commit (inlined)                                                              -      -            
+     4.54%     0.00%  before-referenc  before-reference  [.] platform.crc32_pclmul.update (inlined)                                                                    -      -            
+     4.42%     4.42%  before-referenc  before-reference  [.] encoder.decimal.writeNative                                                                               -      -            
+     4.39%     0.00%  before-referenc  before-reference  [.] journal.journal.Journal.releaseAfter (inlined)                                                            -      -            
+     4.30%     0.00%  before-referenc  before-reference  [.] compiler_rt.memcpy.copyRange4 (inlined)                                                                   -      -            
+     4.30%     0.00%  before-referenc  before-reference  [.] compiler_rt.memcpy.copySmallLength (inlined)                                                              -      -            
+     3.90%     1.70%  before-referenc  before-reference  [.] encoder.common.encodeJsonWithAttributes__anon_39908                                                       -      -            
+     3.90%     0.00%  before-referenc  before-reference  [.] compiler_rt.memcpy.copyLessThan16 (inlined)                                                               -      -            
+     3.81%     0.00%  before-referenc  before-reference  [.] core.field.ValueValidator.fieldsWith__anon_37703 (inlined)                                                -      -            
+     3.80%     2.78%  before-referenc  before-reference  [.] core.codec.measure                                                                                        -      -            
+     3.73%     0.00%  before-referenc  before-reference  [.] journal.journal.Journal.slotChecksum (inlined)                                                            -      -            
+     3.63%     0.00%  before-referenc  before-reference  [.] core.runtime.Runtime.nowNs (inlined)                                                                      -      -            
+     3.63%     0.00%  before-referenc  before-reference  [.] logging.handle.Owner.nowNs (inlined)                                                                      -      -            
+     3.57%     0.00%  before-referenc  before-reference  [.] core.wire_write.writeBlob__anon_33764 (inlined)                                                           -      -            
+     3.54%     0.18%  before-referenc  before-reference  [.] platform.clock.realDefault                                                                                -      -            
+     3.54%     0.00%  before-referenc  before-reference  [.] platform.clock.Clock.realNow (inlined)                                                                    -      -            
+     3.51%     0.00%  before-referenc  before-reference  [.] encoder.decimal.write__anon_34253 (inlined)                                                               -      -            
+     3.49%     0.00%  before-referenc  before-reference  [.] config.routes.Snapshot.retainChannel (inlined)                                                            -      -            
+     3.49%     0.00%  before-referenc  before-reference  [.] Io.Clock.now (inlined)                                                                                    -      -            
+     3.40%     0.17%  before-referenc  before-reference  [.] Io.Threaded.now                                                                                           -      -            
+     3.38%     2.44%  before-referenc  before-reference  [.] encoder.escaping.jsonMember                                                                               -      -            
+     3.35%     0.93%  before-referenc  before-reference  [.] journal.journal.Journal.peekChecked                                                                       -      -            
+     3.34%     0.00%  before-referenc  before-reference  [.] Io.Threaded.nowPosix (inlined)                                                                            -      -            
+     3.23%     0.00%  before-referenc  before-reference  [.] os.linux.clock_gettime (inlined)                                                                          -      -            
+     3.21%     1.94%  before-referenc  before-reference  [.] core.runtime.Runtime.threadSnapshot                                                                       -      -            
+     3.14%     0.00%  before-referenc  before-reference  [.] core.field.checkUnique (inlined)                                                                          -      -            
+     2.96%     2.96%  before-referenc  before-reference  [.] encoder.decimal.writeLargeNative                                                                          -      -            
+     2.81%     0.00%  before-referenc  before-reference  [.] core.codec.Output.put (inlined)                                                                           -      -            
+     2.73%     0.00%  before-referenc  before-reference  [.] Io.Writer.writeAll (inlined)                                                                              -      -            
+     2.67%     0.00%  before-referenc  before-reference  [.] encoder.decimal.digitsChunked (inlined)                                                                   -      -            
+     2.65%     0.00%  before-referenc  before-reference  [.] encoder.decimal.write__anon_34529 (inlined)                                                               -      -            
+     2.62%     0.00%  before-referenc  before-reference  [.] compiler_rt.memcpy.copyFixedLength (inlined)                                                              -      -            
+     2.50%     2.50%  before-referenc  before-reference  [.] core.wire_write.writeValueTo__anon_33805                                                                  -      -            
+     2.46%     0.00%  before-referenc  before-reference  [.] core.runtime.Runtime.filterThreadEnabled (inlined)                                                        -      -            
+     2.33%     0.00%  before-referenc  before-reference  [.] encoder.decimal.digits (inlined)                                                                          -      -            
+     2.08%     0.00%  before-referenc  before-reference  [.] core.logger.Frontend(logging.handle.Owner,.trace,core.context.EmptyContext).finish (inlined)              -      -            
+     2.08%     0.00%  before-referenc  before-reference  [.] logging.handle.Owner.endAdmission (inlined)                                                               -      -            
+     2.04%     1.74%  before-referenc  before-reference  [.] logging.handle.Owner.endOne                                                                               -      -            
+     2.02%     1.51%  before-referenc  before-reference  [.] core.codec.readHeader                                                                                     -      -            
+     1.99%     0.00%  before-referenc  before-reference  [.] mem.eql__anon_2586 (inlined)                                                                              -      -            
+     1.95%     0.00%  before-referenc  before-reference  [.] encoder.escaping.asciiRun (inlined)                                                                       -      -            
+     1.93%     0.00%  before-referenc  before-reference  [.] Io.Writer.write (inlined)                                                                                 -      -            
+     1.91%     0.40%  before-referenc  before-reference  [.] core.runtime.Runtime.beginThread                                                                          -      -            
+     1.87%     1.87%  before-referenc  [vdso]            [.] 0x0000000000000b03                                                                                        -      -            
+     1.87%     0.00%  before-referenc  [vdso]            [.] 0x00007fff1eff7b03                                                                                        -      -            
+     1.84%     0.00%  before-referenc  before-reference  [.] core.field.checkUnique (inlined)                                                                          -      -            
+     1.83%     0.00%  before-referenc  before-reference  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).end (inlined)                                      -      -            
+     1.60%     0.80%  before-referenc  before-reference  [.] sink.file.FileSink.writeErased                                                                            -      -            
+     1.60%     0.00%  before-referenc  before-reference  [.] sink.file.FileSink.writeRecord (inlined)                                                                  -      -            
+     1.53%     0.00%  before-referenc  before-reference  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).validate (inlined)                                 -      -            
+     1.46%     0.00%  before-referenc  before-reference  [.] sink.interface.Sink.writeRecord (inlined)                                                                 -      -            
+     1.45%     0.00%  before-referenc  before-reference  [.] mem.eqlBytes (inlined)                                                                                    -      -            
+     1.45%     0.55%  before-referenc  before-reference  [.] core.codec.encodeSized                                                                                    -      -            
+     1.43%     0.00%  before-referenc  before-reference  [.] encoder.decimal.write__anon_34216 (inlined)                                                               -      -            
+     1.38%     0.00%  before-referenc  before-reference  [.] core.thread_registry.ThreadOwner(core.runtime.Runtime).releaseChannel (inlined)                           -      -            
+     1.31%     0.00%  before-referenc  before-reference  [.] core.thread_registry.Registry(core.runtime.Runtime).Control.release (inlined)                             -      -            
+     1.14%     0.00%  before-referenc  before-reference  [.] core.runtime.Runtime.countersFor (inlined)                                                                -      -            
+     1.10%     1.10%  before-referenc  before-reference  [.] journal.journal.Journal.reserveSingleProducer                                                             -      -            
+     1.05%     0.00%  before-referenc  before-reference  [.] core.codec.WireInput.take (inlined)                                                                       -      -            
+     1.03%     1.03%  before-referenc  before-reference  [.] core.field.ValueValidator.valueWith__anon_37724                                                           -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -1,0 +1,12 @@
+{
+  "scope": "independentPython proofcandidatefullu64, not Zigimplementation/performance",
+  "descriptor": "M=min(floor(2^64/d),2^64-1)",
+  "quotient": "h=high64(n*M), r0=n-h*d, q=h+(r0>=d), r=r0-(r0>=d)*d",
+  "divisor_range": "1..2^64-1",
+  "numerator_range": "0..2^64-1",
+  "cases_checked": 233591,
+  "seed": "0x6b726f6e646976",
+  "oracle": "Python integerdivmod, boundaries aroundmultiples/powers/fullwidth and200k deterministicrandom",
+  "proof": "d>=2:h<=floor(n/d), n/d-h<2 from floorreciprocalfraction andn/2^64<1 soatmostonecorrection; d1cappedMAX gives h=n-1 for n>0 or0, correction exact; h*d<=n andr0<=n",
+  "performance_claim": false
+}

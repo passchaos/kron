@@ -1,0 +1,10 @@
+--- /home/passchaos/project-z/kron/.zig-cache/capacity-reciprocal/before/src/root.zig	2026-11-03 06:25:06.648213828 +0800
++++ /home/passchaos/project-z/kron/.zig-cache/capacity-reciprocal/candidate/src/root.zig	2026-11-03 06:28:06.580103121 +0800
+@@ -90,6 +90,7 @@
+     std.testing.refAllDecls(@This());
+     _ = @import("core/level.zig");
+     _ = @import("core/admission.zig");
++    _ = @import("journal/capacity_divider.zig");
+     _ = @import("platform/crc32.zig");
+     const test_cpu = @import("builtin").cpu;
+     if (test_cpu.arch == .x86_64 and
