@@ -60,6 +60,24 @@ test "slot CRC v1 and v2 preserve independent golden byte order and schema bindi
     try std.testing.expectEqual(@as(u32, 0x530df33b), checksumV2(0x0102030405060708, 0x1122334455667788, &reference, payload));
 }
 
+test "zeroed initialization matches full clear for memory-backed journals" {
+    const capacity = 2;
+    const stride = 128;
+    const identity = [_]u8{7} ** 16;
+    var full: [header_bytes + capacity * stride]u8 = undefined;
+    var zeroed: [header_bytes + capacity * stride]u8 = undefined;
+    @memset(&full, 0xa5);
+    @memset(&zeroed, 0);
+    initialize(&full, capacity, 16, stride, identity);
+    initializeZeroed(&zeroed, capacity, 16, stride, identity);
+    try std.testing.expectEqualSlices(u8, &full, &zeroed);
+    @memset(&full, 0xa5);
+    @memset(&zeroed, 0);
+    initializeV2(&full, capacity, 16, stride, identity);
+    initializeV2Zeroed(&zeroed, capacity, 16, stride, identity);
+    try std.testing.expectEqualSlices(u8, &full, &zeroed);
+}
+
 pub fn layout(capacity: usize, max_record_bytes: usize) !struct { stride: usize, size: usize } {
     if (capacity == 0 or max_record_bytes == 0 or max_record_bytes > std.math.maxInt(u32)) return error.InvalidOptions;
     const raw = std.math.add(usize, slot_header_bytes, max_record_bytes) catch return error.InvalidOptions;
@@ -79,8 +97,24 @@ pub fn initializeV2(bytes: []u8, capacity: usize, max_record_bytes: usize, strid
     initializeVersion(bytes, capacity, max_record_bytes, stride, identity, schema_version);
 }
 
+/// Initializes a storage buffer whose complete contents are already zero.
+/// Memory storage guarantees this after its single writable clear; file
+/// mappings must keep using `initialize`/`initializeV2` so stale bytes in a
+/// reused mapping cannot survive as valid-looking slot payloads.
+pub fn initializeZeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
+    initializeVersionZeroed(bytes, capacity, max_record_bytes, stride, identity, version);
+}
+
+pub fn initializeV2Zeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
+    initializeVersionZeroed(bytes, capacity, max_record_bytes, stride, identity, schema_version);
+}
+
 fn initializeVersion(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8, file_version: u32) void {
     @memset(bytes, 0);
+    initializeVersionZeroed(bytes, capacity, max_record_bytes, stride, identity, file_version);
+}
+
+fn initializeVersionZeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8, file_version: u32) void {
     @memcpy(bytes[0..8], magic);
     put(u32, bytes, 8, file_version);
     put(u32, bytes, 12, 0x01020304);

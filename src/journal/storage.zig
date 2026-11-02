@@ -19,17 +19,13 @@ pub const Storage = struct {
         return .{ .bytes = mapping.bytes, .fresh = mapping.fresh, .backing = .{ .mapped = mapping } };
     }
 
-    /// Allocate only through the caller's allocator. No mapping or filesystem
-    /// operation occurs here; clearing and writable first-touch are cold work.
+    /// Allocate only through the caller's allocator. The returned bytes are
+    /// zeroed and writable-touched; no mapping or filesystem operation occurs.
+    /// Journal header initialization may therefore skip a second full clear.
     pub fn createMemory(allocator: std.mem.Allocator, length: usize) !Storage {
         if (length == 0 or std.math.cast(i64, length) == null) return error.InvalidSize;
         const bytes = try allocator.alignedAlloc(u8, .fromByteUnits(4096), length);
         @memset(bytes, 0);
-        var offset: usize = 0;
-        while (offset < bytes.len) : (offset += 4096) {
-            const page: *volatile u8 = &bytes[offset];
-            page.* = 0;
-        }
         return .{ .bytes = bytes, .fresh = true, .backing = .{ .memory = allocator } };
     }
 

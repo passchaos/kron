@@ -19,6 +19,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 JSON固定metadata的timestamp/session/sequence/route_mask/config_generation现直接以comptime tag和原始i64/u64写出，跳过临时`Value`、运行时tag分派和u64→u128宽整数路径。40项完整shared核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩workflow核对2408万JSON，八组written吞吐全为正（+0.95%–+5.55%），六组达到本轮噪声门限，Memory/Mmap P4 batch中位区间不重叠。text/logfmt控制组、cycles和尾部波动继续保留，不作为一般速度/尾部承诺。源码、全部正负数据与复现见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
 
+Memory journal初始化原先在`Storage.createMemory`完整清零后由`format.initialize`再次清零，并额外逐页写0；现在memory backing只保留一次完整writable清零，header/checkpoint由`initializeZeroed`/`initializeV2Zeroed`写出，file/mmap仍完整清零。16.8MB journal的batch runtime init中位9.13ms→6.64ms（5/5配对下降），sampled 10.79ms→6.99ms（区间仍重叠）；512B小队列差异低于宿主噪声。该结果只针对初始化局部成本，不代表吞吐或跨库排名；ReleaseSafe完整门禁151/151步骤、641/642项通过（1项系统local能力skip）。源码、原始配对数据与复现见 [memory init证据](../bench/evidence/2026-11-02-memory-init-zeroing/README.md)。
+
 owner内部借用、单输出小Frame和多输出循环拆分的早期验证仍绑定当时源码，见 [owner优化证据](../bench/evidence/2026-11-02-managed-owner-borrow/README.md)；当前完整门禁继续保留lazy provider修改caller时的scope/trace快照和多输出所有权边界。
 
 最近一次完整同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog及Rust tracing前端完成200项试验、2020万条输出逐条核对。公共JSON为同元数据/五数值字段，原生build_tracing文本单列；稳态吞吐中位与两个组合互有胜负，全部跨库速度比仍因spread/区间保持inconclusive，SPSC p99.9和Mmap启动仍有明显差距。最新数字输出优化不推导该比较的新排名，完整阶段和资格见 [前端对照](../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)。

@@ -96,6 +96,14 @@ typed visitor之后，JSON metadata仍通过`valueInner(writer, .{ .unsigned = e
 
 采纳依据是JSON probe与四组完整shared指令稳定减少、八组未插桩吞吐全为正且六组稳定，同时输出字节、错误顺序、公开API和全部门禁不变。text/logfmt控制组、cycles和尾部波动全部保留；不更新Foundation/spdlog/tracing排名，也不叠加历史百分比。源码、二进制、原始CSV/row、慢值与复现脚本见`bench/evidence/2026-11-02-wire-metadata-direct/`。
 
+## 2026-11-02 Memory journal单次清零初始化
+
+Memory journal此前经历三次清零：`Storage.createMemory`完整`@memset`、逐4096字节volatile写0、随后`format.initialize`/`initializeV2`再次完整`@memset`。候选删除逐页循环，memory backing保留唯一一次完整writable清零，并新增`initializeZeroed`/`initializeV2Zeroed`只写header、identity、CRC和checkpoint；file/mmap继续使用完整清零入口，避免复用映射中的旧字节被当成有效slot payload。
+
+`init_probe.py`用async Memory、file sink、256槽、`max-record-bytes=65536`（约16.8MB journal），5对交替before/after。batch runtime init中位9.130ms→6.638ms（5/5配对下降，比值0.565–0.739），bootstrap中位区间不重叠；sampled中位10.793ms→6.992ms，4/5下降但区间仍重叠。512B小队列（约147KB）省去的清零工作低于宿主噪声，5对方向混合、区间全部重叠，不能据此宣称回归或收益。file/mmap初始化路径和全部CRC/slot/recovery协议不变；ReleaseSafe完整门禁151/151步骤、641/642项通过（1项系统local能力skip）。
+
+该优化只证明memory journal初始化局部成本下降，不代表producer/consumer吞吐、Mmap启动或跨库排名。原始20项/phase、全部命令/stdout/stderr与source/binary身份见`bench/evidence/2026-11-02-memory-init-zeroing/`。
+
 ## 2026-11-01批次合并后的schema融合
 
 基线`366adc3`的六组百万条完整JSON profile核对600.6万条物理记录，SPSC Memory inline的consumer约占52%用户态core周期采样；prepared SPSC Memory仍有约11%含子调用的decodeRecord和约15%自占的memcpy采样，后者也含producer复制。shared Memory的begin另有显著采样。profile包含setup/preparation/cleanup、排除kernel，不能从这些比例直接计算吞吐或归因某个锁。

@@ -33,6 +33,7 @@
 | [JSON固定metadata直接tag写入](evidence/2026-11-02-wire-metadata-direct/README.md) | 保留优化；40项完整shared核对1204万JSON，四组指令中位减少2.45%–2.48%；80项workflow核对2408万JSON，八组吞吐全为正、六组稳定，text/logfmt控制组与尾部波动保留 |
 | [wire tag与payload合并写出](evidence/2026-11-02-wire-tag-batching/README.md) | 已否决；30项encoder probe instruction中位−0.003%、区间全部重叠，未运行完整流程，生产源码已恢复 |
 | [quotedAscii改用writeVecAll](evidence/2026-11-02-quoted-ascii-vec/README.md) | 已否决；30项encoder probe JSON instructions +26.7%、输出字节一致，生产源码已恢复 |
+| [Memory journal单次清零初始化](evidence/2026-11-02-memory-init-zeroing/README.md) | 保留优化；16.8MB journal batch init 9.13→6.64ms（5/5配对下降），sampled区间仍重叠；512B小队列低于噪声 |
 
 所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 

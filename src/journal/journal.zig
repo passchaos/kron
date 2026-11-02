@@ -196,9 +196,15 @@ pub const Journal = struct {
             try io.randomSecure(&identity);
             if (schema_layout) |*table| {
                 table.identity = identity;
-                format.initializeV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
+                if (memory)
+                    format.initializeV2Zeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
+                else
+                    format.initializeV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
                 schema_format.writeExtension(mapping.bytes[0..format.header_bytes], table.*, identity);
-            } else format.initialize(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
+            } else if (memory)
+                format.initializeZeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
+            else
+                format.initialize(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
             // File length/header must reach the file before use. Directory
             // durability is included where the platform supports it.
             try mapping.publish();
