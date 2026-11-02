@@ -31,6 +31,12 @@
 
 本页不把E-core结果推广到P-core或服务器默认配置，也不更新跨库排名；完整200项矩阵应分别在P-core和E-core窗口重跑。
 
+## E-core profile
+
+在相同单线程物理核上以`cpu_atom/cycles/u`（1063 samples，排除kernel）profile kron managed async Memory P1 batch。自占前项：`Crc32.update` 13.24%、`encodeJsonWithAttributes` 10.94%、`submitSafeDestination` 8.60%、`drainJournal` 7.96%、`memcpyFast` 6.00%、`decimal.writeNative` 5.19%、`encodeSized` 4.67%、`quotedAscii` 4.44%、`jsonKey` 3.89%、`codec.measure` 3.69%、`Journal.reserve` 3.64%、`validateSlot` 2.89%。
+
+CRC、journal reserve/validate、measure+encode的双遍历合计占显著比例；这些是kron结构化journal/恢复协议的一部分，Foundation + spdlog Memory入口没有等价的CRC/恢复工作。因此E-core差距不能简单归因于单一“慢函数”，也不能通过删除CRC或恢复边界来换取排名。后续应分别研究measure+encode重复遍历、E-core CRC实现和consumer格式化/调度；保留全部recovery、CRC与错误边界。原始`self.txt`/`run.log`与binary身份在`ecore-profile/`。
+
 ## 复现
 
 ```sh
