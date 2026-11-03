@@ -116,6 +116,13 @@ pub fn build(b: *std.Build) void {
     b.step("test-journal-progress", "Verify immediate written progress, release publication and failed-prefix ownership").dependOn(&run_journal_progress.step);
     test_step.dependOn(&run_journal_progress.step);
 
+    const journal_fuzz_module = b.createModule(.{ .root_source_file = b.path("tests/journal_fuzz.zig"), .target = target, .optimize = optimize });
+    journal_fuzz_module.addImport("kron", module);
+    const journal_fuzz_tests = b.addTest(.{ .name = "kron-journal-fuzz", .root_module = journal_fuzz_module });
+    const run_journal_fuzz = b.addRunArtifact(journal_fuzz_tests);
+    b.step("test-journal-fuzz", "Verify randomized journal commit/peek/release, mmap recovery and archive round-trip").dependOn(&run_journal_fuzz.step);
+    test_step.dependOn(&run_journal_fuzz.step);
+
     const clock_dispatch_module = b.createModule(.{ .root_source_file = b.path("tests/clock_dispatch.zig"), .target = target, .optimize = optimize });
     clock_dispatch_module.addImport("kron", module);
     const clock_dispatch_tests = b.addTest(.{ .name = "kron-clock-dispatch", .root_module = clock_dispatch_module });

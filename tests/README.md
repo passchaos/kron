@@ -11,6 +11,7 @@
 | 字段键与错误顺序 | [field_key_validation.zig](field_key_validation.zig)、`test-field-keys` | 独立eql字节oracle、精确pair/node计数、重复与cycle/depth/budget先后、Linux两端真实guard page |
 | 队列精确峰值 | [journal_peak.zig](journal_peak.zig)、`test-journal-peak` | Memory/Mmap普通/schema并发持有量与高水位、Full/oversize/abort/CRC失败、恢复重建与完整序号/数据 |
 | written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |
+| Journal/archive随机fuzz | [journal_fuzz.zig](journal_fuzz.zig)、`test-journal-fuzz` | 20,000随机commit/peek/release、mmap reopen/recovery、随机archive record count/message round-trip；seed打印、Debug/Safe/Fast |
 | Clock与Io调用边界 | [clock_dispatch.zig](clock_dispatch.zig)、`test-clock-dispatch` | 精确clamp、callback内/外切换、Io身份/参数快照、zero/monotonic、public函数指针与capture/full边界 |
 | TLS admission生命周期 | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig)、`test-admission-lifecycle` | owned/bare/borrowed复用、回调中的outer所有权、64层栈与溢出、OS线程隔离、全部Level与完整generation/channel边界 |
 | 原生CRC数学与目标选择 | [crc32_pclmul.zig](../src/platform/crc32_pclmul.zig)、[crc32.zig](../src/platform/crc32.zig)；根筛选 `partial CRC stripes` | 独立bitwise/GF2消息和seed basis、任意seed/alignment、冻结zlib、prefix/partition；helper仅在x86_64+PCLMUL+SSE2测试目标导入 |
