@@ -29,6 +29,18 @@ fn enospc(init: std.process.Init, output_path: []const u8) !void {
     const file = try kron.FileSink.create(init.gpa, init.io, .{ .path = output_path, .backend = .portable });
     defer file.deinit();
     try file.writeRecord("buffered-before-full\n");
+    const runtime_path = try std.fmt.allocPrint(init.gpa, "{s}.runtime", .{output_path});
+    defer init.gpa.free(runtime_path);
+    const runtime_file = try kron.FileSink.create(init.gpa, init.io, .{ .path = runtime_path, .backend = .portable });
+    defer runtime_file.deinit();
+    const runtime = try kron.Runtime.create(init.gpa, init.io, .{
+        .submission = .asynchronous,
+        .memory_queue = .{ .capacity = 8, .max_record_bytes = 512 },
+        .overflow = .block,
+        .routes = &.{.{ .name = "runtime-file", .sink = runtime_file.sink(), .format = .json }},
+    });
+    defer runtime.destroy();
+    const log = runtime.scoped("enospc");
     const filler_path = try std.fmt.allocPrint(init.gpa, "{s}.filler", .{output_path});
     defer init.gpa.free(filler_path);
     const filler = try std.Io.Dir.cwd().createFile(init.io, filler_path, .{});
@@ -46,7 +58,13 @@ fn enospc(init: std.process.Init, output_path: []const u8) !void {
     std.debug.print("KRON_ENOSPC_FILLED bytes={d}\n", .{offset});
     file.flush() catch |err| {
         std.debug.print("KRON_ENOSPC_LATCHED err={s}\n", .{@errorName(err)});
-        return;
+        if (try log.tryEmit(.info, "runtime-after-full", .{}) != .accepted) return error.RecordRejected;
+        runtime.flush(.durable) catch |runtime_err| {
+            std.debug.print("KRON_ENOSPC_RUNTIME_LATCHED err={s}\n", .{@errorName(runtime_err)});
+            return;
+        };
+        std.debug.print("KRON_ENOSPC_RUNTIME_UNEXPECTED\n", .{});
+        return error.UnexpectedSuccess;
     };
     std.debug.print("KRON_ENOSPC_UNEXPECTED\n", .{});
     return error.UnexpectedSuccess;

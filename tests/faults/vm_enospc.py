@@ -66,10 +66,10 @@ def main() -> int:
     print(log, end="")
     if completed.returncode != 0:
         raise RuntimeError(f"ENOSPC VM exited with {completed.returncode}")
-    for marker in ("KRON_ENOSPC_FILLED", "KRON_ENOSPC_LATCHED", "KRON_ENOSPC_RC=0"):
+    for marker in ("KRON_ENOSPC_FILLED", "KRON_ENOSPC_LATCHED", "KRON_ENOSPC_RUNTIME_LATCHED", "KRON_ENOSPC_RC=0"):
         if marker not in log:
             raise RuntimeError(f"missing marker: {marker}")
-    print("ENOSPC FileSink path latched without a successful flush")
+    print("ENOSPC FileSink and Runtime durable paths latched without a successful flush")
     return 0
 
 
