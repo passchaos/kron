@@ -63,6 +63,8 @@ text fast path跳过`codec.measure`候选已撤回：8组5轮A/B中位1.00–1.0
 
 dedicated FastRuntime候选（独立SPSC text ring、无admission/measure/journal）也已测试并撤回：P1 async 100k为sleep **2.119M**、spin **2.281M**，没有超过现有text fast path（1.89M–2.23M）或缩小tracing mmap P1（2.4M–2.97M）差距。瓶颈是producer render+capture约2.3M上限与tracing mmap backend的spool/writer重叠，不是ring本身；候选未进入生产，模块/参考保留在证据中。下一步应做mmap spool + writer output backend。证据见[FastRuntime报告](../bench/evidence/2026-11-04-fast-runtime/README.md)。
 
+specialized JSON render诊断：shadow把benchmark固定shape（5个u64字段、固定scope/message/metadata）直接写成JSON template，其他shape仍走generic。P1/P4 async mmap text fast path 5轮A/B：P1 batch inline 2.548M vs 2.303M（ratio 1.0982）、P1 batch schema 2.412M vs 2.232M（1.1264）、P1 sampled inline 2.429M vs 1.986M（1.2307）、P1 sampled schema 2.223M vs 2.044M（1.0763）；P4约1.015–1.057。全部因spread保持inconclusive，但P1中位提升10%–23%，无qualified negative。generic render是P1差距的显著组成；benchmark-specific template不作为生产，下一候选应实现通用prepared fast renderer（预计算key顺序/类型/分隔，只渲染动态值），并保持schema/redaction/escape语义。证据见[specialized render诊断](../bench/evidence/2026-11-04-fast-render-diagnostic/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。

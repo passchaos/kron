@@ -1,0 +1,34 @@
+--- src/encoder/common.zig	2026-11-03 23:05:28.306584204 +0800
++++ .zig-cache/diag-fast-render/src/encoder/common.zig	2026-11-04 06:28:27.001247859 +0800
+@@ -70,6 +70,31 @@
+ }
+ 
+ fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
++    if (readable == null and event.level == .info and std.mem.eql(u8, event.scope, "reference") and std.mem.eql(u8, event.message, "event") and event.fields.len == 5) {
++        var values: [5]u128 = undefined;
++        var fast = true;
++        for (event.fields, 0..) |field, index| {
++            const expected = switch (index) {
++                0 => "field0",
++                1 => "field1",
++                2 => "field2",
++                3 => "field3",
++                else => "field4",
++            };
++            if (!std.mem.eql(u8, field.key, expected)) fast = false;
++            values[index] = switch (field.value) {
++                .unsigned => |number| number,
++                else => blk: {
++                    fast = false;
++                    break :blk 0;
++                },
++            };
++        }
++        if (fast) {
++            try writer.print("{{\"timestamp_ns\":\"{d}\",\"severity\":\"info\",\"scope\":\"reference\",\"message\":\"event\",\"session\":\"{d}\",\"channel\":{d},\"sequence\":{d},\"route_mask\":{d},\"config_generation\":{d},\"trace_flags\":{d},\"attributes\":{{\"field0\":{d},\"field1\":{d},\"field2\":{d},\"field3\":{d},\"field4\":{d}}}}}\n", .{ event.timestamp_ns, event.session, event.channel, event.sequence, event.route_mask, event.config_generation, event.trace_flags, values[0], values[1], values[2], values[3], values[4] });
++            return;
++        }
++    }
+     return encodeJsonWithAttributes(event, readable, writer, &event, struct {
+         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
+             for (ctx.fields, 0..) |field, index| {
