@@ -15,13 +15,41 @@ pub fn main(init: std.process.Init) !void {
         if (index + 1 >= args.len) return error.MissingValue;
         if (std.mem.eql(u8, args[index], "--journal")) journal_path = args[index + 1] else if (std.mem.eql(u8, args[index], "--output")) output_path = args[index + 1] else if (std.mem.eql(u8, args[index], "--acked")) acked = try std.fmt.parseInt(u64, args[index + 1], 10) else if (std.mem.eql(u8, args[index], "--schema")) schema_enabled = std.mem.eql(u8, args[index + 1], "1") else return error.UnknownOption;
     }
-    const journal = journal_path orelse return error.MissingJournal;
     const output = output_path orelse return error.MissingOutput;
+    if (std.mem.eql(u8, args[1], "enospc")) return enospc(init, output);
+    const journal = journal_path orelse return error.MissingJournal;
     if (std.mem.eql(u8, args[1], "write")) {
         try write(init, journal, output, schema_enabled);
     } else if (std.mem.eql(u8, args[1], "verify")) {
         try verify(init, journal, output, acked orelse return error.MissingAcknowledgement, schema_enabled);
     } else return error.UnknownMode;
+}
+
+fn enospc(init: std.process.Init, output_path: []const u8) !void {
+    const file = try kron.FileSink.create(init.gpa, init.io, .{ .path = output_path, .backend = .portable });
+    defer file.deinit();
+    try file.writeRecord("buffered-before-full\n");
+    const filler_path = try std.fmt.allocPrint(init.gpa, "{s}.filler", .{output_path});
+    defer init.gpa.free(filler_path);
+    const filler = try std.Io.Dir.cwd().createFile(init.io, filler_path, .{});
+    defer filler.close(init.io);
+    var chunk: [4096]u8 = @splat('x');
+    var offset: u64 = 0;
+    while (true) {
+        const written = filler.writePositional(init.io, &.{&chunk}, offset) catch |err| switch (err) {
+            error.NoSpaceLeft => break,
+            else => return err,
+        };
+        if (written == 0) return error.FillZero;
+        offset += written;
+    }
+    std.debug.print("KRON_ENOSPC_FILLED bytes={d}\n", .{offset});
+    file.flush() catch |err| {
+        std.debug.print("KRON_ENOSPC_LATCHED err={s}\n", .{@errorName(err)});
+        return;
+    };
+    std.debug.print("KRON_ENOSPC_UNEXPECTED\n", .{});
+    return error.UnexpectedSuccess;
 }
 
 fn write(init: std.process.Init, journal_path: []const u8, output_path: []const u8, schema_enabled: bool) !void {
