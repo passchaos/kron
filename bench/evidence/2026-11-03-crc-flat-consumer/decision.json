@@ -1,0 +1,121 @@
+{
+  "status": "rejected_at_workflow_tail_gate",
+  "baseline_commit": "185e70051172eb01906547b97fd971fab327f7b7",
+  "candidate": "consumer-only fixed 20/24 CRC validation; producer commit keeps ordinary update",
+  "static_gate": "pass: producer 1048 instructions/30 calls/frame0xd18/372 stackrefs with normalized stream and five RIP-relative constant contents identical; general CRC310/20PCL normalized identical; old standalone slotChecksum156B/48instr/3call preserved inlined in identical producer; 24 canonical rows each one physical copy, old rows0..15 shared, extra rows16..23 only in validation; rodata+8192B; Journal768/Runtime12800/Field48 unchanged",
+  "correctness": "21 named validation/CRC/Journal/Reader/progress cases in native Debug/Safe/Fast and generic Safe passed; no compile/numeric/concurrency failure",
+  "complete_workflow": {
+    "ecore": {
+      "trials": 320,
+      "physical_records_verified": 32320000,
+      "axis_counts": {
+        "inconclusive": 155,
+        "kron_leads": 50,
+        "peer_leads": 3
+      },
+      "qualified_negatives": [
+        {
+          "mode": "async",
+          "storage": "memory",
+          "producers": 4,
+          "phase": "batch",
+          "schema": true,
+          "metric": "init_ns",
+          "kron_median": 739603,
+          "peer_median": 728279,
+          "paired_speed_ratio": 0.9525891117298881,
+          "paired_ratio_ci95": [
+            0.9432499838895219,
+            0.984689083197337
+          ]
+        },
+        {
+          "mode": "async",
+          "storage": "mmap",
+          "producers": 1,
+          "phase": "sampled",
+          "schema": true,
+          "metric": "p99_ns",
+          "kron_median": 747,
+          "peer_median": 717,
+          "paired_speed_ratio": 0.9598393574297188,
+          "paired_ratio_ci95": [
+            0.9544235924932976,
+            0.9815303430079155
+          ]
+        },
+        {
+          "mode": "spsc",
+          "storage": "mmap",
+          "producers": 4,
+          "phase": "sampled",
+          "schema": true,
+          "metric": "p50_ns",
+          "kron_median": 467,
+          "peer_median": 434,
+          "paired_speed_ratio": 0.9293361884368309,
+          "paired_ratio_ci95": [
+            0.8850102669404517,
+            0.9739696312364425
+          ]
+        }
+      ]
+    },
+    "pcore": {
+      "trials": 320,
+      "physical_records_verified": 32320000,
+      "axis_counts": {
+        "inconclusive": 207,
+        "kron_leads": 1
+      },
+      "qualified_negatives": []
+    }
+  },
+  "targeted_confirmation": [
+    {
+      "mode": "async",
+      "storage": "memory",
+      "producers": 4,
+      "phase": "batch",
+      "schema": true,
+      "metric": "init_ns",
+      "assessment": "inconclusive",
+      "paired_speed_ratio": 1.0228726188579622,
+      "paired_ratio_ci95": [
+        0.9517978164235936,
+        1.0934202048479194
+      ]
+    },
+    {
+      "mode": "async",
+      "storage": "mmap",
+      "producers": 1,
+      "phase": "sampled",
+      "schema": true,
+      "metric": "p99_ns",
+      "assessment": "peer_leads",
+      "paired_speed_ratio": 0.9149746192893401,
+      "paired_ratio_ci95": [
+        0.9112801013941698,
+        0.9849315068493151
+      ]
+    },
+    {
+      "mode": "spsc",
+      "storage": "mmap",
+      "producers": 4,
+      "phase": "sampled",
+      "schema": true,
+      "metric": "p50_ns",
+      "assessment": "inconclusive",
+      "paired_speed_ratio": 0.9957627118644068,
+      "paired_ratio_ci95": [
+        0.9463519313304721,
+        1.0199556541019956
+      ]
+    }
+  ],
+  "reason": "Predeclared negative-axis gate. E-core async/mmap P1 sampled schema p99 717->747ns ratio0.95984 was qualified in the full run and reproduced at 719->782ns ratio0.91497. The init and spsc p50 negatives did not reproduce in the targeted check, but one stable tail negative rejects the candidate.",
+  "production": "unchanged 185e700; no Foundation trial, no ranking update, no speed or tail qualification retained",
+  "goal_met": false
+}

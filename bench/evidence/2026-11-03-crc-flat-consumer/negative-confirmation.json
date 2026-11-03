@@ -1,0 +1,119 @@
+[
+  {
+    "mode": "async",
+    "storage": "memory",
+    "producers": 4,
+    "phase": "batch",
+    "schema": true,
+    "metric": "init_ns",
+    "qualification": {
+      "assessment": "inconclusive",
+      "rounds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "kron_median": 740180,
+      "peer_median": 734648,
+      "paired_speed_ratio": 1.0228726188579622,
+      "paired_ratios": [
+        0.9517978164235936,
+        1.0228726188579622,
+        1.0560555568367889,
+        1.0934202048479194,
+        0.9757450890323975
+      ],
+      "paired_ratio_ci95": [
+        0.9517978164235936,
+        1.0934202048479194
+      ],
+      "relative_spread": {
+        "kron": 0.10548380123753681,
+        "peer": 0.08874045801526717,
+        "paired_ratio": 0.13845554745853614
+      },
+      "repeatability_qualified": false,
+      "higher_is_better": false
+    }
+  },
+  {
+    "mode": "async",
+    "storage": "mmap",
+    "producers": 1,
+    "phase": "sampled",
+    "schema": true,
+    "metric": "p99_ns",
+    "qualification": {
+      "assessment": "peer_leads",
+      "rounds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "kron_median": 782,
+      "peer_median": 719,
+      "paired_speed_ratio": 0.9149746192893401,
+      "paired_ratios": [
+        0.9149746192893401,
+        0.9143222506393862,
+        0.9112801013941698,
+        0.9609375,
+        0.9849315068493151
+      ],
+      "paired_ratio_ci95": [
+        0.9112801013941698,
+        0.9849315068493151
+      ],
+      "relative_spread": {
+        "kron": 0.07544757033248081,
+        "peer": 0.031988873435326845,
+        "paired_ratio": 0.0804955721201865
+      },
+      "repeatability_qualified": true,
+      "higher_is_better": false
+    }
+  },
+  {
+    "mode": "spsc",
+    "storage": "mmap",
+    "producers": 4,
+    "phase": "sampled",
+    "schema": true,
+    "metric": "p50_ns",
+    "qualification": {
+      "assessment": "inconclusive",
+      "rounds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "kron_median": 454,
+      "peer_median": 453,
+      "paired_speed_ratio": 0.9957627118644068,
+      "paired_ratios": [
+        0.9957627118644068,
+        0.9933481152993349,
+        1.0199556541019956,
+        0.9463519313304721,
+        0.9977973568281938
+      ],
+      "paired_ratio_ci95": [
+        0.9463519313304721,
+        1.0199556541019956
+      ],
+      "relative_spread": {
+        "kron": 0.046255506607929514,
+        "peer": 0.0640176600441501,
+        "paired_ratio": 0.07391693010246615
+      },
+      "repeatability_qualified": true,
+      "higher_is_better": false
+    }
+  }
+]

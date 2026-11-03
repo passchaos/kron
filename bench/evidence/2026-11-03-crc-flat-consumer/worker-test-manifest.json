@@ -1,0 +1,727 @@
+{
+  "scope": "Consumer-only fixed CRC candidate from production185e700 before source. COMMIT calls ordinary CRC update; one private INLINE role/version checksum body and one NOINLINE validation specialization family keep the validation path separate.",
+  "source_sha256": {
+    "platform/crc32.zig": "51d15baab1f4c929c5dd3c3fa899856b6bcf582b5c26fbe6baed658d315aeac6",
+    "journal/format.zig": "dc430b31ba66d6df77237616326032651c0b8a1e65eadff700602858f4f0412d",
+    "journal/journal.zig": "a17e01f8c209f1bef817cafaebb454d0c39dd0d6be252698c94af966c7734202",
+    "archive/reader.zig": "9bc01e1755c7ca1782eb51dd3c82ffe40362ee346ae10d104e26f067bc5e674c"
+  },
+  "source_diff": "worker-source.diff",
+  "source_checks": "worker-source-checks.txt",
+  "commands": "worker-commands.txt",
+  "all_sessions_ended": true,
+  "session_exit_codes": {
+    "3363": 0,
+    "16039": 0,
+    "72160": 0
+  },
+  "configurations": {
+    "native_Debug": {
+      "cases": [
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-debug.log",
+          "actual_output": "14/19 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "consumer CRC roles: commit and validation entries preserve independent golden bytes",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-debug.log",
+          "actual_output": "15/19 journal.format.test.consumer CRC roles: commit and validation entries preserve independent golden bytes...OK"
+        },
+        {
+          "name": "consumer CRC roles: validation family and commit match full integer and partition oracles",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-debug.log",
+          "actual_output": "16/19 journal.format.test.consumer CRC roles: validation family and commit match full integer and partition oracles...OK"
+        },
+        {
+          "name": "checked consumer rejects checksum valid generation corruption without releasing a captured record",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "15/24 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK"
+        },
+        {
+          "name": "recoveryRecordAt retains corrupt records and returns the existing checksum error",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "17/24 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK"
+        },
+        {
+          "name": "v2 CRC covers schema ref and recovery refuses unknown references without reclaim",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "20/24 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK"
+        },
+        {
+          "name": "batch borrows records until ordered acknowledgement and stops at gaps",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "18/24 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "19/24 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "mmap reopen replays committed payload and session without msync",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "16/24 journal.tests.test.mmap reopen replays committed payload and session without msync...OK"
+        },
+        {
+          "name": "SPSC reopens committed data across reservation gap using same file protocol",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "13/24 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK"
+        },
+        {
+          "name": "SPSC producer and consumer concurrently wrap cached cursors",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "14/24 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK"
+        },
+        {
+          "name": "schema SPSC reserve stays exclusive and warm reserve commit has no allocations",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-journal-native-debug.log",
+          "actual_output": "21/24 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK"
+        },
+        {
+          "name": "memory journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-debug.log",
+          "actual_output": "1/4 journal_progress.test.memory journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "mmap journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-debug.log",
+          "actual_output": "2/4 journal_progress.test.mmap journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "memory journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-debug.log",
+          "actual_output": "3/4 journal_progress.test.memory journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "mmap journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-debug.log",
+          "actual_output": "4/4 journal_progress.test.mmap journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "reader returned event is independent of journal slot reuse",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-debug.log",
+          "actual_output": "1/5 tool_query.test.reader returned event is independent of journal slot reuse...OK"
+        },
+        {
+          "name": "journal damage is reported without reclaiming or repairing evidence",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-debug.log",
+          "actual_output": "2/5 tool_query.test.journal damage is reported without reclaiming or repairing evidence...OK"
+        },
+        {
+          "name": "journal reader bounds memory and validates codec payloads",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-debug.log",
+          "actual_output": "3/5 tool_query.test.journal reader bounds memory and validates codec payloads...OK"
+        },
+        {
+          "name": "v2 schema reader retains missing corrupt unknown and mismatched references for retry",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-debug.log",
+          "actual_output": "4/5 tool_query.test.v2 schema reader retains missing corrupt unknown and mismatched references for retry...OK"
+        },
+        {
+          "name": "v2 schema extension corruption and journal version changes are diagnosed",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-debug.log",
+          "actual_output": "5/5 tool_query.test.v2 schema extension corruption and journal version changes are diagnosed...OK"
+        }
+      ],
+      "selected_passed": 21,
+      "skips": []
+    },
+    "native_ReleaseSafe": {
+      "cases": [
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "16/28 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "consumer CRC roles: commit and validation entries preserve independent golden bytes",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "17/28 journal.format.test.consumer CRC roles: commit and validation entries preserve independent golden bytes...OK"
+        },
+        {
+          "name": "consumer CRC roles: validation family and commit match full integer and partition oracles",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "18/28 journal.format.test.consumer CRC roles: validation family and commit match full integer and partition oracles...OK"
+        },
+        {
+          "name": "checked consumer rejects checksum valid generation corruption without releasing a captured record",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "19/28 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK"
+        },
+        {
+          "name": "recoveryRecordAt retains corrupt records and returns the existing checksum error",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "21/28 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK"
+        },
+        {
+          "name": "v2 CRC covers schema ref and recovery refuses unknown references without reclaim",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "24/28 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK"
+        },
+        {
+          "name": "batch borrows records until ordered acknowledgement and stops at gaps",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "22/28 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "23/28 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "mmap reopen replays committed payload and session without msync",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "20/28 journal.tests.test.mmap reopen replays committed payload and session without msync...OK"
+        },
+        {
+          "name": "SPSC reopens committed data across reservation gap using same file protocol",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "14/28 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK"
+        },
+        {
+          "name": "SPSC producer and consumer concurrently wrap cached cursors",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "15/28 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK"
+        },
+        {
+          "name": "schema SPSC reserve stays exclusive and warm reserve commit has no allocations",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-safe.log",
+          "actual_output": "25/28 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK"
+        },
+        {
+          "name": "memory journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-safe.log",
+          "actual_output": "1/4 journal_progress.test.memory journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "mmap journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-safe.log",
+          "actual_output": "2/4 journal_progress.test.mmap journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "memory journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-safe.log",
+          "actual_output": "3/4 journal_progress.test.memory journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "mmap journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-safe.log",
+          "actual_output": "4/4 journal_progress.test.mmap journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "reader returned event is independent of journal slot reuse",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-safe.log",
+          "actual_output": "1/5 tool_query.test.reader returned event is independent of journal slot reuse...OK"
+        },
+        {
+          "name": "journal damage is reported without reclaiming or repairing evidence",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-safe.log",
+          "actual_output": "2/5 tool_query.test.journal damage is reported without reclaiming or repairing evidence...OK"
+        },
+        {
+          "name": "journal reader bounds memory and validates codec payloads",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-safe.log",
+          "actual_output": "3/5 tool_query.test.journal reader bounds memory and validates codec payloads...OK"
+        },
+        {
+          "name": "v2 schema reader retains missing corrupt unknown and mismatched references for retry",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-safe.log",
+          "actual_output": "4/5 tool_query.test.v2 schema reader retains missing corrupt unknown and mismatched references for retry...OK"
+        },
+        {
+          "name": "v2 schema extension corruption and journal version changes are diagnosed",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-safe.log",
+          "actual_output": "5/5 tool_query.test.v2 schema extension corruption and journal version changes are diagnosed...OK"
+        }
+      ],
+      "selected_passed": 21,
+      "skips": []
+    },
+    "native_ReleaseFast": {
+      "cases": [
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "16/28 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "consumer CRC roles: commit and validation entries preserve independent golden bytes",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "17/28 journal.format.test.consumer CRC roles: commit and validation entries preserve independent golden bytes...OK"
+        },
+        {
+          "name": "consumer CRC roles: validation family and commit match full integer and partition oracles",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "18/28 journal.format.test.consumer CRC roles: validation family and commit match full integer and partition oracles...OK"
+        },
+        {
+          "name": "checked consumer rejects checksum valid generation corruption without releasing a captured record",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "19/28 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK"
+        },
+        {
+          "name": "recoveryRecordAt retains corrupt records and returns the existing checksum error",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "21/28 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK"
+        },
+        {
+          "name": "v2 CRC covers schema ref and recovery refuses unknown references without reclaim",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "24/28 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK"
+        },
+        {
+          "name": "batch borrows records until ordered acknowledgement and stops at gaps",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "22/28 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "23/28 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "mmap reopen replays committed payload and session without msync",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "20/28 journal.tests.test.mmap reopen replays committed payload and session without msync...OK"
+        },
+        {
+          "name": "SPSC reopens committed data across reservation gap using same file protocol",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "14/28 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK"
+        },
+        {
+          "name": "SPSC producer and consumer concurrently wrap cached cursors",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "15/28 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK"
+        },
+        {
+          "name": "schema SPSC reserve stays exclusive and warm reserve commit has no allocations",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-native-fast.log",
+          "actual_output": "25/28 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK"
+        },
+        {
+          "name": "memory journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-fast.log",
+          "actual_output": "1/4 journal_progress.test.memory journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "mmap journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-fast.log",
+          "actual_output": "2/4 journal_progress.test.mmap journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "memory journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-fast.log",
+          "actual_output": "3/4 journal_progress.test.memory journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "mmap journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-native-fast.log",
+          "actual_output": "4/4 journal_progress.test.mmap journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "reader returned event is independent of journal slot reuse",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-fast.log",
+          "actual_output": "1/5 tool_query.test.reader returned event is independent of journal slot reuse...OK"
+        },
+        {
+          "name": "journal damage is reported without reclaiming or repairing evidence",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-fast.log",
+          "actual_output": "2/5 tool_query.test.journal damage is reported without reclaiming or repairing evidence...OK"
+        },
+        {
+          "name": "journal reader bounds memory and validates codec payloads",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-fast.log",
+          "actual_output": "3/5 tool_query.test.journal reader bounds memory and validates codec payloads...OK"
+        },
+        {
+          "name": "v2 schema reader retains missing corrupt unknown and mismatched references for retry",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-fast.log",
+          "actual_output": "4/5 tool_query.test.v2 schema reader retains missing corrupt unknown and mismatched references for retry...OK"
+        },
+        {
+          "name": "v2 schema extension corruption and journal version changes are diagnosed",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-native-fast.log",
+          "actual_output": "5/5 tool_query.test.v2 schema extension corruption and journal version changes are diagnosed...OK"
+        }
+      ],
+      "selected_passed": 21,
+      "skips": []
+    },
+    "generic_ReleaseSafe": {
+      "cases": [
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "16/28 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "consumer CRC roles: commit and validation entries preserve independent golden bytes",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "17/28 journal.format.test.consumer CRC roles: commit and validation entries preserve independent golden bytes...OK"
+        },
+        {
+          "name": "consumer CRC roles: validation family and commit match full integer and partition oracles",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "18/28 journal.format.test.consumer CRC roles: validation family and commit match full integer and partition oracles...OK"
+        },
+        {
+          "name": "checked consumer rejects checksum valid generation corruption without releasing a captured record",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "19/28 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK"
+        },
+        {
+          "name": "recoveryRecordAt retains corrupt records and returns the existing checksum error",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "21/28 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK"
+        },
+        {
+          "name": "v2 CRC covers schema ref and recovery refuses unknown references without reclaim",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "24/28 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK"
+        },
+        {
+          "name": "batch borrows records until ordered acknowledgement and stops at gaps",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "22/28 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "23/28 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "mmap reopen replays committed payload and session without msync",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "20/28 journal.tests.test.mmap reopen replays committed payload and session without msync...OK"
+        },
+        {
+          "name": "SPSC reopens committed data across reservation gap using same file protocol",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "14/28 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK"
+        },
+        {
+          "name": "SPSC producer and consumer concurrently wrap cached cursors",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "15/28 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK"
+        },
+        {
+          "name": "schema SPSC reserve stays exclusive and warm reserve commit has no allocations",
+          "family": "journal",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-core-generic-safe.log",
+          "actual_output": "25/28 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK"
+        },
+        {
+          "name": "memory journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-generic-safe.log",
+          "actual_output": "1/4 journal_progress.test.memory journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "mmap journal progress: all peek paths publish leading tombstones and free producer space",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-generic-safe.log",
+          "actual_output": "2/4 journal_progress.test.mmap journal progress: all peek paths publish leading tombstones and free producer space...OK"
+        },
+        {
+          "name": "memory journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-generic-safe.log",
+          "actual_output": "3/4 journal_progress.test.memory journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "mmap journal progress: late CRC and release failures retain the failed record until repair",
+          "family": "progress",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-progress-generic-safe.log",
+          "actual_output": "4/4 journal_progress.test.mmap journal progress: late CRC and release failures retain the failed record until repair...OK"
+        },
+        {
+          "name": "reader returned event is independent of journal slot reuse",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-generic-safe.log",
+          "actual_output": "1/5 tool_query.test.reader returned event is independent of journal slot reuse...OK"
+        },
+        {
+          "name": "journal damage is reported without reclaiming or repairing evidence",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-generic-safe.log",
+          "actual_output": "2/5 tool_query.test.journal damage is reported without reclaiming or repairing evidence...OK"
+        },
+        {
+          "name": "journal reader bounds memory and validates codec payloads",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-generic-safe.log",
+          "actual_output": "3/5 tool_query.test.journal reader bounds memory and validates codec payloads...OK"
+        },
+        {
+          "name": "v2 schema reader retains missing corrupt unknown and mismatched references for retry",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-generic-safe.log",
+          "actual_output": "4/5 tool_query.test.v2 schema reader retains missing corrupt unknown and mismatched references for retry...OK"
+        },
+        {
+          "name": "v2 schema extension corruption and journal version changes are diagnosed",
+          "family": "reader",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-reader-generic-safe.log",
+          "actual_output": "5/5 tool_query.test.v2 schema extension corruption and journal version changes are diagnosed...OK"
+        }
+      ],
+      "selected_passed": 21,
+      "skips": []
+    }
+  },
+  "crc_reuse": {
+    "sha256": "51d15baab1f4c929c5dd3c3fa899856b6bcf582b5c26fbe6baed658d315aeac6",
+    "evidence": "../2026-11-03-crc-flat-segments/direct-index/worker-test-manifest.json",
+    "meaning": "CRC source exactly reused; prior CRC5 mathematics, seed, alignment, page-edge and alias tests were not rerun."
+  },
+  "binding": "External Reader and progress test modules and the tool dependency all import the new candidate kron module; each CLI module receives the same optimization/CPU options.",
+  "unqualified": [
+    "Source preservation does not prove the strict Runtime.submitSafeDestination normalized ops/frame/calls1048/0xd18/30/372, slotChecksum156B/48instructions/3calls or general310/20PCL gate.",
+    "Actual noinline frames/copies, row-sharing and performance remain for the parent actual gate; no producer-tail restoration or benefit is claimed."
+  ],
+  "failures": []
+}
