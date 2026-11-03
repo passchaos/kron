@@ -907,8 +907,9 @@ test "migration stale and drift predicates reject unsafe mappings" {
 test "invalid options and rejected capabilities remain explicit" {
     try std.testing.expect(!validOptions(.{ .calibration_samples = 2 }));
     try std.testing.expectEqual(Status.unsupported_platform, capabilityRejection(.{ .platform_supported = false }, .{}).?);
-    try std.testing.expectEqual(Status.rdtscp_unavailable, capabilityRejection(.{ .has_tsc = true }, .{}).?);
+    try std.testing.expectEqual(Status.rdtscp_unavailable, capabilityRejection(.{ .platform_supported = true, .has_tsc = true }, .{}).?);
     try std.testing.expectEqual(Status.hypervisor_disallowed, capabilityRejection(.{
+        .platform_supported = true,
         .has_tsc = true,
         .has_rdtscp = true,
         .invariant_tsc = true,
