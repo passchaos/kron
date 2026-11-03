@@ -1,0 +1,25 @@
+{
+  "review": "Independent read-only final fixed-segment source preflight",
+  "status": "pass within original valid domain",
+  "reviewed_sha256": {
+    "platform/crc32.zig": "e1b83940f888f645503df9dde69e6963f0db5a31cd6b3396b457cff5dc490e50",
+    "platform/crc32_pclmul.zig": "b04fae1219f65b70b8fd0cda053e205f8085719767cc26a57abab42b4ee87bf9",
+    "journal/format.zig": "f86d3607626b54a9cd566526e08b767c47a6bb0621ae9b601d789f9ac0ca9e96"
+  },
+  "unchanged_bytewise": [
+    "complete Crc32.update function",
+    "old pclmul.update function",
+    "clmul implementation",
+    "journal/runtime/delivery/fused/root/public CRC segment tests"
+  ],
+  "pclmul_source": "Whole file equals first direct-tail candidate; same F32/F64 high suffix formulas, 5/6 CLMUL and original four-multiply reduction",
+  "new_method": "Typed20/24 only, original compile-time CPU gate, native exact helpers or original update on generic",
+  "format_order": [
+    "v1 header typed20 -> original payload update -> final",
+    "v2 original FIRST assert(len24) -> typed20 -> typed24 -> original payload update -> final"
+  ],
+  "valid_domain": "reference length24 in all optimize modes; non24 ReleaseFast is UB, not supported fallback",
+  "scratch_fields_budget": "No change",
+  "probe": "same standalone primitive.zig in both shadow roots; generated support, not production",
+  "execution_limits": "Reviewer did not edit/compile/test/benchmark; source is not speed or compiled-code qualification"
+}

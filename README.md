@@ -12,6 +12,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 短 CRC 单 lane 和代码隔离两个候选也已撤回，70 长度双拓扑控制有稳定回退；保留 `test-crc-segments` 验证任意 seed、20/24 字节分段和 guard-page 边界。源码、实际调用变化与全部反例见 [短 CRC 报告](bench/evidence/2026-11-03-short-crc/README.md)。
 
+精确 20/24 字节直接折叠的通用分派与固定 journal 入口也已拒绝：E-core 跨长度控制分别有 12 和 21 组稳定退步，P-core 均不确定。局部短段收益未形成保留资格，全部源码、测试与正负数据见 [固定段报告](bench/evidence/2026-11-03-crc-fixed-segments/README.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始
