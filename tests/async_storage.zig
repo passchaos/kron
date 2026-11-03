@@ -128,7 +128,7 @@ test "async storage: memory shared and SPSC copy borrowed inputs and retain old 
 
 test "async storage: preallocated memory channels and hot logging allocate nothing after runtime init" {
     inline for (.{ .asynchronous, .low_latency }) |submission| {
-        var bytes: [128 * 1024]u8 = undefined;
+        var bytes: [512 * 1024]u8 = undefined;
         var memory = kron.MemorySink.initBuffer(&bytes);
         var failing = testing.FailingAllocator.init(testing.allocator, .{});
         const runtime = try kron.Runtime.create(failing.allocator(), testing.io, .{
@@ -337,5 +337,67 @@ test "async storage: memory schema prewarm is ready without persistence and both
         try testing.expectEqual(@as(u64, 0), binding.journal.durableReclaimedTarget());
         try runtime.shutdown(.drain);
         try testing.expectEqual(@as(u32, 0), NoFiles.calls.load(.acquire));
+    }
+}
+
+const ConcurrentProducer = struct {
+    runtime: *kron.Runtime,
+    id: usize,
+    records: usize,
+    gate: *std.atomic.Value(bool),
+    accepted: usize = 0,
+    failure: ?anyerror = null,
+
+    fn run(self: *@This()) void {
+        while (!self.gate.load(.acquire)) std.atomic.spinLoopHint();
+        const log = self.runtime.scoped("concurrent");
+        for (0..self.records) |index| {
+            const result = log.tryEmit(.info, "producer", .{ .producer = self.id, .index = index }) catch |err| {
+                self.failure = err;
+                return;
+            };
+            if (result != .accepted) {
+                self.failure = error.RecordRejected;
+                return;
+            }
+            self.accepted += 1;
+        }
+    }
+};
+
+test "async storage: concurrent shared producers deliver every accepted record" {
+    if (builtin.single_threaded) return error.SkipZigTest;
+    const producer_count = 4;
+    const per_producer = 250;
+    const total = producer_count * per_producer;
+    var round: usize = 0;
+    while (round < 2) : (round += 1) {
+        var bytes: [512 * 1024]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+            .submission = .asynchronous,
+            .memory_queue = .{ .capacity = 64, .max_record_bytes = 512 },
+            .overflow = .block,
+            .consumer_batches_per_queue = 4,
+            .routes = &.{.{ .name = "output", .sink = memory.sink() }},
+        });
+        defer runtime.destroy();
+        var gate: std.atomic.Value(bool) = .init(false);
+        var workers: [producer_count]ConcurrentProducer = undefined;
+        var threads: [producer_count]std.Thread = undefined;
+        for (&workers, 0..) |*worker, index| {
+            worker.* = .{ .runtime = runtime, .id = index, .records = per_producer, .gate = &gate };
+            threads[index] = try std.Thread.spawn(.{}, ConcurrentProducer.run, .{worker});
+        }
+        gate.store(true, .release);
+        for (&threads) |thread| thread.join();
+        for (&workers) |*worker| if (worker.failure) |err| return err;
+        try runtime.flush(.written);
+        try runtime.shutdown(.drain);
+        const health = runtime.health();
+        try testing.expectEqual(@as(u64, total), health.accepted);
+        try testing.expectEqual(@as(u64, total), health.written);
+        try testing.expectEqual(@as(usize, 0), health.journal_pending);
+        try testing.expectEqual(total, memory.records);
     }
 }
