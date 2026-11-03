@@ -38,7 +38,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     }
     if (options.memory_queue) |memory| {
         if (memory.text_format) {
-            if (options.submission != .asynchronous or options.max_thread_channels != 0 or options.routes.len != 1 or options.routes[0].format != .json or memory.verify_crc or options.render_cache) return error.InvalidTextFormat;
+            if (options.submission == .sync or options.routes.len != 1 or options.routes[0].format != .json or memory.verify_crc or options.render_cache) return error.InvalidTextFormat;
         }
     }
     if (queue_options) |journal_options| {

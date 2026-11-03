@@ -737,10 +737,11 @@ pub const Runtime = struct {
                 event.sequence = reservation.sequence;
                 if (self.runtimeCaches().text_format) {
                     const route = &snapshot.routes[0];
-                    const header_bytes = 16;
+                    const header_bytes = 20;
                     if (reservation.buffer().len < header_bytes) return error.EncodedRecordTooLarge;
                     std.mem.writeInt(u64, reservation.buffer()[0..8], snapshot.generation, .little);
                     std.mem.writeInt(u64, reservation.buffer()[8..16], snapshot.fingerprint, .little);
+                    std.mem.writeInt(u32, reservation.buffer()[16..20], event.channel, .little);
                     var writer = std.Io.Writer.fixed(reservation.buffer()[header_bytes..]);
                     common.encodeDecoded(.json, event.*, route.timestamp, &writer) catch |err| {
                         reservation.abort();
@@ -976,20 +977,21 @@ pub const Runtime = struct {
             defer versions.deinit();
             var written_counts: delivery_batch.WrittenCounts = .{};
             defer written_counts.flush();
-            if (self.runtimeCaches().text_format and journal == self.journal) {
+            if (self.runtimeCaches().text_format) {
                 for (batch, 0..) |record, index| {
-                    if (record.payload.len < 16) return error.CorruptRecord;
+                    if (record.payload.len < 20) return error.CorruptRecord;
                     const generation = std.mem.readInt(u64, record.payload[0..8], .little);
                     const fingerprint = std.mem.readInt(u64, record.payload[8..16], .little);
+                    const channel = std.mem.readInt(u32, record.payload[16..20], .little);
                     const group = try versions.select(generation, fingerprint);
                     const snapshot = group.snapshot();
                     if (snapshot.routes.len != 1) return error.UnknownRoute;
                     const route = &snapshot.routes[0];
-                    route.sink.writeRecord(record.payload[16..]) catch |err| {
+                    route.sink.writeRecord(record.payload[20..]) catch |err| {
                         recordDeliveryError(@ptrCast(self), err, .write);
                         if (route.delivery == .required) return err;
                     };
-                    channels[index] = 0;
+                    channels[index] = channel;
                     snapshots[index] = snapshot;
                     boundaries[index] = group.include(1);
                 }

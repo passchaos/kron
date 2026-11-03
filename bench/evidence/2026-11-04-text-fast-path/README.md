@@ -4,14 +4,14 @@
 
 opt-in `MemoryQueueOptions.text_format = true`（同时要求 `verify_crc = false`）：
 
-- producer：capture/admission 后把最终 JSON 渲染进 memory queue slot；slot payload 前16字节是capture-time route generation/fingerprint，后面是完整JSON行。
+- producer：capture/admission 后把最终 JSON 渲染进 memory queue slot；slot payload 前20字节是capture-time route generation/fingerprint/channel，后面是完整JSON行。
 - consumer：读取slot header选择route snapshot，直接 `writeRecord`，不再decode/render，也不做slot CRC。
-- 约束：shared asynchronous、单route、JSON、memory queue；无journal/mmap/recovery；默认durable路径不变。
-- 输出 parity 测试：固定clock/session下，text路径与durable deferred路径的inline/schema输出byte-identical。
+- 约束：shared async或SPSC、单route、JSON、memory queue；无journal/mmap/recovery；默认durable路径不变。
+- 输出 parity 测试：固定clock/session下，text路径与durable deferred路径的inline/schema输出byte-identical（async与SPSC）。
 
 该模式与Foundation/tracing的“无恢复”语义对齐；默认CRC/三检查点/recovery仍保留给durable模式。
 
-## A/B（E-core，5轮，cache text vs Foundation/tracing）
+## Async A/B（E-core，5轮，text vs Foundation/tracing）
 
 | case | peer | ratio | 95% CI | kron | peer |
 | --- | --- | ---: | --- | ---: | ---: |
@@ -31,13 +31,30 @@ opt-in `MemoryQueueOptions.text_format = true`（同时要求 `verify_crc = fals
 
 - P4 text 3.84M–3.96M，对Foundation/tracing中位1.61–1.78；部分轴qualified lead，其余因窗口spread inconclusive。
 - P1 text 1.89M–2.23M：对Foundation中位1.10–1.26，对tracing中位0.95–1.05；没有qualified negative。
-- 输出逐条核验；这是无恢复模式与无恢复前端的同语义比较，不是durable默认路径的排名。
+
+## SPSC A/B（E-core，5轮，text vs Foundation/tracing）
+
+| case | peer | ratio | 95% CI | kron | peer |
+| --- | --- | ---: | --- | ---: | ---: |
+| p4-batch-inline | foundation_tracing | 2.3234 | 1.721..13.035 | 5.057M | 2.194M |
+| p4-batch-schema | foundation_tracing | **2.2561** | 2.168..2.298 | 4.943M | 2.233M |
+| p4-batch-schema | foundation | **2.1683** | 2.095..2.275 | 4.943M | 2.302M |
+| p4-sampled-inline | foundation | **2.1320** | 2.035..2.200 | 5.003M | 2.364M |
+| p4-sampled-schema | foundation | 2.0601 | 1.678..2.064 | 4.804M | 2.330M |
+| p1-sampled-inline | foundation | **1.1364** | 1.116..1.149 | 1.909M | 1.695M |
+| p1-sampled-inline | foundation_tracing | 0.9741 | 0.954..0.982 | 1.909M | 1.997M |
+| p1-sampled-schema | foundation_tracing | 0.8932 | 0.888..0.916 | 1.833M | 2.018M |
+
+- **SPSC P4 text 4.80M–5.06M**，对 Foundation/tracing 中位 **2.06–2.32**，多个 qualified lead。
+- SPSC P1 text 1.83M–2.10M：对 Foundation 1.08–1.18（部分 lead），对 tracing 0.89–0.97（sampled 两轴 peer lead）；P1 tracing 差距仍在。
+
+原始行见[async results](results.jsonl)与[SPSC results](spsc/results.jsonl)。
 
 ## 门禁
 
-- `test`：**65/65 steps、764/765 tests（1项skip）**，success。
-- `verify-local`：**159/159 steps、798/799 tests（1项skip）**，`verify-local success`。
+- `test`：**65/65 steps、765/766 tests（1项skip）**，success。
+- `verify-local`：**159/159 steps、799/800 tests（1项skip）**，`verify-local success`。
 
 ## 边界
 
-text模式是volatile，不提供crash recovery；默认durable路径仍是CRC/journal/recovery。A/B绑定当前E-core窗口，host load见[host-load.txt](host-load.txt)。原始行见[results.jsonl](results.jsonl)，binary身份见[binaries.sha256](binaries.sha256)，源码见[candidate.patch](candidate.patch)。
+text模式是volatile，不提供crash recovery；默认durable路径仍是CRC/journal/recovery。A/B绑定当前E-core窗口，host load见[host-load.txt](host-load.txt)。binary身份见[binaries.sha256](binaries.sha256)与[spsc/binary.sha256](spsc/binary.sha256)，源码见[candidate.patch](candidate.patch)。

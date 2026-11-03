@@ -128,6 +128,44 @@ fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
     return allocator.dupe(u8, sink.written());
 }
 
+test "text queue output matches deferred render for spsc" {
+    const text = try textFormatSpscRun(std.testing.allocator, true);
+    defer std.testing.allocator.free(text);
+    const deferred = try textFormatSpscRun(std.testing.allocator, false);
+    defer std.testing.allocator.free(deferred);
+    try std.testing.expectEqualStrings(deferred, text);
+}
+
+fn textFormatSpscRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
+    var bytes: [16 * 1024]u8 = undefined;
+    var sink = MemorySink.initBuffer(&bytes);
+    const runtime = try Runtime.create(allocator, std.testing.io, .{
+        .submission = .low_latency,
+        .memory_queue = .{
+            .capacity = 8,
+            .max_record_bytes = 1024,
+            .schema_capacity = 2,
+            .max_schema_bytes = 1024,
+            .verify_crc = !text_format,
+            .text_format = text_format,
+        },
+        .max_thread_channels = 1,
+        .thread_channel_capacity = 8,
+        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
+        .clock = Clock.zeroTimestamp(),
+    });
+    defer runtime.destroy();
+    runtime.session = 42;
+    const log = try runtime.attachThread(.{ .scope = "cache" });
+    for (0..4) |index| {
+        _ = try log.tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
+    }
+    try runtime.flush(.written);
+    log.detach() catch {};
+    try runtime.shutdown(.drain);
+    return allocator.dupe(u8, sink.written());
+}
+
 test "render cache does not hide journal recovery" {
     if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = std.testing.tmpDir(.{});

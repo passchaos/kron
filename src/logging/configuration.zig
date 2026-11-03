@@ -94,7 +94,7 @@ pub fn validate(options: Options) !void {
         if (d.consumer_batches_per_queue == 0 or d.consumer_batches_per_queue > 4 or d.max_encoded_record_bytes == 0 or d.max_encoded_record_bytes > std.math.maxInt(u32)) return error.InvalidOptions;
         if (d.render_cache and (d.mode == .sync or d.format != .json or d.render_cache_record_bytes == 0 or d.render_cache_record_bytes > d.max_encoded_record_bytes)) return error.InvalidRenderCache;
         if (d.queue.? == .memory and d.queue.?.memory.text_format) {
-            if (d.mode != .asynchronous or d.format != .json or d.queue.?.memory.verify_crc) return error.InvalidTextFormat;
+            if (d.mode == .sync or d.format != .json or d.queue.?.memory.verify_crc) return error.InvalidTextFormat;
         }
         if (d.queue.? == .mmap and (d.queue.?.mmap.path.len == 0 or (route.target != .file and route.target != .rolling_file))) return error.MmapRequiresFileOutput;
         if (d.mode != .sync and d.reclaim_after == .durable and d.queue.? != .mmap) return error.DurableReclaimRequiresMmap;
