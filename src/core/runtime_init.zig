@@ -33,7 +33,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     if (options.memory_queue != null) for (options.routes) |*route| if (route.reclaim_after == .durable) return error.DurableReclaimRequiresMmap;
     if (options.submission == .low_latency and options.max_thread_channels == 0) return error.ThreadChannelsRequired;
     if (options.render_cache) {
-        if (queue_options == null or options.max_thread_channels != 0) return error.RenderCacheUnsupported;
+        if (queue_options == null) return error.RenderCacheUnsupported;
         if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
     }
     if (queue_options) |journal_options| {
@@ -77,11 +77,6 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     caches.* = .{};
     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
     errdefer if (journal) |j| j.deinit();
-    if (options.render_cache) {
-        const cache = try RenderCache.create(allocator, journal.?.capacity, options.render_cache_record_bytes);
-        caches.render_cache = cache;
-    }
-    errdefer if (caches.render_cache) |cache| cache.destroy();
     var identity: [8]u8 = undefined;
     try io.randomSecure(&identity);
     self.* = .{
@@ -114,6 +109,37 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
         });
     }
     errdefer if (self.thread_registry) |registry| registry.destroy();
+    if (options.render_cache) {
+        var cache_journals: [65]?*Journal = @splat(null);
+        var cache_count: usize = 0;
+        if (self.journal) |store| {
+            cache_journals[cache_count] = store;
+            cache_count += 1;
+        }
+        if (self.thread_registry) |registry| for (registry.activeJournals()) |store| {
+            cache_journals[cache_count] = store;
+            cache_count += 1;
+        };
+        const render_caches = try allocator.alloc(?*RenderCache, cache_count);
+        errdefer allocator.free(render_caches);
+        @memset(render_caches, null);
+        const render_journals = try allocator.alloc(?*Journal, cache_count);
+        errdefer allocator.free(render_journals);
+        var created: usize = 0;
+        errdefer for (render_caches[0..created]) |maybe_cache| if (maybe_cache) |cache| cache.destroy();
+        for (cache_journals[0..cache_count], 0..) |maybe_journal, index| {
+            render_journals[index] = maybe_journal;
+            render_caches[index] = try RenderCache.create(allocator, maybe_journal.?.capacity, options.render_cache_record_bytes);
+            created += 1;
+        }
+        caches.render_caches = render_caches;
+        caches.render_journals = render_journals;
+    }
+    errdefer {
+        for (caches.render_caches) |maybe_cache| if (maybe_cache) |cache| cache.destroy();
+        if (caches.render_caches.len != 0) allocator.free(caches.render_caches);
+        if (caches.render_journals.len != 0) allocator.free(caches.render_journals);
+    }
     var recovery_journals: [65]*Journal = undefined;
     var journal_count: usize = 0;
     if (journal) |store| {

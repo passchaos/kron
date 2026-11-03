@@ -6,13 +6,13 @@
 
 - `RenderCache`：`capacity == journal.capacity`，每slot `render_cache_record_bytes`；producer claim → render → publish（release store），commit失败或render失败时abort；consumer lookup（acquire load）→ 写出 → clear。
 - journal格式、binary CRC、三检查点、recovery、queue capacity不变；缓存是volatile，恢复时为空并自动回退。
-- 仅支持shared asynchronous journal、单route、JSON（inline与schema）；SPSC/multi-route不启用。
+- 支持shared async与SPSC的per-journal cache（共享journal与每个thread channel各一份）；单route、JSON（inline与schema）；multi-route不启用。
 - 默认`render_cache=false`；`Logging.Route.render_cache`与benchmark `--render-cache=true`可显式开启。
 
 ## 正确性
 
-- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、762/763 tests（1项skip）**，success。
-- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、796/797 tests（1项skip）**，`verify-local success`。
+- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、763/764 tests（1项skip）**，success。
+- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、797/798 tests（1项skip）**，`verify-local success`。
 - `test-integration` 13/13、`test-async-storage` 10/10、`test-configurations` 14/14。
 - 新增`render cache output matches deferred render for inline and schema`：固定clock/session下，inline与nested schema的输出与deferred路径byte-identical。
 - 新增`render cache does not hide journal recovery`：第一次runtime写入后sink失败、记录保持pending；重开runtime时cache为空，恢复记录仍由deferred renderer正确写出。
@@ -42,6 +42,21 @@ schema route也已验证：producer用同一`common.encodeDecoded`渲染schema e
 | p4-mmap-sampled | 1.5096 | 1.4909..1.5204 | 2.886M | 1.894M |
 
 四组均因spread/区间保持inconclusive，但中位增益1.40–1.51，且没有qualified negative；原始行见[schema results](schema/results.jsonl)。
+
+SPSC P4 async per-channel cache A/B（7轮，cache off/on）：
+
+| case | written ratio | 95% CI | cache-on | cache-off | 资格 |
+| --- | ---: | --- | ---: | ---: | --- |
+| memory-batch-inline | 1.6853 | 1.6728..1.7690 | 3.408M | 2.022M | kron_leads |
+| memory-batch-schema | 1.6459 | 1.5736..1.6645 | 3.394M | 2.046M | kron_leads |
+| memory-sampled-inline | 1.6828 | 1.6325..1.6852 | 3.328M | 1.984M | kron_leads |
+| memory-sampled-schema | 1.6557 | 1.5675..1.6879 | 3.340M | 2.013M | inconclusive |
+| mmap-batch-inline | 1.6564 | 1.6240..1.6862 | 3.287M | 2.004M | inconclusive |
+| mmap-batch-schema | 1.6252 | 1.6131..1.6493 | 3.315M | 2.053M | kron_leads |
+| mmap-sampled-inline | 1.6597 | 1.6056..1.6912 | 3.252M | 1.995M | kron_leads |
+| mmap-sampled-schema | 1.6271 | 1.5370..1.6385 | 3.291M | 2.041M | inconclusive |
+
+SPSC P4 的中位吞吐从约2.0M提升到3.25M–3.41M，5/8轴qualified lead、其余inconclusive，无qualified negative。原始行见[SPSC results](spsc/results.jsonl)。
 
 当前host负载较高时的managed A/B（P4 async inline，7轮）比值为1.2484/1.4170/1.4845/1.5260，但paired spread/区间均未通过10%门槛，全部inconclusive；没有qualified negative。
 

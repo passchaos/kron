@@ -50,6 +50,39 @@ test "render cache output matches deferred render for inline and schema" {
     try std.testing.expectEqualStrings(deferred, cached);
 }
 
+test "render cache output matches deferred render for spsc" {
+    const cached = try renderCacheSpscRun(std.testing.allocator, true);
+    defer std.testing.allocator.free(cached);
+    const deferred = try renderCacheSpscRun(std.testing.allocator, false);
+    defer std.testing.allocator.free(deferred);
+    try std.testing.expectEqualStrings(deferred, cached);
+}
+
+fn renderCacheSpscRun(allocator: std.mem.Allocator, cache: bool) ![]u8 {
+    var bytes: [16 * 1024]u8 = undefined;
+    var sink = MemorySink.initBuffer(&bytes);
+    const runtime = try Runtime.create(allocator, std.testing.io, .{
+        .submission = .low_latency,
+        .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 },
+        .max_thread_channels = 1,
+        .thread_channel_capacity = 8,
+        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
+        .clock = Clock.zeroTimestamp(),
+        .render_cache = cache,
+        .render_cache_record_bytes = if (cache) 512 else 0,
+    });
+    defer runtime.destroy();
+    runtime.session = 42;
+    const log = try runtime.attachThread(.{ .scope = "cache" });
+    for (0..4) |index| {
+        _ = try log.tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
+    }
+    try runtime.flush(.written);
+    log.detach() catch {};
+    try runtime.shutdown(.drain);
+    return allocator.dupe(u8, sink.written());
+}
+
 test "render cache does not hide journal recovery" {
     if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = std.testing.tmpDir(.{});

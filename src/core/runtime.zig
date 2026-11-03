@@ -69,7 +69,8 @@ pub const Runtime = struct {
     /// The configuration cache allocation also carries the optional volatile
     /// producer-rendered JSON cache, keeping the Runtime object size unchanged.
     pub const Caches = struct {
-        render_cache: ?*RenderCache = null,
+        render_caches: []?*RenderCache = &.{},
+        render_journals: []?*Journal = &.{},
         channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
     };
     pub const TestingHooks = if (@import("builtin").is_test) struct {
@@ -136,8 +137,12 @@ pub const Runtime = struct {
         return &self.runtimeCaches().channels;
     }
 
-    fn renderCache(self: *Runtime) ?*RenderCache {
-        return self.runtimeCaches().render_cache;
+    fn renderCacheFor(self: *Runtime, journal: *Journal) ?*RenderCache {
+        const caches = self.runtimeCaches();
+        for (caches.render_journals, caches.render_caches) |maybe_journal, maybe_cache| {
+            if (maybe_journal) |candidate| if (candidate == journal) return maybe_cache;
+        }
+        return null;
     }
 
     pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*Runtime {
@@ -753,10 +758,10 @@ pub const Runtime = struct {
                 // write pre-rendered bytes. Publish before commit so a
                 // committed record always has a visible render.
                 var render_claim: ?RenderCache.Claim = null;
-                if (producer_token == null and destination == self.journal and event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
+                if (destination) |cache_journal| if (event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
                     const route = &snapshot.routes[0];
                     const redacted = if (route.policy) |policy| policy.redactor != null else false;
-                    if (!redacted) if (self.renderCache()) |cache| if (cache.claim(reservation.sequence)) |claim| {
+                    if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.claim(reservation.sequence)) |claim| {
                         var writer = std.Io.Writer.fixed(claim.buffer);
                         if (common.encodeDecoded(.json, event.*, route.timestamp, &writer)) |_| {
                             claim.publish(writer.buffered().len);
@@ -765,7 +770,7 @@ pub const Runtime = struct {
                             claim.abort();
                         }
                     };
-                }
+                };
                 // Retain before publishing: the collector can consume the
                 // record immediately after the release commit marker.
                 snapshot.retainChannel(event.channel);
@@ -911,7 +916,7 @@ pub const Runtime = struct {
 
     fn drainJournal(self: *Runtime, journal: *Journal) !bool {
         var worked = false;
-        const render_cache = if (self.journal) |shared| (if (shared == journal) self.renderCache() else null) else null;
+        const render_cache = self.renderCacheFor(journal);
         var records: [delivery_batch.max_records]JournalModule.Record = undefined;
         var channels: [delivery_batch.max_records]u32 = undefined;
         var snapshots: [delivery_batch.max_records]*configurations.Snapshot = undefined;
@@ -1471,8 +1476,11 @@ pub const Runtime = struct {
         cleanup_owner = self;
         defer cleanup_owner = previous_cleanup;
         self.configurationManager().destroy();
-        if (self.renderCache()) |cache| cache.destroy();
-        allocator.destroy(self.runtimeCaches());
+        const runtime_caches = self.runtimeCaches();
+        for (runtime_caches.render_caches) |maybe_cache| if (maybe_cache) |cache| cache.destroy();
+        if (runtime_caches.render_caches.len != 0) allocator.free(runtime_caches.render_caches);
+        if (runtime_caches.render_journals.len != 0) allocator.free(runtime_caches.render_journals);
+        allocator.destroy(runtime_caches);
         self.dynamicFilter().destroy();
         allocator.free(self.output);
         allocator.destroy(self);

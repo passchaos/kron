@@ -365,7 +365,6 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
-    if (result.render_cache and std.mem.eql(u8, result.mode, "spsc")) return error.RenderCacheUnsupported;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {
