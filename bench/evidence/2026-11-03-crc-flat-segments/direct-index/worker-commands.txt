@@ -1,0 +1,5 @@
+zig test .zig-cache/crc-flat-segments/direct-index/src/platform/crc32.zig -O Debug -mcpu=native --test-filter 'flat fixed CRC'
+zig test .zig-cache/crc-flat-segments/direct-index/src/platform/crc32.zig -O ReleaseSafe -mcpu=native --test-filter 'flat fixed CRC'
+zig test .zig-cache/crc-flat-segments/direct-index/src/platform/crc32.zig -O ReleaseFast -mcpu=native --test-filter 'flat fixed CRC'
+zig test .zig-cache/crc-flat-segments/direct-index/src/platform/crc32.zig -O ReleaseSafe -target x86_64-linux-gnu -mcpu=baseline --test-filter 'flat fixed CRC'
+zig test .zig-cache/crc-flat-segments/direct-index/src/root.zig -O ReleaseSafe -mcpu=native --test-filter 'flat fixed CRC journal segments' --test-filter 'slot CRC'

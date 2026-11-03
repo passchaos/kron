@@ -10,7 +10,7 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 近期 [key scratch](bench/evidence/2026-11-03-fused-key-scratch/README.md)、[短 CRC](bench/evidence/2026-11-03-short-crc/README.md)、[精确固定段 CRC](bench/evidence/2026-11-03-crc-fixed-segments/README.md) 和 [CAS pause](bench/evidence/2026-11-03-cas-failure-pause/README.md) 候选均因控制退步撤回。保留 `test-wire-scratch` 与 `test-crc-segments` 验证复用、嵌套预算、任意 seed、独立分段和 guard-page 边界。
 
-最新等待者计数通知候选完成两核 320 项完整 async/SPSC 流程、3,232 万条 JSON 核对，但有稳定吞吐与尾部退步，已拒绝；生产原算法和默认协议保持。全部正负、SC 握手、真实 futex 测试与实际布局见 [progress 报告](bench/evidence/2026-11-03-progress-waiters/README.md)。
+等待者计数通知候选完成两核 320 项流程、3,232 万条 JSON 核对，但有稳定吞吐与尾部退步，已拒绝，见 [progress 报告](bench/evidence/2026-11-03-progress-waiters/README.md)。最新平坦 CRC 直接索引版消除了旧表重复，两核 640 项流程核对 6,464 万条 JSON，E/P 分别有 27/6 个 written 组局部领先；仍有 p99/p50 稳定反例，按门槛拒绝，见 [direct-index 报告](bench/evidence/2026-11-03-crc-flat-segments/direct-index/README.md)。生产原算法和默认协议保持，尚未全面超过两个 Foundation 前端。
 
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 

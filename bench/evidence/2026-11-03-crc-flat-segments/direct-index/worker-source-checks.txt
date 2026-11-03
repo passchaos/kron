@@ -1,0 +1,4 @@
+Exactly platform/crc32.zig differs from the archived initial candidate source. Its entire outside-fixedWord content is byte-identical.
+fixedWord now has four u32 scalar expressions selected by comptime conditions. No row/array pointer, row value binding or combined table was introduced. Local and total balanced XOR, typed methods, reads, seed and final state write are unchanged.
+All other source files, including journal/format.zig and generated primitive.zig, are byte-identical to the initial candidate.
+No binary table deduplication, rodata budget, hot address/hash, frame/call or performance claim is made before the parent actual gate.
