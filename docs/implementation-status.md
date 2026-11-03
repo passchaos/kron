@@ -57,7 +57,7 @@ regex/predicate mutation fuzz改为把固定PRNG种子与`std.testing.random_see
 
 decoder mutation fuzz同样改为runner-seed驱动；200个seed各执行7个test（persistent Reader fixtures + bounded decoder mutation + malformed input/format），**200/200通过、0 failures**，Safe/Debug/Fast各7/7。仍是bounded进程内mutation；证据见[decoder 200-seed扫描](../bench/evidence/2026-11-03-decoder-200-seeds/README.md)。
 
-新增aarch64-linux-musl静态二进制的QEMU用户态执行：root suite **455 passed/7 skipped/0 failed**（462项），journal/archive fuzz 20/20 seed通过；独立`b.dependency` package consumer五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）均2条记录、pending=0、输出/redaction/journal文件数核对通过，`qualify`确认5模式file durable、inline/schema journal reopen与rolling retention。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
+新增aarch64-linux-musl静态二进制的QEMU用户态执行：当前HEAD（`04e6a46`）root suite **457 passed/7 skipped/0 failed**（464项，含两个aarch64旧二进制fixture case），journal/archive fuzz 20/20 seed通过；独立`b.dependency` package consumer五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）均2条记录、pending=0、输出/redaction/journal文件数核对通过，`qualify`确认5模式file durable、inline/schema journal reopen与rolling retention。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
 
 新增tmpfs vs ext4 public consumer行为对照：tmpfs上`sync`/`memory`/`spsc_memory`通过，`mmap`/`spsc_mmap`按设计以`VolatileFilesystem`拒绝并仅留下0字节文件；ext4上五模式全部通过并核对JSON/redaction/journal header。该对照验证volatile文件系统拒绝策略，不是多文件系统crash/掉电资格。证据见[多文件系统对照](../bench/evidence/2026-11-03-multifs-volatile/README.md)。
 

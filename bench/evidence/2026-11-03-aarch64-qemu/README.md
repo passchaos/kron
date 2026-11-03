@@ -33,6 +33,14 @@ root suite直接以`/tmp/kron-aarch64-tests`运行；fuzz binary对seed `0x1..0x
 - io_uring rotation与4项LinuxUring probe/batch/fault/depth（qemu-user下不可用）；
 - system local time cache（依赖本机zoneinfo/libc路径）。
 
+## Current HEAD重跑
+
+在提交`04e6a46`（加入aarch64旧二进制fixtures与并发回归后）重新构建并执行aarch64-linux-musl root suite：
+
+- binary `90bb8049b0ad7d0611760a7ef69a11f74840e0564d6fa1baaf08d34bba8318b2`。
+- **457 passed、7 skipped、0 failed**（共464项）；新增两个aarch64 fixture case实际执行。
+- 原始输出见[root-suite-current.log](root-suite-current.log)。
+
 ## 独立包consumer与平台qualification
 
 在`tests/package_consumer`中以本地`b.dependency`交叉构建：

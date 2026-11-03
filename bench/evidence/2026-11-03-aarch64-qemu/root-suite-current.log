@@ -1,0 +1,465 @@
+1/464 root.test_0...OK
+2/464 core.level.test.severity ordering and disabled levels...OK
+3/464 core.admission.test.TLS owner stack rejects recursion and preserves nested independent runtimes...OK
+4/464 core.admission.test.closed admission preserves outstanding count and denies new producers...OK
+5/464 core.admission.test.outer runtime resource lookup survives nested independent runtime frames...OK
+6/464 core.admission.test_0...OK
+7/464 encoder.escaping.test.JSON member prefix matches independent key writer across bytes and short buffers...OK
+8/464 encoder.escaping.test.quoted strings preserve UTF-8 and escape malformed bytes and record separators...OK
+9/464 encoder.escaping.test.streaming escaping preserves UTF-8 for every write boundary...OK
+10/464 encoder.escaping.test.ASCII word scan matches scalar predicate for every byte pair lane and alignment...OK
+11/464 encoder.escaping.test.ASCII short tail scan matches independent scalar predicate for every lane and adjacent pair...OK
+12/464 encoder.escaping.test.ASCII short tail outputs preserve quoted key and comma member partial write prefixes...OK
+13/464 encoder.escaping.test.ASCII word scan retains exact escaping and streaming output across random chunk boundaries...OK
+14/464 platform.crc32.test.sliced IEEE CRC32 standard vectors match the persisted polynomial...OK
+15/464 platform.crc32.test.sliced CRC matches standard oracle across lengths alignments and incremental partitions...OK
+16/464 platform.crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
+17/464 platform.crc32.test.compile-time PCLMUL path matches the portable oracle across block and partition boundaries...SKIP
+18/464 platform.crc32_segment_tests.test.CRC segments: standard oracle matches every length through 512 and all alignments...OK
+19/464 platform.crc32_segment_tests.test.CRC segments: arbitrary seeds preserve journal partitions and block crossing controls...OK
+20/464 platform.crc32_segment_tests.test.CRC segments: exact bounds at both inaccessible page edges...OK
+21/464 logging.root.test_0...OK
+22/464 core.field.test.validating visitors share attributes and arguments budgets and visit each nested descriptor once...OK
+23/464 core.field.test.named append uses compile-time unique keys but retains invalid prefix and joint value budgets...OK
+24/464 core.field.test.static scalar capture skips dynamic dispatch while retaining mixed tree budgets...OK
+25/464 core.field.test.capture built-in values and erase secrets before capture...OK
+26/464 core.field.test.append struct, tuple and slices with duplicate and capacity rejection...OK
+27/464 core.field.test.explicit array and group capture validates nested keys and fixed traversal budgets...OK
+28/464 core.field.test.failed nested append leaves visible field count unchanged...OK
+29/464 encoder.root.test_0...OK
+30/464 encoder.root.test.source location text keeps repository paths linkable and identical after inline and schema decoding...OK
+31/464 encoder.root.test.bounded encoders report overflow instead of treating a prefix as success...OK
+32/464 encoder.root.test.deferred rendering escapes all output formats without a message scratch limit...OK
+33/464 encoder.root.test.nested containers remain complete records with secret erasure and logfmt quoting...OK
+34/464 encoder.root.test.all encoders reject nested cycles depth duplicate keys and shared node budget before output...OK
+35/464 encoder.root.test_1...OK
+36/464 encoder.root.test.public encoder validates even when the internal proof hint is set...OK
+37/464 core.logger.test.admission skips capture and clock; every ready admission ends on failure...OK
+38/464 core.logger.test.nested borrowed context, owned parent snapshot and explicit trace propagation...OK
+39/464 core.logger.test.typed logf retains template and source rather than formatting on producer...OK
+40/464 core.logger.test.enabled and lazy guards do not construct skipped fields...OK
+41/464 core.logger.test.explicit preencoding supports custom formatter and obeys admission...OK
+42/464 core.logger.test.static level methods erase capture and owned emits allocate nothing...OK
+43/464 core.logger.test.internal frontend borrowing preserves the public call snapshot across a lazy provider...OK
+44/464 core.context.test.context precedence replaces keys and rejects duplicate siblings transactionally...OK
+45/464 core.context.test.owned context deeply copies key, string and bytes...OK
+46/464 core.context.test.maximum fields permit replacements but reject additional keys...OK
+47/464 core.context.test.owned context releases descriptors when copying storage fails...OK
+48/464 core.context.test.owned context copies every nested descriptor key string and bytes...OK
+49/464 core.context.test.nested owned context rejects cycles and releases partial allocation failures...OK
+50/464 core.adapter.test.selection copies scalars and borrows only selected bytes and descriptors...OK
+51/464 core.adapter.test.caller storage factory and mapped names never return local descriptors...OK
+52/464 core.adapter.test.explicit nested adapters retain group traversal limits...OK
+53/464 core.adapter.test.maximum selected members stay within fixed caller storage...OK
+54/464 telemetry.trace_context.test.trace context child retains trace and flags with explicit span ID...OK
+55/464 telemetry.span.test.span propagation and explicit monotonic completion...OK
+56/464 config.filter.test.longest component match, off, and duplicate last wins...OK
+57/464 config.filter.test.parse diagnostics preserve original byte positions...OK
+58/464 config.filter.test.filter owns scope bytes and copies preserve ownership...OK
+59/464 config.filter.test.fixed budgets reject excess without penalizing duplicates...OK
+60/464 config.reload.test.failed reload is atomic and setLevel retains overrides...OK
+61/464 config.reload.test.runtime filter instances never share decisions...OK
+62/464 config.reload.test.enabled and policy updates allocate nothing after creation...OK
+63/464 config.reload.test.snapshot reuse waits for a registered reader...OK
+64/464 config.reload.test.concurrent writers serialize configuration transactions...OK
+65/464 config.reload.test.concurrent reload returns a threshold from its exact generation...OK
+66/464 config.cache.test.cached filter refreshes reload and preserves old decisions...OK
+67/464 config.cache.test.cached filter bindings isolate owners and namespace scopes...OK
+68/464 config.cache.test.cached filter hits and refreshes allocate nothing...OK
+69/464 config.cache.test.cached filter stale refresh cannot overwrite a new generation...OK
+70/464 config.cache.test.cached filter preserves full generations beyond its packing capacity...OK
+71/464 config.cache.test.cached filter concurrent readers and reload never mix level and generation...OK
+72/464 config.env.test.explicit environment and documented merge precedence...OK
+73/464 config.env.test.environment map is supplied by the application...OK
+74/464 config.sources.test.configuration sources apply precedence independently to every policy field...OK
+75/464 config.sources.test.configuration sources preserve explicit empty values and complete defaults...OK
+76/464 config.sources.test.configuration sources predicate inherit clear and expression retain three states...OK
+77/464 config.sources.test.configuration sources borrow input storage and can merge entirely at comptime...OK
+78/464 config.sources.test.configuration sources supplied environment map reads only KRON_LOG without allocation...OK
+79/464 config.document.test.document owns filter predicate rule keys and keeps missing versus explicit values...OK
+80/464 config.document.test.document sampling variants retain exact full width integers and existing policy checks...OK
+81/464 config.document.test.document rejects malformed shape duplicates unknown fields and numeric policy errors...OK
+82/464 config.document.test.document size and string aware depth budgets reject before allocation...OK
+83/464 config.document.test.document rule budgets reuse redactor validation...OK
+84/464 config.document.test.document allocation failures release all parsed and policy storage and override allocates nothing...OK
+85/464 pipeline.sampler.test.count accepts exactly its configured budget...OK
+86/464 pipeline.sampler.test.every N is deterministic and never wraps a call counter...OK
+87/464 pipeline.sampler.test.token bucket burst and continuous refill use a fake clock...OK
+88/464 pipeline.sampler.test.concurrent count, every, and bucket sampling preserve exact budgets...OK
+89/464 pipeline.redact.test.drop, mask, exact keys, and mandatory secret replacement...OK
+90/464 pipeline.redact.test.policy snapshots own keys and duplicate last wins...OK
+91/464 pipeline.redact.test.in-place redaction removes original references from storage...OK
+92/464 pipeline.redact.test.redaction key and rule budgets are fixed...OK
+93/464 pipeline.redact.test.deep redaction rebuilds immutable arrays and groups and clears all unused views...OK
+94/464 pipeline.redact.test.deep redaction clears partial results after scratch or validation failure...OK
+95/464 pipeline.redact.test.argument redaction preserves top slots and applies rules inside all containers...OK
+96/464 pipeline.predicate.test.predicate AND parser metadata fields strings and diagnostics...OK
+97/464 pipeline.predicate.test.predicate exact integer float comparisons preserve 128-bit boundaries...OK
+98/464 pipeline.predicate.test.predicate explicit group paths and literal dotted keys have distinct behavior...OK
+99/464 pipeline.predicate.test.predicate absent null primitive types and deferred messages have explicit semantics...OK
+100/464 pipeline.predicate.test.predicate owns configuration and all matches use fixed storage...OK
+101/464 pipeline.predicate.test.predicate compatibility equality avoids undefined tails and distinguishes policies...OK
+102/464 pipeline.predicate.test.regex states remain bounded for nullable loops and multiple compiled rules...OK
+103/464 pipeline.predicate.test.parsed numeric string and pattern literals preserve their types...OK
+104/464 pipeline.regex.test.Thompson regex supports alternation groups classes anchors and quantifiers...OK
+105/464 pipeline.regex.test.regex worst-case nested quantifiers use fixed states and bounded input...OK
+106/464 pipeline.regex.test.regex escapes and character classes cover every byte including NUL...OK
+107/464 pipeline.regex.test.regex bracket placement and strict anchors retain byte search semantics...OK
+108/464 pipeline.regex.test.regex rejects unsupported syntax instead of silently matching literals...OK
+109/464 pipeline.regex.test.closure words span full state budget and nullable assertion cycles...OK
+110/464 core.diagnostics.test.record does not invoke hooks and dispatch supplies one coalesced snapshot outside locks...OK
+111/464 core.diagnostics.test.hook errors remain pending and recursive dispatch never calls the hook twice...OK
+112/464 core.diagnostics.test.disabled hooks still expose errors and bounded dispatch statistics...OK
+113/464 core.diagnostics.test.concurrent recording and dispatch preserve counts without overlapping hooks...OK
+114/464 core.diagnostics.test.nested distinct reporter hooks still reject returning to an active reporter...OK
+115/464 adapters.std_log.test.standard level mapping, scopes, unbound calls and explicit rebinding...OK
+116/464 adapters.std_log.test.standard custom formatting, oversize reporting and error hook recursion...OK
+117/464 adapters.std_log.test.unbind drains concurrent submission and error hook before owner destruction...OK
+118/464 core.runtime.test_0...OK
+119/464 config.routes.test_0...OK
+120/464 core.control.test.deadline rejects wall clocks and zero duration expires...OK
+121/464 core.control.test.timed control detaches safely and next caller observes completion...OK
+122/464 core.control.test.completed callback failures remain inspectable and do not strand the mailbox...OK
+123/464 core.control.test.cancellation after publication detaches instead of abandoning a running slot...OK
+124/464 sink.memory.test.memory sink never partially accepts records at its capacity...OK
+125/464 sink.file.test.file buffering flush append sync and oversize records...OK
+126/464 sink.file.test.file sink default backend is portable and remains writable...OK
+127/464 sink.file.test.auto selects a visible backend and explicit unsupported io_uring does not fall back...OK
+128/464 sink.file.test.file sink observes short writes zero progress disk errors and failed sync...OK
+129/464 sink.file.test.file record writes and flushes use only initialization allocations...OK
+130/464 sink.file.test.file recovery identity canonicalizes the owned parent and distinguishes targets...OK
+131/464 sink.writer.test.writer sink emits complete records and declares unsupported durability...OK
+132/464 sink.multi.test.fanout continues after one child fails...OK
+133/464 sink.multi.test.memory writer and fanout keep optional recovery identity explicit...OK
+134/464 sink.rolling_file.test_0...OK
+135/464 sink.rolling_file.test.whole records rotate at size boundary and retention keeps newest archives...OK
+136/464 sink.rolling_file.test.reopen drains buffered old generation and opens the external replacement...OK
+137/464 sink.rolling_file.test.rotation failure is explicit and does not accept the triggering record...OK
+138/464 sink.rolling_file.test.io_uring rotation drains original writes before moving file generations...SKIP
+139/464 sink.rolling_file.test.failed reopen latches and keeps the original generation alive for cleanup...OK
+140/464 sink.rolling_file.test.rolling owns its directory after the initialization directory closes...OK
+141/464 sink.rolling_file.test.rolling recovery identity is independent of active generation and binds the logical file...OK
+142/464 pipeline.flight_recorder.test.flight recorder retains FIFO order across wraps and clear...OK
+143/464 pipeline.flight_recorder.test.flight recorder copies full opaque bytes and rejects oversized records atomically...OK
+144/464 pipeline.flight_recorder.test.flight recorder failed writes and flushes keep records for retry...OK
+145/464 pipeline.flight_recorder.test.flight recorder capture and dump allocate nothing after startup...OK
+146/464 pipeline.flight_recorder.test.flight recorder dump callbacks may capture and cannot reenter dump...OK
+147/464 pipeline.flight_recorder.test.flight recorder initialization validates and cleans all allocation failures...OK
+148/464 pipeline.flight_recorder.test.flight recorder captured codec frame contains no original secret...OK
+149/464 pipeline.flight_recorder.test.flight recorder supports concurrent capture and dump with whole records...OK
+150/464 core.codec.test_0...OK
+151/464 core.schema_codec.test.frozen v5 reference payload and metadata preserve native range integer bytes...OK
+152/464 core.schema_codec.test.referenced event omits static metadata and survives copied schema plus values...OK
+153/464 core.schema_codec.test.ordinary dynamic message and optional typed metadata roundtrip...OK
+154/464 core.schema_codec.test.reference codec rejects malformed lengths counts tags and wrong versions...OK
+155/464 core.schema_codec.test.reference values retain integer extremes float bits bytes and time wrappers...OK
+156/464 core.schema_codec.test.nested references keep one schema while values sizes and nested keys change...OK
+157/464 core.schema_codec.test.schema metadata and reference encoding reject invalid nested values...OK
+158/464 core.schema_codec.test.historical schema payload v2 reads scalar definitions with zero route generation...OK
+159/464 core.schema_codec.test.reference size and encoding validate each node once and count only payload keys...OK
+160/464 core.schema_codec.test.reference single-pass validation preserves shared node depth and duplicate budgets...OK
+161/464 core.schema_codec.test.reference length overflow follows tree shape and level errors with zero output...OK
+162/464 journal.schema.test.schema extension roundtrip validates version layout checksum and budgets...OK
+163/464 journal.schema.test.registry deduplicates metadata keeps types source and requires sync after restart...OK
+164/464 journal.schema.test.unfinished schema slots do not hide later entries or get reused...OK
+165/464 journal.schema.test.content hash collisions still compare complete metadata before deduplication...OK
+166/464 journal.schema.test.metadata hash covers source keys kinds and scope but never event values...OK
+167/464 journal.schema.test.schema registration deeply copies keys source format and scope once...OK
+168/464 journal.schema.test.concurrent registration publishes one definition and readiness remains local...OK
+169/464 journal.schema.test.invalid refs lengths and all committed definitions are checked without mutation...OK
+170/464 journal.schema.test.ready resolution uses validated cached definitions and rejects tampered references...OK
+171/464 journal.schema.test.nested definition masks use version two while scalar definitions stay byte compatible...OK
+172/464 journal.journal.test_0...OK
+173/464 journal.journal.test.memory journal can opt out of slot CRC...OK
+174/464 journal.spsc.test_0...OK
+175/464 submit.format.test.capture preserves typed scalar arguments and erases secrets...OK
+176/464 submit.format.test.comptime syntax count and type rejection are inspectable...OK
+177/464 submit.format.test.runtime rendering supports float escaped braces indices bases and widths...OK
+178/464 submit.format.test.named width precision tag and optional rendering...OK
+179/464 submit.format.test.invalid runtime templates and argument types return writer errors...OK
+180/464 submit.format.test.consumer handles maximum precision without standard writer buffer panic...OK
+181/464 submit.format.test.integer extremes and fixed writer failure are safe...OK
+182/464 submit.format.test.dynamic invalid width and hex string options are rejected...OK
+183/464 submit.format.test.nested deferred defaults stream JSON while scalar specifiers reject containers...OK
+184/464 submit.callsite.test.descriptor validates format and stores immutable argument schema...OK
+185/464 submit.callsite.test.schema fingerprints are independent of source location and integer width...OK
+186/464 submit.source.test.source paths are mapped at compile time without changing location metadata...OK
+187/464 submit.schema_site.test.static schema optional and dynamic masks contain every supported capture kind...OK
+188/464 submit.schema_site.test.static schema format argument keys source and integer masks are type based...OK
+189/464 submit.schema_site.test.static schema ordinary literals dynamic messages and empty metadata remain distinct...OK
+190/464 submit.schema_site.test.static schema optional null and full-width values reuse one registered definition...OK
+191/464 submit.schema_site.test.static nested wrapper metadata records only top level type masks...OK
+192/464 time.root.test_0...OK
+193/464 platform.clock.test.injected clocks keep wall time and monotonic progression independent...OK
+194/464 platform.clock.test.default std.Io clock selection and zero timestamp retain awake clock...OK
+195/464 platform.static_clock.test.static clocks keep explicit injection and native capability separate...OK
+196/464 platform.tsc_clock.test.qualification math uses median and fixed point without overflow...OK
+197/464 platform.tsc_clock.test.fake counter and monotonic samples qualify or reject without hardware...OK
+198/464 platform.tsc_clock.test.migration stale and drift predicates reject unsafe mappings...OK
+199/464 platform.tsc_clock.test.invalid options and rejected capabilities remain explicit...OK
+200/464 platform.tsc_clock.test.native wall fallback preserves backward wall-clock adjustments...OK
+201/464 platform.tsc_clock.test.instance cookies are unique nonzero and fail before wrap...OK
+202/464 platform.tsc_clock.test.TLS cache keys generation together with instance cookie...OK
+203/464 platform.tsc_clock.test.reused calibration slots never expose mixed generations...OK
+204/464 time.civil.test.calendar covers the complete Gregorian 400 year cycle and civil bounds...OK
+205/464 time.civil.test.calendar arithmetic rejects overflow and requires explicit month clamping...OK
+206/464 time.types.test.timestamp civil conversion uses floor for negative epochs and checks every bound...OK
+207/464 time.types.test.duration and timestamp arithmetic never silently wraps...OK
+208/464 time.types.test.fixed UTC offset parsing rejects implicit geography malformed input and unknown zero...OK
+209/464 time.rfc3339.test.RFC3339 exact fractions offsets negative epochs and leap year round trips...OK
+210/464 time.rfc3339.test.RFC3339 rejects invalid dates leap seconds unknown offsets and lost precision...OK
+211/464 time.rfc3339.test.RFC3339 cache recomputes on clock rollback offset change and every second...OK
+212/464 time.rfc3339.test.RFC3339 seeded full timestamp range and parser mutations preserve exact instants...OK
+213/464 time.local_tests.test.system local time cache refreshes once per event second and rejects partial output...SKIP
+214/464 time.local_tests.test.system local time fingerprints distinguish rule sources and retain fixed compatibility...OK
+215/464 core.wire_size.test.wire size caps individually unrepresentable lengths without losing exact valid sums...OK
+216/464 core.wire_size.test.bounded length arithmetic agrees with exact wide sums at wire limits and native extremes...OK
+217/464 encoder.common.test.record encoding validates every value tag once with one shared attribute and argument budget...OK
+218/464 encoder.common.test.record encoding standalone values still reject invalid trees before output...OK
+219/464 encoder.common.test.decoded delivery proof reuses decoder validation with identical bytes...OK
+220/464 encoder.decimal.test.decimal output matches the standard formatter for native widths and all u16 values...OK
+221/464 encoder.decimal.test.decimal output preserves wide decimal chunks signs and every binary boundary...OK
+222/464 encoder.decimal.test.decimal output preserves all fixed writer prefixes on capacity failure...OK
+223/464 encoder.decimal.test.direct native output preserves binary decimal boundaries and existing writer bytes...OK
+224/464 encoder.decimal.test.decimal eight-digit tails retain interior zeros and leading widths...OK
+225/464 encoder.decimal.test.direct digits preserve buffered writer partial flushes and physical failure prefixes...OK
+226/464 encoder.source_path.test.terminal source paths keep printable bytes without quote delimiters and escape record separators...OK
+227/464 encoder.text.test.text golden escapes message, keys and binary data...OK
+228/464 encoder.json.test.JSON golden keeps metadata separate from attributes...OK
+229/464 encoder.json.test.JSON malformed UTF-8, NaN/Inf, integer boundaries and bytes remain parseable...OK
+230/464 encoder.json.test.invalid UTF-8 keys remain distinct from each other and literal hex spellings...OK
+231/464 encoder.json.test.deferred messages roundtrip typed arguments then render and escape at encoding...OK
+232/464 encoder.json.test.finite float extremes and subnormal values produce valid JSON...OK
+233/464 encoder.json.test.nested JSON and deferred arguments survive descriptor key and scalar source overwrites...OK
+234/464 encoder.logfmt.test.logfmt golden protects metadata and escapes keys injectively...OK
+235/464 encoder.logfmt.test.logfmt nested representation retains text scalar and malformed byte policies...OK
+236/464 archive.writer.test.binary archive frame preserves typed fields, templates and secret redaction...OK
+237/464 archive.writer.test.binary archive writes independent concatenated frames without a size limit...OK
+238/464 archive.writer.test.binary archive rejects invalid events before output and returns bounded writer failure...OK
+239/464 archive.writer.test.binary archive validates nested values once and rejects all invalid trees before framing...OK
+240/464 archive.format.test.archive frame header golden and CRC32 standard vector...OK
+241/464 archive.format.test.archive headers reject truncation, magic, version and reserved bits...OK
+242/464 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK
+243/464 journal.format.test.slot CRC v3 covers reference and zero padding with contiguous slot bytes...OK
+244/464 journal.format.test.v3 slot checksum matches independent oracle across payload lengths...OK
+245/464 journal.format.test.zeroed initialization matches full clear for memory-backed journals...OK
+246/464 journal.storage.test.memory Storage is aligned zeroed and uses only caller memory...OK
+247/464 journal.storage.test.memory Storage publication and durability errors allocate nothing after creation...OK
+248/464 journal.storage.test.memory Storage invalid size and OOM leave no owned allocation...OK
+249/464 journal.tests.test.shared and single reserve coordinates preserve full width generations through nonpower wraps and aborts...OK
+250/464 journal.tests.test.checked consumer rejects checksum valid generation corruption without releasing a captured record...OK
+251/464 journal.tests.test.mmap reopen replays committed payload and session without msync...OK
+252/464 journal.tests.test.normal consumer waits at reservation gap but recovery scans later commits...OK
+253/464 journal.tests.test.recovery completion includes abandoned trailing reservation but excludes new live work...OK
+254/464 journal.tests.test.recovery ignores stale high written cursor while retaining pending commits...OK
+255/464 journal.tests.test.recovery without commits completes abandoned tail immediately...OK
+256/464 journal.tests.test.recoveryRecordAt enumerates every remaining commit across gaps without consuming...OK
+257/464 journal.tests.test.recoveryRecordAt retains corrupt records and returns the existing checksum error...OK
+258/464 journal.tests.test.abort, full, oversize, wrap reuse and generation...OK
+259/464 journal.tests.test.lock, layout, recovery opt out, checksum corruption retain evidence...OK
+260/464 journal.tests.test.durable acknowledgement and alternating checkpoint recovery...OK
+261/464 journal.tests.test.durable written checkpoint does not pass pending commits or regress...OK
+262/464 journal.tests.test.invalid options, header version and checkpoint integrity...OK
+263/464 journal.tests.test.recovery validates generation, length and commit sequence...OK
+264/464 journal.tests.test.producer hot path uses no allocator after create...OK
+265/464 journal.tests.test.batch borrows records until ordered acknowledgement and stops at gaps...OK
+266/464 journal.tests.test.checked live peek retains corrupt records instead of exposing invalid length...OK
+267/464 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK
+268/464 journal.tests.test.fresh mapped zero capability implies zero body...OK
+269/464 journal.tests.test.recoverable journals reject verify_crc false...OK
+270/464 journal.schema_journal_tests.test.schema disabled preserves v1 file size framing and bytes...OK
+271/464 journal.schema_journal_tests.test.v2 schema ref and ordinary self-contained records survive reopen across reserve gap...OK
+272/464 journal.schema_journal_tests.test.v1 v2 and schema layout mismatches leave the existing journal intact...OK
+273/464 journal.schema_journal_tests.test.Linux file and directory publication failures reject creation and release the journal lock...OK
+274/464 journal.schema_journal_tests.test.Linux directory sync failure after file sync keeps a schema unready until full retry...OK
+275/464 journal.schema_journal_tests.test.failed cold schema sync retains definition and forbids event commit until retry...OK
+276/464 journal.schema_journal_tests.test.failed schema sync definition can reopen and become ready after successful sync...OK
+277/464 journal.schema_journal_tests.test.v2 CRC covers schema ref and recovery refuses unknown references without reclaim...OK
+278/464 journal.schema_journal_tests.test.schema table corruption is rejected even when no event refers to that definition...OK
+279/464 journal.schema_journal_tests.test.missing schema definition retains committed event and unknown schema versions are rejected...OK
+280/464 journal.schema_journal_tests.test.registered schema metadata strings keys source and format persist independently of caller buffers...OK
+281/464 journal.schema_journal_tests.test.schema SPSC reserve stays exclusive and warm reserve commit has no allocations...OK
+282/464 journal.schema_journal_tests.test.v1 and v2 journals remain readable and writable under the current source...OK
+283/464 journal.schema_journal_tests.test.journal written by pre-V3 binary reopens with schema and pending records...OK
+284/464 journal.schema_journal_tests.test.v1 journal written by pre-V3 binary reopens with pending record...OK
+285/464 journal.schema_journal_tests.test.aarch64 v1 journal written by pre-V3 binary reopens with pending record...OK
+286/464 journal.schema_journal_tests.test.aarch64 v2 journal written by pre-V3 binary reopens with schema and pending records...OK
+287/464 core.tests.codec.test_0...OK
+288/464 core.tests.codec.test.wire measurement rejects logical oversized slices only after full tree validation...OK
+289/464 core.tests.codec.test.public value writer still validates invalid nested input before output...OK
+290/464 core.tests.codec.test.codec roundtrip copies all metadata and values without source pointers...OK
+291/464 core.tests.codec.test.codec deferred arguments are copied after attributes and never contain secret values...OK
+292/464 core.tests.codec.test.codec rejects every truncated prefix, unknown version and malformed lengths...OK
+293/464 core.tests.codec.test.codec validates boolean, tag, duplicate keys and bounded output...OK
+294/464 core.tests.codec.test.codec wire golden is little endian and independent of struct padding...OK
+295/464 core.tests.codec.test.codec route fingerprint spans the appended header and both output paths...OK
+296/464 core.tests.codec.test.codec rejects corrupt source string terminators and reserved header bits...OK
+297/464 core.tests.codec.test.codec single byte corruption cannot bypass bounds validation...OK
+298/464 core.tests.codec.test.codec preserves float bits in an unaligned payload...OK
+299/464 core.tests.codec.test.historical self-contained v1 68-byte fixture decodes and reencodes as v4...OK
+300/464 core.tests.codec.test.legacy header offsets preserve source trace and deferred arguments...OK
+301/464 core.tests.codec.test.standalone decoder rejects v2 references and unversioned extended v1 headers...OK
+302/464 core.tests.codec.test.nested wire copies source bytes and descriptors into caller scratch only...OK
+303/464 core.tests.codec.test.nested input rejects cycles depth nodes and duplicate group keys before writing...OK
+304/464 core.tests.codec.test.size overflow retains complete validation priority and never touches output...OK
+305/464 core.tests.codec.test.admission measurement skips level validation and sized writes stay byte-identical...OK
+306/464 core.tests.codec.test.size encode and streaming visit values once while preserving all scalar and nested wire sizes...OK
+307/464 core.tests.codec.test.nested decoder rejects malformed child counts depth keys and legacy tags...OK
+308/464 core.tests.codec.test.historical v3 header migrates route generation and preserves scalar body...OK
+309/464 core.tests.codec.test.full node budget fits fixed scratch for the largest group descriptor layout...OK
+310/464 core.tests.codec.test.wire typed visitor rejects damaged values before invoking its receiver...OK
+311/464 core.tests.codec_frozen.test.frozen v4 writer fixtures preserve complete metadata integer range nested and deferred values...OK
+312/464 backend.portable.test.partial writes retain explicit offsets and finish the batch...OK
+313/464 backend.portable.test.zero writes and disk failure preserve only successful progress...OK
+314/464 backend.linux_uring.test.io_uring probe reports unavailable capability explicitly...SKIP
+315/464 backend.linux_uring.test.io_uring batches drain before fsync and shutdown...SKIP
+316/464 backend.linux_uring.test.io_uring write faults still reap every original request before shutdown...SKIP
+317/464 backend.linux_uring.test.depth one reuses buffers only after completion and deinit drains final request...SKIP
+318/464 backend.buffer_pool.test.out of order completions retain buffers and only advance contiguous written offset...OK
+319/464 backend.buffer_pool.test.failed and zero completions cannot retire an earlier gap...OK
+320/464 sink.rolling_file_time_tests.test.timed rolling validates intervals and size-only mode never reads the clock...OK
+321/464 sink.rolling_file_time_tests.test.timed rolling rotates exactly at the threshold and preserves whole records...OK
+322/464 sink.rolling_file_time_tests.test.timed rolling empty files and empty records do not create empty archives...OK
+323/464 sink.rolling_file_time_tests.test.timed rolling size and time trigger only one rotation and reset together...OK
+324/464 sink.rolling_file_time_tests.test.timed rolling ignores backwards clocks and saturated deadlines never fire early...OK
+325/464 sink.rolling_file_time_tests.test.timed rolling reopen and restart reset the epoch without recovering mtime...OK
+326/464 sink.rolling_file_time_tests.test.timed rolling failed rotations latch and reject the triggering record...OK
+327/464 sink.rolling_file_time_tests.test.timed rolling ordinary record checks allocate nothing after initialization...OK
+328/464 sink.rolling_file_time_tests.test.timed rolling supports time-only rotation without a size threshold...OK
+329/464 sink.rolling_file_reliability_tests.test.ordinary size rotation makes no implicit file or directory sync request...OK
+330/464 sink.rolling_file_reliability_tests.test.tracked archive disappearance is an error before durable directory confirmation...OK
+331/464 sink.rolling_file_reliability_tests.test.ordinary rotation remains written when strict media durability is unsupported...OK
+332/464 sink.rolling_file_reliability_tests.test.explicit rolling sync covers current and preexisting retained archives before directory confirmation...OK
+333/464 sink.rolling_file_reliability_tests.test.external reopen remembers unsupported old media durability without blocking later written logs...OK
+334/464 sink.rolling_file_reliability_tests.test.cross-directory external reopen cannot certify the unknown destination even after file sync succeeds...OK
+335/464 sink.rolling_file_reliability_tests.test.unsupported file or directory durability does not poison ordinary FileSink writes...OK
+336/464 sink.rolling_file_reliability_tests.test.rolling archive I/O sync failure latches and stops later admission...OK
+337/464 sink.rolling_file_reliability_tests.test.rolling initialization allocation failures release tracked archive metadata...OK
+338/464 config.routes_tests.test.route snapshots retain old pins while current routes change and reclaim slots...OK
+339/464 config.routes_tests.test.route snapshots held views protect metadata and shared leases release once...OK
+340/464 config.routes_tests.test.route snapshots reject invalid transactions without ownership transfer...OK
+341/464 config.routes_tests.test.route snapshots own filters names identities and redaction keys...OK
+342/464 config.routes_tests.test.route snapshots recovery generations require exact binding and legacy ambiguity fails...OK
+343/464 config.routes_tests.test.route snapshots legacy fingerprint compares full metadata and stable identical targets...OK
+344/464 config.routes_tests.test.route snapshots lookup pin and misses allocate nothing...OK
+345/464 config.routes_tests.test.route snapshots retained views cover history and capacity errors release every reader...OK
+346/464 config.routes_tests.test.route snapshots collection tokens skip versions retired during callback installation...OK
+347/464 config.routes_tests.test.route snapshots owner shutdown discards local record pins before abandon...OK
+348/464 config.routes_tests.test.route snapshots channel counters have separate cache lines and preserve global pins...OK
+349/464 config.routes_tests.test.route snapshots channel caches keep global and per-route predicates from the same version...OK
+350/464 config.routes_tests.test.route snapshots channel cache hits preserve pin counts and allocate nothing...OK
+351/464 config.routes_tests.test.route snapshots channel caches validate channels before changing ownership...OK
+352/464 config.routes_tests.test.route snapshots legacy full metadata compares compiled per-route predicates...OK
+353/464 config.routes_tests.test.route snapshots channel cache refresh keeps old accepted records until channel release...OK
+354/464 config.routes_tests.test.route snapshots four owner caches avoid global counters during parallel records...OK
+355/464 config.routes_tests.test.route snapshots channel cache publication races preserve the validated version...OK
+356/464 config.routes_tests.test.route snapshots allocation failures preserve ownership and current version...OK
+357/464 config.routes_tests.test.route snapshots abandon and duplicate leases across routes do not double release...OK
+358/464 config.routes_tests.test.route snapshots bounded metadata and version overflow fail atomically...OK
+359/464 config.routes_tests.test.route snapshots configured metadata budget supports the full 64-route table...OK
+360/464 config.routes_tests.test.route snapshots concurrent acquire install and collect preserve exact payloads...OK
+361/464 core.tests.runtime_queue_progress.test.queue progress unrelated written batches never notify the SPSC space waiter and shutdown before wait cannot be lost...OK
+362/464 core.tests.runtime_queue_progress.test.queue progress own abort reclaim wakes registered producer across u32 epoch wrap...OK
+363/464 core.tests.runtime_queue_progress.test.queue progress worker failure on another journal broadcasts the original error to SPSC waiter...OK
+364/464 core.tests.runtime_coalesced.test.coalesced service window flushes all 255 queued records before reclaim without allocation...OK
+365/464 core.tests.runtime_coalesced.test.coalesced checked window rejects later corruption before any earlier record reaches a sink...OK
+366/464 core.tests.runtime_coalesced.test.coalesced old and new routes keep all record pins when final flush or durable barrier fails...OK
+367/464 core.tests.runtime_coalesced.test.coalesced flush failure retains every slot and pin of a retired configuration...OK
+368/464 core.tests.runtime_coalesced.test.coalesced late corruption acknowledges only its successful prefix and retains old configuration...OK
+369/464 core.tests.runtime.test_0...OK
+370/464 core.tests.runtime.test.admission paused after old snapshot retains its already completed filter overlay...OK
+371/464 core.tests.runtime.test.warmed SPSC configuration and filter guards perform no shared reader or pending RMW...OK
+372/464 core.tests.runtime.test.runtime sync structured context, deferred format, redaction and reload...OK
+373/464 core.tests.runtime.test.runtime route union and best effort isolation...OK
+374/464 core.tests.runtime.test.runtime sync and filter allocate nothing after initialization...OK
+375/464 core.tests.runtime.test.runtime asynchronous journal drains and snapshots borrowed inputs...OK
+376/464 core.tests.runtime.test.runtime SPSC attached logger uses copied generation and survives late detach...OK
+377/464 core.tests.runtime.test.runtime recovery refuses changed required route binding before acceptance...OK
+378/464 core.tests.runtime.test.typed producer clock skips callback dispatch without changing the pipeline...OK
+379/464 core.tests.runtime.test.runtime error hooks run outside delivery locks and reject logger recursion...OK
+380/464 core.tests.runtime.test.sleeping SPSC worker wakes when shutdown observes the final channel admission end...OK
+381/464 core.tests.runtime.test.runtime SPSC closing publication drains every successfully accepted event...OK
+382/464 core.tests.runtime.test.prepared runtime schema removes static capture bytes and keeps output self contained...OK
+383/464 core.tests.runtime.test.prepared thread schema retains SPSC ownership and metadata across collector output...OK
+384/464 core.tests.runtime.test.same-format routes share exact encoded records while mixed formats keep their contracts...OK
+385/464 core.tests.runtime.test.prepared binding definitions cannot relabel values and full fallback preserves shape checks...OK
+386/464 core.tests.runtime.test.comptime prepared format preserves optional masks and transforms redacted metadata...OK
+387/464 core.tests.runtime.test.new snapshot uses its complete baseline while bound filter publication is delayed...OK
+388/464 core.tests.runtime_delivery.test.real shared and SPSC batches perform one configuration lookup for 31 records...OK
+389/464 core.tests.runtime_delivery.test.Memory and Mmap consumer quantum bounds shared and SPSC peer service...OK
+390/464 core.tests.runtime_delivery.test.consumer quantum rejects unbounded or zero budgets before allocation...OK
+391/464 core.tests.runtime_delivery.test.mixed version batch releases its views on sink failure but keeps record pins and leases...OK
+392/464 core.tests.runtime_delivery.test.batched written counts retain the exact acknowledged prefix after late reclaim corruption...OK
+393/464 config.route_selection.test.precomputed route masks equal the route scan for every level scope and 64-bit route index...OK
+394/464 core.thread_registry.test_0...OK
+395/464 core.delivery_batch.test.coalesced service budget charges short windows and bounds every allowed quantum...OK
+396/464 core.delivery_batch.test.batch configuration selects one protected view per exact version and keeps retired leases alive...OK
+397/464 core.delivery_batch.test.legacy batch lookups retain manager validation and batch views allocate nothing...OK
+398/464 core.delivery_batch.test.batch views cover the maximum 64 versions and deduplicate equal targets by exact generation...OK
+399/464 core.delivery_batch.test.precomputed durable masks retain required best effort and full event barrier semantics...OK
+400/464 core.delivery_batch.test.written batch counts publish only acknowledged runs and preserve concurrent increments...OK
+401/464 core.delivery_batch.test.written batch counts compose with a concurrent sync or fallback counter owner...OK
+402/464 encoder.wire_json.test.fused wire JSON matches decoded encoder for flat scalar events...OK
+403/464 encoder.wire_json.test.fused wire JSON matches decoded encoder for nested attributes...OK
+404/464 encoder.wire_json.test.fused wire JSON declines deferred messages...OK
+405/464 encoder.wire_json.test.fused wire JSON matches readable timestamp formatting...OK
+406/464 encoder.wire_json.test.fused wire text and logfmt match decoded encoders...OK
+407/464 encoder.wire_json.test_0...OK
+408/464 encoder.wire_reference_tests.test.fused reference matches materialized all tags nested static dynamic and historical records...OK
+409/464 encoder.wire_reference_tests.test.fused reference has identical checked errors on truncation mutation type mismatch and scratch exhaustion...OK
+410/464 encoder.wire_reference_tests.test.fused reference declines deferred including unused arguments for the authoritative materialized renderer...OK
+411/464 encoder.wire_reference_tests.test.fused reference runtime rejects checked schema damage before output and retains exact pins...OK
+412/464 encoder.wire_scratch_tests.test.fused scratch lifecycle: failed rendering and fallback permit complete decoder reuse...OK
+413/464 encoder.wire_scratch_tests.test.fused scratch lifecycle: top level reservation retains exact nested descriptor budget...OK
+414/464 core.tests.thread_registry.test.fixed channels copy scopes cache reloads and reject stale value owners...OK
+415/464 core.tests.thread_registry.test.wrong threads cannot use or detach handles and retired channels transfer ownership...OK
+416/464 core.tests.thread_registry.test.retireAll retains admitted calls and permits late detach without freeing controls...OK
+417/464 core.tests.thread_registry.test.unattached recovered channels remain visible and warmed attachment emits allocate nothing...OK
+418/464 core.tests.thread_registry.test.registry creation allocation failures release every initialized channel...OK
+419/464 core.tests.thread_registry.test.channel gate balances all outcomes without acquiring global runtime admission...OK
+420/464 core.tests.thread_registry.test.channel cut drains admitted events blocks producers and prevents attachment until endCut...OK
+421/464 core.tests.thread_registry.test.retireAll wakes a producer blocked by cut and preserves closing through endCut...OK
+422/464 core.tests.thread_registry.test.disabled cached route bypasses cut gate TLS sampling clock and lazy fields...OK
+423/464 core.tests.thread_registry.test.early route union preserves independent override and reload decision generations...OK
+424/464 core.tests.thread_registry.test.closing before or during early route check is never counted as filtered...OK
+425/464 core.tests.thread_registry.test.registry forwards the fixed schema budget to every preallocated journal...OK
+426/464 core.tests.thread_registry.test.thread schema binding rejects foreign owner channel and stale attachment before delegation...OK
+427/464 core.tests.thread_registry.test.channel configuration hooks take precedence and release after retire before reuse...OK
+428/464 core.tests.runtime_prepared_measure.test.prepared runtime measure visits the final tree once while public reference codecs always validate...OK
+429/464 core.tests.runtime_prepared_measure.test.prepared runtime measure preserves predicate before shape but complete tree before predicate...OK
+430/464 core.tests.runtime_prepared_measure.test.prepared runtime measure retains full drop fallback and shape level capacity ordering...OK
+431/464 core.tests.runtime_prepared_measure.test.prepared runtime measure leaves rewritten redaction and canonical binding checks independent...OK
+432/464 core.tests.runtime_admission_view.test.shared admission retains its checked view without a pending pin conversion...OK
+433/464 core.tests.runtime_admission_view.test.shared admission old view preserves retired lease before reserve and after worker acknowledgement...OK
+434/464 core.tests.runtime_admission_view.test.shared admission view unwinds filtered sampled capture failure and sync delivery failure...OK
+435/464 core.tests.runtime_admission_shutdown.test.shared runtime final admission wakes sleeping closing worker without submitting a record...OK
+436/464 journal.spsc_tests.test.SPSC full wrap and exclusive producer mode preserve MPSC API...OK
+437/464 journal.spsc_tests.test.SPSC validates owner thread on reserve commit and retirement...OK
+438/464 journal.spsc_tests.test.SPSC rejects a reused thread id with an unregistered or different TLS cookie...OK
+439/464 journal.spsc_tests.test.SPSC retire reactivate invalidates old generation and retains pending data...OK
+440/464 journal.spsc_tests.test.SPSC retired channel can transfer ownership to another thread...OK
+441/464 journal.spsc_tests.test.SPSC reopens committed data across reservation gap using same file protocol...OK
+442/464 journal.spsc_tests.test.SPSC reserve commit retire reactivate allocate nothing after creation...OK
+443/464 journal.spsc_tests.test.SPSC written durable checkpoint confirms consumer progress without reclaiming pending data...OK
+444/464 journal.spsc_tests.test.SPSC producer and consumer concurrently wrap cached cursors...OK
+445/464 logging.tests.test.managed logging writer lifetime context snapshots filtering and shutdown allocate only at initialization...OK
+446/464 logging.tests.test.managed logging owns file cleanup and mmap close reopen including prepared thread helper...OK
+447/464 logging.tests.test.managed logging reports write and shutdown errors before ordered cleanup...OK
+448/464 logging.tests.test.managed logging rejects invalid configurations before touching files or allocator...OK
+449/464 logging.tests.test.managed logging allocation failure rolls back runtime and output resources...OK
+450/464 logging.tests.test.managed logging file initialization rolls back each allocation failure...OK
+451/464 logging.tests.test.managed logging failed prepared attachment releases its channel and shared prepared logger works...OK
+452/464 logging.tests.test.managed logging validates policy and budgets before truncating existing output...OK
+453/464 logging.tests.test.managed logging multiple outputs retain independent formats filters and writer lifetimes...OK
+454/464 logging.tests.test.managed logging multiple output initialization rolls back partial resources on every allocation failure...OK
+455/464 logging.tests.test.managed logging mmap supports owned file rolling and best effort writer through one entry...OK
+456/464 logging.tests.test.managed logging rolling mmap schema journal reopens and replays prepared nested records...OK
+457/464 logging.tests.test.managed logging rejects invalid multiple outputs before allocating...OK
+458/464 logging.tests.test.managed logging std log binding cleanup cannot unbind another owner...OK
+459/464 logging.tests.test.managed logging accepts memory-only CRC opt-out...OK
+460/464 core.tests.admission_lifecycle.test.admission lifecycle: owned bare borrowed reuse resets getters without repeating releases...OK
+461/464 core.tests.admission_lifecycle.test.admission lifecycle: all levels full width generations and channels survive decision overwrite and bare reuse...OK
+462/464 core.tests.admission_lifecycle.test.admission lifecycle: release callbacks retain outer ownership and balance independent nested frames...OK
+463/464 core.tests.admission_lifecycle.test.admission lifecycle: sixty four active owners reject overflow then pop and reuse with all defaults...OK
+464/464 core.tests.admission_lifecycle.test.admission lifecycle: OS threads isolate the same owner address across simultaneous TLS phases...OK
+457 passed; 7 skipped; 0 failed.
