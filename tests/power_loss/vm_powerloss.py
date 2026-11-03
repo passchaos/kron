@@ -155,6 +155,7 @@ def filesystem_module_closure(release: str, work: Path, config: dict[str, str], 
         "ext4": ("CONFIG_EXT4_FS", "ext4"),
         "xfs": ("CONFIG_XFS_FS", "xfs"),
         "btrfs": ("CONFIG_BTRFS_FS", "btrfs"),
+        "f2fs": ("CONFIG_F2FS_FS", "f2fs"),
     }[filesystem]
     if config.get(config_key) == "y":
         return []
@@ -203,6 +204,14 @@ def filesystem_module_closure(release: str, work: Path, config: dict[str, str], 
             add(dependency)
         ordered.append(path)
 
+    # F2FS resolves its CRC through the crypto API at mount time; the crypto
+    # provider is not a modules.dep dependency of f2fs.ko.
+    extras = {"f2fs": ("crc32_generic",)}.get(filesystem, ())
+    for extra in extras:
+        path = by_name.get(extra)
+        if path is None:
+            raise RuntimeError(f"{filesystem} requires missing module {extra}")
+        add(path)
     add(root_module)
     return [module_root / path for path in ordered]
 
@@ -370,6 +379,7 @@ def resolve_mkfs(filesystem: str, work: Path) -> list[str]:
     tools = {
         "xfs": ("mkfs.xfs", "xfsprogs"),
         "btrfs": ("mkfs.btrfs", "btrfs-progs"),
+        "f2fs": ("mkfs.f2fs", "f2fs-tools"),
     }
     if filesystem not in tools:
         raise RuntimeError(f"unsupported filesystem: {filesystem}")
@@ -395,7 +405,8 @@ def resolve_mkfs(filesystem: str, work: Path) -> list[str]:
         tool = str(extracted / "sbin" / tool_name)
         if not Path(tool).is_file():
             raise RuntimeError(f"{package} package has no sbin/{tool_name}")
-    return [tool, "-q", "-f", "-L", "KRONTEST"]
+    label_option = "-l" if filesystem == "f2fs" else "-L"
+    return [tool, "-q", "-f", label_option, "KRONTEST"]
 
 
 def main() -> int:
@@ -406,7 +417,7 @@ def main() -> int:
     parser.add_argument("--busybox", type=Path, default=Path("/usr/bin/busybox"))
     parser.add_argument("--work-dir", type=Path, default=Path(f"/tmp/kron-power-loss-{os.getpid()}"))
     parser.add_argument("--disk-mib", type=int, default=256)
-    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs"), default="ext4")
+    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs", "f2fs"), default="ext4")
     parser.add_argument("--kill-after-acks", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=90.0)
     parser.add_argument("--schema", action="store_true", help="Exercise the v2 persistent schema-reference path")

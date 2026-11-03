@@ -46,11 +46,13 @@ python3 tests/power_loss/vm_powerloss.py \
   --work-dir /tmp/kron-power-loss-run
 ```
 
-Pass `--filesystem xfs` or `--filesystem btrfs` to run the same gate on those
-filesystems; the harness then uses a 512 MiB image (mkfs.xfs rejects images at
-or below 300 MiB) and downloads `xfsprogs` or `btrfs-progs` with
-`apt-get download` if the matching `mkfs` tool is not on the host. The
-filesystem type is also passed to the guest as `kron.fs`.
+Pass `--filesystem xfs`, `--filesystem btrfs`, or `--filesystem f2fs` to run
+the same gate on those filesystems; the harness then uses a 512 MiB image for
+XFS/Btrfs (mkfs.xfs rejects images at or below 300 MiB) and downloads the
+matching tools package with `apt-get download` if the `mkfs` tool is not on the
+host. F2FS additionally loads `crc32_generic`, which is not a `modules.dep`
+dependency of `f2fs.ko`. The filesystem type is also passed to the guest as
+`kron.fs`.
 
 The harness uses TCG explicitly; KVM is not required. A readable kernel can be
 provided with `--kernel`. Otherwise it first checks local unprivileged paths,
@@ -103,3 +105,6 @@ rechecked after the harness change. See
 Btrfs was exercised the same way (single ACK1 and four-trial schema campaign
 ACK17/31/8/3); see
 [the Btrfs campaign report](../../bench/evidence/2026-11-03-powerloss-btrfs/README.md).
+F2FS was exercised on a 128 MiB image (single ACK1 and four-trial schema
+campaign ACK17/31/8/3); see
+[the F2FS campaign report](../../bench/evidence/2026-11-03-powerloss-f2fs/README.md).

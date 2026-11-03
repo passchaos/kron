@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--busybox", required=True, type=pathlib.Path)
     parser.add_argument("--output-dir", required=True, type=pathlib.Path)
     parser.add_argument("--runs", type=int, default=4)
-    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs"), default="ext4")
+    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs", "f2fs"), default="ext4")
     parser.add_argument("--seed", type=int, default=0x4B524F4E)
     parser.add_argument("--timeout", type=float, default=90)
     options = parser.parse_args()
