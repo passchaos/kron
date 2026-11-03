@@ -514,3 +514,91 @@ test "SPSC producers keep all accepted records while routes and redaction are re
     try testing.expect(std.mem.indexOf(u8, first.written(), "raw-hot-password") == null);
     try testing.expect(std.mem.indexOf(u8, second.written(), "raw-hot-password") == null);
 }
+
+test "shared async producers keep all accepted records while routes and redaction are repeatedly replaced" {
+    const Context = struct {
+        runtime: *kron.Runtime,
+        start: std.Io.Event = .unset,
+        ready: std.atomic.Value(u32) = .init(0),
+        accepted: [4]u64 = @splat(0),
+        failure: [4]?anyerror = @splat(null),
+        fn producer(self: *@This(), index: usize) void {
+            _ = self.ready.fetchAdd(1, .release);
+            self.start.waitUncancelable(testing.io);
+            for (0..500) |record| {
+                const log = self.runtime.scoped("replacement.concurrent");
+                const result = log.tryEmit(.info, "during replacements", .{
+                    .producer = index,
+                    .record = record,
+                    .password = "raw-hot-password",
+                }) catch |err| {
+                    self.failure[index] = err;
+                    return;
+                };
+                if (result != .accepted) {
+                    self.failure[index] = error.UnexpectedOutcome;
+                    return;
+                }
+                self.accepted[index] += 1;
+            }
+        }
+    };
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [128]u8 = undefined;
+    var first = try kron.MemorySink.init(testing.allocator, 1024 * 1024);
+    defer first.deinit();
+    var second = try kron.MemorySink.init(testing.allocator, 1024 * 1024);
+    defer second.deinit();
+    const first_route: kron.RouteOptions = .{ .name = "output", .sink = first.sink(), .recovery_identity = "shared-concurrent-one" };
+    const second_route: kron.RouteOptions = .{ .name = "output", .sink = second.sink(), .recovery_identity = "shared-concurrent-two" };
+    var options = try journalOptions(&tmp, &path);
+    options.submission = .asynchronous;
+    options.configuration_slots = 4;
+    options.routes = &.{first_route};
+    options.redaction = &.{.{ .key = "password", .action = .mask }};
+    const runtime = try kron.Runtime.create(testing.allocator, testing.io, options);
+    defer runtime.destroy();
+    var context: Context = .{ .runtime = runtime };
+    var threads: [4]std.Thread = undefined;
+    var spawned: usize = 0;
+    var joined = false;
+    defer if (!joined) {
+        context.start.set(testing.io);
+        for (threads[0..spawned]) |thread| thread.join();
+    };
+    for (&threads, 0..) |*thread, index| {
+        thread.* = try std.Thread.spawn(.{}, Context.producer, .{ &context, index });
+        spawned += 1;
+    }
+    while (context.ready.load(.acquire) != threads.len) std.Thread.yield() catch {};
+    context.start.set(testing.io);
+    for (0..20) |replacement| {
+        const target = if (replacement % 2 == 0) second_route else first_route;
+        const policy: kron.Configuration = .{ .redaction = &.{.{ .key = "password", .action = if (replacement % 2 == 0) .drop else .mask }} };
+        _ = runtime.replaceConfiguration(&.{target}, policy) catch |err| switch (err) {
+            error.ConfigSlotsExhausted => blk: {
+                try runtime.flush(.written);
+                _ = try runtime.collectConfigurations();
+                break :blk try runtime.replaceConfiguration(&.{target}, policy);
+            },
+            else => return err,
+        };
+        _ = try runtime.collectConfigurations();
+    }
+    try runtime.flush(.written);
+    for (threads) |thread| thread.join();
+    joined = true;
+    try runtime.flush(.written);
+    var accepted: u64 = 0;
+    for (context.accepted, context.failure) |count, failure| {
+        if (failure) |err| return err;
+        accepted += count;
+    }
+    try testing.expectEqual(@as(u64, 2000), accepted);
+    try testing.expectEqual(accepted, runtime.health().accepted);
+    try testing.expectEqual(accepted, runtime.health().written);
+    try testing.expectEqual(accepted, first.records + second.records);
+    try testing.expect(std.mem.indexOf(u8, first.written(), "raw-hot-password") == null);
+    try testing.expect(std.mem.indexOf(u8, second.written(), "raw-hot-password") == null);
+}
