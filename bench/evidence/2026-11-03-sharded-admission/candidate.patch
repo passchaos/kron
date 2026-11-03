@@ -1,0 +1,238 @@
+diff --git a/src/core/admission.zig b/src/core/admission.zig
+index af694db..3d18244 100644
+--- a/src/core/admission.zig
++++ b/src/core/admission.zig
+@@ -14,6 +14,7 @@ const Frame = struct {
+     resource: ?*anyopaque = null,
+     release: ?*const fn (*anyopaque) void = null,
+     channel: u32 = 0,
++    admission_shard: usize = 0,
+     filter_scope: []const u8 = "",
+     filter_decision: ?BoundDecision = null,
+ };
+@@ -76,6 +77,20 @@ pub fn getChannel(owner: *anyopaque) u32 {
+     return 0;
+ }
+ 
++pub fn attachAdmissionShard(owner: *anyopaque, shard: usize) void {
++    std.debug.assert(depth != 0 and owners[depth - 1].owner == owner);
++    owners[depth - 1].admission_shard = shard;
++}
++
++pub fn currentAdmissionShard(owner: *anyopaque) usize {
++    var index = depth;
++    while (index != 0) {
++        index -= 1;
++        if (owners[index].owner == owner) return owners[index].admission_shard;
++    }
++    return 0;
++}
++
+ pub fn attachFilterDecision(owner: *anyopaque, scope: []const u8, decision: BoundDecision) void {
+     std.debug.assert(depth != 0 and owners[depth - 1].owner == owner);
+     owners[depth - 1].filter_scope = scope;
+@@ -128,6 +143,88 @@ pub fn wait(gate: *Atomic(u64), epoch: *Atomic(u32), io: std.Io) void {
+     }
+ }
+ 
++/// Sharded producer-side admission counters. Each thread increments a
++/// cache-line-separated word that carries its own closing/cut flags, so a
++/// begin/end pair never touches a word shared with another producer. Close
++/// and cut publish a global flag first, then set the flags on every shard and
++/// wait for the summed counters to drain.
++pub const shard_count = 8;
++pub const ShardCounter = struct {
++    word: Atomic(u64) align(64) = .init(0),
++};
++pub const Sharded = struct {
++    /// Fast guard for `enabled`/close checks; authoritative admission state is
++    /// the per-shard word ordered with the producer's CAS.
++    flags: Atomic(u64) = .init(0),
++    counters: [shard_count]ShardCounter = @splat(.{}),
++};
++
++threadlocal var shard_index: usize = 0;
++threadlocal var shard_assigned: bool = false;
++var next_shard: Atomic(usize) = .init(0);
++
++fn currentShard() usize {
++    if (!shard_assigned) {
++        shard_index = next_shard.fetchAdd(1, .monotonic) % shard_count;
++        shard_assigned = true;
++    }
++    return shard_index;
++}
++
++pub fn activeSharded(sharded: *const Sharded) u64 {
++    var total: u64 = 0;
++    for (sharded.counters) |counter| total += counter.word.load(.acquire) & count_mask;
++    return total;
++}
++
++pub fn closingSharded(sharded: *const Sharded) bool {
++    return sharded.flags.load(.acquire) & closing_bit != 0;
++}
++
++pub fn setShardedFlag(sharded: *Sharded, bit: u64) void {
++    _ = sharded.flags.fetchOr(bit, .acq_rel);
++    for (&sharded.counters) |*counter| _ = counter.word.fetchOr(bit, .acq_rel);
++}
++
++pub fn clearShardedFlag(sharded: *Sharded, bit: u64) void {
++    for (&sharded.counters) |*counter| _ = counter.word.fetchAnd(~bit, .release);
++    _ = sharded.flags.fetchAnd(~bit, .release);
++}
++
++pub fn acquireSharded(sharded: *Sharded, epoch: *Atomic(u32), io: std.Io) ?usize {
++    const shard = currentShard();
++    while (true) {
++        const observed = sharded.counters[shard].word.load(.acquire);
++        if (observed & closing_bit != 0) return null;
++        if (observed & cut_bit != 0) {
++            const version = epoch.load(.acquire);
++            const current = sharded.counters[shard].word.load(.acquire);
++            if (current & cut_bit != 0 and current & closing_bit == 0) io.futexWaitUncancelable(u32, &epoch.raw, version);
++            continue;
++        }
++        if (observed & count_mask == count_mask) return null;
++        if (sharded.counters[shard].word.cmpxchgWeak(observed, observed + 1, .acq_rel, .acquire)) |_| {} else return shard;
++    }
++}
++
++/// Returns true when this release observed the closing bit after draining its
++/// shard, so the caller can notify the closing collector.
++pub fn releaseSharded(sharded: *Sharded, shard: usize, epoch: *Atomic(u32), io: std.Io) bool {
++    const previous = sharded.counters[shard].word.fetchSub(1, .acq_rel);
++    std.debug.assert(previous & count_mask != 0);
++    if (previous & count_mask != 1 or previous & (closing_bit | cut_bit) == 0) return false;
++    wake(epoch, io);
++    return previous & closing_bit != 0;
++}
++
++pub fn waitSharded(sharded: *const Sharded, epoch: *Atomic(u32), io: std.Io) void {
++    while (true) {
++        const version = epoch.load(.acquire);
++        if (activeSharded(sharded) == 0) return;
++        io.futexWaitUncancelable(u32, &epoch.raw, version);
++    }
++}
++
+ test "TLS owner stack rejects recursion and preserves nested independent runtimes" {
+     var first: u8 = 0;
+     var second: u8 = 0;
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 3a1fb26..f56ae3f 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -82,8 +82,9 @@ pub const Runtime = struct {
+     session: u64,
+     sync_sequence: Atomic(u64) = .init(0),
+     state: Atomic(State) = .init(.running),
+-    /// Closing/cut flags and admission count share one modification order.
+-    admission_gate: Atomic(u64) = .init(0),
++    /// Closing/cut flags and per-thread admission counters; the counters are
++    /// cache-line separated so P4 producers do not contend on one cache line.
++    admission_sharded: admission_protocol.Sharded = .{},
+     admission_epoch: Atomic(u32) = .init(0),
+     configuration_gate: Atomic(u64) = .init(0),
+     configuration_epoch: Atomic(u32) = .init(0),
+@@ -251,7 +252,7 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn activeAdmissions(self: *Runtime) u64 {
+-        var count = self.admission_gate.load(.acquire) & count_mask;
++        var count = admission_protocol.activeSharded(&self.admission_sharded);
+         if (self.thread_registry) |registry| count += registry.activeAdmissions();
+         count += self.configuration_gate.load(.acquire) & count_mask;
+         return count;
+@@ -265,7 +266,7 @@ pub const Runtime = struct {
+ 
+     pub fn enabledCached(self: *Runtime, level: Level, scope: []const u8, decision: FilterDecision) bool {
+         _ = decision;
+-        if (self.admission_gate.load(.acquire) & closing_bit != 0 or self.worker_error.load(.acquire) != 0) return false;
++        if (admission_protocol.closingSharded(&self.admission_sharded) or self.worker_error.load(.acquire) != 0) return false;
+         return self.routeMask(level, scope) != 0;
+     }
+ 
+@@ -304,7 +305,7 @@ pub const Runtime = struct {
+ 
+     pub fn enabledThreadCached(self: *Runtime, level: Level, scope: []const u8, decision: FilterDecision, channel: u32) bool {
+         _ = decision;
+-        if (self.admission_gate.load(.acquire) & closing_bit != 0 or self.worker_error.load(.acquire) != 0) return false;
++        if (admission_protocol.closingSharded(&self.admission_sharded) or self.worker_error.load(.acquire) != 0) return false;
+         const selected = self.threadSnapshot(channel, scope) catch return false;
+         return routeMaskIn(selected.snapshot, level, scope, selected.bound) != 0;
+     }
+@@ -401,7 +402,7 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn threadAdmissionEnded(self: *Runtime) void {
+-        if (self.admission_gate.load(.acquire) & closing_bit != 0) self.notify();
++        if (admission_protocol.closingSharded(&self.admission_sharded)) self.notify();
+     }
+ 
+     pub fn beginThread(self: *Runtime, level: Level, scope: []const u8, decision: FilterDecision, channel: u32) BeginResult {
+@@ -480,12 +481,9 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn end(self: *Runtime) void {
++        const shard = admission_protocol.currentAdmissionShard(self);
+         admission_protocol.leave(self);
+-        const previous = admission_protocol.release(&self.admission_gate);
+-        if (previous & count_mask == 1 and previous & (closing_bit | cut_bit) != 0) {
+-            self.wakeAdmissions();
+-            if (previous & closing_bit != 0) self.notify();
+-        }
++        if (admission_protocol.releaseSharded(&self.admission_sharded, shard, &self.admission_epoch, self.io)) self.notify();
+         self.dispatchDiagnostics();
+     }
+ 
+@@ -499,9 +497,10 @@ pub const Runtime = struct {
+             self.reportError(error.TooManyNestedSubmissions);
+             return false;
+         }
+-        if (!admission_protocol.acquire(&self.admission_gate, &self.admission_epoch, self.io)) return false;
++        const shard = admission_protocol.acquireSharded(&self.admission_sharded, &self.admission_epoch, self.io) orelse return false;
+         const entered = admission_protocol.enter(self);
+         std.debug.assert(entered);
++        admission_protocol.attachAdmissionShard(self, shard);
+         return true;
+     }
+ 
+@@ -514,15 +513,15 @@ pub const Runtime = struct {
+     }
+ 
+     fn waitAdmissions(self: *Runtime) void {
+-        admission_protocol.wait(&self.admission_gate, &self.admission_epoch, self.io);
++        admission_protocol.waitSharded(&self.admission_sharded, &self.admission_epoch, self.io);
+     }
+ 
+     fn cutTargets(self: *Runtime, targets: *[65]u64) usize {
+         self.cut_mutex.lockUncancelable(self.io);
+         defer self.cut_mutex.unlock(self.io);
+-        _ = self.admission_gate.fetchOr(cut_bit, .acq_rel);
++        admission_protocol.setShardedFlag(&self.admission_sharded, cut_bit);
+         defer {
+-            _ = self.admission_gate.fetchAnd(~cut_bit, .release);
++            admission_protocol.clearShardedFlag(&self.admission_sharded, cut_bit);
+             self.wakeAdmissions();
+         }
+         self.waitAdmissions();
+@@ -842,7 +841,7 @@ pub const Runtime = struct {
+                 return;
+             };
+             self.dispatchDiagnostics();
+-            if (self.admission_gate.load(.acquire) & closing_bit != 0 and self.activeAdmissions() == 0 and self.totalPending() == 0) return;
++            if (admission_protocol.closingSharded(&self.admission_sharded) and self.activeAdmissions() == 0 and self.totalPending() == 0) return;
+             if (work) continue;
+             if (self.idle == .spin) {
+                 std.atomic.spinLoopHint();
+@@ -1251,7 +1250,7 @@ pub const Runtime = struct {
+         // only after all thread gates are closed, before waiting for users.
+         if (self.thread_registry) |registry| registry.retireAll();
+         _ = self.configuration_gate.fetchOr(closing_bit, .acq_rel);
+-        _ = self.admission_gate.fetchOr(closing_bit, .acq_rel);
++        admission_protocol.setShardedFlag(&self.admission_sharded, closing_bit);
+         _ = self.state.cmpxchgStrong(.running, .closing, .release, .monotonic);
+         self.wakeAdmissions();
+         self.notify();

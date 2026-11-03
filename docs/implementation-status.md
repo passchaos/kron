@@ -25,6 +25,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 `quotedAscii`完整ASCII直接写入候选完成22项转义/边界测试；P-core五对交替instructions中位约−0.40%，cycles ratio 0.85–1.23，100k/500k完整流程矩阵无qualified吞吐或尾部领先，按预定门槛撤回，生产保持基线。证据见[quotedAscii诊断](../bench/evidence/2026-11-03-quoted-ascii-direct/README.md)。
 
+shared async admission分片候选（v1 state+per-shard counters、v2 per-shard flags）完成65/65 steps、748/749 tests正确性门禁；v1 P4 cycles约降10%–20%但instructions略增，v2 cycles方向不稳。当前host load约125（sibling repo构建与长测试占用多核），P1/P4快速A/B成对ratio 0.58–1.60，无CV/spread资格；且Runtime 12800→13376B（+576B）超对象预算。按门槛撤回，生产恢复基线；patch与全部原始数据见[sharded admission诊断](../bench/evidence/2026-11-03-sharded-admission/README.md)，待安静窗口重测。
+
 journal/archive fuzz在冻结的ReleaseSafe binary上扩展100个连续seed（0x1..0x64）：100/100通过，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[100-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-100-seeds/README.md)。
 
 新增aarch64-linux-musl静态二进制的QEMU用户态执行：root suite **455 passed/7 skipped/0 failed**（462项），journal/archive fuzz 20/20 seed通过；独立`b.dependency` package consumer五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）均2条记录、pending=0、输出/redaction/journal文件数核对通过，`qualify`确认5模式file durable、inline/schema journal reopen与rolling retention。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
