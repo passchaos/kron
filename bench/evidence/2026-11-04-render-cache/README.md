@@ -58,6 +58,8 @@ SPSC P4 async per-channel cache A/B（7轮，cache off/on）：
 
 SPSC P4 的中位吞吐从约2.0M提升到3.25M–3.41M，5/8轴qualified lead、其余inconclusive，无qualified negative。原始行见[SPSC results](spsc/results.jsonl)。
 
+P-core P4 A/B（affinity `[0,2,4,6,8,10]`，7轮）：16组written全部inconclusive（窗口噪声/spread），中位比值0.956–1.447。较大的有`spsc-mmap-batch-inline` 1.447、`spsc-memory-sampled-schema` 1.409、`spsc-memory-batch-inline` 1.278、`async-memory-batch-inline` 1.256；schema轴0.956–1.252。没有qualified negative；P-core cache收益存在但小于E-core，完整P-core排名仍需安静窗口。原始行见[P-core results](pcore/results.jsonl)。
+
 当前host负载较高时的managed A/B（P4 async inline，7轮）比值为1.2484/1.4170/1.4845/1.5260，但paired spread/区间均未通过10%门槛，全部inconclusive；没有qualified negative。
 
 两个E-core完整矩阵（cache对所有async inline开启 / 仅P4开启）均在该高负载窗口运行，分别为1 lead/12 peer/51 inc与0 lead/3 peer/61 inc；绝对吞吐低于安静窗口，不能用于更新跨库排名。原始行见[runtime results](runtime/results.jsonl)、[managed results](managed/results.jsonl)，完整矩阵见[all-async](../2026-11-04-current-foundation-full-ecore-render-cache/comparison.md)与[P4-only](../2026-11-04-current-foundation-full-ecore-render-cache-p4/comparison.md)。
