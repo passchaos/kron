@@ -33,6 +33,23 @@ root suite直接以`/tmp/kron-aarch64-tests`运行；fuzz binary对seed `0x1..0x
 - io_uring rotation与4项LinuxUring probe/batch/fault/depth（qemu-user下不可用）；
 - system local time cache（依赖本机zoneinfo/libc路径）。
 
+## 独立包consumer与平台qualification
+
+在`tests/package_consumer`中以本地`b.dependency`交叉构建：
+
+```sh
+zig build -Dtarget=aarch64-linux-musl -Doptimize=ReleaseSafe -j1 \
+  --prefix /tmp/kron-aarch64-consumer \
+  --cache-dir /tmp/kron-aarch64-package-cache
+```
+
+binary `5966ae97e82bed1754a02ed231d54c65073eaad0dd7bfa8bad121dfb8c1f30d5`，ELF ARM aarch64 static。五个模式全部通过：
+
+- `sync`、`memory`、`mmap`、`spsc_memory`、`spsc_mmap`各写2条、pending=0；JSON attributes、nested/redaction、journal文件数（mmap 1、spsc_mmap 2）逐项核对，`private`/`never captured`未出现在输出或journal。见[package-modes.log](package-modes.log)。
+- `qualify`：5个runtime mode均`file_durable=confirmed`、`runtime_allocations_after_setup=0`；inline与schema journal各`recovered=1`、`inspection_unchanged=true`、`durable=confirmed`；rolling `archives=2`、`rolling_durable=confirmed`。见[package-qualification.json](package-qualification.json)。
+
+qualification scope明确为host file/runtime/queue/journal reopen检查，不是process-kill或power-loss资格。
+
 ## test-only修正
 
 `platform.tsc_clock.test.invalid options and rejected capabilities remain explicit`原先假设`Capability.platform_supported`默认为true；aarch64上默认false，导致`rdtscp_unavailable`断言先被`unsupported_platform`拦截。修正为该test的两个capability显式设置`.platform_supported = true`，使rejection顺序与host无关。x86语义不变，生产代码未改。

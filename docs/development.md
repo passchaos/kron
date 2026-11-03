@@ -29,7 +29,7 @@
 | fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
 | 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence` |
 | build/dependency/分发 | `test-package`、`test-package-single-threaded`、`test-package-distribution`、`check-platforms` |
-| aarch64 QEMU用户态 | `zig test src/root.zig -target aarch64-linux-musl -O ReleaseSafe`与journal fuzz；见[aarch64证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) |
+| aarch64 QEMU用户态 | `zig test src/root.zig -target aarch64-linux-musl -O ReleaseSafe`、journal fuzz与`tests/package_consumer`交叉构建；见[aarch64证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) |
 
 表中build step统一加 `zig build ... -Doptimize=ReleaseSafe -j1`，平台对象检查内部固定ReleaseSafe。`--test-filter` 只是选择执行测试，不能把过滤后的通过计数描述为整库覆盖。
 

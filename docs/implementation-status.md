@@ -27,7 +27,7 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 journal/archive fuzz在冻结的ReleaseSafe binary上扩展100个连续seed（0x1..0x64）：100/100通过，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[100-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-100-seeds/README.md)。
 
-新增aarch64-linux-musl静态二进制的QEMU用户态执行：root suite **455 passed/7 skipped/0 failed**（462项），journal/archive fuzz 20/20 seed通过。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
+新增aarch64-linux-musl静态二进制的QEMU用户态执行：root suite **455 passed/7 skipped/0 failed**（462项），journal/archive fuzz 20/20 seed通过；独立`b.dependency` package consumer五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）均2条记录、pending=0、输出/redaction/journal文件数核对通过，`qualify`确认5模式file durable、inline/schema journal reopen与rolling retention。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
 
 新增持续fuzz门禁`tests/journal_fuzz.zig`/`test-journal-fuzz`：8槽mmap journal上20,000次随机reserve/commit/peek/release、每5000 ops `recover=true`重开并核对已提交未释放记录/pending/writtenTarget/payload；archive随机1..20条记录与message，经`CompressedArchiveSink`+`decodeBlock`逐block核对。ReleaseSafe连续5个随机seed、Debug/ReleaseFast各2/2通过，纳入默认`test`；完整`test`为65/65 steps、743/744 tests（1项local skip）。该fuzz是进程内随机操作/恢复，不替代真实SIGKILL、掉电、多文件系统或设备资格。证据见[journal fuzz报告](../bench/evidence/2026-11-03-journal-fuzz/README.md)。
 
