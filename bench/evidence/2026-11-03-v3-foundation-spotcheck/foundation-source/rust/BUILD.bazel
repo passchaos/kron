@@ -1,0 +1,48 @@
+load("@foundation_logging_crates//:defs.bzl", "aliases", "all_crate_deps")
+load("//common/rust:defs.bzl", "cargo_rust_library", "cargo_rust_shared_library", "cargo_rust_static_library", "cargo_rust_test")
+
+package(default_visibility = ["//foundation/logging:__pkg__"])
+
+exports_files(["Cargo.toml", "Cargo.lock"])
+
+filegroup(
+    name = "source_files",
+    srcs = ["Cargo.toml", "Cargo.lock"] + glob(["src/**/*.rs", "tests/**/*.rs"]),
+    visibility = ["//visibility:public"],
+)
+
+RUST_SOURCES = glob(["src/**/*.rs"], exclude = ["src/bin/**"])
+
+# Native consumers need both artifacts. Cargo's probe and benchmark binaries
+# are kept out of the packaging graph, while its dependencies remain unchanged.
+cargo_rust_static_library(
+    name = "core_static",
+    srcs = RUST_SOURCES,
+    aliases = aliases(),
+    crate_name = "foundation_logging_core",
+    crate_root = "src/lib.rs",
+    deps = all_crate_deps(normal = True),
+)
+
+cargo_rust_shared_library(
+    name = "core_shared",
+    srcs = RUST_SOURCES,
+    aliases = aliases(),
+    crate_name = "foundation_logging_core",
+    crate_root = "src/lib.rs",
+    deps = all_crate_deps(normal = True),
+)
+
+cargo_rust_library(
+    name = "core",
+    srcs = RUST_SOURCES,
+    aliases = aliases(),
+    crate_name = "foundation_logging_core",
+    crate_root = "src/lib.rs",
+    deps = all_crate_deps(normal = True),
+)
+
+cargo_rust_test(
+    name = "core_test",
+    crate = ":core",
+)
