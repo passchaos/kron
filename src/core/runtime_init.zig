@@ -111,6 +111,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
             .max_schema_bytes = queue_options.?.max_schema_bytes,
             .memory = options.memory_queue != null,
             .verify_crc = queue_options.?.verify_crc,
+            .text_format = queue_options.?.text_format,
         });
     }
     errdefer if (self.thread_registry) |registry| registry.destroy();

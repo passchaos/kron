@@ -128,6 +128,43 @@ fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
     return allocator.dupe(u8, sink.written());
 }
 
+fn textFormatSpscMmapRun(allocator: std.mem.Allocator, path: []const u8, text_format: bool) ![]u8 {
+    var bytes: [16 * 1024]u8 = undefined;
+    var sink = MemorySink.initBuffer(&bytes);
+    const runtime = try Runtime.create(allocator, std.testing.io, .{
+        .submission = .low_latency,
+        .journal = .{ .path = path, .capacity = 8, .max_record_bytes = 1024, .recover = false, .verify_crc = !text_format, .text_format = text_format },
+        .max_thread_channels = 1,
+        .thread_channel_capacity = 8,
+        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json, .recovery_identity = "spsc-mmap-text" }},
+        .clock = Clock.zeroTimestamp(),
+    });
+    defer runtime.destroy();
+    runtime.session = 42;
+    const log = try runtime.attachThread(.{ .scope = "cache" });
+    for (0..4) |index| {
+        _ = try log.tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
+    }
+    try runtime.flush(.written);
+    log.detach() catch {};
+    try runtime.shutdown(.drain);
+    return allocator.dupe(u8, sink.written());
+}
+
+test "text queue spsc mmap matches durable deferred render" {
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var text_path: [128]u8 = undefined;
+    var durable_path: [128]u8 = undefined;
+    const text = try std.fmt.bufPrint(&text_path, ".zig-cache/tmp/{s}/text-spsc.journal", .{tmp.sub_path});
+    const durable = try std.fmt.bufPrint(&durable_path, ".zig-cache/tmp/{s}/durable-spsc.journal", .{tmp.sub_path});
+    const text_output = try textFormatSpscMmapRun(std.testing.allocator, text, true);
+    defer std.testing.allocator.free(text_output);
+    const durable_output = try textFormatSpscMmapRun(std.testing.allocator, durable, false);
+    defer std.testing.allocator.free(durable_output);
+    try std.testing.expectEqualStrings(durable_output, text_output);
+}
+
 test "text queue output matches deferred render for spsc" {
     const text = try textFormatSpscRun(std.testing.allocator, true);
     defer std.testing.allocator.free(text);

@@ -23,6 +23,7 @@ pub const Options = struct {
     max_schema_bytes: usize = 8192,
     memory: bool = false,
     verify_crc: bool = true,
+    text_format: bool = false,
 };
 
 pub const ChannelState = enum(u8) { available, attached, retiring };
@@ -111,6 +112,7 @@ pub fn Registry(comptime R: type) type {
                     .schema_capacity = options.schema_capacity,
                     .max_schema_bytes = options.max_schema_bytes,
                     .verify_crc = options.verify_crc,
+                    .text_format = options.text_format,
                 };
                 const channel = if (options.memory) try spsc.SpscJournal.createMemory(allocator, io, channel_options) else try spsc.SpscJournal.create(allocator, io, channel_options);
                 errdefer channel.deinit();
