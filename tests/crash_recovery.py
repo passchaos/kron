@@ -108,7 +108,7 @@ def verify_journal_layout(data, phase, expected_sequences):
     # Protocol migration adds route_generation: self-contained v4 and schema
     # references v5 use 84 bytes. Legacy v1/v3 and references v2 remain readable.
     expected_payload_version = 5 if schema else 4
-    assert number(8, 4) == (2 if schema else 1), "wrong journal protocol version"
+    assert number(8, 4) == (3 if schema else 1), "wrong journal protocol version"
     capacity = number(16, 8)
     maximum = number(24, 8)
     stride = number(32, 8)

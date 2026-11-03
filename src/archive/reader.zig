@@ -113,8 +113,12 @@ pub const Reader = struct {
                     try journal_format.validate(&header, capacity, maximum, stride);
                     break :blk null;
                 },
-                journal_format.schema_version => blk: {
+                journal_format.schema_version_v2 => blk: {
                     try journal_format.validateV2(&header, capacity, maximum, stride);
+                    break :blk try schema.readLayout(&header);
+                },
+                journal_format.schema_version => blk: {
+                    try journal_format.validateV3(&header, capacity, maximum, stride);
                     break :blk try schema.readLayout(&header);
                 },
                 else => return error.UnsupportedVersion,
@@ -299,12 +303,14 @@ pub const Reader = struct {
             if (!std.mem.eql(u8, &before, &after)) continue;
             if (!valid) return error.CorruptRecord;
             const payload = self.payload[0..length];
-            const checksum = if (state.version == journal_format.version)
-                journal_format.checksum(sequence, generation, payload)
-            else
-                journal_format.checksumV2(sequence, generation, before[32..56], payload);
+            const checksum = switch (state.version) {
+                journal_format.version => journal_format.checksum(sequence, generation, payload),
+                journal_format.schema_version_v2 => journal_format.checksumV2(sequence, generation, before[32..56], payload),
+                journal_format.schema_version => journal_format.checksumV3(sequence, generation, before[32..64], payload),
+                else => return error.UnsupportedVersion,
+            };
             if (journal_format.get(u32, &before, 28) != checksum) return error.CorruptRecord;
-            if (state.version == journal_format.schema_version) {
+            if (state.version == journal_format.schema_version_v2 or state.version == journal_format.schema_version) {
                 const reference = try readReference(&before);
                 if (reference) |ref| return try schema_codec.resolve(payload, try self.copySchema(ref), self.scratch);
             }

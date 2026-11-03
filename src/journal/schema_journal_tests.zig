@@ -60,7 +60,7 @@ test "v2 schema ref and ordinary self-contained records survive reopen across re
     try append(first, ref, "schema payload");
     try append(first, null, "self-contained payload");
     const table_layout = try schema.readLayout(first.mapping.bytes[0..format.header_bytes]);
-    try testing.expectEqual(@as(u32, 2), format.get(u32, first.mapping.bytes, 8));
+    try testing.expectEqual(format.schema_version, format.get(u32, first.mapping.bytes, 8));
     try testing.expectEqual(table_layout.size, first.mappedBytes());
     try testing.expectEqual(table_layout, first.getSchemaLayout().?);
     try testing.expectEqual(first.sessionIdentity(), table_layout.identity);
@@ -272,7 +272,13 @@ test "v2 CRC covers schema ref and recovery refuses unknown references without r
     try testing.expectError(error.CorruptRecord, first.peekChecked());
     slot[40] ^= 0x10;
     format.put(u32, slot, 32, @intCast(options.schema_capacity + 1));
-    format.put(u32, slot, 28, format.checksumV2(1, 1, slot[32..56], slot[64..][0..format.get(u32, slot, 24)]));
+    const length = format.get(u32, slot, 24);
+    format.put(u32, slot, 28, switch (first.file_version) {
+        format.version => format.checksum(1, 1, slot[64..][0..length]),
+        format.schema_version_v2 => format.checksumV2(1, 1, slot[32..56], slot[64..][0..length]),
+        format.schema_version => format.checksumV3Slot(slot, length),
+        else => unreachable,
+    });
     try testing.expectError(error.MissingSchema, first.peekChecked());
     first.deinit();
     try testing.expectError(error.MissingSchema, journal.Journal.create(testing.allocator, testing.io, options));

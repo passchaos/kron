@@ -2,6 +2,7 @@
 //! pointers. A caller syncs the mapping before marking a reference ready.
 const std = @import("std");
 const codec = @import("../core/codec.zig");
+const journal_format = @import("format.zig");
 
 /// Table extension and scalar-only definitions retain their original version.
 pub const version: u16 = 1;
@@ -81,7 +82,9 @@ pub fn writeExtension(header: []u8, spec: Layout, identity: [16]u8) void {
 
 pub fn readLayout(header: []const u8) Error!Layout {
     if (header.len < extension_offset + extension_size) return error.TruncatedSchema;
-    if (get(u32, header, 8) != 2) return error.UnsupportedSchemaVersion;
+    const journal_version = get(u32, header, 8);
+    if (journal_version != journal_format.schema_version_v2 and journal_version != journal_format.schema_version)
+        return error.UnsupportedSchemaVersion;
     const bytes = header[extension_offset..][0..extension_size];
     if (!std.mem.eql(u8, bytes[0..8], extension_magic)) return error.InvalidSchema;
     if (get(u16, bytes, 8) != version) return error.UnsupportedSchemaVersion;

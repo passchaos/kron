@@ -129,7 +129,7 @@ def verify_journal(data, ready):
         return int.from_bytes(data[offset:offset + width], "little")
 
     assert data[:8] == b"KRONJNL1"
-    assert number(8, 4) == (2 if ready["schema"] else 1)
+    assert number(8, 4) == (3 if ready["schema"] else 1)
     assert number(16, 8) == 16 and number(24, 8) == 4096
     assert zlib.crc32(data[:60]) == number(60, 4)
     stride = number(32, 8)
@@ -171,6 +171,8 @@ def verify_journal(data, ready):
         crc_data = struct.pack("<QQI", sequence, generation, length)
         if ready["schema"]:
             crc_data += reference
+            assert data[slot + 56:slot + 64] == bytes(8)
+            crc_data += bytes(8)
         assert zlib.crc32(crc_data + payload) == number(slot + 28, 4)
         assert payload[:4] == b"KRNE" and int.from_bytes(payload[4:6], "little") == (5 if ready["schema"] else 4)
         identifier = sequence - 2

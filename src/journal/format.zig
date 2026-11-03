@@ -11,7 +11,8 @@ const Crc32 = @import("../platform/crc32.zig").Crc32;
 
 pub const magic = "KRONJNL1";
 pub const version: u32 = 1;
-pub const schema_version: u32 = 2;
+pub const schema_version_v2: u32 = 2;
+pub const schema_version: u32 = 3;
 pub const header_bytes: usize = 4096;
 pub const slot_header_bytes: usize = 64;
 pub const max_sequence = std.math.maxInt(u64) >> 2;
@@ -50,6 +51,33 @@ pub fn checksumV2(sequence: u64, generation: u64, reference_bytes: []const u8, p
     return crc.final();
 }
 
+/// V3 CRC covers the reference, the eight zero padding bytes and the payload.
+/// The journal slot keeps the reference and padding contiguous, so the
+/// producer and consumer fold them with the payload in one update.
+pub fn checksumV3(sequence: u64, generation: u64, reference_and_padding: []const u8, payload: []const u8) u32 {
+    std.debug.assert(reference_and_padding.len == 32);
+    var header: [20]u8 = undefined;
+    put(u64, &header, 0, sequence);
+    put(u64, &header, 8, generation);
+    put(u32, &header, 16, @intCast(payload.len));
+    var crc = Crc32.init();
+    crc.update(&header);
+    crc.update(reference_and_padding);
+    crc.update(payload);
+    return crc.final();
+}
+
+/// Computes the V3 slot CRC directly from contiguous slot bytes. Bytes 8..28
+/// are the sequence/generation/length header, 28..32 hold the stored CRC and
+/// 32..slot_header_bytes hold the reference plus zero padding.
+pub fn checksumV3Slot(bytes: []const u8, length: usize) u32 {
+    std.debug.assert(bytes.len >= slot_header_bytes + length);
+    var crc = Crc32.init();
+    crc.update(bytes[8..28]);
+    crc.update(bytes[32 .. slot_header_bytes + length]);
+    return crc.final();
+}
+
 test "slot CRC v1 and v2 preserve independent golden byte order and schema binding" {
     const payload = "kron slot golden\x00\xff";
     var reference: [24]u8 = undefined;
@@ -58,6 +86,56 @@ test "slot CRC v1 and v2 preserve independent golden byte order and schema bindi
     // explicit little-endian 20-byte header, reference, and payload.
     try std.testing.expectEqual(@as(u32, 0x2f07cd99), checksum(0x0102030405060708, 0x1122334455667788, payload));
     try std.testing.expectEqual(@as(u32, 0x530df33b), checksumV2(0x0102030405060708, 0x1122334455667788, &reference, payload));
+}
+
+test "slot CRC v3 covers reference and zero padding with contiguous slot bytes" {
+    const payload = "kron slot golden\x00\xff";
+    var reference: [24]u8 = undefined;
+    for (&reference, 0..) |*byte, i| byte.* = @intCast(i);
+    var reference_and_padding: [32]u8 = undefined;
+    @memcpy(reference_and_padding[0..24], &reference);
+    @memset(reference_and_padding[24..], 0);
+    // Independently calculated by Python zlib.crc32 over header + reference + eight zero padding bytes + payload.
+    try std.testing.expectEqual(@as(u32, 0x4be88818), checksumV3(0x0102030405060708, 0x1122334455667788, &reference_and_padding, payload));
+    var slot: [slot_header_bytes + payload.len]u8 = undefined;
+    @memset(&slot, 0);
+    put(u64, &slot, 8, 0x0102030405060708);
+    put(u64, &slot, 16, 0x1122334455667788);
+    put(u32, &slot, 24, payload.len);
+    @memcpy(slot[32..56], &reference);
+    @memcpy(slot[slot_header_bytes..], payload);
+    try std.testing.expectEqual(@as(u32, 0x4be88818), checksumV3Slot(&slot, payload.len));
+    // The stored CRC at 28..32 is outside the V3 input.
+    put(u32, &slot, 28, 0xdeadbeef);
+    try std.testing.expectEqual(@as(u32, 0x4be88818), checksumV3Slot(&slot, payload.len));
+}
+
+test "v3 slot checksum matches independent oracle across payload lengths" {
+    var slot: [slot_header_bytes + 512]u8 = undefined;
+    var reference: [24]u8 = undefined;
+    var random = std.Random.DefaultPrng.init(0x763370616464696e);
+    random.random().bytes(&reference);
+    const lengths = [_]usize{ 0, 1, 3, 7, 8, 15, 16, 20, 24, 31, 32, 33, 63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512 };
+    for (lengths) |length| {
+        random.random().bytes(&slot);
+        @memset(slot[56..64], 0);
+        @memcpy(slot[32..56], &reference);
+        const sequence = random.random().int(u64);
+        const generation = random.random().int(u64);
+        put(u64, &slot, 8, sequence);
+        put(u64, &slot, 16, generation);
+        put(u32, &slot, 24, @intCast(length));
+        var header: [20]u8 = undefined;
+        std.mem.writeInt(u64, header[0..8], sequence, .little);
+        std.mem.writeInt(u64, header[8..16], generation, .little);
+        std.mem.writeInt(u32, header[16..20], @intCast(length), .little);
+        var oracle = std.hash.Crc32.init();
+        oracle.update(&header);
+        oracle.update(slot[32..64]);
+        oracle.update(slot[64 .. 64 + length]);
+        try std.testing.expectEqual(oracle.final(), checksumV3Slot(&slot, length));
+        try std.testing.expectEqual(oracle.final(), checksumV3(sequence, generation, slot[32..64], slot[64 .. 64 + length]));
+    }
 }
 
 test "zeroed initialization matches full clear for memory-backed journals" {
@@ -94,6 +172,10 @@ pub fn initialize(bytes: []u8, capacity: usize, max_record_bytes: usize, stride:
 }
 
 pub fn initializeV2(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
+    initializeVersion(bytes, capacity, max_record_bytes, stride, identity, schema_version_v2);
+}
+
+pub fn initializeV3(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
     initializeVersion(bytes, capacity, max_record_bytes, stride, identity, schema_version);
 }
 
@@ -106,6 +188,10 @@ pub fn initializeZeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, s
 }
 
 pub fn initializeV2Zeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
+    initializeVersionZeroed(bytes, capacity, max_record_bytes, stride, identity, schema_version_v2);
+}
+
+pub fn initializeV3Zeroed(bytes: []u8, capacity: usize, max_record_bytes: usize, stride: usize, identity: [16]u8) void {
     initializeVersionZeroed(bytes, capacity, max_record_bytes, stride, identity, schema_version);
 }
 
@@ -132,6 +218,10 @@ pub fn validate(bytes: []const u8, capacity: usize, max_record_bytes: usize, str
 }
 
 pub fn validateV2(bytes: []const u8, capacity: usize, max_record_bytes: usize, stride: usize) !void {
+    return validateVersion(bytes, capacity, max_record_bytes, stride, schema_version_v2);
+}
+
+pub fn validateV3(bytes: []const u8, capacity: usize, max_record_bytes: usize, stride: usize) !void {
     return validateVersion(bytes, capacity, max_record_bytes, stride, schema_version);
 }
 

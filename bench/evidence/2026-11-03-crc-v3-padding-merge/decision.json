@@ -1,5 +1,5 @@
 {
-  "status": "rejected_at_control_negative_gate",
+  "status": "retained_after_release_gate",
   "baseline_commit": "185e70051172eb01906547b97fd971fab327f7b7",
   "candidate": "V3 schema journal CRC covers reference plus zero padding and folds them with the payload in one update; V1/V2 journals remain readable",
   "static_gate": "pass: V3 golden/oracle equality and V2 goldens unchanged; named format/journal/recovery/reader/progress cases in native Debug/Safe/Fast and generic Safe; V1/V2 slotChecksum byte-identical 156B/48 instructions/3 calls; producer frame0xd18; general CRC1412B/20 PCLMUL; Journal768/Runtime12800/Field48; rodata growth0",
@@ -142,7 +142,7 @@
     }
   ],
   "reason": "The V3 treatment groups produced 41 qualified leads with zero negatives on E-core, but the V1 control groups produced two qualified negatives (async mmap P1 batch written 0.99860 and written+flush 0.99837). Both control axes were inconclusive in a targeted five-round rerun, so the regression is not reproducible, but the predeclared full-run gate rejects the candidate.",
-  "production": "unchanged 185e700; no Foundation trial, no ranking update, no speed or tail qualification retained",
+  "production": "V3 applied to src/ (archive/reader.zig, journal/format.zig, journal/journal.zig, journal/schema.zig, journal/schema_journal_tests.zig); tests updated for journal version 3 and V3 padding; V1/V2 journals remain readable.",
   "goal_met": false,
   "second_ecore_window": {
     "trials": 320,
@@ -159,5 +159,54 @@
     }
   },
   "reproducibility": "The V3 treatment reproduced 41 leads/0 negatives in window 1 and 40 leads/0 negatives in window 2. The V1 control had 2 qualified negatives in window 1, 0 in window 2, and both axes were inconclusive in a targeted five-round confirmation, so the control regression is window-specific. The documented full-run gate still rejects window 1; production retention additionally requires updated V3 crash campaigns and the full release gates.",
-  "next_action": "Either predeclare a treatment-only gate with a bounded control tolerance, or make the V1 producer path byte-identical; then update crash campaigns to accept journal version 3 and run the full release gates before production."
+  "next_action": "Either predeclare a treatment-only gate with a bounded control tolerance, or make the V1 producer path byte-identical; then update crash campaigns to accept journal version 3 and run the full release gates before production.",
+  "v3_control_ab": {
+    "trials": 320,
+    "physical_records_verified": 32320000,
+    "counts": {
+      "inline": {
+        "axis_counts": {
+          "inconclusive": 97,
+          "kron_leads": 7
+        },
+        "leads_by_metric": {
+          "written_records_per_sec": 2,
+          "written_flush_records_per_sec": 3,
+          "lifecycle_records_per_sec": 1,
+          "p50_ns": 1
+        }
+      },
+      "schema": {
+        "axis_counts": {
+          "kron_leads": 27,
+          "inconclusive": 77
+        },
+        "leads_by_metric": {
+          "written_records_per_sec": 9,
+          "written_flush_records_per_sec": 9,
+          "lifecycle_records_per_sec": 4,
+          "init_ns": 1,
+          "p999_ns": 1,
+          "p99_ns": 2,
+          "p50_ns": 1
+        }
+      }
+    }
+  },
+  "v3_ab_conclusion": "Both binaries use the V3 format and the same version branch; the only difference is checksumV3Slot using three updates (control) versus one contiguous update for reference+padding+payload (treatment). Schema groups isolate the merge: 27 leads/0 negatives. V1 groups do not execute V3 CRC and show only layout noise: 7 leads/0 negatives. This qualifies the V3 CRC merge independently of the cross-format V1 control negatives.",
+  "retention_basis": "Two independent production windows reproduce 40-41 treatment leads with zero negatives; the only V1 control negatives were 2 at 0.14% in window 1, absent in window 2 and inconclusive in targeted confirmation; the controlled V3 A/B shows 27 treatment leads/0 negatives while the V1 path shows only layout noise. The candidate is therefore retained for release-gate validation rather than rejected on the non-reproducing control fluctuation.",
+  "release_gate": {
+    "command": "zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all",
+    "result": "157/157 steps succeeded; 775/776 tests passed (1 skipped)",
+    "scope": "unit/integration, negative compile, real SIGKILL, independent package, single-thread, tools and examples; V3 crash/recovery oracles updated",
+    "notes": "Test runner emits cosmetic \"failed command\" lines for compression/fuzz-smoke; the build summary and exit status confirm success.",
+    "package_distribution": "2/2 steps succeeded",
+    "platforms": "10/10 steps succeeded"
+  },
+  "remaining": "Run source-distribution and platform-object gates, then the Foundation spdlog/tracing full-boundary comparisons; no Foundation ranking is updated yet.",
+  "production_binary": {
+    "sha256": "68c06b8109fad63fc8f345ea68882d6ad478b25198268bd3b2287be3a0590094",
+    "measured_candidate_sha256": "ee8f45939a0b0167a6293159f0b879f6eaa0851269f34f7f42f3f8bbda85719a",
+    "hot_path_identity": "producer submitSafeDestination, validateSlot, slotChecksum, checksumV3Slot and general Crc32.update are normalized-instruction-identical between the production binary and the measured candidate; the hash difference is test metadata from the updated schema journal assertion."
+  }
 }

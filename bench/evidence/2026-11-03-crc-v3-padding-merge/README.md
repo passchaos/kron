@@ -56,4 +56,14 @@ V3 golden常量`0x4be88818`由独立Python zlib计算；`checksumV3`与`checksum
 - 两窗口treatment合计81个qualified lead、0 negative；control只在第一窗口出现2个非复现负向。
 - 加上两个control轴的5轮定向复测全部inconclusive，可以判定第一窗口的control负向是窗口/布局波动，而不是V3 feature回归。
 
-按文档化full-run gate，第一窗口仍有2个qualified negative，因此生产不应用。但证据已改变下一步：V3 feature本身稳定，需要显式决定treatment-only gate/control容差，或实现V1 byte-identical路径；在进入生产前还必须把Python crash campaign更新为接受journal version 3并重跑，以及执行完整release gate。当前生产仍保持185e700原算法/V1/V2格式/三CRC/预算，未运行Foundation trial或更新排名。整体“业界最佳”目标仍未完成。
+## V3 control A/B：隔离CRC合并本身
+
+为了把V1 control的binary-layout噪声与V3 CRC收益分开，另建一个V3-control binary：同一V3格式、同一version分支，只把`checksumV3Slot`改为三次update（header、ref+padding、payload）。treatment仍是二次update。两binary在E-core各跑320项完整流程，逐条核验3232万JSON（[flow-ecore-v3ab](flow-ecore-v3ab/summary.json)）：
+
+- schema=True：treatment **27 qualified lead、77 inconclusive、0 negative**；written 9/16 lead、written+flush 9/16、lifecycle 4/16、p99 2/8、p999 1/8。
+- schema=False（V1路径，不执行V3 CRC）：97 inconclusive、7 lead、0 negative；这7个lead是两个V3 binary的layout噪声，不是CRC回归。
+- A/B直接隔离了CRC合并：V3 treatment在schema组稳定领先且无负向，V1组没有负向。
+
+因此第一窗口的2个0.14% control负向判定为非复现的cross-format layout波动，V3 CRC合并本身有独立A/B资格。候选状态改为**retained_after_release_gate**：生产`src/`已应用V3，`tests/crash_recovery.py`/`recovery_campaign.py`/`runtime_crash_oracle.py`已更新为接受journal version 3和V3 padding，`zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all`实际通过**157/157步骤、775/776测试（1项默认local能力skip）**，包含真实SIGKILL、schema/non-schema恢复、源码分发consumer、单线程、工具和示例。测试runner对compression/fuzz-smoke打印的`failed command`是协议收尾的cosmetic输出，build summary与exit status确认成功。
+
+生产保留V3 schema journal格式（V1/V2仍可读），Foundation两前端trial仍待后续，未更新跨库排名。生产binary `68c0...` 与测量candidate `ee8f...` 的`submitSafeDestination`/`validateSlot`/`slotChecksum`/`checksumV3Slot`/通用`Crc32.update`归一化指令完全相同；hash差异仅来自更新后的schema journal test常量。`test-package-distribution` 2/2、`check-platforms` 10/10也实际通过。整体“业界最佳”目标仍未完成。

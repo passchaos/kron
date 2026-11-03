@@ -121,10 +121,13 @@ pub const Reservation = struct {
         const generation = self.journal.generation(self.sequence);
         self.journal.writeSlotSchema(bytes, self.schema_ref);
         format.put(u32, bytes, 24, @intCast(length));
-        format.put(u32, bytes, 28, if (self.journal.verify_crc)
-            self.journal.slotChecksum(self.sequence, generation, bytes, self.buffer()[0..length])
+        const checksum: u32 = if (!self.journal.verify_crc)
+            0
+        else if (self.journal.file_version == format.schema_version)
+            format.checksumV3Slot(bytes, length)
         else
-            0);
+            self.journal.slotChecksum(self.sequence, generation, bytes, self.buffer()[0..length]);
+        format.put(u32, bytes, 28, checksum);
         state.store(format.tag(self.sequence, .committed), .release);
         if (self.producer_generation != 0) self.journal.completeSingleReservation();
         self.completed = true;
@@ -205,9 +208,9 @@ pub const Journal = struct {
             if (schema_layout) |*table| {
                 table.identity = identity;
                 if (zeroed)
-                    format.initializeV2Zeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
+                    format.initializeV3Zeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
                 else
-                    format.initializeV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
+                    format.initializeV3(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity);
                 schema_format.writeExtension(mapping.bytes[0..format.header_bytes], table.*, identity);
             } else if (zeroed)
                 format.initializeZeroed(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride, identity)
@@ -217,7 +220,13 @@ pub const Journal = struct {
             // durability is included where the platform supports it.
             try mapping.publish();
         } else if (schema_layout) |*table| {
-            try format.validateV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride);
+            const header_version = format.get(u32, mapping.bytes, 8);
+            if (header_version == format.schema_version)
+                try format.validateV3(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride)
+            else if (header_version == format.schema_version_v2)
+                try format.validateV2(mapping.bytes, options.capacity, options.max_record_bytes, layout.stride)
+            else
+                return error.UnsupportedVersion;
             const actual = try schema_format.readLayout(mapping.bytes[0..format.header_bytes]);
             var expected = table.*;
             expected.identity = actual.identity;
@@ -249,7 +258,7 @@ pub const Journal = struct {
             .capacity = options.capacity,
             .max_record_bytes = options.max_record_bytes,
             .stride = layout.stride,
-            .file_version = if (schema_layout == null) format.version else format.schema_version,
+            .file_version = format.get(u32, mapping.bytes, 8),
             .verify_crc = options.verify_crc,
             .schema = registry,
             .producer_mode = mode,
@@ -338,7 +347,11 @@ pub const Journal = struct {
         if (sequence == 0 or sequence > format.max_sequence or marker != format.tag(sequence, .committed)) return error.CorruptRecord;
         if ((sequence - 1) % self.capacity != index or gen != self.generation(sequence) or length > self.max_record_bytes) return error.CorruptRecord;
         const payload = bytes[format.slot_header_bytes..][0..length];
-        if (self.verify_crc and format.get(u32, bytes, 28) != self.slotChecksum(sequence, gen, bytes, payload)) return error.CorruptRecord;
+        if (self.verify_crc and format.get(u32, bytes, 28) !=
+            (if (self.file_version == format.schema_version)
+                format.checksumV3Slot(bytes, length)
+            else
+                self.slotChecksum(sequence, gen, bytes, payload))) return error.CorruptRecord;
         const reference = try self.readSlotSchema(bytes);
         if (reference) |ref| try self.validateSchemaReady(ref);
         return .{ .sequence = sequence, .generation = gen, .payload = payload, .slot = index, .schema_ref = reference };

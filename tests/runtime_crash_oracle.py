@@ -97,7 +97,7 @@ def committed_sequences(data, schema):
     def number(offset, width):
         assert 0 <= offset <= len(data) - width
         return int.from_bytes(data[offset:offset + width], "little")
-    assert data[:8] == b"KRONJNL1" and number(8, 4) == (2 if schema else 1)
+    assert data[:8] == b"KRONJNL1" and number(8, 4) == (3 if schema else 1)
     assert number(12, 4) == 0x01020304 and number(56, 4) == 4096
     assert zlib.crc32(data[:60]) == number(60, 4)
     assert number(16, 8) == 16 and number(24, 8) == 4096 and number(32, 8) == 4160
@@ -138,6 +138,8 @@ def committed_sequences(data, schema):
         if schema:
             assert 1 <= number(slot + 32, 4) <= 4
             checksum += reference
+            assert data[slot + 56:slot + 64] == bytes(8)
+            checksum += bytes(8)
         else:
             assert reference == bytes(24)
         assert zlib.crc32(checksum + payload) == number(slot + 28, 4)
