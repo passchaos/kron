@@ -50,6 +50,45 @@ test "render cache output matches deferred render for inline and schema" {
     try std.testing.expectEqualStrings(deferred, cached);
 }
 
+test "render cache does not hide journal recovery" {
+    if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_bytes: [128]u8 = undefined;
+    const path = try std.fmt.bufPrint(&path_bytes, ".zig-cache/tmp/{s}/render-cache-recovery.journal", .{tmp.sub_path});
+    var storage: [8192]u8 = undefined;
+    var memory = MemorySink.initBuffer(&storage);
+    {
+        const first = try Runtime.create(std.testing.allocator, std.testing.io, .{
+            .submission = .asynchronous,
+            .journal = .{ .path = path, .capacity = 8, .max_record_bytes = 1024 },
+            .routes = &.{.{ .name = "out", .sink = memory.sink(), .recovery_identity = "render-cache-recovery" }},
+            .render_cache = true,
+            .render_cache_record_bytes = 512,
+            .clock = Clock.zeroTimestamp(),
+        });
+        defer first.destroy();
+        first.session = 42;
+        memory.fail_after_records = 0;
+        _ = try first.scoped("cache").tryEmit(.info, "recover", .{ .n = @as(u64, 1) });
+        try std.testing.expectError(error.InjectedWriteFailure, first.flush(.written));
+    }
+    memory.fail_after_records = null;
+    const second = try Runtime.create(std.testing.allocator, std.testing.io, .{
+        .submission = .asynchronous,
+        .journal = .{ .path = path, .capacity = 8, .max_record_bytes = 1024 },
+        .routes = &.{.{ .name = "out", .sink = memory.sink(), .recovery_identity = "render-cache-recovery" }},
+        .render_cache = true,
+        .render_cache_record_bytes = 512,
+        .clock = Clock.zeroTimestamp(),
+    });
+    defer second.destroy();
+    second.session = 42;
+    try second.flush(.written);
+    try std.testing.expectEqual(@as(usize, 1), memory.records);
+    try std.testing.expect(std.mem.indexOf(u8, memory.written(), "recover") != null);
+}
+
 const ObservedSink = struct {
     memory: MemorySink,
     find_calls: [64]usize = undefined,

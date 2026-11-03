@@ -11,10 +11,11 @@
 
 ## 正确性
 
-- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、761/762 tests（1项skip）**，success。
-- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、795/796 tests（1项skip）**，`verify-local success`。
+- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、762/763 tests（1项skip）**，success。
+- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、796/797 tests（1项skip）**，`verify-local success`。
 - `test-integration` 13/13、`test-async-storage` 10/10、`test-configurations` 14/14。
 - 新增`render cache output matches deferred render for inline and schema`：固定clock/session下，inline与nested schema的输出与deferred路径byte-identical。
+- 新增`render cache does not hide journal recovery`：第一次runtime写入后sink失败、记录保持pending；重开runtime时cache为空，恢复记录仍由deferred renderer正确写出。
 - 两个E-core完整矩阵各逐条核验24,240,000条完整JSON；cache-on路径的输出通过同一`verify`。
 
 ## 性能
