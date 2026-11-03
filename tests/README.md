@@ -24,7 +24,7 @@
 | fused scratch生命周期 | [wire_scratch_tests.zig](../src/encoder/wire_scratch_tests.zig)、`test-wire-scratch` | JSON/text/logfmt错误和Fallback后的完整decode复用、准确比较次数、64顶层key/精确nested预算及后缀守卫 |
 | 共享/SPSC坐标与证据 | [journal/tests.zig](../src/journal/tests.zig)、`test-journal-coordinates` | 八容量独立递增slot/generation oracle、非二次幂环回、跨2^32及max_sequence、reserved header/commit payload/abort/release与written；独立重算有效CRC下generation错误仍拒绝并保留槽位 |
 | 配置与deadline | configuration_integration/transactions、route_policy、route_filter、predicate、deadline | 旧route版本/lease、admission、采样相位、timeout资源与reentrancy |
-| 配置替换并发 | [configuration_integration.zig](configuration_integration.zig)、`test-configurations` | shared async 4 producer×500、20次route/redaction替换与cut；accepted=written=2000、sink records总和、redaction |
+| 配置替换并发 | [configuration_integration.zig](configuration_integration.zig)、`test-configurations` | shared async 4 producer×500、20次route/redaction替换与cut；另有4 producer×500+20次filter reload；accepted=written、health/sink一致 |
 | 时间与source | time_integration、local_time_integration/oracle、独立package tests | exact纳秒、固定/local cache、DST/恢复身份、repo-relative source路径 |
 | 文件/归档/解码 | file_delivery_failures、compressed_archive、decoder_matrix/fuzz、tool_query | partial/zero/CQE错误、版本/损坏、只读Reader/query/follow |
 | 多文件系统行为 | [multifs-volatile证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) | tmpfs上mmap journal按设计`VolatileFilesystem`拒绝；ext4五模式通过；非crash/掉电资格 |

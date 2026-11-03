@@ -602,3 +602,85 @@ test "shared async producers keep all accepted records while routes and redactio
     try testing.expect(std.mem.indexOf(u8, first.written(), "raw-hot-password") == null);
     try testing.expect(std.mem.indexOf(u8, second.written(), "raw-hot-password") == null);
 }
+
+test "shared async producers tolerate repeated filter reloads without losing outcomes" {
+    const Context = struct {
+        runtime: *kron.Runtime,
+        start: std.Io.Event = .unset,
+        ready: std.atomic.Value(u32) = .init(0),
+        accepted: [4]u64 = @splat(0),
+        filtered: [4]u64 = @splat(0),
+        failure: [4]?anyerror = @splat(null),
+        fn producer(self: *@This(), index: usize) void {
+            _ = self.ready.fetchAdd(1, .release);
+            self.start.waitUncancelable(testing.io);
+            const log = self.runtime.scoped("reload.concurrent");
+            for (0..500) |record| {
+                const result = log.tryEmit(.info, "during reloads", .{
+                    .producer = index,
+                    .record = record,
+                }) catch |err| {
+                    self.failure[index] = err;
+                    return;
+                };
+                switch (result) {
+                    .accepted => self.accepted[index] += 1,
+                    .filtered => self.filtered[index] += 1,
+                    else => {
+                        self.failure[index] = error.UnexpectedOutcome;
+                        return;
+                    },
+                }
+            }
+        }
+    };
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [128]u8 = undefined;
+    var sink = try kron.MemorySink.init(testing.allocator, 1024 * 1024);
+    defer sink.deinit();
+    const route: kron.RouteOptions = .{ .name = "output", .sink = sink.sink(), .recovery_identity = "reload-concurrent" };
+    var options = try journalOptions(&tmp, &path);
+    options.submission = .asynchronous;
+    options.routes = &.{route};
+    options.filter = "info";
+    const runtime = try kron.Runtime.create(testing.allocator, testing.io, options);
+    defer runtime.destroy();
+    var context: Context = .{ .runtime = runtime };
+    var threads: [4]std.Thread = undefined;
+    var spawned: usize = 0;
+    var joined = false;
+    defer if (!joined) {
+        context.start.set(testing.io);
+        for (threads[0..spawned]) |thread| thread.join();
+    };
+    for (&threads, 0..) |*thread, index| {
+        thread.* = try std.Thread.spawn(.{}, Context.producer, .{ &context, index });
+        spawned += 1;
+    }
+    while (context.ready.load(.acquire) != threads.len) std.Thread.yield() catch {};
+    context.start.set(testing.io);
+    for (0..20) |iteration| {
+        try runtime.reloadFilter(if (iteration % 2 == 0) "warn" else "info");
+        runtime.setLevel(.info);
+    }
+    try runtime.flush(.written);
+    for (threads) |thread| thread.join();
+    joined = true;
+    try runtime.flush(.written);
+    try runtime.shutdown(.drain);
+    var accepted: u64 = 0;
+    var filtered: u64 = 0;
+    for (context.accepted, context.filtered, context.failure) |a, f, failure| {
+        if (failure) |err| return err;
+        accepted += a;
+        filtered += f;
+    }
+    const health = runtime.health();
+    try testing.expectEqual(@as(u64, 2000), accepted + filtered);
+    try testing.expectEqual(accepted, health.accepted);
+    try testing.expectEqual(filtered, health.filtered);
+    try testing.expectEqual(health.accepted, health.written);
+    try testing.expectEqual(@as(usize, 0), health.journal_pending);
+    try testing.expectEqual(@as(usize, @intCast(health.written)), sink.records);
+}

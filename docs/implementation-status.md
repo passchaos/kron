@@ -51,6 +51,8 @@ ext4/XFS/Btrfs/F2FS child-VM abrupt-loss campaign均扩展到16个ACK边界（17
 
 新增shared async配置替换并发回归：4个producer各提交500条，主线程交替安装两个MemorySink route并切换redaction mask/drop共20次；`replaceConfiguration`的cut/旧lease保留/collect期间producer继续提交。断言accepted==written==2000、两个sink records之和==accepted、输出不含raw password。`test-configurations`在Safe/Debug/Fast各13/13，Safe独立binary 10 seeds 10/10。完整`test`为**65/65 steps、752/753 tests（1项local skip）**；`verify-local`为**159/159 steps、786/787 tests（1项local skip）**，`verify-local success`。证据见[shared replacement报告](../bench/evidence/2026-11-03-shared-replacement/README.md)。
 
+新增shared async filter reload并发回归：4个producer各提交500条info记录，主线程20次交替`reloadFilter("warn"/"info")`并`setLevel(.info)`；producer只接受accepted/filtered。断言accepted+filtered==2000、producer计数等于health、accepted==written、pending==0、sink records==written。`test-configurations`在Safe/Debug/Fast各14/14，Safe独立binary 10 seeds 10/10。完整`test`为**65/65 steps、755/756 tests（1项local skip）**；`verify-local`为**159/159 steps、789/790 tests（1项local skip）**，`verify-local success`。证据见[filter reload报告](../bench/evidence/2026-11-03-filter-reload/README.md)。
+
 并发测试重复soak：冻结ReleaseSafe async-storage binary执行**1000 iterations、0 failures**（每次10 tests，含2轮delivery/shutdown/mmap并发）；configuration replacement binary执行**200 iterations、0 failures**（每次13 tests，含4 producer×500记录与20次替换）。该soak是重复进程执行，不是ASan/TSan或crash/power-loss资格。证据见[concurrency soak](../bench/evidence/2026-11-03-concurrency-soak/README.md)。
 
 journal/archive fuzz在冻结的ReleaseSafe binary上扩展到1000个连续seed（0x1..0x3e8）：**1000/1000通过**，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[1000-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-1000-seeds/README.md)。

@@ -19,7 +19,7 @@
 | 旧二进制journal fixture | [fixtures/journal](../tests/fixtures/journal/README.md)、根test/`test-logging`；`5b1fd7c`实际x86_64与aarch64二进制写出的v1/v2 journal在V3源码`recover=true`下读取 |
 | nested/轮转/schema组合恢复 | 根test/`test-logging`；prepared nested group/array经rolling输出+mmap schema journal，durable后同journal reopen、pending=0与replay追加 |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
-| 配置替换并发 | `test-configurations`；shared async 4 producer×500、20次route/redaction替换与cut、accepted=written=2000；200次重复soak |
+| 配置替换并发 | `test-configurations`；shared async 4 producer×500、20次route/redaction替换与cut，另4 producer×500+20次filter reload；200次重复soak |
 | TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
 | CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |
 | CRC分段/seed/读边界 | `test-crc-segments`；0..512长度与32对齐、20/24分段、任意seed、两端真实guard page |
