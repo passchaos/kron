@@ -30,6 +30,7 @@
 | 多文件系统行为 | tmpfs vs ext4 package consumer；tmpfs mmap journal按设计拒绝`VolatileFilesystem`，见[多文件系统证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) |
 | 共享文件系统行为 | `tests/shared_fs/vm_9p.py`；QEMU virtio-9p下sync/memory通过、mmap journal按设计`PreallocationUnsupported`拒绝，见[9p证据](../bench/evidence/2026-11-03-9p-shared-fs/README.md) |
 | 真实ENOSPC故障 | `tests/faults/vm_enospc.py`；child VM tmpfs填满后，直接FileSink、Runtime Memory+FileSink durable flush与RollingFileSink flush均返回`NoSpaceLeft`并latch |
+| 只读文件系统初始化 | `tests/faults/vm_readonly.py`；child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem` |
 | 子VM停机 | [power_loss](../tests/power_loss/README.md)；ext4/XFS/Btrfs/F2FS 16-run child-VM SIGKILL campaigns；非物理掉电 |
 | wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |
 | fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |

@@ -30,6 +30,7 @@
 | 多文件系统行为 | [multifs-volatile证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) | tmpfs上mmap journal按设计`VolatileFilesystem`拒绝；ext4五模式通过；非crash/掉电资格 |
 | 共享文件系统行为 | [9p shared FS证据](../bench/evidence/2026-11-03-9p-shared-fs/README.md)、[shared_fs/vm_9p.py](shared_fs/vm_9p.py) | QEMU virtio-9p：sync/memory/spsc_memory通过；mmap journal按设计`PreallocationUnsupported`拒绝；非NFS/crash资格 |
 | 真实ENOSPC故障 | [ENOSPC证据](../bench/evidence/2026-11-03-enospc-fault/README.md)、[faults/vm_enospc.py](faults/vm_enospc.py) | child VM 1MiB tmpfs填满后，直接FileSink、Runtime Memory+FileSink durable flush与RollingFileSink flush均返回`NoSpaceLeft`并latch；无false success |
+| 只读文件系统初始化 | [read-only证据](../bench/evidence/2026-11-03-readonly-fault/README.md)、[faults/vm_readonly.py](faults/vm_readonly.py) | child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem`；无false success |
 | 正则 | regex_differential/fuzz/equivalence | Python差分、有界mutation、coverage-guided入口；不同资格范围分别记录 |
 | 负向编译 | [compile_fail/](compile_fail/)、[run_compile_fail.py](run_compile_fail.py) | 不支持输入/格式、字段选择边界、禁止直接改opaque配置 |
 | 进程恢复 | crash_writer/recovery、async_storage_crash、recovery_campaign、runtime_crash_campaign | 真实SIGKILL，完整commit/预留缺口/热route、随机ACK覆盖 |

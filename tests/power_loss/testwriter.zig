@@ -17,12 +17,33 @@ pub fn main(init: std.process.Init) !void {
     }
     const output = output_path orelse return error.MissingOutput;
     if (std.mem.eql(u8, args[1], "enospc")) return enospc(init, output);
+    if (std.mem.eql(u8, args[1], "readonly")) {
+        const journal = journal_path orelse return error.MissingJournal;
+        return readonly(init, journal, output);
+    }
     const journal = journal_path orelse return error.MissingJournal;
     if (std.mem.eql(u8, args[1], "write")) {
         try write(init, journal, output, schema_enabled);
     } else if (std.mem.eql(u8, args[1], "verify")) {
         try verify(init, journal, output, acked orelse return error.MissingAcknowledgement, schema_enabled);
     } else return error.UnknownMode;
+}
+
+fn readonly(init: std.process.Init, journal_path: []const u8, output_path: []const u8) !void {
+    if (kron.FileSink.create(init.gpa, init.io, .{ .path = output_path, .backend = .portable })) |file| {
+        file.deinit();
+        std.debug.print("KRON_READONLY_FILE_UNEXPECTED\n", .{});
+        return error.UnexpectedSuccess;
+    } else |err| {
+        std.debug.print("KRON_READONLY_FILE_REJECTED err={s}\n", .{@errorName(err)});
+    }
+    if (kron.Journal.create(init.gpa, init.io, .{ .path = journal_path, .capacity = 8, .max_record_bytes = 512 })) |journal| {
+        journal.deinit();
+        std.debug.print("KRON_READONLY_JOURNAL_UNEXPECTED\n", .{});
+        return error.UnexpectedSuccess;
+    } else |err| {
+        std.debug.print("KRON_READONLY_JOURNAL_REJECTED err={s}\n", .{@errorName(err)});
+    }
 }
 
 fn enospc(init: std.process.Init, output_path: []const u8) !void {
