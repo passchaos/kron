@@ -12,6 +12,7 @@ const prepared_module = @import("prepared.zig");
 const schema_site = @import("../submit/schema_site.zig");
 pub const SchemaBinding = prepared_module.Binding;
 const encoder = @import("../encoder/root.zig");
+const common = @import("../encoder/common.zig");
 const delivery = @import("delivery.zig");
 const delivery_batch = @import("delivery_batch.zig");
 const configurations = @import("../config/routes.zig");
@@ -42,6 +43,7 @@ const cut_bit = admission_protocol.cut_bit;
 const count_mask = admission_protocol.count_mask;
 const SinkFrame = struct { owner: *Runtime, previous: ?*const SinkFrame };
 const ReleaseKey = struct { snapshot: *configurations.Snapshot, channel: u32, count: usize };
+const RenderCache = @import("render_cache.zig").RenderCache;
 threadlocal var sink_frame: ?*const SinkFrame = null;
 threadlocal var cleanup_owner: ?*Runtime = null;
 
@@ -64,6 +66,12 @@ const Route = types.Route;
 
 pub const Runtime = struct {
     pub const configuration_bound_filter = true;
+    /// The configuration cache allocation also carries the optional volatile
+    /// producer-rendered JSON cache, keeping the Runtime object size unchanged.
+    pub const Caches = struct {
+        render_cache: ?*RenderCache = null,
+        channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
+    };
     pub const TestingHooks = if (@import("builtin").is_test) struct {
         pub threadlocal var after_snapshot: ?*const fn (*anyopaque) void = null;
         pub threadlocal var context: ?*anyopaque = null;
@@ -120,8 +128,16 @@ pub const Runtime = struct {
         return @ptrCast(@alignCast(self.configuration_handle));
     }
 
-    fn channelCaches(self: *Runtime) *[64]configurations.Manager.ChannelCache {
+    fn runtimeCaches(self: *Runtime) *Caches {
         return @ptrCast(@alignCast(self.configuration_cache_handle));
+    }
+
+    fn channelCaches(self: *Runtime) *[64]configurations.Manager.ChannelCache {
+        return &self.runtimeCaches().channels;
+    }
+
+    fn renderCache(self: *Runtime) ?*RenderCache {
+        return self.runtimeCaches().render_cache;
     }
 
     pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*Runtime {
@@ -732,10 +748,29 @@ pub const Runtime = struct {
                     self.reportError(err);
                     return err;
                 };
+                // Optional producer-side render. The binary journal stays the
+                // recovery source; the volatile cache only lets the consumer
+                // write pre-rendered bytes. Publish before commit so a
+                // committed record always has a visible render.
+                var render_claim: ?RenderCache.Claim = null;
+                if (definition == null and binding == null and producer_token == null and destination == self.journal and event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
+                    const route = &snapshot.routes[0];
+                    const redacted = if (route.policy) |policy| policy.redactor != null else false;
+                    if (!redacted) if (self.renderCache()) |cache| if (cache.claim(reservation.sequence)) |claim| {
+                        var writer = std.Io.Writer.fixed(claim.buffer);
+                        if (common.encodeDecoded(.json, event.*, route.timestamp, &writer)) |_| {
+                            claim.publish(writer.buffered().len);
+                            render_claim = claim;
+                        } else |_| {
+                            claim.abort();
+                        }
+                    };
+                }
                 // Retain before publishing: the collector can consume the
                 // record immediately after the release commit marker.
                 snapshot.retainChannel(event.channel);
                 reservation.commit(payload.len) catch |err| {
+                    if (render_claim) |claim| claim.abort();
                     snapshot.releaseChannel(event.channel);
                     return err;
                 };
@@ -876,6 +911,7 @@ pub const Runtime = struct {
 
     fn drainJournal(self: *Runtime, journal: *Journal) !bool {
         var worked = false;
+        const render_cache = if (self.journal) |shared| (if (shared == journal) self.renderCache() else null) else null;
         var records: [delivery_batch.max_records]JournalModule.Record = undefined;
         var channels: [delivery_batch.max_records]u32 = undefined;
         var snapshots: [delivery_batch.max_records]*configurations.Snapshot = undefined;
@@ -903,6 +939,7 @@ pub const Runtime = struct {
             defer written_counts.flush();
             for (batch, 0..) |record, index| {
                 var fields: [codec.decode_scratch_fields]Field = undefined;
+                const preformatted = if (render_cache) |cache| cache.lookup(record.sequence) else null;
                 const definition: ?schema_module.Definition = if (record.schema_ref) |reference|
                     (if (@hasDecl(Journal, "resolveReadySchema")) try journal.resolveReadySchema(reference) else try journal.resolveSchema(reference))
                 else
@@ -931,7 +968,8 @@ pub const Runtime = struct {
                         if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
                         return error.UnknownRoute;
                     }
-                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
+                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, preformatted, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
+                    if (render_cache) |cache| cache.clear(record.sequence);
                     channels[index] = header.event.channel;
                     snapshots[index] = snapshot;
                     boundaries[index] = group.include(header.event.route_mask);
@@ -943,6 +981,7 @@ pub const Runtime = struct {
                 const snapshot = group.snapshot();
                 if (event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;
                 try self.deliverWith(snapshot, event);
+                if (render_cache) |cache| cache.clear(record.sequence);
                 channels[index] = event.channel;
                 snapshots[index] = snapshot;
                 boundaries[index] = group.include(event.route_mask);
@@ -1432,7 +1471,8 @@ pub const Runtime = struct {
         cleanup_owner = self;
         defer cleanup_owner = previous_cleanup;
         self.configurationManager().destroy();
-        allocator.destroy(self.channelCaches());
+        if (self.renderCache()) |cache| cache.destroy();
+        allocator.destroy(self.runtimeCaches());
         self.dynamicFilter().destroy();
         allocator.free(self.output);
         allocator.destroy(self);
@@ -1440,6 +1480,7 @@ pub const Runtime = struct {
 };
 
 test {
+    _ = @import("render_cache.zig");
     _ = @import("tests/runtime_queue_progress.zig");
     _ = @import("tests/runtime_coalesced.zig");
     _ = @import("tests/runtime.zig");

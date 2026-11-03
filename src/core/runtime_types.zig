@@ -103,6 +103,11 @@ pub const Options = struct {
     max_configuration_bytes: usize = 2 * 1024 * 1024,
     initial_route_generation: u64 = 1,
     recovery_versions: []const RecoveryVersion = &.{},
+    /// Opt-in producer-rendered JSON cache for a single inline JSON route on
+    /// the shared asynchronous journal. The cache is volatile; recovery and
+    /// any miss fall back to the deferred consumer renderer.
+    render_cache: bool = false,
+    render_cache_record_bytes: usize = 0,
 };
 
 pub const Health = struct {

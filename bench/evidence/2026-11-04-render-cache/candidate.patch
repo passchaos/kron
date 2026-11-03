@@ -1,0 +1,345 @@
+diff --git a/bench/cpp_reference/kron_reference.zig b/bench/cpp_reference/kron_reference.zig
+index 8e9dcda..fbcc910 100644
+--- a/bench/cpp_reference/kron_reference.zig
++++ b/bench/cpp_reference/kron_reference.zig
+@@ -17,6 +17,7 @@ const Options = struct {
+     schema: bool = false,
+     consumer_batches: usize = 4,
+     backend: BackendKind = .portable,
++    render_cache: bool = false,
+ };
+ 
+ const Gate = struct {
+@@ -151,6 +152,8 @@ pub fn main(init: std.process.Init) !void {
+             .max_journal_bytes = 32 * 1024 * 1024,
+             .max_encoded_record_bytes = 512,
+             .consumer_batches_per_queue = options.consumer_batches,
++            .render_cache = options.render_cache,
++            .render_cache_record_bytes = if (options.render_cache) options.max_record_bytes else 0,
+             .format = .json,
+             .overflow = .block,
+         }},
+@@ -166,6 +169,8 @@ pub fn main(init: std.process.Init) !void {
+         .overflow = .block,
+         .idle = .sleep,
+         .consumer_batches_per_queue = options.consumer_batches,
++        .render_cache = options.render_cache,
++        .render_cache_record_bytes = if (options.render_cache) options.max_record_bytes else 0,
+         .routes = &.{.{ .name = "reference", .sink = file.?.sink(), .format = .json }},
+     });
+     var runtime_live = true;
+@@ -336,6 +341,8 @@ fn parse(arguments: []const []const u8) !Options {
+             if (result.consumer_batches == 0 or result.consumer_batches > 4) return error.InvalidBudget;
+         } else if (std.mem.eql(u8, key, "--backend")) {
+             result.backend = std.meta.stringToEnum(BackendKind, value) orelse return error.InvalidBackend;
++        } else if (std.mem.eql(u8, key, "--render-cache")) {
++            result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
+         } else {
+             const count = try std.fmt.parseInt(usize, value, 10);
+             if (std.mem.eql(u8, key, "--events")) {
+@@ -358,6 +365,7 @@ fn parse(arguments: []const []const u8) !Options {
+         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
+         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
+     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
++    if (result.render_cache and (result.schema or std.mem.eql(u8, result.mode, "spsc"))) return error.RenderCacheUnsupported;
+     return result;
+ }
+ fn share(total: usize, producers: usize, id: usize) usize {
+diff --git a/bench/cpp_reference/run.py b/bench/cpp_reference/run.py
+index 83297f4..ee18e56 100644
+--- a/bench/cpp_reference/run.py
++++ b/bench/cpp_reference/run.py
+@@ -235,6 +235,7 @@ def main():
+     parser.add_argument("--kron-modes", default="async,spsc")
+     parser.add_argument("--kron-storages", default="memory,mmap")
+     parser.add_argument("--kron-schema", choices=("off", "on", "both"), default="off")
++    parser.add_argument("--kron-render-cache", action="store_true")
+     parser.add_argument("--metadata", choices=("minimal", "full", "default_text", "native_tracing"), default="full")
+     parser.add_argument("--affinity", default="auto")
+     parser.add_argument("--discard-artifacts", action="store_true")
+@@ -330,7 +331,7 @@ def main():
+                 artifact = artifacts / f"{name}-{strategy}-p{producer}-{phase}-r{repetition}.jsonl"
+                 command = [str(binaries[name]), f"--output={artifact}", f"--events={options.events}", f"--warmup={options.warmup}",
+                            f"--producers={producer}", f"--phase={phase}", "--queue-slots=256",
+-                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}"] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
++                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}", *(["--render-cache=true"] if options.kron_render_cache and producer == 4 and strategy.startswith("async") and not strategy.endswith("-schema") else [])] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
+                 row = {"status": "failed", "library": name, "strategy": strategy, "phase": phase,
+                        "producers": producer, "repetition": repetition, "command": command, "artifact": str(artifact)}
+                 if name in timed_out_libraries:
+diff --git a/src/core/delivery.zig b/src/core/delivery.zig
+index 0a471e2..aa02419 100644
+--- a/src/core/delivery.zig
++++ b/src/core/delivery.zig
+@@ -102,7 +102,7 @@ pub fn needsDurableReclaim(routes: []const types.Route, mask: u64) bool {
+ 
+ /// Fused consumer path for one JSON route. Returns false when the payload or
+ /// route shape is not eligible; the caller then uses the normal decode path.
+-pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, definition: ?@import("schema_codec.zig").Definition, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
++pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, definition: ?@import("schema_codec.zig").Definition, preformatted: ?[]const u8, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
+     var matched: ?*const types.Route = null;
+     var count: usize = 0;
+     for (routes, 0..) |*route, index| {
+@@ -119,19 +119,21 @@ pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8
+         .logfmt => .logfmt,
+         .binary => return false,
+     };
+-    const rendered = if (definition) |canonical|
+-        wire_json.renderReference(format, payload, header, canonical, output, keys, route.timestamp)
+-    else
+-        wire_json.render(format, payload, header, output, keys, route.timestamp);
+-    const bytes = rendered catch |err| switch (err) {
+-        error.Fallback => return false,
+-        error.WriteFailed => {
+-            // A short output scratch must not hide a later schema/value error.
+-            // The materialized decoder historically validates before encoding.
+-            if (definition) |canonical| _ = try @import("schema_codec.zig").resolve(payload, canonical, keys);
+-            return error.EncodedRecordTooLarge;
+-        },
+-        else => return err,
++    const bytes = if (preformatted) |bytes| bytes else blk: {
++        const rendered = if (definition) |canonical|
++            wire_json.renderReference(format, payload, header, canonical, output, keys, route.timestamp)
++        else
++            wire_json.render(format, payload, header, output, keys, route.timestamp);
++        break :blk rendered catch |err| switch (err) {
++            error.Fallback => return false,
++            error.WriteFailed => {
++                // A short output scratch must not hide a later schema/value error.
++                // The materialized decoder historically validates before encoding.
++                if (definition) |canonical| _ = try @import("schema_codec.zig").resolve(payload, canonical, keys);
++                return error.EncodedRecordTooLarge;
++            },
++            else => return err,
++        };
+     };
+     if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (bytes.len > limit) {
+         diagnostics.note(error.EncodedRecordTooLarge, .write);
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index a4581f1..88794e3 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -12,6 +12,7 @@ const prepared_module = @import("prepared.zig");
+ const schema_site = @import("../submit/schema_site.zig");
+ pub const SchemaBinding = prepared_module.Binding;
+ const encoder = @import("../encoder/root.zig");
++const common = @import("../encoder/common.zig");
+ const delivery = @import("delivery.zig");
+ const delivery_batch = @import("delivery_batch.zig");
+ const configurations = @import("../config/routes.zig");
+@@ -42,6 +43,7 @@ const cut_bit = admission_protocol.cut_bit;
+ const count_mask = admission_protocol.count_mask;
+ const SinkFrame = struct { owner: *Runtime, previous: ?*const SinkFrame };
+ const ReleaseKey = struct { snapshot: *configurations.Snapshot, channel: u32, count: usize };
++const RenderCache = @import("render_cache.zig").RenderCache;
+ threadlocal var sink_frame: ?*const SinkFrame = null;
+ threadlocal var cleanup_owner: ?*Runtime = null;
+ 
+@@ -64,6 +66,12 @@ const Route = types.Route;
+ 
+ pub const Runtime = struct {
+     pub const configuration_bound_filter = true;
++    /// The configuration cache allocation also carries the optional volatile
++    /// producer-rendered JSON cache, keeping the Runtime object size unchanged.
++    pub const Caches = struct {
++        render_cache: ?*RenderCache = null,
++        channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
++    };
+     pub const TestingHooks = if (@import("builtin").is_test) struct {
+         pub threadlocal var after_snapshot: ?*const fn (*anyopaque) void = null;
+         pub threadlocal var context: ?*anyopaque = null;
+@@ -120,10 +128,18 @@ pub const Runtime = struct {
+         return @ptrCast(@alignCast(self.configuration_handle));
+     }
+ 
+-    fn channelCaches(self: *Runtime) *[64]configurations.Manager.ChannelCache {
++    fn runtimeCaches(self: *Runtime) *Caches {
+         return @ptrCast(@alignCast(self.configuration_cache_handle));
+     }
+ 
++    fn channelCaches(self: *Runtime) *[64]configurations.Manager.ChannelCache {
++        return &self.runtimeCaches().channels;
++    }
++
++    fn renderCache(self: *Runtime) ?*RenderCache {
++        return self.runtimeCaches().render_cache;
++    }
++
+     pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*Runtime {
+         return @import("runtime_init.zig").create(allocator, io, options, workerMain, runControl, decodeRecord);
+     }
+@@ -732,10 +748,29 @@ pub const Runtime = struct {
+                     self.reportError(err);
+                     return err;
+                 };
++                // Optional producer-side render. The binary journal stays the
++                // recovery source; the volatile cache only lets the consumer
++                // write pre-rendered bytes. Publish before commit so a
++                // committed record always has a visible render.
++                var render_claim: ?RenderCache.Claim = null;
++                if (definition == null and binding == null and producer_token == null and destination == self.journal and event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
++                    const route = &snapshot.routes[0];
++                    const redacted = if (route.policy) |policy| policy.redactor != null else false;
++                    if (!redacted) if (self.renderCache()) |cache| if (cache.claim(reservation.sequence)) |claim| {
++                        var writer = std.Io.Writer.fixed(claim.buffer);
++                        if (common.encodeDecoded(.json, event.*, route.timestamp, &writer)) |_| {
++                            claim.publish(writer.buffered().len);
++                            render_claim = claim;
++                        } else |_| {
++                            claim.abort();
++                        }
++                    };
++                }
+                 // Retain before publishing: the collector can consume the
+                 // record immediately after the release commit marker.
+                 snapshot.retainChannel(event.channel);
+                 reservation.commit(payload.len) catch |err| {
++                    if (render_claim) |claim| claim.abort();
+                     snapshot.releaseChannel(event.channel);
+                     return err;
+                 };
+@@ -876,6 +911,7 @@ pub const Runtime = struct {
+ 
+     fn drainJournal(self: *Runtime, journal: *Journal) !bool {
+         var worked = false;
++        const render_cache = if (self.journal) |shared| (if (shared == journal) self.renderCache() else null) else null;
+         var records: [delivery_batch.max_records]JournalModule.Record = undefined;
+         var channels: [delivery_batch.max_records]u32 = undefined;
+         var snapshots: [delivery_batch.max_records]*configurations.Snapshot = undefined;
+@@ -903,6 +939,7 @@ pub const Runtime = struct {
+             defer written_counts.flush();
+             for (batch, 0..) |record, index| {
+                 var fields: [codec.decode_scratch_fields]Field = undefined;
++                const preformatted = if (render_cache) |cache| cache.lookup(record.sequence) else null;
+                 const definition: ?schema_module.Definition = if (record.schema_ref) |reference|
+                     (if (@hasDecl(Journal, "resolveReadySchema")) try journal.resolveReadySchema(reference) else try journal.resolveSchema(reference))
+                 else
+@@ -931,7 +968,8 @@ pub const Runtime = struct {
+                         if (definition) |canonical| _ = try schema_codec.resolve(record.payload, canonical, &fields);
+                         return error.UnknownRoute;
+                     }
+-                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
++                    if (!try delivery.emitWireFused(snapshot.routes, header.event.route_mask, record.payload, header, definition, preformatted, self.output, &fields, self.deliveryDiagnostics())) break :blk false;
++                    if (render_cache) |cache| cache.clear(record.sequence);
+                     channels[index] = header.event.channel;
+                     snapshots[index] = snapshot;
+                     boundaries[index] = group.include(header.event.route_mask);
+@@ -943,6 +981,7 @@ pub const Runtime = struct {
+                 const snapshot = group.snapshot();
+                 if (event.route_mask >> @intCast(snapshot.routes.len % 64) != 0 and snapshot.routes.len != 64) return error.UnknownRoute;
+                 try self.deliverWith(snapshot, event);
++                if (render_cache) |cache| cache.clear(record.sequence);
+                 channels[index] = event.channel;
+                 snapshots[index] = snapshot;
+                 boundaries[index] = group.include(event.route_mask);
+@@ -1432,7 +1471,8 @@ pub const Runtime = struct {
+         cleanup_owner = self;
+         defer cleanup_owner = previous_cleanup;
+         self.configurationManager().destroy();
+-        allocator.destroy(self.channelCaches());
++        if (self.renderCache()) |cache| cache.destroy();
++        allocator.destroy(self.runtimeCaches());
+         self.dynamicFilter().destroy();
+         allocator.free(self.output);
+         allocator.destroy(self);
+@@ -1440,6 +1480,7 @@ pub const Runtime = struct {
+ };
+ 
+ test {
++    _ = @import("render_cache.zig");
+     _ = @import("tests/runtime_queue_progress.zig");
+     _ = @import("tests/runtime_coalesced.zig");
+     _ = @import("tests/runtime.zig");
+diff --git a/src/core/runtime_init.zig b/src/core/runtime_init.zig
+index 1c29894..e0c2766 100644
+--- a/src/core/runtime_init.zig
++++ b/src/core/runtime_init.zig
+@@ -17,6 +17,7 @@ const redact_module = @import("../pipeline/redact.zig");
+ const diagnostics_module = @import("diagnostics.zig");
+ const control_module = @import("control.zig");
+ const configurations = @import("../config/routes.zig");
++const RenderCache = @import("render_cache.zig").RenderCache;
+ 
+ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, comptime worker_callback: anytype, comptime control_callback: anytype, comptime decode_callback: anytype) !*Runtime {
+     if (builtin.single_threaded and options.submission != .sync) return error.ThreadsUnavailable;
+@@ -31,6 +32,10 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
+     if (options.memory_queue != null and options.recovery_versions.len != 0) return error.RecoveryRequiresMmap;
+     if (options.memory_queue != null) for (options.routes) |*route| if (route.reclaim_after == .durable) return error.DurableReclaimRequiresMmap;
+     if (options.submission == .low_latency and options.max_thread_channels == 0) return error.ThreadChannelsRequired;
++    if (options.render_cache) {
++        if (queue_options == null or options.max_thread_channels != 0) return error.RenderCacheUnsupported;
++        if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
++    }
+     if (queue_options) |journal_options| {
+         const layout = try @import("../journal/format.zig").layout(journal_options.capacity, journal_options.max_record_bytes);
+         var total = if (journal_options.schema_capacity == 0) layout.size else (try schema_module.layout(layout.size, journal_options.schema_capacity, journal_options.max_schema_bytes)).size;
+@@ -67,11 +72,16 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
+         for (version.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
+         try configuration.addRecovery(version.generation, version.routes, version.policy);
+     }
+-    const caches = try allocator.create([64]configurations.Manager.ChannelCache);
++    const caches = try allocator.create(Runtime.Caches);
+     errdefer allocator.destroy(caches);
+-    caches.* = @splat(.{ .channel = 0 });
++    caches.* = .{};
+     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
+     errdefer if (journal) |j| j.deinit();
++    if (options.render_cache) {
++        const cache = try RenderCache.create(allocator, journal.?.capacity, options.render_cache_record_bytes);
++        caches.render_cache = cache;
++    }
++    errdefer if (caches.render_cache) |cache| cache.destroy();
+     var identity: [8]u8 = undefined;
+     try io.randomSecure(&identity);
+     self.* = .{
+diff --git a/src/core/runtime_types.zig b/src/core/runtime_types.zig
+index e34af31..1042156 100644
+--- a/src/core/runtime_types.zig
++++ b/src/core/runtime_types.zig
+@@ -103,6 +103,11 @@ pub const Options = struct {
+     max_configuration_bytes: usize = 2 * 1024 * 1024,
+     initial_route_generation: u64 = 1,
+     recovery_versions: []const RecoveryVersion = &.{},
++    /// Opt-in producer-rendered JSON cache for a single inline JSON route on
++    /// the shared asynchronous journal. The cache is volatile; recovery and
++    /// any miss fall back to the deferred consumer renderer.
++    render_cache: bool = false,
++    render_cache_record_bytes: usize = 0,
+ };
+ 
+ pub const Health = struct {
+diff --git a/src/logging/configuration.zig b/src/logging/configuration.zig
+index 575e5d0..227886b 100644
+--- a/src/logging/configuration.zig
++++ b/src/logging/configuration.zig
+@@ -28,6 +28,10 @@ pub const Route = struct {
+     max_encoded_record_bytes: usize = 64 * 1024,
+     max_journal_bytes: usize = 256 * 1024 * 1024,
+     consumer_batches_per_queue: usize = 4,
++    /// Opt-in producer-rendered JSON cache for a single asynchronous JSON
++    /// route. Volatile; misses and recovery use the deferred renderer.
++    render_cache: bool = false,
++    render_cache_record_bytes: usize = 1024,
+     diagnostics: @import("../core/diagnostics.zig").Options = .{},
+ };
+ pub const Options = struct {
+@@ -88,6 +92,7 @@ pub fn validate(options: Options) !void {
+         if (d.mode != .sync and d.queue.? == .none) return error.JournalRequired;
+         if (d.mode == .spsc and (d.max_threads == 0 or d.max_threads > 64)) return error.InvalidThreadBudget;
+         if (d.consumer_batches_per_queue == 0 or d.consumer_batches_per_queue > 4 or d.max_encoded_record_bytes == 0 or d.max_encoded_record_bytes > std.math.maxInt(u32)) return error.InvalidOptions;
++        if (d.render_cache and (d.mode != .asynchronous or d.format != .json or d.render_cache_record_bytes == 0 or d.render_cache_record_bytes > d.max_encoded_record_bytes)) return error.InvalidRenderCache;
+         if (d.queue.? == .mmap and (d.queue.?.mmap.path.len == 0 or (route.target != .file and route.target != .rolling_file))) return error.MmapRequiresFileOutput;
+         if (d.mode != .sync and d.reclaim_after == .durable and d.queue.? != .mmap) return error.DurableReclaimRequiresMmap;
+         try validatePaths(options, index, d);
+diff --git a/src/logging/root.zig b/src/logging/root.zig
+index 4500fc8..0dd50c9 100644
+--- a/src/logging/root.zig
++++ b/src/logging/root.zig
+@@ -79,6 +79,8 @@ pub const Logging = struct {
+                 .max_journal_bytes = d.max_journal_bytes,
+                 .max_encoded_record_bytes = d.max_encoded_record_bytes,
+                 .consumer_batches_per_queue = d.consumer_batches_per_queue,
++                .render_cache = d.render_cache,
++                .render_cache_record_bytes = if (d.render_cache) d.render_cache_record_bytes else 0,
+                 .filter = d.filter,
+                 .overflow = d.overflow,
+                 .redaction = d.redaction,

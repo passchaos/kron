@@ -28,6 +28,10 @@ pub const Route = struct {
     max_encoded_record_bytes: usize = 64 * 1024,
     max_journal_bytes: usize = 256 * 1024 * 1024,
     consumer_batches_per_queue: usize = 4,
+    /// Opt-in producer-rendered JSON cache for a single asynchronous JSON
+    /// route. Volatile; misses and recovery use the deferred renderer.
+    render_cache: bool = false,
+    render_cache_record_bytes: usize = 1024,
     diagnostics: @import("../core/diagnostics.zig").Options = .{},
 };
 pub const Options = struct {
@@ -88,6 +92,7 @@ pub fn validate(options: Options) !void {
         if (d.mode != .sync and d.queue.? == .none) return error.JournalRequired;
         if (d.mode == .spsc and (d.max_threads == 0 or d.max_threads > 64)) return error.InvalidThreadBudget;
         if (d.consumer_batches_per_queue == 0 or d.consumer_batches_per_queue > 4 or d.max_encoded_record_bytes == 0 or d.max_encoded_record_bytes > std.math.maxInt(u32)) return error.InvalidOptions;
+        if (d.render_cache and (d.mode != .asynchronous or d.format != .json or d.render_cache_record_bytes == 0 or d.render_cache_record_bytes > d.max_encoded_record_bytes)) return error.InvalidRenderCache;
         if (d.queue.? == .mmap and (d.queue.?.mmap.path.len == 0 or (route.target != .file and route.target != .rolling_file))) return error.MmapRequiresFileOutput;
         if (d.mode != .sync and d.reclaim_after == .durable and d.queue.? != .mmap) return error.DurableReclaimRequiresMmap;
         try validatePaths(options, index, d);

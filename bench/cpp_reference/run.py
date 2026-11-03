@@ -235,6 +235,7 @@ def main():
     parser.add_argument("--kron-modes", default="async,spsc")
     parser.add_argument("--kron-storages", default="memory,mmap")
     parser.add_argument("--kron-schema", choices=("off", "on", "both"), default="off")
+    parser.add_argument("--kron-render-cache", action="store_true")
     parser.add_argument("--metadata", choices=("minimal", "full", "default_text", "native_tracing"), default="full")
     parser.add_argument("--affinity", default="auto")
     parser.add_argument("--discard-artifacts", action="store_true")
@@ -330,7 +331,7 @@ def main():
                 artifact = artifacts / f"{name}-{strategy}-p{producer}-{phase}-r{repetition}.jsonl"
                 command = [str(binaries[name]), f"--output={artifact}", f"--events={options.events}", f"--warmup={options.warmup}",
                            f"--producers={producer}", f"--phase={phase}", "--queue-slots=256",
-                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}"] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
+                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}", *(["--render-cache=true"] if options.kron_render_cache and producer == 4 and strategy.startswith("async") and not strategy.endswith("-schema") else [])] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
                 row = {"status": "failed", "library": name, "strategy": strategy, "phase": phase,
                        "producers": producer, "repetition": repetition, "command": command, "artifact": str(artifact)}
                 if name in timed_out_libraries:

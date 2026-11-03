@@ -102,7 +102,7 @@ pub fn needsDurableReclaim(routes: []const types.Route, mask: u64) bool {
 
 /// Fused consumer path for one JSON route. Returns false when the payload or
 /// route shape is not eligible; the caller then uses the normal decode path.
-pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, definition: ?@import("schema_codec.zig").Definition, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
+pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8, header: codec.EventHeader, definition: ?@import("schema_codec.zig").Definition, preformatted: ?[]const u8, output: []u8, keys: []field.Field, diagnostics: ErrorRecorder) !bool {
     var matched: ?*const types.Route = null;
     var count: usize = 0;
     for (routes, 0..) |*route, index| {
@@ -119,19 +119,21 @@ pub fn emitWireFused(routes: []const types.Route, mask: u64, payload: []const u8
         .logfmt => .logfmt,
         .binary => return false,
     };
-    const rendered = if (definition) |canonical|
-        wire_json.renderReference(format, payload, header, canonical, output, keys, route.timestamp)
-    else
-        wire_json.render(format, payload, header, output, keys, route.timestamp);
-    const bytes = rendered catch |err| switch (err) {
-        error.Fallback => return false,
-        error.WriteFailed => {
-            // A short output scratch must not hide a later schema/value error.
-            // The materialized decoder historically validates before encoding.
-            if (definition) |canonical| _ = try @import("schema_codec.zig").resolve(payload, canonical, keys);
-            return error.EncodedRecordTooLarge;
-        },
-        else => return err,
+    const bytes = if (preformatted) |bytes| bytes else blk: {
+        const rendered = if (definition) |canonical|
+            wire_json.renderReference(format, payload, header, canonical, output, keys, route.timestamp)
+        else
+            wire_json.render(format, payload, header, output, keys, route.timestamp);
+        break :blk rendered catch |err| switch (err) {
+            error.Fallback => return false,
+            error.WriteFailed => {
+                // A short output scratch must not hide a later schema/value error.
+                // The materialized decoder historically validates before encoding.
+                if (definition) |canonical| _ = try @import("schema_codec.zig").resolve(payload, canonical, keys);
+                return error.EncodedRecordTooLarge;
+            },
+            else => return err,
+        };
     };
     if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (bytes.len > limit) {
         diagnostics.note(error.EncodedRecordTooLarge, .write);

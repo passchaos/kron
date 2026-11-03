@@ -17,6 +17,7 @@ const Options = struct {
     schema: bool = false,
     consumer_batches: usize = 4,
     backend: BackendKind = .portable,
+    render_cache: bool = false,
 };
 
 const Gate = struct {
@@ -151,6 +152,8 @@ pub fn main(init: std.process.Init) !void {
             .max_journal_bytes = 32 * 1024 * 1024,
             .max_encoded_record_bytes = 512,
             .consumer_batches_per_queue = options.consumer_batches,
+            .render_cache = options.render_cache,
+            .render_cache_record_bytes = if (options.render_cache) options.max_record_bytes else 0,
             .format = .json,
             .overflow = .block,
         }},
@@ -166,6 +169,8 @@ pub fn main(init: std.process.Init) !void {
         .overflow = .block,
         .idle = .sleep,
         .consumer_batches_per_queue = options.consumer_batches,
+        .render_cache = options.render_cache,
+        .render_cache_record_bytes = if (options.render_cache) options.max_record_bytes else 0,
         .routes = &.{.{ .name = "reference", .sink = file.?.sink(), .format = .json }},
     });
     var runtime_live = true;
@@ -336,6 +341,8 @@ fn parse(arguments: []const []const u8) !Options {
             if (result.consumer_batches == 0 or result.consumer_batches > 4) return error.InvalidBudget;
         } else if (std.mem.eql(u8, key, "--backend")) {
             result.backend = std.meta.stringToEnum(BackendKind, value) orelse return error.InvalidBackend;
+        } else if (std.mem.eql(u8, key, "--render-cache")) {
+            result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
         } else {
             const count = try std.fmt.parseInt(usize, value, 10);
             if (std.mem.eql(u8, key, "--events")) {
@@ -358,6 +365,7 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
+    if (result.render_cache and (result.schema or std.mem.eql(u8, result.mode, "spsc"))) return error.RenderCacheUnsupported;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {

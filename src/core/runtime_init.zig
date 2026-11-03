@@ -17,6 +17,7 @@ const redact_module = @import("../pipeline/redact.zig");
 const diagnostics_module = @import("diagnostics.zig");
 const control_module = @import("control.zig");
 const configurations = @import("../config/routes.zig");
+const RenderCache = @import("render_cache.zig").RenderCache;
 
 pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, comptime worker_callback: anytype, comptime control_callback: anytype, comptime decode_callback: anytype) !*Runtime {
     if (builtin.single_threaded and options.submission != .sync) return error.ThreadsUnavailable;
@@ -31,6 +32,10 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     if (options.memory_queue != null and options.recovery_versions.len != 0) return error.RecoveryRequiresMmap;
     if (options.memory_queue != null) for (options.routes) |*route| if (route.reclaim_after == .durable) return error.DurableReclaimRequiresMmap;
     if (options.submission == .low_latency and options.max_thread_channels == 0) return error.ThreadChannelsRequired;
+    if (options.render_cache) {
+        if (queue_options == null or options.max_thread_channels != 0) return error.RenderCacheUnsupported;
+        if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
+    }
     if (queue_options) |journal_options| {
         const layout = try @import("../journal/format.zig").layout(journal_options.capacity, journal_options.max_record_bytes);
         var total = if (journal_options.schema_capacity == 0) layout.size else (try schema_module.layout(layout.size, journal_options.schema_capacity, journal_options.max_schema_bytes)).size;
@@ -67,11 +72,16 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
         for (version.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
         try configuration.addRecovery(version.generation, version.routes, version.policy);
     }
-    const caches = try allocator.create([64]configurations.Manager.ChannelCache);
+    const caches = try allocator.create(Runtime.Caches);
     errdefer allocator.destroy(caches);
-    caches.* = @splat(.{ .channel = 0 });
+    caches.* = .{};
     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
     errdefer if (journal) |j| j.deinit();
+    if (options.render_cache) {
+        const cache = try RenderCache.create(allocator, journal.?.capacity, options.render_cache_record_bytes);
+        caches.render_cache = cache;
+    }
+    errdefer if (caches.render_cache) |cache| cache.destroy();
     var identity: [8]u8 = undefined;
     try io.randomSecure(&identity);
     self.* = .{
