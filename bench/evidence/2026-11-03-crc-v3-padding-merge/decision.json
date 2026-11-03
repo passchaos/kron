@@ -1,0 +1,147 @@
+{
+  "status": "rejected_at_control_negative_gate",
+  "baseline_commit": "185e70051172eb01906547b97fd971fab327f7b7",
+  "candidate": "V3 schema journal CRC covers reference plus zero padding and folds them with the payload in one update; V1/V2 journals remain readable",
+  "static_gate": "pass: V3 golden/oracle equality and V2 goldens unchanged; named format/journal/recovery/reader/progress cases in native Debug/Safe/Fast and generic Safe; V1/V2 slotChecksum byte-identical 156B/48 instructions/3 calls; producer frame0xd18; general CRC1412B/20 PCLMUL; Journal768/Runtime12800/Field48; rodata growth0",
+  "correctness": "V3 tests plus 21 named validation/CRC/Journal/Reader/progress cases passed in four configurations",
+  "final_workflow": {
+    "ecore": {
+      "trials": 320,
+      "physical_records_verified": 32320000,
+      "schemas": {
+        "inline": {
+          "axis_counts": {
+            "inconclusive": 101,
+            "peer_leads": 2,
+            "kron_leads": 1
+          },
+          "qualified_negatives": [
+            {
+              "mode": "async",
+              "storage": "mmap",
+              "producers": 1,
+              "phase": "batch",
+              "schema": false,
+              "metric": "written_records_per_sec",
+              "kron_median": 1833215.2162215936,
+              "peer_median": 1854696.2690039598,
+              "paired_speed_ratio": 0.9986027589862726,
+              "paired_ratio_ci95": [
+                0.9578407436600627,
+                0.9995269204813019
+              ]
+            },
+            {
+              "mode": "async",
+              "storage": "mmap",
+              "producers": 1,
+              "phase": "batch",
+              "schema": false,
+              "metric": "written_flush_records_per_sec",
+              "kron_median": 1837982.639077665,
+              "peer_median": 1859536.1439156015,
+              "paired_speed_ratio": 0.9983667737800821,
+              "paired_ratio_ci95": [
+                0.9590870497709533,
+                0.9993262874636462
+              ]
+            }
+          ]
+        },
+        "schema": {
+          "axis_counts": {
+            "kron_leads": 41,
+            "inconclusive": 63
+          },
+          "qualified_negatives": []
+        }
+      }
+    },
+    "pcore": {
+      "trials": 320,
+      "physical_records_verified": 32320000,
+      "schemas": {
+        "inline": {
+          "axis_counts": {
+            "inconclusive": 104
+          },
+          "qualified_negatives": []
+        },
+        "schema": {
+          "axis_counts": {
+            "inconclusive": 104
+          },
+          "qualified_negatives": []
+        }
+      }
+    }
+  },
+  "isolation_iterations": {
+    "unseparated_inline_switch": {
+      "ecore_inline": {
+        "inconclusive": 86,
+        "kron_leads": 5,
+        "peer_leads": 13
+      },
+      "ecore_schema": {
+        "kron_leads": 50,
+        "inconclusive": 54
+      }
+    },
+    "isolated_inline": {
+      "ecore_inline": {
+        "inconclusive": 101,
+        "peer_leads": 2,
+        "kron_leads": 1
+      },
+      "ecore_schema": {
+        "kron_leads": 41,
+        "inconclusive": 63
+      }
+    },
+    "isolated_noinline": {
+      "ecore_inline": {
+        "inconclusive": 83,
+        "peer_leads": 20,
+        "kron_leads": 1
+      },
+      "ecore_schema": {
+        "kron_leads": 49,
+        "inconclusive": 55
+      }
+    }
+  },
+  "control_confirmation": [
+    {
+      "mode": "async",
+      "storage": "mmap",
+      "producers": 1,
+      "phase": "batch",
+      "schema": false,
+      "metric": "written_records_per_sec",
+      "assessment": "inconclusive",
+      "paired_speed_ratio": 1.0036880601658211,
+      "paired_ratio_ci95": [
+        0.9854998709238674,
+        1.006840872321761
+      ]
+    },
+    {
+      "mode": "async",
+      "storage": "mmap",
+      "producers": 1,
+      "phase": "batch",
+      "schema": false,
+      "metric": "written_flush_records_per_sec",
+      "assessment": "inconclusive",
+      "paired_speed_ratio": 0.9862416548841759,
+      "paired_ratio_ci95": [
+        0.9739324033555937,
+        1.0209866980348148
+      ]
+    }
+  ],
+  "reason": "The V3 treatment groups produced 41 qualified leads with zero negatives on E-core, but the V1 control groups produced two qualified negatives (async mmap P1 batch written 0.99860 and written+flush 0.99837). Both control axes were inconclusive in a targeted five-round rerun, so the regression is not reproducible, but the predeclared full-run gate rejects the candidate.",
+  "production": "unchanged 185e700; no Foundation trial, no ranking update, no speed or tail qualification retained",
+  "goal_met": false
+}

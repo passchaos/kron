@@ -58,6 +58,7 @@ fn refreshSlotCRC(journal: *kron.Journal, slot: usize) void {
     var crc = std.hash.Crc32.init();
     crc.update(&header);
     crc.update(bytes[32..56]);
+    if (journal.file_version == 3) crc.update(bytes[56..64]);
     crc.update(bytes[64..][0..length]);
     std.mem.writeInt(u32, bytes[28..32], crc.final(), .little);
 }
@@ -549,9 +550,10 @@ test "v2 schema extension corruption and journal version changes are diagnosed" 
     std.mem.writeInt(u16, journal.mapping.bytes[264..266], 99, .little);
     try testing.expectError(error.UnsupportedSchemaVersion, kron.archive.Reader.open(testing.allocator, testing.io, path));
     std.mem.writeInt(u16, journal.mapping.bytes[264..266], 1, .little);
+    const original_version = std.mem.readInt(u32, journal.mapping.bytes[8..12], .little);
     std.mem.writeInt(u32, journal.mapping.bytes[8..12], 99, .little);
     try testing.expectError(error.UnsupportedVersion, kron.archive.Reader.open(testing.allocator, testing.io, path));
-    std.mem.writeInt(u32, journal.mapping.bytes[8..12], 2, .little);
+    std.mem.writeInt(u32, journal.mapping.bytes[8..12], original_version, .little);
     try testing.expect(try reader.next() == null);
 }
 

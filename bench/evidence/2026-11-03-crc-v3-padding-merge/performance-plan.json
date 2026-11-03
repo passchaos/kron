@@ -1,0 +1,24 @@
+{
+  "candidate": "V3 schema journal CRC covers reference plus zero padding and folds them with the payload in one update; V1 and V2 journals remain readable.",
+  "first_gate": "Independent V3 golden and oracle equality for slot/parts across lengths, V2 goldens unchanged, named format/journal/recovery/reader/progress cases in native Debug/Safe/Fast and generic Safe, producer frame 0xd18, general CRC 310 instructions/20 PCLMUL, object sizes Journal768/Runtime12800/Field48, rodata growth 0.",
+  "controls": "schema=False groups stay on V1 and are unchanged controls; schema=True groups use V3 and isolate the CRC-input change.",
+  "phase1": {
+    "kind": "complete managed Logging actual producer/consumer pipeline, not checksum-only claim",
+    "modes": ["async", "spsc"],
+    "storages": ["memory", "mmap"],
+    "producers": [1, 4],
+    "phases": ["batch", "sampled"],
+    "schema": "both",
+    "events": 100000,
+    "warmup": 1000,
+    "pairs": 5,
+    "trials_per_topology": 320,
+    "affinity": {"ecore": "16,18,20,22,24,26", "pcore": "0,2,4,6,8,10"}
+  },
+  "qualification": "unchanged paired metric input/ratio spread<=10%, CI95 excludes 1, all throughput/lifecycle/init/shutdown/p50/p99/p999 separate",
+  "stop": "qualified negative axis rejects candidate, all raw positive/negative/noisy retained; no qualified benefit means no retention basis",
+  "compatibility": "V2 fixtures and journals must remain readable; new journals use V3. Python crash campaigns must accept both versions before any production retention.",
+  "release_if_passes": "required CRC/Journal/Reader/schema/platform/source package and full release gates before production",
+  "foundation_if_retained": "fresh both requested frontends source owning identity/compile then full JSON same-boundary E/P paired qualification; no stale rank",
+  "goal_met": false
+}
