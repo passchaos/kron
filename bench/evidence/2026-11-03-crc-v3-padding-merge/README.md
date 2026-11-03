@@ -45,4 +45,15 @@ V3 golden常量`0x4be88818`由独立Python zlib计算；`checksumV3`与`checksum
 
 隔离版把control负向从13降到2，同时保留41个V3 lead；noinline进一步缩小producer，却让control负向升到20，说明binary layout/对齐对V1路径的影响大于调用边界。最终选择隔离版，但不越过预定门槛。
 
-candidate撤回，生产保持185e700原算法/V1/V2格式/三CRC/预算；未运行Foundation trial，未更新排名。V3 treatment的41个lead和0 negative保留为下一候选证据，不继承为当前生产资格。整体“业界最佳”目标仍未完成。
+另试两版out-of-line commit，均未运行性能trial：V1 commit完全out-of-line时producer为915条指令、`Reservation.commit`/`commitV3`各成独立调用，V1路径合计约1095条且新增commit调用边界；V1 commit强制inline、V3 commit noinline时producer frame `0xd28`（比baseline +16B）且`slotChecksum`不再内联。两者都未过预设no-new-frame/call边界，因此没有full JSON对照；冻结候选仍为隔离inline版`ee8f...`。这说明在共享commit函数内很难同时保持V1 byte-identical与V3 out-of-line收益，下一候选需要独立gate或不同杠杆。
+
+## 第二独立窗口：treatment复现，control负向不复现
+
+同一binary `ee8f...` 在E-core再跑一个320项完整窗口（[flow-ecore-inline-2](flow-ecore-inline-2/summary.json)，逐条核验3232万JSON）：
+
+- schema=True V3 treatment：**40 qualified lead、64 inconclusive、0 negative**，与第一窗口的41 lead/0 negative一致。
+- schema=False V1 control：103 inconclusive、1 lead、**0 negative**；第一窗口的2个0.14%负向未复现。
+- 两窗口treatment合计81个qualified lead、0 negative；control只在第一窗口出现2个非复现负向。
+- 加上两个control轴的5轮定向复测全部inconclusive，可以判定第一窗口的control负向是窗口/布局波动，而不是V3 feature回归。
+
+按文档化full-run gate，第一窗口仍有2个qualified negative，因此生产不应用。但证据已改变下一步：V3 feature本身稳定，需要显式决定treatment-only gate/control容差，或实现V1 byte-identical路径；在进入生产前还必须把Python crash campaign更新为接受journal version 3并重跑，以及执行完整release gate。当前生产仍保持185e700原算法/V1/V2格式/三CRC/预算，未运行Foundation trial或更新排名。整体“业界最佳”目标仍未完成。

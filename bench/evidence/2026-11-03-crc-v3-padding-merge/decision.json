@@ -143,5 +143,21 @@
   ],
   "reason": "The V3 treatment groups produced 41 qualified leads with zero negatives on E-core, but the V1 control groups produced two qualified negatives (async mmap P1 batch written 0.99860 and written+flush 0.99837). Both control axes were inconclusive in a targeted five-round rerun, so the regression is not reproducible, but the predeclared full-run gate rejects the candidate.",
   "production": "unchanged 185e700; no Foundation trial, no ranking update, no speed or tail qualification retained",
-  "goal_met": false
+  "goal_met": false,
+  "second_ecore_window": {
+    "trials": 320,
+    "physical_records_verified": 32320000,
+    "counts": {
+      "inline": {
+        "inconclusive": 103,
+        "kron_leads": 1
+      },
+      "schema": {
+        "kron_leads": 40,
+        "inconclusive": 64
+      }
+    }
+  },
+  "reproducibility": "The V3 treatment reproduced 41 leads/0 negatives in window 1 and 40 leads/0 negatives in window 2. The V1 control had 2 qualified negatives in window 1, 0 in window 2, and both axes were inconclusive in a targeted five-round confirmation, so the control regression is window-specific. The documented full-run gate still rejects window 1; production retention additionally requires updated V3 crash campaigns and the full release gates.",
+  "next_action": "Either predeclare a treatment-only gate with a bounded control tolerance, or make the V1 producer path byte-identical; then update crash campaigns to accept journal version 3 and run the full release gates before production."
 }
