@@ -1,0 +1,344 @@
+{
+  "scope": "Independent flat fixed-segment CRC candidate from production185e700 before tree. Required native Debug/Safe/Fast and generic Safe each execute new5 CRC cases plus actual format golden/oracle. Additional legacy Safe is restricted to the new5 CRC cases.",
+  "source_sha256": {
+    "platform/crc32.zig": "3e4dc94f6b68dea6f595993aa95dbffaad8b2f54ad4d54c144ad6db9cde8ee53",
+    "journal/format.zig": "a48b3ec7ad363c11cb1918c0df48c84eacfba9ccaf3d2a39e41df9166478a26f"
+  },
+  "source_diff": "worker-source.diff",
+  "source_checks": "worker-source-checks.txt",
+  "commands": "worker-commands.txt",
+  "all_sessions_ended": true,
+  "session_exit_codes": {
+    "58846": 0,
+    "7361": 0,
+    "83384": 0,
+    "77265": 0,
+    "26563": 0,
+    "77531": 0,
+    "17111": 0
+  },
+  "configurations": {
+    "native_Debug": {
+      "cases": [
+        {
+          "name": "flat fixed CRC extension rows match independent IEEE generator and byte recurrence",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-debug.log",
+          "actual_output": "1/5 crc32.test.flat fixed CRC extension rows match independent IEEE generator and byte recurrence...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve complete message and full seed basis",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-debug.log",
+          "actual_output": "2/5 crc32.test.flat fixed CRC typed segments preserve complete message and full seed basis...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-debug.log",
+          "actual_output": "3/5 crc32.test.flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments...OK"
+        },
+        {
+          "name": "flat fixed CRC typed inputs respect both inaccessible page edges",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-debug.log",
+          "actual_output": "4/5 crc32.test.flat fixed CRC typed inputs respect both inaccessible page edges...OK"
+        },
+        {
+          "name": "flat fixed CRC preserves bytes aliased by the destination state",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-debug.log",
+          "actual_output": "5/5 crc32.test.flat fixed CRC preserves bytes aliased by the destination state...OK"
+        },
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-debug.log",
+          "actual_output": "14/18 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "flat fixed CRC journal segments match full integer header oracle and payload partitions",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-debug.log",
+          "actual_output": "15/18 journal.format.test.flat fixed CRC journal segments match full integer header oracle and payload partitions...OK"
+        }
+      ],
+      "selected_passed": 7,
+      "skips": []
+    },
+    "native_ReleaseSafe": {
+      "cases": [
+        {
+          "name": "flat fixed CRC extension rows match independent IEEE generator and byte recurrence",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-safe.log",
+          "actual_output": "1/5 crc32.test.flat fixed CRC extension rows match independent IEEE generator and byte recurrence...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve complete message and full seed basis",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-safe.log",
+          "actual_output": "2/5 crc32.test.flat fixed CRC typed segments preserve complete message and full seed basis...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-safe.log",
+          "actual_output": "3/5 crc32.test.flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments...OK"
+        },
+        {
+          "name": "flat fixed CRC typed inputs respect both inaccessible page edges",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-safe.log",
+          "actual_output": "4/5 crc32.test.flat fixed CRC typed inputs respect both inaccessible page edges...OK"
+        },
+        {
+          "name": "flat fixed CRC preserves bytes aliased by the destination state",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-safe.log",
+          "actual_output": "5/5 crc32.test.flat fixed CRC preserves bytes aliased by the destination state...OK"
+        },
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-safe.log",
+          "actual_output": "14/18 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "flat fixed CRC journal segments match full integer header oracle and payload partitions",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-safe.log",
+          "actual_output": "15/18 journal.format.test.flat fixed CRC journal segments match full integer header oracle and payload partitions...OK"
+        }
+      ],
+      "selected_passed": 7,
+      "skips": []
+    },
+    "native_ReleaseFast": {
+      "cases": [
+        {
+          "name": "flat fixed CRC extension rows match independent IEEE generator and byte recurrence",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-fast.log",
+          "actual_output": "1/5 crc32.test.flat fixed CRC extension rows match independent IEEE generator and byte recurrence...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve complete message and full seed basis",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-fast.log",
+          "actual_output": "2/5 crc32.test.flat fixed CRC typed segments preserve complete message and full seed basis...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-fast.log",
+          "actual_output": "3/5 crc32.test.flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments...OK"
+        },
+        {
+          "name": "flat fixed CRC typed inputs respect both inaccessible page edges",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-fast.log",
+          "actual_output": "4/5 crc32.test.flat fixed CRC typed inputs respect both inaccessible page edges...OK"
+        },
+        {
+          "name": "flat fixed CRC preserves bytes aliased by the destination state",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-native-fast.log",
+          "actual_output": "5/5 crc32.test.flat fixed CRC preserves bytes aliased by the destination state...OK"
+        },
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-fast.log",
+          "actual_output": "14/18 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "flat fixed CRC journal segments match full integer header oracle and payload partitions",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-native-fast.log",
+          "actual_output": "15/18 journal.format.test.flat fixed CRC journal segments match full integer header oracle and payload partitions...OK"
+        }
+      ],
+      "selected_passed": 7,
+      "skips": []
+    },
+    "generic_ReleaseSafe": {
+      "cases": [
+        {
+          "name": "flat fixed CRC extension rows match independent IEEE generator and byte recurrence",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-generic-safe.log",
+          "actual_output": "1/5 crc32.test.flat fixed CRC extension rows match independent IEEE generator and byte recurrence...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve complete message and full seed basis",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-generic-safe.log",
+          "actual_output": "2/5 crc32.test.flat fixed CRC typed segments preserve complete message and full seed basis...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-generic-safe.log",
+          "actual_output": "3/5 crc32.test.flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments...OK"
+        },
+        {
+          "name": "flat fixed CRC typed inputs respect both inaccessible page edges",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-generic-safe.log",
+          "actual_output": "4/5 crc32.test.flat fixed CRC typed inputs respect both inaccessible page edges...OK"
+        },
+        {
+          "name": "flat fixed CRC preserves bytes aliased by the destination state",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-generic-safe.log",
+          "actual_output": "5/5 crc32.test.flat fixed CRC preserves bytes aliased by the destination state...OK"
+        },
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-generic-safe.log",
+          "actual_output": "14/18 journal.format.test.slot CRC v1 and v2 preserve independent golden byte order and schema binding...OK"
+        },
+        {
+          "name": "flat fixed CRC journal segments match full integer header oracle and payload partitions",
+          "family": "format",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-format-generic-safe.log",
+          "actual_output": "15/18 journal.format.test.flat fixed CRC journal segments match full integer header oracle and payload partitions...OK"
+        }
+      ],
+      "selected_passed": 7,
+      "skips": []
+    },
+    "legacy_ReleaseSafe": {
+      "cases": [
+        {
+          "name": "flat fixed CRC extension rows match independent IEEE generator and byte recurrence",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-legacy-safe.log",
+          "actual_output": "1/5 crc32.test.flat fixed CRC extension rows match independent IEEE generator and byte recurrence...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve complete message and full seed basis",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-legacy-safe.log",
+          "actual_output": "2/5 crc32.test.flat fixed CRC typed segments preserve complete message and full seed basis...OK"
+        },
+        {
+          "name": "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-legacy-safe.log",
+          "actual_output": "3/5 crc32.test.flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments...OK"
+        },
+        {
+          "name": "flat fixed CRC typed inputs respect both inaccessible page edges",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-legacy-safe.log",
+          "actual_output": "4/5 crc32.test.flat fixed CRC typed inputs respect both inaccessible page edges...OK"
+        },
+        {
+          "name": "flat fixed CRC preserves bytes aliased by the destination state",
+          "family": "crc",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-crc-legacy-safe.log",
+          "actual_output": "5/5 crc32.test.flat fixed CRC preserves bytes aliased by the destination state...OK"
+        },
+        {
+          "name": "slot CRC v1 and v2 preserve independent golden byte order and schema binding",
+          "family": "format",
+          "executed": false,
+          "result": "not_requested",
+          "log": null
+        },
+        {
+          "name": "flat fixed CRC journal segments match full integer header oracle and payload partitions",
+          "family": "format",
+          "executed": false,
+          "result": "not_requested",
+          "log": null
+        }
+      ],
+      "selected_passed": 5,
+      "skips": []
+    }
+  },
+  "logical_additional_table_bytes": 8192,
+  "coverage": {
+    "crc_basis": "Complete 20/24-byte message basis and full32-bit seed basis: 416 checks, with independent bitwise and standard CRC oracles.",
+    "crc_random": "10240 arbitrary raw32 seeds per segment length over all32 byte alignments.",
+    "table": "All2048 extra entries checked using an independent normal IEEE generator plus reflected bitwise zero-byte recurrence.",
+    "guard": "Typed20/24 bytes at both real PROT_NONE page edges, using arbitrary raw seeds.",
+    "alias": "Destination state overlaps each input word position; expected result is computed by the independent bitwise oracle before the state write.",
+    "format": "Original frozen v1/v2 golden plus full64 sequence/generation extremes/random values, payload lengths0..4096 and segmented delivery; only legal24-byte reference inputs."
+  },
+  "unqualified": [
+    "Actual hot row hashes, table placement/duplication, frame/call lowering, rodata and performance remain for the parent actual gate.",
+    "8192 is the logical additional table budget, not a claim about emitted binary size or speed."
+  ],
+  "failures": []
+}

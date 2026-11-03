@@ -1,0 +1,6 @@
+Only platform/crc32.zig and journal/format.zig differ from the production185e700 before source tree. All other files, including PCLMUL, admission, progress and journal reserve source, are byte-identical.
+Complete general update, makeTables, init, final and hash functions are byte-identical. The original tables declaration is retained once.
+The additional table has 8*256 u32 entries: 8192 bytes of logical source-table budget. No 24-row combined table is defined.
+fixedWord uses four typed constant row pointers; updateFixed has balanced per-word and total XOR trees, six exact u32 source loads (five in the compile-time20 branch), and a single final state assignment.
+checksumV2 signature and first assert statement remain byte-identical; only legal24-byte reference inputs are tested. Both payloads use original update.
+Actual table placement, hot loaded row hashes, calls, frames, rodata and performance remain for the parent gate.

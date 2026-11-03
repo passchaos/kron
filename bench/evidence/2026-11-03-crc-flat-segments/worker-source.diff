@@ -1,0 +1,270 @@
+--- before/src/platform/crc32.zig
++++ candidate/src/platform/crc32.zig
+@@ -7,6 +7,9 @@
+ const builtin = @import("builtin");
+ const polynomial: u32 = 0xedb88320;
+ const tables = makeTables();
++// Only the additional byte-distance rows 16..23 are stored here. The general
++// update retains its original sixteen rows and implementation.
++const extra = makeExtraTables();
+ const use_pclmul = switch (builtin.cpu.arch) {
+     .x86_64 => std.Target.x86.featureSetHas(builtin.cpu.features, .pclmul) and
+         std.Target.x86.featureSetHas(builtin.cpu.features, .sse2),
+@@ -55,6 +58,23 @@
+         self.state = crc;
+     }
+ 
++    /// Folds a complete fixed journal segment using byte-distance rows.
++    /// Every input word is read before the single final state write, including
++    /// when the destination state aliases bytes within the supplied segment.
++    pub fn updateFixed(self: *Crc32, comptime N: usize, bytes: *const [N]u8) void {
++        if (N != 20 and N != 24) @compileError("fixed CRC segments must contain 20 or 24 bytes");
++        const a = fixedWord(N - 1, std.mem.readInt(u32, bytes[0..4], .little) ^ self.state);
++        const b = fixedWord(N - 5, std.mem.readInt(u32, bytes[4..8], .little));
++        const c = fixedWord(N - 9, std.mem.readInt(u32, bytes[8..12], .little));
++        const d = fixedWord(N - 13, std.mem.readInt(u32, bytes[12..16], .little));
++        const e = fixedWord(N - 17, std.mem.readInt(u32, bytes[16..20], .little));
++        const folded = if (N == 20) (a ^ b) ^ (c ^ (d ^ e)) else blk: {
++            const f = fixedWord(N - 21, std.mem.readInt(u32, bytes[20..24], .little));
++            break :blk (a ^ b) ^ ((c ^ d) ^ (e ^ f));
++        };
++        self.state = folded;
++    }
++
+     pub fn final(self: Crc32) u32 {
+         return ~self.state;
+     }
+@@ -65,6 +85,14 @@
+         return crc.final();
+     }
+ };
++
++inline fn fixedWord(comptime top_row: usize, word: u32) u32 {
++    const a: *const [256]u32 = if (top_row < 16) &tables[top_row] else &extra[top_row - 16];
++    const b: *const [256]u32 = if (top_row - 1 < 16) &tables[top_row - 1] else &extra[top_row - 17];
++    const c: *const [256]u32 = if (top_row - 2 < 16) &tables[top_row - 2] else &extra[top_row - 18];
++    const d: *const [256]u32 = if (top_row - 3 < 16) &tables[top_row - 3] else &extra[top_row - 19];
++    return (a[word & 255] ^ b[(word >> 8) & 255]) ^ (c[(word >> 16) & 255] ^ d[word >> 24]);
++}
+ 
+ fn makeTables() [16][256]u32 {
+     @setEvalBranchQuota(80_000);
+@@ -77,6 +105,20 @@
+     for (1..16) |slice| for (0..256) |index| {
+         const previous = result[slice - 1][index];
+         result[slice][index] = (previous >> 8) ^ result[0][previous & 255];
++    };
++    return result;
++}
++
++fn makeExtraTables() [8][256]u32 {
++    @setEvalBranchQuota(40_000);
++    var result: [8][256]u32 = undefined;
++    for (&result[0], 0..) |*entry, index| {
++        const previous = tables[15][index];
++        entry.* = (previous >> 8) ^ tables[0][previous & 255];
++    }
++    for (1..8) |row| for (0..256) |index| {
++        const previous = result[row - 1][index];
++        result[row][index] = (previous >> 8) ^ tables[0][previous & 255];
+     };
+     return result;
+ }
+@@ -149,3 +191,122 @@
+         }
+     };
+ }
++
++fn bitwiseState(initial: u32, bytes: []const u8) u32 {
++    var state = initial;
++    for (bytes) |byte| {
++        state ^= byte;
++        for (0..8) |_| state = (state >> 1) ^ (if (state & 1 != 0) @as(u32, 0xedb88320) else 0);
++    }
++    return state;
++}
++
++fn normalGeneratorRow(byte: u8, row: usize) u32 {
++    // Start in the normal polynomial domain and reflect only at the endpoints.
++    // This does not use any candidate table or reflected transition helper.
++    var remainder: u64 = @bitReverse(@as(u32, byte));
++    for (0..8 * (row + 1)) |_| {
++        remainder <<= 1;
++        if (remainder & (@as(u64, 1) << 32) != 0) remainder ^= 0x104c11db7;
++    }
++    return @bitReverse(@as(u32, @intCast(remainder)));
++}
++
++test "flat fixed CRC extension rows match independent IEEE generator and byte recurrence" {
++    try std.testing.expectEqual(@as(usize, 8192), @sizeOf(@TypeOf(extra)));
++    for (0..8) |row| for (0..256) |byte| {
++        try std.testing.expectEqual(normalGeneratorRow(@intCast(byte), row + 16), extra[row][byte]);
++        const previous = if (row == 0) tables[15][byte] else extra[row - 1][byte];
++        try std.testing.expectEqual(bitwiseState(previous, &.{0}), extra[row][byte]);
++    };
++}
++
++test "flat fixed CRC typed segments preserve complete message and full seed basis" {
++    var bytes: [24]u8 = undefined;
++    inline for (.{ 20, 24 }) |N| {
++        for (0..N * 8) |bit| {
++            @memset(&bytes, 0);
++            bytes[bit / 8] = @as(u8, 1) << @intCast(bit % 8);
++            var actual: Crc32 = .{ .state = 0 };
++            actual.updateFixed(N, bytes[0..N]);
++            try std.testing.expectEqual(bitwiseState(0, bytes[0..N]), actual.state);
++            var oracle: std.hash.Crc32 = .{ .crc = 0 };
++            oracle.update(bytes[0..N]);
++            try std.testing.expectEqual(oracle.final(), actual.final());
++        }
++        @memset(&bytes, 0);
++        for (0..32) |bit| {
++            const state = @as(u32, 1) << @intCast(bit);
++            var actual: Crc32 = .{ .state = state };
++            actual.updateFixed(N, bytes[0..N]);
++            try std.testing.expectEqual(bitwiseState(state, bytes[0..N]), actual.state);
++            var oracle: std.hash.Crc32 = .{ .crc = state };
++            oracle.update(bytes[0..N]);
++            try std.testing.expectEqual(oracle.final(), actual.final());
++        }
++    }
++}
++
++test "flat fixed CRC typed segments preserve arbitrary seeds and all 32 alignments" {
++    var bytes: [24 + 31]u8 = undefined;
++    var random = std.Random.DefaultPrng.init(0x666c617463726373);
++    for (0..10_240) |iteration| {
++        random.random().bytes(&bytes);
++        const alignment = iteration % 32;
++        inline for (.{ 20, 24 }) |N| {
++            const input: *const [N]u8 = bytes[alignment..][0..N];
++            const state = random.random().int(u32);
++            var actual: Crc32 = .{ .state = state };
++            actual.updateFixed(N, input);
++            try std.testing.expectEqual(bitwiseState(state, input), actual.state);
++            var oracle: std.hash.Crc32 = .{ .crc = state };
++            oracle.update(input);
++            try std.testing.expectEqual(oracle.final(), actual.final());
++        }
++    }
++}
++
++test "flat fixed CRC typed inputs respect both inaccessible page edges" {
++    if (builtin.os.tag != .linux) return error.SkipZigTest;
++    const linux = std.os.linux;
++    const page_size = std.heap.pageSize();
++    const address = linux.mmap(null, page_size * 3, .{ .READ = true, .WRITE = true }, .{ .TYPE = .PRIVATE, .ANONYMOUS = true }, -1, 0);
++    if (linux.errno(address) != .SUCCESS) return error.GuardMappingFailed;
++    const mapping = @as([*]u8, @ptrFromInt(address))[0 .. page_size * 3];
++    defer std.testing.expectEqual(linux.E.SUCCESS, linux.errno(linux.munmap(mapping.ptr, mapping.len))) catch @panic("flat CRC guard mapping cleanup failed");
++    try std.testing.expectEqual(linux.E.SUCCESS, linux.errno(linux.mprotect(mapping.ptr, page_size, .{})));
++    try std.testing.expectEqual(linux.E.SUCCESS, linux.errno(linux.mprotect(mapping[page_size * 2 ..].ptr, page_size, .{})));
++    const writable = mapping[page_size .. page_size * 2];
++    var random = std.Random.DefaultPrng.init(0x666c617467756172);
++    inline for (.{ 20, 24 }) |N| for ([_]bool{ false, true }) |at_end| {
++        const start = if (at_end) writable.len - N else 0;
++        const input: *const [N]u8 = writable[start..][0..N];
++        for (0..64) |iteration| {
++            random.random().bytes(writable[start..][0..N]);
++            const state: u32 = switch (iteration) {
++                0 => 0,
++                1 => std.math.maxInt(u32),
++                else => random.random().int(u32),
++            };
++            var actual: Crc32 = .{ .state = state };
++            actual.updateFixed(N, input);
++            try std.testing.expectEqual(bitwiseState(state, input), actual.state);
++        }
++    };
++}
++
++test "flat fixed CRC preserves bytes aliased by the destination state" {
++    var bytes: [24]u8 align(@alignOf(Crc32)) = undefined;
++    var random = std.Random.DefaultPrng.init(0x666c6174616c6961);
++    inline for (.{ 20, 24 }) |N| for (0..N / 4) |word| {
++        for (0..128) |_| {
++            random.random().bytes(&bytes);
++            const actual: *Crc32 = @ptrCast(@alignCast(bytes[word * 4 ..][0..@sizeOf(Crc32)]));
++            const state = random.random().int(u32);
++            actual.state = state;
++            const expected = bitwiseState(state, bytes[0..N]);
++            actual.updateFixed(N, bytes[0..N]);
++            try std.testing.expectEqual(expected, actual.state);
++        }
++    };
++}
+--- before/src/journal/format.zig
++++ candidate/src/journal/format.zig
+@@ -32,7 +32,7 @@
+     put(u64, &header, 8, generation);
+     put(u32, &header, 16, @intCast(payload.len));
+     var crc = Crc32.init();
+-    crc.update(&header);
++    crc.updateFixed(20, &header);
+     crc.update(payload);
+     return crc.final();
+ }
+@@ -44,8 +44,8 @@
+     put(u64, &header, 8, generation);
+     put(u32, &header, 16, @intCast(payload.len));
+     var crc = Crc32.init();
+-    crc.update(&header);
+-    crc.update(reference_bytes);
++    crc.updateFixed(20, &header);
++    crc.updateFixed(24, reference_bytes[0..24]);
+     crc.update(payload);
+     return crc.final();
+ }
+@@ -58,6 +58,52 @@
+     // explicit little-endian 20-byte header, reference, and payload.
+     try std.testing.expectEqual(@as(u32, 0x2f07cd99), checksum(0x0102030405060708, 0x1122334455667788, payload));
+     try std.testing.expectEqual(@as(u32, 0x530df33b), checksumV2(0x0102030405060708, 0x1122334455667788, &reference, payload));
++}
++
++test "flat fixed CRC journal segments match full integer header oracle and payload partitions" {
++    var payload_storage: [4096 + 31]u8 = undefined;
++    var reference_storage: [24 + 31]u8 = undefined;
++    var random = std.Random.DefaultPrng.init(0x666c6174666f726d);
++    random.random().bytes(&payload_storage);
++    random.random().bytes(&reference_storage);
++    const lengths = [_]usize{ 0, 1, 7, 8, 15, 16, 17, 19, 20, 21, 23, 24, 25, 31, 32, 33, 47, 48, 49, 63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512, 513, 1023, 1024, 1025, 4095, 4096 };
++    const extremes = [_]u64{ 0, 1, std.math.maxInt(i64), @as(u64, std.math.maxInt(i64)) + 1, std.math.maxInt(u64) };
++    for (0..32) |alignment| for (lengths, 0..) |length, index| {
++        const payload = payload_storage[alignment..][0..length];
++        const reference: *const [24]u8 = reference_storage[alignment..][0..24];
++        const sequence = if (index % 2 == 0) extremes[(index + alignment) % extremes.len] else random.random().int(u64);
++        const generation = if (index % 3 == 0) extremes[(index * 2 + alignment) % extremes.len] else random.random().int(u64);
++        // The oracle builds the header without format.put or the candidate CRC.
++        var header: [20]u8 = undefined;
++        std.mem.writeInt(u64, header[0..8], sequence, .little);
++        std.mem.writeInt(u64, header[8..16], generation, .little);
++        std.mem.writeInt(u32, header[16..20], @intCast(length), .little);
++        var v1 = std.hash.Crc32.init();
++        v1.update(&header);
++        v1.update(payload);
++        var v2 = std.hash.Crc32.init();
++        v2.update(&header);
++        v2.update(reference);
++        v2.update(payload);
++        try std.testing.expectEqual(v1.final(), checksum(sequence, generation, payload));
++        try std.testing.expectEqual(v2.final(), checksumV2(sequence, generation, reference, payload));
++        for ([_]usize{ 0, 1, 15, 16, 20, 24, 31, 32, 47, 48, 63, 64, length / 2, length }) |boundary| {
++            const split = @min(length, boundary);
++            var actual_v1 = Crc32.init();
++            actual_v1.updateFixed(20, &header);
++            actual_v1.update(payload[0..split]);
++            actual_v1.update(&.{});
++            actual_v1.update(payload[split..]);
++            try std.testing.expectEqual(v1.final(), actual_v1.final());
++            var actual_v2 = Crc32.init();
++            actual_v2.updateFixed(20, &header);
++            actual_v2.updateFixed(24, reference);
++            actual_v2.update(payload[0..split]);
++            actual_v2.update(&.{});
++            actual_v2.update(payload[split..]);
++            try std.testing.expectEqual(v2.final(), actual_v2.final());
++        }
++    };
+ }
+ 
+ test "zeroed initialization matches full clear for memory-backed journals" {

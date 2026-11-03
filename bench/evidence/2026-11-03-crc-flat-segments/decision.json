@@ -1,0 +1,44 @@
+{
+  "status": "rejected_at_static_storage_gate",
+  "baseline_commit": "185e70051172eb01906547b97fd971fab327f7b7",
+  "candidate": "flat20/24 explicit row POINTER representation",
+  "correctness": "allnamedCRC/format tests andindependent20416casespassed",
+  "static_failure": "fixed row pointer forces old16KiB named table alongside generalupdate individually materializedoldrows; EVERYoldrow0..15 has2actual loadedaddresses withidenticalcanonical1KiBhash",
+  "logical_extension_bytes": 8192,
+  "observed_rodata_growth_bytes": {
+    "primitive": 24576,
+    "reference": 24672
+  },
+  "growth_composition": "new8192 +duplicateold16384;reference additional96otherbytes",
+  "reference_named_objects": {
+    "tables": {
+      "address": "0x10686c0",
+      "bytes": 16384
+    },
+    "extra": {
+      "address": "0x10702c0",
+      "bytes": 8192
+    }
+  },
+  "example_duplicate_rows": {
+    "T0": {
+      "general": "0x1066f68",
+      "fixed": "0x10686c0"
+    },
+    "T15": {
+      "general": "0x106c6c0",
+      "fixed": "0x106c2c0"
+    }
+  },
+  "all16_oldrow_pairs_checked_in_both_binaries": true,
+  "rowhash_reference": "independent-math.json",
+  "no_runtime_row_copy": "source/actual no memcpy or rowaggregate copy; duplication isconstant image storage",
+  "frame_subgate": "producer/drain no largeframegrowth;slotPUSHrax reserves8B local scratch despite noSUBRSP",
+  "primitive_trials": 0,
+  "full_json_trials": 0,
+  "foundation_trials": 0,
+  "production_algorithm_changed": false,
+  "goal_met": false,
+  "frozen_initial_source_binary_archives_preserved": true,
+  "next_candidate": "newdirect-index sibling;4SCALAR constrow-index expressions, no row/arrayaddress/valuebinding;actualdedupunproveduntilitsown gate"
+}
