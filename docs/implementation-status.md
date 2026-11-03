@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+Global progress等待者计数候选也已拒绝。SC epoch/count握手、Full与cut登记/defer、UINT64MAX永久wake及四配置各11具名真实futex/关闭/多waiter/timed-detach回归通过；Runtime12800B保持但字段重排，helperoutline、submitframe+16B、cutinlineCAS成本完整记录。双拓扑320项完整async/SPSC流程逐条核验32320000JSON；E-core104轴有26稳定负向/1局部p99正向/77不确定，written16组中9组稳定负向（async7/8）；P-core6轴稳定负向/98不确定，written2/16负向。按预定门槛不扩展schema/Foundation，生产未应用，默认CRC3点/原预算/生命周期保持，未采集动态wake重试次数或推因果。完整源码、结构偏移、正负与撤回见[progress报告](../bench/evidence/2026-11-03-progress-waiters/README.md)，整体性能目标未完成。
+
 CAS失败后的两处有限pause候选已拒绝：四配置各8个关闭/cut/并发reserve/flush故障/共享与SPSC关闭回归实际通过，native两个hint仅在失败边，原atomic/CRC/预算及Runtime12800B/Journal768B对象布局保持；begin的branch/layout确有变化。双拓扑160项完整managed shared流程逐条核验16160000JSON，E-core Memory P1 batch的written/written+flush/lifecycle速度比分别0.98615/0.98511/0.98439，均稳定负向；其他E-core49轴与P-core52轴不确定。按预定门槛未扩展SPSC/schema/Foundation，未将局部中位或静态变化推断为因果，生产仍原算法，详见[CAS报告](../bench/evidence/2026-11-03-cas-failure-pause/README.md)。后续独立考察progress通知，整体性能目标未完成。
 
 精确20/24字节直接尾折叠的通用分派和固定journal入口均拒绝，生产保持185e700算法。两版各完成70长度×两header形状的双拓扑控制，各14000个完整checksum计时batch；通用版E-core64组领先/12组稳定退步/64组不确定，固定版95/21/24，P-core两版各140组全不确定。固定版通用update源码及实际310条指令/1412B保持原样，仍有192/240/512B等边界反例；169B局部收益不覆盖默认241B不确定与负向控制。native Debug/Safe/Fast、legacy Safe各8项相关具名case及generic Safe5项typed/format/guard通过；generic gate实际SKIP，非法reference域、惰性发现与wrapper误判均保留并纠正资格。零完整JSON/Foundation trial，不更新排名，完整证据见[固定段报告](../bench/evidence/2026-11-03-crc-fixed-segments/README.md)与[通用首版](../bench/evidence/2026-11-03-crc-direct-tail/README.md)。整体目标未完成。

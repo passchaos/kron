@@ -1,0 +1,478 @@
+--- before/src/core/runtime.zig
++++ candidate/src/core/runtime.zig
+@@ -66,6 +66,9 @@
+     pub const TestingHooks = if (@import("builtin").is_test) struct {
+         pub threadlocal var after_snapshot: ?*const fn (*anyopaque) void = null;
+         pub threadlocal var context: ?*anyopaque = null;
++        pub const ProgressPoint = enum { shared_before_register, shared_after_register, cut_after_register };
++        pub var progress_context: Atomic(?*anyopaque) = .init(null);
++        pub var progress: Atomic(?*const fn (*anyopaque, *Runtime, ProgressPoint) void) = .init(null);
+     } else struct {};
+     allocator: std.mem.Allocator,
+     io: std.Io,
+@@ -89,6 +92,7 @@
+     configuration_epoch: Atomic(u32) = .init(0),
+     wake_epoch: Atomic(u32) = .init(0),
+     progress_epoch: Atomic(u32) = .init(0),
++    progress_waiters: Atomic(u64) = .init(0),
+     worker_alive: Atomic(bool) = .init(false),
+     worker_sleeping: Atomic(bool) = .init(false),
+     worker_id: Atomic(std.Thread.Id) = .init(0),
+@@ -664,7 +668,7 @@
+         } else null;
+         if (destination) |journal| {
+             while (true) {
+-                const progress = if (producer_token != null) journal.single.space_epoch.load(.seq_cst) else self.progress_epoch.load(.acquire);
++                const progress = if (producer_token != null) journal.single.space_epoch.load(.seq_cst) else self.progress_epoch.load(.seq_cst);
+                 const attempt = if (binding) |prepared|
+                     (if (producer_token) |token| journal.reserveSingleProducerWithSchema(token, prepared) else journal.reserveWithSchema(prepared))
+                 else
+@@ -691,6 +695,12 @@
+                                 return self.submitSync(fallback, snapshot);
+                             },
+                             .block => {
++                                if (producer_token == null) {
++                                    if (@import("builtin").is_test) if (TestingHooks.progress.load(.acquire)) |hook| hook(TestingHooks.progress_context.load(.acquire).?, self, .shared_before_register);
++                                    self.changeProgressWaiter(true);
++                                }
++                                defer if (producer_token == null) self.changeProgressWaiter(false);
++                                if (@import("builtin").is_test) if (producer_token == null) if (TestingHooks.progress.load(.acquire)) |hook| hook(TestingHooks.progress_context.load(.acquire).?, self, .shared_after_register);
+                                 // One owner may wait on an SPSC queue. Register
+                                 // before checking terminal state; a concurrent
+                                 // notification either wakes us or changes the
+@@ -800,9 +810,22 @@
+         }
+     }
+ 
++    fn changeProgressWaiter(self: *Runtime, register: bool) void {
++        var count = self.progress_waiters.load(.seq_cst);
++        while (count != std.math.maxInt(u64)) {
++            if (!register and count == 0) return;
++            const next = if (register) count + 1 else count - 1;
++            if (self.progress_waiters.cmpxchgWeak(count, next, .seq_cst, .seq_cst)) |actual| {
++                count = actual;
++            } else return;
++        }
++        // Saturation is permanent: later notifications always wake, even
++        // after the remaining real waiters have left.
++    }
++
+     fn notifyProgress(self: *Runtime) void {
+-        _ = self.progress_epoch.fetchAdd(1, .release);
+-        self.io.futexWake(u32, &self.progress_epoch.raw, std.math.maxInt(u32));
++        _ = self.progress_epoch.fetchAdd(1, .seq_cst);
++        if (self.progress_waiters.load(.seq_cst) != 0) self.io.futexWake(u32, &self.progress_epoch.raw, std.math.maxInt(u32));
+     }
+ 
+     fn notifyJournalProgress(self: *Runtime, journal: *Journal) void {
+@@ -1141,7 +1164,10 @@
+         self.notify();
+         for (journals[0..count], targets[0..count]) |journal, target| {
+             while (journal.writtenTarget() < target) {
+-                const progress = self.progress_epoch.load(.acquire);
++                self.changeProgressWaiter(true);
++                defer self.changeProgressWaiter(false);
++                if (@import("builtin").is_test) if (TestingHooks.progress.load(.acquire)) |hook| hook(TestingHooks.progress_context.load(.acquire).?, self, .cut_after_register);
++                const progress = self.progress_epoch.load(.seq_cst);
+                 if (self.workerError()) |err| return err;
+                 if (journal.writtenTarget() >= target) break;
+                 self.io.futexWaitUncancelable(u32, &self.progress_epoch.raw, progress);
+--- before/src/core/tests/runtime.zig
++++ candidate/src/core/tests/runtime.zig
+@@ -6,6 +6,7 @@
+     _ = @import("runtime_prepared_measure.zig");
+     _ = @import("runtime_admission_view.zig");
+     _ = @import("runtime_admission_shutdown.zig");
++    _ = @import("runtime_progress_notifications.zig");
+ }
+ const fields = @import("../field.zig");
+ 
+--- before/src/core/tests/runtime_progress_notifications.zig
++++ candidate/src/core/tests/runtime_progress_notifications.zig
+@@ -0,0 +1,386 @@
++//! Runtime progress registration races, observed through real futex forwarding.
++const std = @import("std");
++const builtin = @import("builtin");
++const Runtime = @import("../runtime.zig").Runtime;
++const Deadline = @import("../runtime.zig").Deadline;
++const JournalModule = @import("../../journal/journal.zig");
++const MemorySink = @import("../../sink/memory.zig").MemorySink;
++const Sink = @import("../../sink/interface.zig").Sink;
++const testing = std.testing;
++const Atomic = std.atomic.Value;
++
++fn completes(event: *std.Io.Event) !bool {
++    event.waitTimeout(testing.io, .{ .duration = .{ .clock = .awake, .raw = .fromSeconds(5) } }) catch |err| {
++        if (err == error.Timeout) return false;
++        return err;
++    };
++    return event.isSet();
++}
++
++fn expectEvent(event: *std.Io.Event) !void {
++    const completed_before_cleanup = try completes(event);
++    try testing.expect(completed_before_cleanup);
++}
++
++const Observer = struct {
++    var current: Atomic(?*Observer) = .init(null);
++    runtime: Atomic(?*Runtime) = .init(null),
++    pause: enum { none, before, after } = .none,
++    producer_ids: [2]Atomic(std.Thread.Id) = @splat(.init(0)),
++    paused: [2]Atomic(bool) = @splat(.init(false)),
++    registered: [2]std.Io.Event = @splat(.unset),
++    permits: [2]std.Io.Event = @splat(.unset),
++    producer_waits: [2]std.Io.Event = @splat(.unset),
++    cut_registered: std.Io.Event = .unset,
++    cut_wait: std.Io.Event = .unset,
++    global_wakes: Atomic(u64) = .init(0),
++    last_max: Atomic(u32) = .init(0),
++    hook_timeout: Atomic(bool) = .init(false),
++    rescuing: Atomic(bool) = .init(false),
++
++    fn producerIndex(self: *Observer) ?usize {
++        const id = std.Thread.getCurrentId();
++        for (&self.producer_ids, 0..) |*candidate, index| if (candidate.load(.acquire) == id) return index;
++        return null;
++    }
++
++    fn schedule(raw: *anyopaque, runtime: *Runtime, point: Runtime.TestingHooks.ProgressPoint) void {
++        const self: *Observer = @ptrCast(@alignCast(raw));
++        if (self.runtime.load(.acquire) != runtime) return;
++        if (point == .cut_after_register) {
++            self.cut_registered.set(testing.io);
++            return;
++        }
++        const index = self.producerIndex() orelse return;
++        const matches = switch (self.pause) {
++            .none => false,
++            .before => point == .shared_before_register,
++            .after => point == .shared_after_register,
++        };
++        if (!matches or self.paused[index].swap(true, .acq_rel)) return;
++        self.registered[index].set(testing.io);
++        const permitted = completes(&self.permits[index]) catch false;
++        if (!permitted) self.hook_timeout.store(true, .release);
++    }
++
++    fn wait(userdata: ?*anyopaque, ptr: *const u32, expected: u32) void {
++        if (current.load(.acquire)) |self| if (self.runtime.load(.acquire)) |runtime| {
++            if (ptr == &runtime.progress_epoch.raw) {
++                if (self.producerIndex()) |index| self.producer_waits[index].set(testing.io) else self.cut_wait.set(testing.io);
++            }
++        };
++        // Events observe the real syscall boundary; no simulated wait replaces it.
++        testing.io.vtable.futexWaitUncancelable(userdata, ptr, expected);
++    }
++
++    fn wake(userdata: ?*anyopaque, ptr: *const u32, maximum: u32) void {
++        if (current.load(.acquire)) |self| if (self.runtime.load(.acquire)) |runtime| {
++            if (ptr == &runtime.progress_epoch.raw) {
++                _ = self.global_wakes.fetchAdd(1, .seq_cst);
++                self.last_max.store(maximum, .seq_cst);
++            }
++        };
++        testing.io.vtable.futexWake(userdata, ptr, maximum);
++    }
++};
++
++const Output = struct {
++    memory: MemorySink = undefined,
++    fail_writes: Atomic(bool) = .init(false),
++
++    fn write(raw: *anyopaque, bytes: []const u8) !void {
++        const self: *Output = @ptrCast(@alignCast(raw));
++        if (self.fail_writes.load(.acquire)) return error.InjectedProgressWrite;
++        try self.memory.writeRecord(bytes);
++    }
++
++    fn flush(raw: *anyopaque) !void {
++        const self: *Output = @ptrCast(@alignCast(raw));
++        try self.memory.flush();
++    }
++
++    fn sink(self: *Output) Sink {
++        return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush, .sync = flush }, .recovery_identity = "progress-notification-output" };
++    }
++};
++
++const Fixture = struct {
++    observer: Observer = .{},
++    output: Output = .{},
++    storage: [32 * 1024]u8 = undefined,
++    temporary: testing.TmpDir = undefined,
++    path: [160]u8 = undefined,
++    vtable: @TypeOf(testing.io.vtable.*) = undefined,
++    runtime: *Runtime = undefined,
++    gap: ?JournalModule.Reservation = null,
++
++    fn init(self: *Fixture, persistent: bool, capacity: usize) !void {
++        self.temporary = testing.tmpDir(.{});
++        errdefer self.temporary.cleanup();
++        self.output.memory = MemorySink.initBuffer(&self.storage);
++        self.vtable = testing.io.vtable.*;
++        self.vtable.futexWaitUncancelable = Observer.wait;
++        self.vtable.futexWake = Observer.wake;
++        Observer.current.store(&self.observer, .release);
++        Runtime.TestingHooks.progress_context.store(&self.observer, .release);
++        Runtime.TestingHooks.progress.store(Observer.schedule, .release);
++        errdefer self.uninstall();
++        const io: std.Io = .{ .userdata = testing.io.userdata, .vtable = &self.vtable };
++        const path = try std.fmt.bufPrint(&self.path, ".zig-cache/tmp/{s}/progress.journal", .{self.temporary.sub_path});
++        self.runtime = try Runtime.create(testing.allocator, io, .{
++            .submission = .asynchronous,
++            .overflow = .block,
++            .idle = .sleep,
++            .memory_queue = if (persistent) null else .{ .capacity = capacity, .max_record_bytes = 512 },
++            .journal = if (persistent) .{ .path = path, .capacity = capacity, .max_record_bytes = 512 } else null,
++            .routes = &.{.{ .name = "output", .sink = self.output.sink() }},
++        });
++        self.observer.runtime.store(self.runtime, .release);
++        self.gap = try self.runtime.journal.?.reserve();
++    }
++
++    fn abortGap(self: *Fixture) void {
++        if (self.gap) |*gap| gap.abort();
++        self.gap = null;
++    }
++
++    fn kickWorker(self: *Fixture) void {
++        _ = self.runtime.wake_epoch.fetchAdd(1, .seq_cst);
++        self.runtime.io.futexWake(u32, &self.runtime.wake_epoch.raw, std.math.maxInt(u32));
++    }
++
++    fn rescue(self: *Fixture) void {
++        self.observer.rescuing.store(true, .release);
++        for (&self.observer.permits) |*permit| permit.set(testing.io);
++        self.abortGap();
++        self.runtime.stopAccepting() catch {};
++        _ = self.runtime.progress_epoch.fetchAdd(1, .seq_cst);
++        self.runtime.io.futexWake(u32, &self.runtime.progress_epoch.raw, std.math.maxInt(u32));
++        self.kickWorker();
++    }
++
++    fn uninstall(self: *Fixture) void {
++        Runtime.TestingHooks.progress.store(null, .release);
++        Runtime.TestingHooks.progress_context.store(null, .release);
++        Observer.current.store(null, .release);
++        self.observer.runtime.store(null, .release);
++    }
++
++    fn deinit(self: *Fixture) void {
++        self.rescue();
++        self.runtime.destroy();
++        self.uninstall();
++        self.temporary.cleanup();
++    }
++};
++
++const Producer = struct {
++    fixture: *Fixture,
++    index: usize,
++    done: std.Io.Event = .unset,
++    result: ?@import("../runtime.zig").EmitResult = null,
++    failure: ?anyerror = null,
++    finished_before_rescue: bool = false,
++
++    fn run(self: *Producer) void {
++        self.fixture.observer.producer_ids[self.index].store(std.Thread.getCurrentId(), .release);
++        self.result = self.fixture.runtime.scoped("full.waiter").tryEmit(.info, "after progress", .{}) catch |err| blk: {
++            self.failure = err;
++            break :blk null;
++        };
++        self.finished_before_rescue = !self.fixture.observer.rescuing.load(.acquire);
++        self.done.set(testing.io);
++    }
++};
++
++const TimedFlush = struct {
++    runtime: *Runtime,
++    done: std.Io.Event = .unset,
++    failure: ?anyerror = null,
++
++    fn run(self: *TimedFlush) void {
++        self.runtime.flushUntil(.written, Deadline.after(testing.io, std.time.ns_per_s)) catch |err| {
++            self.failure = err;
++        };
++        self.done.set(testing.io);
++    }
++};
++
++fn waitCount(runtime: *Runtime, expected: u64) !void {
++    const deadline = Deadline.after(testing.io, 5 * std.time.ns_per_s);
++    while (runtime.progress_waiters.load(.seq_cst) != expected) {
++        if (deadline.expired(testing.io)) return error.ProgressCountTimeout;
++        std.Thread.yield() catch {};
++    }
++}
++
++fn waitEpoch(runtime: *Runtime, expected: u32) !void {
++    const deadline = Deadline.after(testing.io, 5 * std.time.ns_per_s);
++    while (runtime.progress_epoch.load(.seq_cst) != expected) {
++        if (deadline.expired(testing.io)) return error.ProgressEpochTimeout;
++        std.Thread.yield() catch {};
++    }
++}
++
++fn waitSleeping(runtime: *Runtime) !void {
++    const deadline = Deadline.after(testing.io, 5 * std.time.ns_per_s);
++    while (!runtime.worker_sleeping.load(.seq_cst)) {
++        if (deadline.expired(testing.io)) return error.ProgressWorkerSleepTimeout;
++        std.Thread.yield() catch {};
++    }
++}
++
++fn waitControl(runtime: *Runtime) !void {
++    const deadline = Deadline.after(testing.io, 5 * std.time.ns_per_s);
++    while (runtime.control.?.status().completed_operations == 0 or runtime.control.?.status().busy) {
++        if (deadline.expired(testing.io)) return error.ProgressControlTimeout;
++        std.Thread.yield() catch {};
++    }
++}
++
++test "progress notifications: real shared Full registration races preserve zero wake elision and u32 wrap" {
++    if (builtin.single_threaded) return error.SkipZigTest;
++    for ([_]bool{ false, true }) |persistent| for ([_]bool{ false, true }) |after_registration| {
++        var fixture: Fixture = .{};
++        try fixture.init(persistent, 1);
++        defer fixture.deinit();
++        fixture.observer.pause = if (after_registration) .after else .before;
++        fixture.runtime.progress_epoch.store(std.math.maxInt(u32), .seq_cst);
++        var producer: Producer = .{ .fixture = &fixture, .index = 0 };
++        const thread = try std.Thread.spawn(.{}, Producer.run, .{&producer});
++        defer {
++            fixture.rescue();
++            thread.join();
++        }
++        try expectEvent(&fixture.observer.registered[0]);
++        try testing.expectEqual(@as(u64, if (after_registration) 1 else 0), fixture.runtime.progress_waiters.load(.seq_cst));
++        const before_wakes = fixture.observer.global_wakes.load(.seq_cst);
++        fixture.abortGap();
++        fixture.kickWorker();
++        try waitEpoch(fixture.runtime, 0);
++        // The epoch advances before notifyProgress decides whether to wake.
++        // Observe the worker's next idle boundary before checking wake counts.
++        try waitSleeping(fixture.runtime);
++        try testing.expectEqual(@as(usize, 0), fixture.runtime.journal.?.pending());
++        try testing.expectEqual(before_wakes + @as(u64, if (after_registration) 1 else 0), fixture.observer.global_wakes.load(.seq_cst));
++        if (after_registration) try testing.expectEqual(std.math.maxInt(u32), fixture.observer.last_max.load(.seq_cst));
++        fixture.observer.permits[0].set(testing.io);
++        try expectEvent(&producer.done);
++        try testing.expect(producer.finished_before_rescue);
++        if (producer.failure) |err| return err;
++        try testing.expectEqual(.accepted, producer.result.?);
++        try testing.expectEqual(@as(u64, 0), fixture.runtime.progress_waiters.load(.seq_cst));
++        try testing.expect(!fixture.observer.hook_timeout.load(.acquire));
++        try fixture.runtime.flush(.written);
++    };
++}
++
++test "progress notifications: detached cut and multiple Full waiters balance closing and worker error exits" {
++    if (builtin.single_threaded) return error.SkipZigTest;
++    for ([_]bool{ false, true }) |persistent| for ([_]bool{ false, true }) |worker_failure| {
++        var fixture: Fixture = .{};
++        try fixture.init(persistent, if (worker_failure) 2 else 1);
++        defer fixture.deinit();
++        if (worker_failure) {
++            // A valid committed record stays behind the gap until delivery is
++            // told to fail. Full producers pause after registration so neither
++            // can win a reclaimed slot before observing the terminal error.
++            _ = try fixture.runtime.scoped("seed").tryEmit(.info, "pending failure", .{});
++            fixture.observer.pause = .after;
++        }
++        var flush: TimedFlush = .{ .runtime = fixture.runtime };
++        const flushing = try std.Thread.spawn(.{}, TimedFlush.run, .{&flush});
++        defer {
++            fixture.rescue();
++            flushing.join();
++        }
++        // Cut must capture its target before either Full admission starts.
++        try expectEvent(&fixture.observer.cut_registered);
++        try expectEvent(&fixture.observer.cut_wait);
++        try waitCount(fixture.runtime, 1);
++        var producers = [_]Producer{ .{ .fixture = &fixture, .index = 0 }, .{ .fixture = &fixture, .index = 1 } };
++        var threads: [2]std.Thread = undefined;
++        var spawned: usize = 0;
++        defer {
++            fixture.rescue();
++            for (threads[0..spawned]) |thread| thread.join();
++        }
++        for (&producers, &threads) |*producer, *thread| {
++            thread.* = try std.Thread.spawn(.{}, Producer.run, .{producer});
++            spawned += 1;
++        }
++        for (0..2) |index| try expectEvent(if (worker_failure) &fixture.observer.registered[index] else &fixture.observer.producer_waits[index]);
++        try waitCount(fixture.runtime, 3);
++        try expectEvent(&flush.done);
++        try testing.expectEqual(error.Timeout, flush.failure.?);
++        try testing.expect(fixture.runtime.control.?.status().detached);
++        try testing.expect(fixture.runtime.control.?.status().busy);
++        try testing.expectEqual(@as(u64, 3), fixture.runtime.progress_waiters.load(.seq_cst));
++        if (worker_failure) {
++            fixture.output.fail_writes.store(true, .release);
++            fixture.abortGap();
++            fixture.kickWorker();
++            try waitControl(fixture.runtime);
++            try testing.expectEqual(error.InjectedProgressWrite, fixture.runtime.control.?.status().last_error.?);
++            try waitCount(fixture.runtime, 2);
++            try fixture.runtime.stopAccepting();
++            for (&fixture.observer.permits) |*permit| permit.set(testing.io);
++        } else try fixture.runtime.stopAccepting();
++        for (&producers) |*producer| {
++            try expectEvent(&producer.done);
++            try testing.expect(producer.finished_before_rescue);
++            if (worker_failure) try testing.expectEqual(error.InjectedProgressWrite, producer.failure.?) else {
++                try testing.expect(producer.failure == null);
++                try testing.expectEqual(.rejected_closing, producer.result.?);
++            }
++        }
++        try testing.expectEqual(@as(u64, 0), fixture.runtime.activeAdmissions());
++        if (!worker_failure) {
++            try waitCount(fixture.runtime, 1);
++            fixture.abortGap();
++            fixture.kickWorker();
++            try waitControl(fixture.runtime);
++            try testing.expect(fixture.runtime.control.?.status().last_error == null);
++        }
++        const control_completed_before_rescue = fixture.runtime.control.?.status().completed_operations == 1 and !fixture.observer.rescuing.load(.acquire);
++        try testing.expect(control_completed_before_rescue);
++        try waitCount(fixture.runtime, 0);
++        try testing.expect(!fixture.observer.hook_timeout.load(.acquire));
++        try testing.expectEqual(std.math.maxInt(u32), fixture.observer.last_max.load(.seq_cst));
++    };
++}
++
++test "progress notifications: real registration saturates permanently and future notifications still wake" {
++    if (builtin.single_threaded) return error.SkipZigTest;
++    for ([_]bool{ false, true }) |persistent| {
++        var fixture: Fixture = .{};
++        try fixture.init(persistent, 1);
++        defer fixture.deinit();
++        fixture.observer.pause = .after;
++        fixture.runtime.progress_waiters.store(std.math.maxInt(u64) - 1, .seq_cst);
++        var producer: Producer = .{ .fixture = &fixture, .index = 0 };
++        const thread = try std.Thread.spawn(.{}, Producer.run, .{&producer});
++        defer {
++            fixture.rescue();
++            thread.join();
++        }
++        try expectEvent(&fixture.observer.registered[0]);
++        try testing.expectEqual(std.math.maxInt(u64), fixture.runtime.progress_waiters.load(.seq_cst));
++        fixture.abortGap();
++        fixture.kickWorker();
++        fixture.observer.permits[0].set(testing.io);
++        try expectEvent(&producer.done);
++        try testing.expect(producer.finished_before_rescue);
++        if (producer.failure) |err| return err;
++        try testing.expectEqual(.accepted, producer.result.?);
++        try fixture.runtime.flush(.written);
++        try testing.expectEqual(@as(u64, 0), fixture.runtime.activeAdmissions());
++        try testing.expectEqual(std.math.maxInt(u64), fixture.runtime.progress_waiters.load(.seq_cst));
++        const before_wakes = fixture.observer.global_wakes.load(.seq_cst);
++        try fixture.runtime.stopAccepting();
++        try testing.expect(fixture.observer.global_wakes.load(.seq_cst) > before_wakes);
++        try testing.expectEqual(std.math.maxInt(u32), fixture.observer.last_max.load(.seq_cst));
++        try testing.expectEqual(std.math.maxInt(u64), fixture.runtime.progress_waiters.load(.seq_cst));
++        try testing.expect(!fixture.observer.hook_timeout.load(.acquire));
++    }
++}

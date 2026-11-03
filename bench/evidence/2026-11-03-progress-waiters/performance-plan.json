@@ -1,0 +1,43 @@
+{
+  "pre_timing_gates": [
+    "named actual numeric/real-futex/closing/cut/timed-detach/saturation regressions",
+    "source SC registration and everyexit audit",
+    "production testhook absence",
+    "compiled caller/CRC/frame/calls and direct layout/resource audit"
+  ],
+  "phase1": {
+    "scope": "Complete managed Logging default inline JSON, every notification source affects both queue modes",
+    "modes": [
+      "async",
+      "spsc"
+    ],
+    "storages": [
+      "memory",
+      "mmap"
+    ],
+    "producers": [
+      1,
+      4
+    ],
+    "phases": [
+      "batch",
+      "sampled"
+    ],
+    "schema": "off",
+    "events": 100000,
+    "warmup": 1000,
+    "rounds": 5,
+    "trials_per_topology": 160,
+    "topologies": {
+      "ecore": "16,18,20,22,24,26",
+      "pcore": "0,2,4,6,8,10"
+    }
+  },
+  "qualification": "unchanged paired_metric spreads<=10% for each input and pairedratio; CI95 excludes1; throughput/lifecycle/init/shutdown/p50/p99/p999 separately",
+  "stop": "Any qualified regression disqualifies candidate and suppresses expansion; no qualified benefit gives no retention basis",
+  "phase2_if_phase1_passes": "schema-on samefullflow matrix and other relevant format/overload controls; then required release gate before production",
+  "foundation_if_retained": "Same-round both requested Foundation frontends, samefulloutput/writtenflush/shutdown/cleanup/defaultCRC/256slot512B; everyselectedpair independentlyqualified bothCPUtopologies",
+  "retain_all": "positive/negative/noisy/failure/rawcommands/snapshots/hashes; noselectedwin or historicalpercentaddition",
+  "concurrency": "No compile/test/otherbenchmark duringtiming; readonlyreview permitted",
+  "goal_met": false
+}

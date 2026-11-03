@@ -1,0 +1,28 @@
+.zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:102:48: error: missing struct field: sync
+        return .{ .context = self, .vtable = &.{ .writeRecord = write, .flush = flush }, .recovery_identity = "progress-notification-output" };
+                                              ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.zig-cache/progress-waiters/candidate/src/sink/interface.zig:15:24: note: struct declared here
+    pub const VTable = struct {
+                       ^~~~~~
+referenced by:
+    init: .zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:135:71
+    test.progress notifications: real shared Full registration races preserve zero wake elision and u32 wrap: .zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:236:25
+    5 reference(s) hidden; use '-freference-trace=7' to see all references
+.zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:201:51: error: struct 'core.runtime.Runtime' has no member named 'Deadline'
+        self.runtime.flushUntil(.written, Runtime.Deadline.after(testing.io, std.time.ns_per_s)) catch |err| {
+                                                  ^~~~~~~~
+.zig-cache/progress-waiters/candidate/src/core/runtime.zig:64:21: note: struct declared here
+pub const Runtime = struct {
+                    ^~~~~~
+.zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:209:30: error: struct 'core.runtime.Runtime' has no member named 'Deadline'
+    const deadline = Runtime.Deadline.after(testing.io, 5 * std.time.ns_per_s);
+                             ^~~~~~~~
+.zig-cache/progress-waiters/candidate/src/core/runtime.zig:64:21: note: struct declared here
+pub const Runtime = struct {
+                    ^~~~~~
+.zig-cache/progress-waiters/candidate/src/core/tests/runtime_progress_notifications.zig:217:30: error: struct 'core.runtime.Runtime' has no member named 'Deadline'
+    const deadline = Runtime.Deadline.after(testing.io, 5 * std.time.ns_per_s);
+                             ^~~~~~~~
+.zig-cache/progress-waiters/candidate/src/core/runtime.zig:64:21: note: struct declared here
+pub const Runtime = struct {
+                    ^~~~~~
