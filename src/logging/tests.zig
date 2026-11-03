@@ -264,6 +264,74 @@ test "managed logging mmap supports owned file rolling and best effort writer th
     try std.testing.expectEqual(@as(usize, 0), reopened.health().journal_pending);
 }
 
+test "managed logging rolling mmap schema journal reopens and replays prepared nested records" {
+    const event = @import("../core/event.zig");
+    const field = @import("../core/field.zig");
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var journal_path_bytes: [192]u8 = undefined;
+    const journal_path = try std.fmt.bufPrint(&journal_path_bytes, ".zig-cache/tmp/{s}/rolling-upgrade.journal", .{tmp.sub_path});
+    const options: Logging.Options = .{ .outputs = &.{.{
+        .name = "rolling",
+        .target = .{ .rolling_file = .{ .dir = tmp.dir, .path = "rolling-upgrade.jsonl", .max_bytes = 64 * 1024, .retention = 2, .backend = .portable } },
+        .mode = .asynchronous,
+        .format = .json,
+        .queue = .{ .mmap = .{ .path = journal_path, .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 } },
+    }} };
+    const shape_members = [_]field.Field{ field.kv("region", "seed"), field.kv("attempt", @as(u64, 0)) };
+    const shape_values = [_]field.Value{ field.fromAny(@as(u64, 0)), .null_value };
+    const shape: event.Event = .{
+        .level = .info,
+        .scope = "nested",
+        .message = "nested",
+        .timestamp_ns = 0,
+        .fields = &.{
+            field.kv("child", field.group(&shape_members)),
+            field.kv("items", field.array(&shape_values)),
+        },
+    };
+    {
+        const logging = try Logging.create(std.testing.allocator, std.testing.io, options);
+        var live = true;
+        defer if (live) logging.destroy();
+        const log = try logging.prepared(shape);
+        inline for (.{ .{ "one", 1 }, .{ "two", 2 }, .{ "three", 3 } }) |case| {
+            const members = [_]field.Field{ field.kv("region", case[0]), field.kv("attempt", @as(u64, case[1])) };
+            const values = [_]field.Value{ field.fromAny(@as(u64, case[1])), .null_value };
+            try std.testing.expectEqual(EmitResult.accepted, try log.tryEmit(.info, "nested", .{ .child = field.group(&members), .items = field.array(&values) }));
+        }
+        try logging.flushDurable();
+        try logging.shutdown();
+        try std.testing.expectEqual(@as(u64, 3), logging.health().written);
+        logging.destroy();
+        live = false;
+    }
+    const written = try tmp.dir.readFileAlloc(std.testing.io, "rolling-upgrade.jsonl", std.testing.allocator, .limited(16384));
+    defer std.testing.allocator.free(written);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, written, "\n"));
+    try std.testing.expect(std.mem.indexOf(u8, written, "\"region\":\"one\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, written, "\"items\":[3,null]") != null);
+    {
+        const reopened = try Logging.create(std.testing.allocator, std.testing.io, options);
+        var live = true;
+        defer if (live) reopened.destroy();
+        try reopened.flush();
+        try std.testing.expectEqual(@as(usize, 0), reopened.health().journal_pending);
+        const log = try reopened.prepared(shape);
+        const members = [_]field.Field{ field.kv("region", "four"), field.kv("attempt", @as(u64, 4)) };
+        const values = [_]field.Value{ field.fromAny(@as(u64, 4)), .null_value };
+        try std.testing.expectEqual(EmitResult.accepted, try log.tryEmit(.info, "nested", .{ .child = field.group(&members), .items = field.array(&values) }));
+        try reopened.shutdown();
+        try std.testing.expectEqual(@as(u64, 1), reopened.health().written);
+        reopened.destroy();
+        live = false;
+    }
+    const after = try tmp.dir.readFileAlloc(std.testing.io, "rolling-upgrade.jsonl", std.testing.allocator, .limited(16384));
+    defer std.testing.allocator.free(after);
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, after, "\n"));
+    try std.testing.expect(std.mem.indexOf(u8, after, "\"region\":\"four\"") != null);
+}
+
 test "managed logging rejects invalid multiple outputs before allocating" {
     var forbidden = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
     try std.testing.expectError(error.InvalidOutputs, Logging.create(forbidden.allocator(), std.testing.io, .{
