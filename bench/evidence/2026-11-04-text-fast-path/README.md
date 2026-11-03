@@ -6,7 +6,7 @@ opt-in `MemoryQueueOptions.text_format = true`（同时要求 `verify_crc = fals
 
 - producer：capture/admission 后把最终 JSON 渲染进 memory queue slot；slot payload 前20字节是capture-time route generation/fingerprint/channel，后面是完整JSON行。
 - consumer：读取slot header选择route snapshot，直接 `writeRecord`，不再decode/render，也不做slot CRC。
-- 约束：shared async或SPSC、单route、JSON、memory queue；无journal/mmap/recovery；默认durable路径不变。
+- 约束：shared async或SPSC、单route、JSON、memory queue或`recover=false`的mmap journal；无journal recovery；默认durable路径不变。
 - 输出 parity 测试：固定clock/session下，text路径与durable deferred路径的inline/schema输出byte-identical（async与SPSC）。
 
 该模式与Foundation/tracing的“无恢复”语义对齐；默认CRC/三检查点/recovery仍保留给durable模式。
@@ -48,7 +48,26 @@ opt-in `MemoryQueueOptions.text_format = true`（同时要求 `verify_crc = fals
 - **SPSC P4 text 4.80M–5.06M**，对 Foundation/tracing 中位 **2.06–2.32**，多个 qualified lead。
 - SPSC P1 text 1.83M–2.10M：对 Foundation 1.08–1.18（部分 lead），对 tracing 0.89–0.97（sampled 两轴 peer lead）；P1 tracing 差距仍在。
 
-原始行见[async results](results.jsonl)与[SPSC results](spsc/results.jsonl)。
+## Mmap A/B（E-core，5轮，async text vs Foundation/tracing）
+
+| case | peer | ratio | 95% CI | kron | peer |
+| --- | --- | ---: | --- | ---: | ---: |
+| p4-batch-inline | foundation_tracing | 1.3396 | 0.852..1.410 | 3.853M | 2.827M |
+| p4-batch-schema | foundation_tracing | 1.2655 | 1.222..1.694 | 3.500M | 2.539M |
+| p4-batch-schema | foundation | 1.1709 | 1.090..1.521 | 3.500M | 2.814M |
+| p4-sampled-inline | foundation | 1.4000 | 1.316..1.587 | 4.039M | 2.853M |
+| p4-sampled-inline | foundation_tracing | 1.3277 | 1.303..1.692 | 4.039M | 2.929M |
+| p4-sampled-schema | foundation | 1.3856 | 1.210..1.411 | 3.828M | 2.867M |
+| p1-batch-inline | foundation | **1.0916** | 1.043..1.106 | 2.304M | 2.160M |
+| p1-sampled-inline | foundation | **1.1166** | 1.049..1.127 | 2.146M | 1.922M |
+| p1-sampled-inline | foundation_tracing | 0.8662 | 0.815..0.887 | 2.146M | 2.478M |
+| p1-batch-inline | foundation_tracing | 0.8005 | 0.751..0.844 | 2.304M | 2.968M |
+| p1-batch-schema | foundation_tracing | 0.7225 | 0.671..0.832 | 2.027M | 2.805M |
+
+- **P4 mmap text 3.50M–4.04M**，对 Foundation/tracing 中位 **1.09–1.40**，全部因spread inconclusive但中位领先。
+- P1 mmap text 2.03M–2.30M：对 Foundation 0.94–1.12（部分 lead），对 tracing 0.72–0.87（peer lead）；**tracing mmap P1 仍是最大剩余差距**。
+
+原始行见[async results](results.jsonl)、[SPSC results](spsc/results.jsonl)与[mmap results](mmap/results.jsonl)。
 
 ## 门禁
 

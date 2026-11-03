@@ -36,9 +36,9 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
         if (queue_options == null) return error.RenderCacheUnsupported;
         if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
     }
-    if (options.memory_queue) |memory| {
-        if (memory.text_format) {
-            if (options.submission == .sync or options.routes.len != 1 or options.routes[0].format != .json or memory.verify_crc or options.render_cache) return error.InvalidTextFormat;
+    if (queue_options) |journal_options| {
+        if (journal_options.text_format) {
+            if (options.submission == .sync or options.routes.len != 1 or options.routes[0].format != .json or journal_options.verify_crc or journal_options.recover or options.recovery_versions.len != 0 or options.render_cache) return error.InvalidTextFormat;
         }
     }
     if (queue_options) |journal_options| {
@@ -79,7 +79,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     }
     const caches = try allocator.create(Runtime.Caches);
     errdefer allocator.destroy(caches);
-    caches.* = .{ .text_format = if (options.memory_queue) |memory| memory.text_format else false };
+    caches.* = .{ .text_format = if (queue_options) |queue| queue.text_format else false };
     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
     errdefer if (journal) |j| j.deinit();
     var identity: [8]u8 = undefined;

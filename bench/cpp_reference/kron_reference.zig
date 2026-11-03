@@ -148,7 +148,7 @@ pub fn main(init: std.process.Init) !void {
             .name = "reference",
             .target = .{ .file = .{ .path = options.output, .buffer_bytes = 65536, .backend = .portable, .append = false } },
             .mode = if (is_spsc) .spsc else .asynchronous,
-            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
+            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } },
             .max_threads = options.producers,
             .max_journal_bytes = 32 * 1024 * 1024,
             .max_encoded_record_bytes = 512,
@@ -161,8 +161,8 @@ pub fn main(init: std.process.Init) !void {
     }) else null;
     const runtime = if (managed) |owner| try owner.runtime("reference") else try kron.Runtime.create(allocator, io, .{
         .submission = if (is_spsc) .low_latency else .asynchronous,
-        .journal = if (!memory) .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
-        .memory_queue = if (memory) .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } else null,
+        .journal = if (!memory) .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } else null,
+        .memory_queue = if (memory) .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } else null,
         .max_thread_channels = if (is_spsc) options.producers else 0,
         .thread_channel_capacity = options.queue_slots,
         .max_journal_bytes = 32 * 1024 * 1024,
@@ -368,7 +368,6 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
-    if (result.text_format and !std.mem.eql(u8, result.storage, "memory")) return error.TextFormatUnsupported;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {

@@ -198,7 +198,7 @@ pub const Journal = struct {
 
     fn createWithMode(allocator: std.mem.Allocator, io: std.Io, options: Options, mode: ProducerMode, memory: bool) !*Journal {
         if (@import("builtin").cpu.arch.endian() != .little or @sizeOf(usize) != 8) return error.UnsupportedPlatform;
-        if (!options.verify_crc and !memory) return error.CrcRequiredForRecovery;
+        if (!options.verify_crc and !memory and !options.text_format) return error.CrcRequiredForRecovery;
         const layout = try format.layout(options.capacity, options.max_record_bytes);
         var schema_layout: ?schema_format.Layout = if (options.schema_capacity == 0) null else try schema_format.layout(layout.size, options.schema_capacity, options.max_schema_bytes);
         const file_size = if (schema_layout) |table| table.size else layout.size;

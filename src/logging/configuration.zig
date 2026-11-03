@@ -96,6 +96,9 @@ pub fn validate(options: Options) !void {
         if (d.queue.? == .memory and d.queue.?.memory.text_format) {
             if (d.mode == .sync or d.format != .json or d.queue.?.memory.verify_crc) return error.InvalidTextFormat;
         }
+        if (d.queue.? == .mmap and d.queue.?.mmap.text_format) {
+            if (d.mode == .sync or d.format != .json or d.queue.?.mmap.verify_crc or d.queue.?.mmap.recover) return error.InvalidTextFormat;
+        }
         if (d.queue.? == .mmap and (d.queue.?.mmap.path.len == 0 or (route.target != .file and route.target != .rolling_file))) return error.MmapRequiresFileOutput;
         if (d.mode != .sync and d.reclaim_after == .durable and d.queue.? != .mmap) return error.DurableReclaimRequiresMmap;
         try validatePaths(options, index, d);
