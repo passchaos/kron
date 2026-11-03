@@ -32,7 +32,7 @@
 | 真实ENOSPC故障 | [ENOSPC证据](../bench/evidence/2026-11-03-enospc-fault/README.md)、[faults/vm_enospc.py](faults/vm_enospc.py) | child VM 1MiB tmpfs填满后，直接FileSink、Runtime Memory+FileSink durable flush与RollingFileSink flush均返回`NoSpaceLeft`并latch；无false success |
 | 只读文件系统初始化 | [read-only证据](../bench/evidence/2026-11-03-readonly-fault/README.md)、[faults/vm_readonly.py](faults/vm_readonly.py) | child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem`；无false success |
 | Journal ENOSPC预分配 | [journal ENOSPC证据](../bench/evidence/2026-11-03-journal-enospc/README.md)、[faults/vm_journal_enospc.py](faults/vm_journal_enospc.py) | 64MiB ext4填满后`Journal.create`返回`NoSpaceLeft`；无false success |
-| 正则 | regex_differential/fuzz/equivalence | Python差分、有界mutation、coverage-guided入口；不同资格范围分别记录 |
+| 正则 | regex_differential/fuzz/equivalence | Python差分、有界mutation、coverage-guided入口；fuzz corpus由runner seed驱动并完成1000-seed扫描 |
 | 负向编译 | [compile_fail/](compile_fail/)、[run_compile_fail.py](run_compile_fail.py) | 不支持输入/格式、字段选择边界、禁止直接改opaque配置 |
 | 进程恢复 | crash_writer/recovery、async_storage_crash、recovery_campaign、runtime_crash_campaign | 真实SIGKILL，完整commit/预留缺口/热route、随机ACK覆盖 |
 | 子VM停机 | [power_loss/](power_loss/README.md) | QEMU停机及journal/output确认；ext4/XFS/Btrfs/F2FS 16-run schema campaigns与单次非schema ACK1通过；具体文件系统/设备，非物理断电普遍资格 |

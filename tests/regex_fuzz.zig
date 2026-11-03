@@ -5,7 +5,7 @@ const std = @import("std");
 const kron = @import("kron");
 
 test "byte regex mutation and arbitrary input preserve owned fixed-budget state" {
-    var random = std.Random.DefaultPrng.init(0x6b726f6e72656766);
+    var random = std.Random.DefaultPrng.init(0x6b726f6e72656766 ^ @as(u64, std.testing.random_seed));
     const rng = random.random();
     const seeds = [_][]const u8{
         "",         "^((a?)*)*b$",          "[\\x00-\\xff]+", "[]a]",  "[^]a]",
@@ -71,7 +71,7 @@ test "byte regex mutation and arbitrary input preserve owned fixed-budget state"
 }
 
 test "predicate parser mutation diagnostics and successful values stay owned" {
-    var random = std.Random.DefaultPrng.init(0x7072656469636174);
+    var random = std.Random.DefaultPrng.init(0x7072656469636174 ^ @as(u64, std.testing.random_seed));
     const rng = random.random();
     const seeds = [_][]const u8{
         "@message =~ \"^[]a]+$\"",     "exists(input) && @scope =~ \"^fuzz\\\\.\"",

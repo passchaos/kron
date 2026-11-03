@@ -35,7 +35,7 @@
 | 子VM停机 | [power_loss](../tests/power_loss/README.md)；ext4/XFS/Btrfs/F2FS 16-run child-VM SIGKILL campaigns；非物理掉电 |
 | wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |
 | fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
-| 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence` |
+| 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence`；fuzz corpus由runner seed驱动，1000-seed扫描 |
 | build/dependency/分发 | `test-package`、`test-package-single-threaded`、`test-package-distribution`、`check-platforms` |
 | aarch64 QEMU用户态 | `zig test src/root.zig -target aarch64-linux-musl -O ReleaseSafe`、journal fuzz与`tests/package_consumer`交叉构建；见[aarch64证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) |
 
