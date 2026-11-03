@@ -750,21 +750,102 @@ pub const Journal = struct {
         } else self.head += 1;
     }
 
-    /// Identity-only counterpart of the checked peek used by `releaseAfter`.
+    /// Identity-only counterpart of the checked peek used by batch release.
     /// The borrowed record must have been returned by this journal's checked
     /// peek and not yet released. Payload bytes are deliberately not rehashed:
     /// the consumer already observed them and the ring protocol keeps the slot
     /// write-protected for producers until reclaim.
-    fn validateReclaimIdentity(self: *Journal, record: Record) !void {
+    fn validateReclaimIdentityAt(self: *Journal, record: Record, expected_sequence: u64, expected_slot: usize) !void {
         if (record.sequence == 0 or record.sequence > format.max_sequence) return error.InvalidRecord;
         if ((record.sequence - 1) % self.capacity != record.slot) return error.InvalidRecord;
+        if (record.sequence != expected_sequence or record.slot != expected_slot) return error.InvalidRecord;
         if (record.generation != self.generation(record.sequence)) return error.InvalidRecord;
         const bytes = self.slotBytes(record.slot);
-        if (format.get(u64, bytes, 8) != record.sequence or format.get(u64, bytes, 16) != record.generation) return error.InvalidRecord;
-        if (self.slotState(record.slot).load(.acquire) != format.tag(record.sequence, .committed)) return error.InvalidRecord;
+        if (format.get(u64, bytes, 8) != record.sequence or format.get(u64, bytes, 16) != record.generation) return error.CorruptRecord;
+        if (self.slotState(record.slot).load(.acquire) != format.tag(record.sequence, .committed)) return error.CorruptRecord;
+    }
+
+    /// Recheck the slot checksum before acknowledgement. Identity checks alone
+    /// cannot see late payload damage injected between the checked peek and
+    /// release, so the prefix contract still rehashes each record.
+    fn validateReclaimChecksum(self: *Journal, record: Record) !void {
+        const bytes = self.slotBytes(record.slot);
+        const length = format.get(u32, bytes, 24);
+        if (length > self.max_record_bytes) return error.CorruptRecord;
+        if (!self.verify_crc) return;
+        const payload = bytes[format.slot_header_bytes..][0..length];
+        if (format.get(u32, bytes, 28) !=
+            (if (self.file_version == format.schema_version)
+                format.checksumV3Slot(bytes, length)
+            else
+                self.slotChecksum(record.sequence, record.generation, bytes, payload))) return error.CorruptRecord;
+    }
+
+    /// Acknowledge a contiguous written run borrowed from `peekBatchChecked`.
+    /// The returned count is the successful prefix even when late damage
+    /// reports an error, so callers acknowledge exactly what was reclaimed.
+    pub fn releaseBatchWritten(self: *Journal, records: []const Record, released: *usize) !void {
+        released.* = 0;
+        if (records.len == 0) return;
+        var valid: usize = 0;
+        while (valid < records.len) : (valid += 1) {
+            self.validateReclaimRecord(records[valid], valid) catch |err| {
+                if (valid != 0) {
+                    self.releaseValidatedWritten(records[0..valid]);
+                    released.* = valid;
+                }
+                return err;
+            };
+        }
+        self.releaseValidatedWritten(records);
+        released.* = records.len;
+    }
+
+    fn validateReclaimRecord(self: *Journal, record: Record, index: usize) !void {
         if (self.recovery_cursor < self.recovery_length) {
-            if (self.recovery_order[self.recovery_cursor] != record.slot) return error.InvalidRecord;
-        } else if (record.sequence != self.head + 1) return error.InvalidRecord;
+            if (index >= self.recovery_length - self.recovery_cursor) return error.InvalidRecord;
+            const slot = self.recovery_order[self.recovery_cursor + index];
+            try self.validateReclaimIdentityAt(record, format.get(u64, self.slotBytes(slot), 8), slot);
+        } else {
+            const expected = std.math.add(u64, self.head, index + 1) catch return error.InvalidRecord;
+            if (expected > format.max_sequence) return error.InvalidRecord;
+            try self.validateReclaimIdentityAt(record, expected, @intCast((expected - 1) % self.capacity));
+        }
+        try self.validateReclaimChecksum(record);
+    }
+
+    /// Reclaim a run whose identities and checksums were just checked.
+    fn releaseValidatedWritten(self: *Journal, records: []const Record) void {
+        if (records.len == 0) return;
+        // Slots stay unavailable through their in-memory turns, so publishing
+        // all free markers before the accounting update cannot expose reuse.
+        for (records) |record| self.slotState(record.slot).store(0, .release);
+        if (self.producer_mode == .shared) {
+            _ = self.occupied.fetchSub(records.len, .monotonic);
+        } else {
+            self.single.released_total.store(self.single.released_total.load(.monotonic) + records.len, .release);
+        }
+        const last_sequence = records[records.len - 1].sequence;
+        self.advanceWritten(last_sequence);
+        // Every slot in this run is still consumer-owned, so its next turn is
+        // independent of producer reservations that happen during this call.
+        const producer_tail = self.tail().load(.monotonic);
+        for (records) |record| {
+            self.turns[record.slot].store(self.nextTurn(producer_tail, record.slot), .release);
+        }
+        if (self.producer_mode == .single) {
+            self.single.consumer_free_position.store(last_sequence, .release);
+        }
+        if (self.recovery_cursor < self.recovery_length) {
+            self.recovery_cursor += records.len;
+            const completed_prefix = if (self.recovery_cursor < self.recovery_length)
+                format.get(u64, self.slotBytes(self.recovery_order[self.recovery_cursor]), 8) - 1
+            else
+                self.recovery_tail;
+            // Only this opening's old tail has been scanned for abandoned
+            // reservations. New live reservations remain consumer-owned.
+            self.advanceWritten(completed_prefix);
+        } else self.head += records.len;
     }
 
     fn advanceWritten(self: *Journal, sequence: u64) void {

@@ -510,6 +510,89 @@ test "batch borrows records until ordered acknowledgement and stops at gaps" {
     try testing.expectEqual(@as(usize, 0), j.pending());
 }
 
+test "batch written acknowledgement advances cursors once and rejects reordered records" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [128]u8 = undefined;
+    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
+    const j = try journal.Journal.create(testing.allocator, testing.io, options);
+    defer j.deinit();
+    try append(j, "one");
+    try append(j, "two");
+    try append(j, "three");
+    var records: [4]journal.Record = undefined;
+    const batch = try j.peekBatchChecked(&records);
+    try testing.expectEqual(@as(usize, 3), batch.len);
+    var released: usize = 0;
+    try testing.expectError(error.InvalidRecord, j.releaseBatchWritten(batch[1..], &released));
+    try testing.expectEqual(@as(usize, 0), released);
+    try testing.expectEqual(@as(usize, 3), j.pending());
+    try testing.expectEqual(@as(u64, 0), j.writtenTarget());
+    try j.releaseBatchWritten(batch, &released);
+    try testing.expectEqual(@as(usize, 3), released);
+    try testing.expectEqual(@as(usize, 0), j.pending());
+    try testing.expectEqual(@as(u64, 3), j.writtenTarget());
+    try testing.expectEqual(@as(usize, 0), j.peekBatch(&records).len);
+    released = 0;
+    try testing.expectError(error.InvalidRecord, j.releaseBatchWritten(batch, &released));
+    try testing.expectEqual(@as(usize, 0), released);
+}
+
+test "batch written acknowledgement rejects a corrupted middle slot without reclaiming" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [128]u8 = undefined;
+    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
+    const j = try journal.Journal.create(testing.allocator, testing.io, options);
+    defer j.deinit();
+    try append(j, "one");
+    try append(j, "two");
+    try append(j, "three");
+    var records: [4]journal.Record = undefined;
+    const batch = try j.peekBatchChecked(&records);
+    const stride = (try format.layout(4, 16)).stride;
+    const slot = format.header_bytes + batch[1].slot * stride;
+    const original_generation = format.get(u64, j.mapping.bytes, slot + 16);
+    format.put(u64, j.mapping.bytes, slot + 16, original_generation + 1);
+    var released: usize = 0;
+    try testing.expectError(error.CorruptRecord, j.releaseBatchWritten(batch, &released));
+    try testing.expectEqual(@as(usize, 1), released);
+    try testing.expectEqual(@as(usize, 2), j.pending());
+    try testing.expectEqual(@as(u64, 1), j.writtenTarget());
+    format.put(u64, j.mapping.bytes, slot + 16, original_generation);
+    try testing.expectEqual(@as(u64, 2), (try j.peekChecked()).?.sequence);
+    try j.releaseBatchWritten(batch[1..], &released);
+    try testing.expectEqual(@as(usize, 2), released);
+    try testing.expectEqual(@as(usize, 0), j.pending());
+    try testing.expectEqual(@as(u64, 3), j.writtenTarget());
+}
+
+
+test "batch written acknowledgement rejects late payload corruption after checked peek" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [128]u8 = undefined;
+    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
+    const j = try journal.Journal.create(testing.allocator, testing.io, options);
+    defer j.deinit();
+    try append(j, "one");
+    try append(j, "two");
+    try append(j, "three");
+    var records: [4]journal.Record = undefined;
+    const batch = try j.peekBatchChecked(&records);
+    const stride = (try format.layout(4, 16)).stride;
+    const slot = format.header_bytes + batch[1].slot * stride;
+    j.mapping.bytes[slot + format.slot_header_bytes] ^= 1;
+    var released: usize = 0;
+    try testing.expectError(error.CorruptRecord, j.releaseBatchWritten(batch, &released));
+    try testing.expectEqual(@as(usize, 1), released);
+    try testing.expectEqual(@as(usize, 2), j.pending());
+    try testing.expectEqual(@as(u64, 1), j.writtenTarget());
+}
+
 test "checked live peek retains corrupt records instead of exposing invalid length" {
     if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = testing.tmpDir(.{});

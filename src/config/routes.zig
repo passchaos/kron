@@ -105,10 +105,23 @@ pub const Snapshot = struct {
     }
 
     pub fn releaseChannel(self: *Snapshot, channel: u32) void {
-        if (channel == 0) return self.release();
+        self.releaseChannelCount(channel, 1);
+    }
+
+    /// Release a run of equal pins with one atomic update. Counts are
+    /// interchangeable; observers only require that the total never drops
+    /// below the records still owned by the consumer.
+    pub fn releaseChannelCount(self: *Snapshot, channel: u32, count: usize) void {
+        if (count == 0) return;
+        if (channel == 0) {
+            if (@import("builtin").is_test) _ = TestingAudit.global_pending_rmw.fetchAdd(@intCast(count), .monotonic);
+            const before = self.pending.fetchSub(count, .seq_cst);
+            std.debug.assert(before >= count);
+            return;
+        }
         std.debug.assert(channel <= max_channels);
-        const before = self.perchannel_pending[channel - 1].value.fetchSub(1, .seq_cst);
-        std.debug.assert(before != 0);
+        const before = self.perchannel_pending[channel - 1].value.fetchSub(count, .seq_cst);
+        std.debug.assert(before >= count);
     }
 
     /// Cold lifecycle checks use the sum of all counters. It is a concurrent

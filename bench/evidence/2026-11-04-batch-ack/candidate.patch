@@ -1,0 +1,341 @@
+diff --git a/README.md b/README.md
+index 65840f6..defd279 100644
+--- a/README.md
++++ b/README.md
+@@ -8,6 +8,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交
+ 
+ 最新 [双拓扑完整流程 profile](bench/evidence/2026-11-03-current-workflow-profile/analysis.md) 核验 800.8 万条 JSON，用于定位当前热点，不提供新的速度排名。
+ 
++最新批量消费者确认候选已保留生产：连续`.written`记录的journal reclaim与snapshot pin释放合并为批次操作，逐条保留identity/slot CRC重查和late-damage成功前缀语义。E-core 16配置×5轮×2 binary核对**1,616万条JSON**，written **12 lead、0 negative、4 inconclusive**（中位1.0156–1.1074）。完整`test` 758/759、`verify-local` 792/793通过；跨库排名未更新，仍低于Foundation。证据见[batch acknowledgment](bench/evidence/2026-11-04-batch-ack/README.md)。
++
+ 近期 [key scratch](bench/evidence/2026-11-03-fused-key-scratch/README.md)、[短 CRC](bench/evidence/2026-11-03-short-crc/README.md)、[精确固定段 CRC](bench/evidence/2026-11-03-crc-fixed-segments/README.md)、[CAS pause](bench/evidence/2026-11-03-cas-failure-pause/README.md)、[消费校验 flat CRC](bench/evidence/2026-11-03-crc-flat-consumer/README.md)、[16行消费校验 CRC](bench/evidence/2026-11-03-crc-flat-consumer-16row/README.md) 和 [THP mmap](bench/evidence/2026-11-03-mmap-hugepage/README.md)、[consumer spin](bench/evidence/2026-11-03-consumer-spin/README.md)、[producer-format](bench/evidence/2026-11-03-producer-format/README.md)、[mutex reserve](bench/evidence/2026-11-03-mutex-reserve/README.md)、[async file sink](bench/evidence/2026-11-03-async-file-sink/README.md) 候选均因控制或尾部退步撤回；V3 schema CRC 则保留生产。消费校验版通过实际producer/通用CRC/24row单copy/对象预算门槛，E-core 320项有50个qualified lead，但async Mmap P1 sampled schema p99 717→747ns且定向复测719→782ns，按预定负向门槛拒绝。16行版改为只复用原16个row、rodata增长0B，E-core 60个qualified lead、23/32 written lead，但full-run有6个latency/init负向；六轴定向复测全部inconclusive且窗口受无关100% CPU测试干扰，仍按预定门槛拒绝。V3 schema CRC把reference+padding并入payload一次折叠，E-core两窗口treatment合计81 qualified lead/0 negative，V1 control仅第一窗口2个0.14%级非复现负向；同格式V3-control A/B中treatment 27 lead/0 negative、V1路径仅layout噪声，V3 schema journal格式已保留生产并通过`verify-local` 157/157步骤、775/776测试、package-distribution 2/2、check-platforms 10/10；生产热路径与测量binary归一化指令相同。保留后双拓扑完整Foundation矩阵（各240 trials、2424万JSON）为E-core `target_not_met_in_selected_cases`（29 lead/94 peer/293 inc）、P-core `inconclusive`（2 lead/414 inc）；kron lead集中在P1 memory batch，P4/mmap与tracing仍领先，未更新完整排名。P4 mmap单trial PMU显示kron 786M instructions/485M cycles、Foundation 1.828B/904M，kron CPU更少但wall-clock更慢；扩展PMU显示kron的cache-miss/context-switch也更少，关键路径是consumer单线程decode+format+write与文件写吞吐（kron约543MB/s vs Foundation约745MB/s）。consumer spin 160项0 lead/6 negative被拒，P4差距不是sleep/wake。producer-format候选（producer格式化、consumer只写出）在E-core async 160项inline组0 lead/10 negative（0.96–0.99）被拒；kron producer已承担capture/encode/CRC/commit，迁移格式化使其成为瓶颈。mutex reserve候选（复用sync_mutex、不增Journal字段）160项0 lead、P1 5 negative、P4 11 negative被拒；std.Io.Mutex开销高于lock-free CAS。当前源码`verify_crc=false` opt-in的no-CRC诊断（E-core memory 80项）仅1 lead/10 negative，未复现旧compile-time +20%–31%；但复制源码compile-time删除slot CRC的80项诊断得到23 lead/0 negative，P1/P4 inline快约14%–17%、schema约8%。CRC仍是显著功能成本，runtime opt-in的负向更可能来自分支/代码布局；默认CRC保持，跨库比较需归一化Foundation无CRC成本。FileSink writer-thread双缓冲160项P1 2 lead/3 negative、P4 0 lead/11 negative被拒；6个E-core CPU被4 producer+consumer+writer占满，barrier成本超过I/O重叠收益。保留 `test-wire-scratch` 与 `test-crc-segments` 验证复用、嵌套预算、任意 seed、独立分段和 guard-page 边界。
+ 
+ 等待者计数通知候选完成两核 320 项流程、3,232 万条 JSON 核对，但有稳定吞吐与尾部退步，已拒绝，见 [progress 报告](bench/evidence/2026-11-03-progress-waiters/README.md)。最新平坦 CRC 直接索引版消除了旧表重复，两核 640 项流程核对 6,464 万条 JSON，E/P 分别有 27/6 个 written 组局部领先；仍有 p99/p50 稳定反例，按门槛拒绝，见 [direct-index 报告](bench/evidence/2026-11-03-crc-flat-segments/direct-index/README.md)。生产原算法和默认协议保持，尚未全面超过两个 Foundation 前端。
+diff --git a/docs/implementation-status.md b/docs/implementation-status.md
+index 3353619..7f5b9f7 100644
+--- a/docs/implementation-status.md
++++ b/docs/implementation-status.md
+@@ -39,6 +39,8 @@ consumer bounded-spin idle候选（`.sleep`前最多256次epoch检查spin）在E
+ 
+ consumer session JSON缓存候选（每batch缓存Runtime session的JSON字节，record session匹配时直接写出）在E-core P4 20对A/B中written中位1.0025–1.0146、mean混合，幅度约0.3%–1.5%，未达qualified门槛，撤回；生产无改动。证据见[session cache诊断](../bench/evidence/2026-11-03-session-cache/README.md)。
+ 
++批量消费者确认候选保留生产：把连续`.written`记录的journal reclaim与snapshot pin释放合并为批次操作，`releaseBatchWritten`逐条重查identity与slot CRC（保留late-damage成功前缀语义）后一次发布written游标、occupancy与SPSC free position，`releaseChannelCount`用一次`fetchSub(count)`释放同一`(snapshot, channel)`的pin；`.durable`记录仍逐条`releaseAfter`。新增3项journal回归，既有late-corruption runtime前缀测试保持190/65与1/2预期。完整`test`为**65/65 steps、758/759 tests（1项local skip）**；`verify-local`为**159/159 steps、792/793 tests（1项local skip）**，`verify-local success`。E-core 16配置×5轮×2 binary核对**16,160,000条JSON**：written **12 lead、0 negative、4 inconclusive**，中位比值1.0156–1.1074；4个inconclusive均为P4的spread/区间未达标，不是稳定回退。该结果不更新Foundation跨库排名，candidate仍为1.8M–2.1M records/s，低于Foundation的2.4M–3.2M；默认CRC、三检查点、queue预算、durable/recovery契约不变。证据见[batch acknowledgment报告](../bench/evidence/2026-11-04-batch-ack/README.md)。
++
+ 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
+ 
+ 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
+diff --git a/src/config/routes.zig b/src/config/routes.zig
+index fdfb56c..c7f0772 100644
+--- a/src/config/routes.zig
++++ b/src/config/routes.zig
+@@ -105,10 +105,23 @@ pub const Snapshot = struct {
+     }
+ 
+     pub fn releaseChannel(self: *Snapshot, channel: u32) void {
+-        if (channel == 0) return self.release();
++        self.releaseChannelCount(channel, 1);
++    }
++
++    /// Release a run of equal pins with one atomic update. Counts are
++    /// interchangeable; observers only require that the total never drops
++    /// below the records still owned by the consumer.
++    pub fn releaseChannelCount(self: *Snapshot, channel: u32, count: usize) void {
++        if (count == 0) return;
++        if (channel == 0) {
++            if (@import("builtin").is_test) _ = TestingAudit.global_pending_rmw.fetchAdd(@intCast(count), .monotonic);
++            const before = self.pending.fetchSub(count, .seq_cst);
++            std.debug.assert(before >= count);
++            return;
++        }
+         std.debug.assert(channel <= max_channels);
+-        const before = self.perchannel_pending[channel - 1].value.fetchSub(1, .seq_cst);
+-        std.debug.assert(before != 0);
++        const before = self.perchannel_pending[channel - 1].value.fetchSub(count, .seq_cst);
++        std.debug.assert(before >= count);
+     }
+ 
+     /// Cold lifecycle checks use the sum of all counters. It is a concurrent
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 3a1fb26..a4581f1 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -41,6 +41,7 @@ const closing_bit = admission_protocol.closing_bit;
+ const cut_bit = admission_protocol.cut_bit;
+ const count_mask = admission_protocol.count_mask;
+ const SinkFrame = struct { owner: *Runtime, previous: ?*const SinkFrame };
++const ReleaseKey = struct { snapshot: *configurations.Snapshot, channel: u32, count: usize };
+ threadlocal var sink_frame: ?*const SinkFrame = null;
+ threadlocal var cleanup_owner: ?*Runtime = null;
+ 
+@@ -950,17 +951,60 @@ pub const Runtime = struct {
+                 try self.flushWith(group.snapshot(), group.route_mask, .written, false);
+                 if (group.durable_mask != 0) try self.flushWith(group.snapshot(), group.durable_mask, .durable, true);
+             }
+-            for (batch, channels[0..batch.len], snapshots[0..batch.len], boundaries[0..batch.len]) |record, channel, snapshot, boundary| {
+-                try journal.releaseAfter(record, boundary);
+-                snapshot.releaseChannel(channel);
+-                written_counts.acknowledged(&self.countersFor(channel).written);
++            var release_keys: [delivery_batch.max_records]ReleaseKey = undefined;
++            var release_len: usize = 0;
++            defer {
++                if (release_len != 0) for (release_keys[0..release_len]) |key| key.snapshot.releaseChannelCount(key.channel, key.count);
+             }
++            var written_run_start: usize = 0;
++            for (batch, 0..) |record, index| {
++                if (boundaries[index] == .written) continue;
++                try self.releaseWrittenRun(journal, batch[written_run_start..index], channels[written_run_start..index], snapshots[written_run_start..index], &written_counts, release_keys[0..], &release_len);
++                try journal.releaseAfter(record, boundaries[index]);
++                written_counts.acknowledged(&self.countersFor(channels[index]).written);
++                noteRelease(release_keys[0..], &release_len, snapshots[index], channels[index]);
++                written_run_start = index + 1;
++            }
++            try self.releaseWrittenRun(journal, batch[written_run_start..], channels[written_run_start..batch.len], snapshots[written_run_start..batch.len], &written_counts, release_keys[0..], &release_len);
++            for (release_keys[0..release_len]) |key| key.snapshot.releaseChannelCount(key.channel, key.count);
++            release_len = 0;
+             written_counts.flush();
+             self.notifyJournalProgress(journal);
+         }
+         return worked;
+     }
+ 
++    fn releaseWrittenRun(
++        self: *Runtime,
++        journal: *Journal,
++        run: []const JournalModule.Record,
++        run_channels: []const u32,
++        run_snapshots: []const *configurations.Snapshot,
++        written_counts: *delivery_batch.WrittenCounts,
++        release_keys: []ReleaseKey,
++        release_len: *usize,
++    ) !void {
++        if (run.len == 0) return;
++        var released: usize = 0;
++        const result = journal.releaseBatchWritten(run, &released);
++        for (run[0..released], run_channels[0..released], run_snapshots[0..released]) |_, channel, snapshot| {
++            written_counts.acknowledged(&self.countersFor(channel).written);
++            noteRelease(release_keys, release_len, snapshot, channel);
++        }
++        try result;
++    }
++
++    fn noteRelease(keys: []ReleaseKey, len: *usize, snapshot: *configurations.Snapshot, channel: u32) void {
++        for (keys[0..len.*]) |*key| {
++            if (key.snapshot == snapshot and key.channel == channel) {
++                key.count += 1;
++                return;
++            }
++        }
++        keys[len.*] = .{ .snapshot = snapshot, .channel = channel, .count = 1 };
++        len.* += 1;
++    }
++
+     fn decodeRecord(journal: *Journal, record: JournalModule.Record, fields: []Field) !Event {
+         return if (record.schema_ref) |reference|
+             schema_codec.resolve(record.payload, if (@hasDecl(Journal, "resolveReadySchema")) try journal.resolveReadySchema(reference) else try journal.resolveSchema(reference), fields)
+diff --git a/src/journal/journal.zig b/src/journal/journal.zig
+index 320ea23..1d7c832 100644
+--- a/src/journal/journal.zig
++++ b/src/journal/journal.zig
+@@ -750,21 +750,102 @@ pub const Journal = struct {
+         } else self.head += 1;
+     }
+ 
+-    /// Identity-only counterpart of the checked peek used by `releaseAfter`.
++    /// Identity-only counterpart of the checked peek used by batch release.
+     /// The borrowed record must have been returned by this journal's checked
+     /// peek and not yet released. Payload bytes are deliberately not rehashed:
+     /// the consumer already observed them and the ring protocol keeps the slot
+     /// write-protected for producers until reclaim.
+-    fn validateReclaimIdentity(self: *Journal, record: Record) !void {
++    fn validateReclaimIdentityAt(self: *Journal, record: Record, expected_sequence: u64, expected_slot: usize) !void {
+         if (record.sequence == 0 or record.sequence > format.max_sequence) return error.InvalidRecord;
+         if ((record.sequence - 1) % self.capacity != record.slot) return error.InvalidRecord;
++        if (record.sequence != expected_sequence or record.slot != expected_slot) return error.InvalidRecord;
+         if (record.generation != self.generation(record.sequence)) return error.InvalidRecord;
+         const bytes = self.slotBytes(record.slot);
+-        if (format.get(u64, bytes, 8) != record.sequence or format.get(u64, bytes, 16) != record.generation) return error.InvalidRecord;
+-        if (self.slotState(record.slot).load(.acquire) != format.tag(record.sequence, .committed)) return error.InvalidRecord;
++        if (format.get(u64, bytes, 8) != record.sequence or format.get(u64, bytes, 16) != record.generation) return error.CorruptRecord;
++        if (self.slotState(record.slot).load(.acquire) != format.tag(record.sequence, .committed)) return error.CorruptRecord;
++    }
++
++    /// Recheck the slot checksum before acknowledgement. Identity checks alone
++    /// cannot see late payload damage injected between the checked peek and
++    /// release, so the prefix contract still rehashes each record.
++    fn validateReclaimChecksum(self: *Journal, record: Record) !void {
++        const bytes = self.slotBytes(record.slot);
++        const length = format.get(u32, bytes, 24);
++        if (length > self.max_record_bytes) return error.CorruptRecord;
++        if (!self.verify_crc) return;
++        const payload = bytes[format.slot_header_bytes..][0..length];
++        if (format.get(u32, bytes, 28) !=
++            (if (self.file_version == format.schema_version)
++                format.checksumV3Slot(bytes, length)
++            else
++                self.slotChecksum(record.sequence, record.generation, bytes, payload))) return error.CorruptRecord;
++    }
++
++    /// Acknowledge a contiguous written run borrowed from `peekBatchChecked`.
++    /// The returned count is the successful prefix even when late damage
++    /// reports an error, so callers acknowledge exactly what was reclaimed.
++    pub fn releaseBatchWritten(self: *Journal, records: []const Record, released: *usize) !void {
++        released.* = 0;
++        if (records.len == 0) return;
++        var valid: usize = 0;
++        while (valid < records.len) : (valid += 1) {
++            self.validateReclaimRecord(records[valid], valid) catch |err| {
++                if (valid != 0) {
++                    self.releaseValidatedWritten(records[0..valid]);
++                    released.* = valid;
++                }
++                return err;
++            };
++        }
++        self.releaseValidatedWritten(records);
++        released.* = records.len;
++    }
++
++    fn validateReclaimRecord(self: *Journal, record: Record, index: usize) !void {
+         if (self.recovery_cursor < self.recovery_length) {
+-            if (self.recovery_order[self.recovery_cursor] != record.slot) return error.InvalidRecord;
+-        } else if (record.sequence != self.head + 1) return error.InvalidRecord;
++            if (index >= self.recovery_length - self.recovery_cursor) return error.InvalidRecord;
++            const slot = self.recovery_order[self.recovery_cursor + index];
++            try self.validateReclaimIdentityAt(record, format.get(u64, self.slotBytes(slot), 8), slot);
++        } else {
++            const expected = std.math.add(u64, self.head, index + 1) catch return error.InvalidRecord;
++            if (expected > format.max_sequence) return error.InvalidRecord;
++            try self.validateReclaimIdentityAt(record, expected, @intCast((expected - 1) % self.capacity));
++        }
++        try self.validateReclaimChecksum(record);
++    }
++
++    /// Reclaim a run whose identities and checksums were just checked.
++    fn releaseValidatedWritten(self: *Journal, records: []const Record) void {
++        if (records.len == 0) return;
++        // Slots stay unavailable through their in-memory turns, so publishing
++        // all free markers before the accounting update cannot expose reuse.
++        for (records) |record| self.slotState(record.slot).store(0, .release);
++        if (self.producer_mode == .shared) {
++            _ = self.occupied.fetchSub(records.len, .monotonic);
++        } else {
++            self.single.released_total.store(self.single.released_total.load(.monotonic) + records.len, .release);
++        }
++        const last_sequence = records[records.len - 1].sequence;
++        self.advanceWritten(last_sequence);
++        // Every slot in this run is still consumer-owned, so its next turn is
++        // independent of producer reservations that happen during this call.
++        const producer_tail = self.tail().load(.monotonic);
++        for (records) |record| {
++            self.turns[record.slot].store(self.nextTurn(producer_tail, record.slot), .release);
++        }
++        if (self.producer_mode == .single) {
++            self.single.consumer_free_position.store(last_sequence, .release);
++        }
++        if (self.recovery_cursor < self.recovery_length) {
++            self.recovery_cursor += records.len;
++            const completed_prefix = if (self.recovery_cursor < self.recovery_length)
++                format.get(u64, self.slotBytes(self.recovery_order[self.recovery_cursor]), 8) - 1
++            else
++                self.recovery_tail;
++            // Only this opening's old tail has been scanned for abandoned
++            // reservations. New live reservations remain consumer-owned.
++            self.advanceWritten(completed_prefix);
++        } else self.head += records.len;
+     }
+ 
+     fn advanceWritten(self: *Journal, sequence: u64) void {
+diff --git a/src/journal/tests.zig b/src/journal/tests.zig
+index 8a4b0f9..96a2ce3 100644
+--- a/src/journal/tests.zig
++++ b/src/journal/tests.zig
+@@ -510,6 +510,89 @@ test "batch borrows records until ordered acknowledgement and stops at gaps" {
+     try testing.expectEqual(@as(usize, 0), j.pending());
+ }
+ 
++test "batch written acknowledgement advances cursors once and rejects reordered records" {
++    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
++    var tmp = testing.tmpDir(.{});
++    defer tmp.cleanup();
++    var path_buffer: [128]u8 = undefined;
++    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
++    const j = try journal.Journal.create(testing.allocator, testing.io, options);
++    defer j.deinit();
++    try append(j, "one");
++    try append(j, "two");
++    try append(j, "three");
++    var records: [4]journal.Record = undefined;
++    const batch = try j.peekBatchChecked(&records);
++    try testing.expectEqual(@as(usize, 3), batch.len);
++    var released: usize = 0;
++    try testing.expectError(error.InvalidRecord, j.releaseBatchWritten(batch[1..], &released));
++    try testing.expectEqual(@as(usize, 0), released);
++    try testing.expectEqual(@as(usize, 3), j.pending());
++    try testing.expectEqual(@as(u64, 0), j.writtenTarget());
++    try j.releaseBatchWritten(batch, &released);
++    try testing.expectEqual(@as(usize, 3), released);
++    try testing.expectEqual(@as(usize, 0), j.pending());
++    try testing.expectEqual(@as(u64, 3), j.writtenTarget());
++    try testing.expectEqual(@as(usize, 0), j.peekBatch(&records).len);
++    released = 0;
++    try testing.expectError(error.InvalidRecord, j.releaseBatchWritten(batch, &released));
++    try testing.expectEqual(@as(usize, 0), released);
++}
++
++test "batch written acknowledgement rejects a corrupted middle slot without reclaiming" {
++    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
++    var tmp = testing.tmpDir(.{});
++    defer tmp.cleanup();
++    var path_buffer: [128]u8 = undefined;
++    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
++    const j = try journal.Journal.create(testing.allocator, testing.io, options);
++    defer j.deinit();
++    try append(j, "one");
++    try append(j, "two");
++    try append(j, "three");
++    var records: [4]journal.Record = undefined;
++    const batch = try j.peekBatchChecked(&records);
++    const stride = (try format.layout(4, 16)).stride;
++    const slot = format.header_bytes + batch[1].slot * stride;
++    const original_generation = format.get(u64, j.mapping.bytes, slot + 16);
++    format.put(u64, j.mapping.bytes, slot + 16, original_generation + 1);
++    var released: usize = 0;
++    try testing.expectError(error.CorruptRecord, j.releaseBatchWritten(batch, &released));
++    try testing.expectEqual(@as(usize, 1), released);
++    try testing.expectEqual(@as(usize, 2), j.pending());
++    try testing.expectEqual(@as(u64, 1), j.writtenTarget());
++    format.put(u64, j.mapping.bytes, slot + 16, original_generation);
++    try testing.expectEqual(@as(u64, 2), (try j.peekChecked()).?.sequence);
++    try j.releaseBatchWritten(batch[1..], &released);
++    try testing.expectEqual(@as(usize, 2), released);
++    try testing.expectEqual(@as(usize, 0), j.pending());
++    try testing.expectEqual(@as(u64, 3), j.writtenTarget());
++}
++
++
++test "batch written acknowledgement rejects late payload corruption after checked peek" {
++    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
++    var tmp = testing.tmpDir(.{});
++    defer tmp.cleanup();
++    var path_buffer: [128]u8 = undefined;
++    const options: journal.Options = .{ .path = try pathFor(&tmp, &path_buffer), .capacity = 4, .max_record_bytes = 16 };
++    const j = try journal.Journal.create(testing.allocator, testing.io, options);
++    defer j.deinit();
++    try append(j, "one");
++    try append(j, "two");
++    try append(j, "three");
++    var records: [4]journal.Record = undefined;
++    const batch = try j.peekBatchChecked(&records);
++    const stride = (try format.layout(4, 16)).stride;
++    const slot = format.header_bytes + batch[1].slot * stride;
++    j.mapping.bytes[slot + format.slot_header_bytes] ^= 1;
++    var released: usize = 0;
++    try testing.expectError(error.CorruptRecord, j.releaseBatchWritten(batch, &released));
++    try testing.expectEqual(@as(usize, 1), released);
++    try testing.expectEqual(@as(usize, 2), j.pending());
++    try testing.expectEqual(@as(u64, 1), j.writtenTarget());
++}
++
+ test "checked live peek retains corrupt records instead of exposing invalid length" {
+     if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+     var tmp = testing.tmpDir(.{});

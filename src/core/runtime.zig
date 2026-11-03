@@ -41,6 +41,7 @@ const closing_bit = admission_protocol.closing_bit;
 const cut_bit = admission_protocol.cut_bit;
 const count_mask = admission_protocol.count_mask;
 const SinkFrame = struct { owner: *Runtime, previous: ?*const SinkFrame };
+const ReleaseKey = struct { snapshot: *configurations.Snapshot, channel: u32, count: usize };
 threadlocal var sink_frame: ?*const SinkFrame = null;
 threadlocal var cleanup_owner: ?*Runtime = null;
 
@@ -950,15 +951,58 @@ pub const Runtime = struct {
                 try self.flushWith(group.snapshot(), group.route_mask, .written, false);
                 if (group.durable_mask != 0) try self.flushWith(group.snapshot(), group.durable_mask, .durable, true);
             }
-            for (batch, channels[0..batch.len], snapshots[0..batch.len], boundaries[0..batch.len]) |record, channel, snapshot, boundary| {
-                try journal.releaseAfter(record, boundary);
-                snapshot.releaseChannel(channel);
-                written_counts.acknowledged(&self.countersFor(channel).written);
+            var release_keys: [delivery_batch.max_records]ReleaseKey = undefined;
+            var release_len: usize = 0;
+            defer {
+                if (release_len != 0) for (release_keys[0..release_len]) |key| key.snapshot.releaseChannelCount(key.channel, key.count);
             }
+            var written_run_start: usize = 0;
+            for (batch, 0..) |record, index| {
+                if (boundaries[index] == .written) continue;
+                try self.releaseWrittenRun(journal, batch[written_run_start..index], channels[written_run_start..index], snapshots[written_run_start..index], &written_counts, release_keys[0..], &release_len);
+                try journal.releaseAfter(record, boundaries[index]);
+                written_counts.acknowledged(&self.countersFor(channels[index]).written);
+                noteRelease(release_keys[0..], &release_len, snapshots[index], channels[index]);
+                written_run_start = index + 1;
+            }
+            try self.releaseWrittenRun(journal, batch[written_run_start..], channels[written_run_start..batch.len], snapshots[written_run_start..batch.len], &written_counts, release_keys[0..], &release_len);
+            for (release_keys[0..release_len]) |key| key.snapshot.releaseChannelCount(key.channel, key.count);
+            release_len = 0;
             written_counts.flush();
             self.notifyJournalProgress(journal);
         }
         return worked;
+    }
+
+    fn releaseWrittenRun(
+        self: *Runtime,
+        journal: *Journal,
+        run: []const JournalModule.Record,
+        run_channels: []const u32,
+        run_snapshots: []const *configurations.Snapshot,
+        written_counts: *delivery_batch.WrittenCounts,
+        release_keys: []ReleaseKey,
+        release_len: *usize,
+    ) !void {
+        if (run.len == 0) return;
+        var released: usize = 0;
+        const result = journal.releaseBatchWritten(run, &released);
+        for (run[0..released], run_channels[0..released], run_snapshots[0..released]) |_, channel, snapshot| {
+            written_counts.acknowledged(&self.countersFor(channel).written);
+            noteRelease(release_keys, release_len, snapshot, channel);
+        }
+        try result;
+    }
+
+    fn noteRelease(keys: []ReleaseKey, len: *usize, snapshot: *configurations.Snapshot, channel: u32) void {
+        for (keys[0..len.*]) |*key| {
+            if (key.snapshot == snapshot and key.channel == channel) {
+                key.count += 1;
+                return;
+            }
+        }
+        keys[len.*] = .{ .snapshot = snapshot, .channel = channel, .count = 1 };
+        len.* += 1;
     }
 
     fn decodeRecord(journal: *Journal, record: JournalModule.Record, fields: []Field) !Event {
