@@ -1,0 +1,11 @@
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -617,7 +617,9 @@
+         // bytes, leaving canonical shape/level checks at their original later
+         // boundary. Redaction rewrites values and retains independent checks.
+-        const measured: ?usize = if (snapshot.redactor.rule_count == 0)
++        const measured: ?usize = if (self.runtimeCaches().text_format)
++            null
++        else if (snapshot.redactor.rule_count == 0)
+             (if (binding != null) @intCast(try @import("reference_encoding.zig").measureValues(original)) else try codec.measure(original))
+         else blk: {
