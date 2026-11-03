@@ -1,0 +1,290 @@
+diff --git a/bench/cpp_reference/kron_reference.zig b/bench/cpp_reference/kron_reference.zig
+index fae8a1f..10642c4 100644
+--- a/bench/cpp_reference/kron_reference.zig
++++ b/bench/cpp_reference/kron_reference.zig
+@@ -19,6 +19,7 @@ const Options = struct {
+     backend: BackendKind = .portable,
+     render_cache: bool = false,
+     text_format: bool = false,
++    format_plan: bool = false,
+ };
+ 
+ const Gate = struct {
+@@ -346,6 +347,8 @@ fn parse(arguments: []const []const u8) !Options {
+             result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
+         } else if (std.mem.eql(u8, key, "--text-format")) {
+             result.text_format = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidTextFormat;
++        } else if (std.mem.eql(u8, key, "--format-plan")) {
++            result.format_plan = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidFormatPlan;
+         } else {
+             const count = try std.fmt.parseInt(usize, value, 10);
+             if (std.mem.eql(u8, key, "--events")) {
+diff --git a/src/core/prepared.zig b/src/core/prepared.zig
+index b6a032b..0f0b512 100644
+--- a/src/core/prepared.zig
++++ b/src/core/prepared.zig
+@@ -5,6 +5,7 @@ const std = @import("std");
+ const logger = @import("logger.zig");
+ const journal = @import("../journal/journal.zig");
+ const schema = @import("../journal/schema.zig");
++const common = @import("../encoder/common.zig");
+ 
+ pub const Binding = struct {
+     owner: *anyopaque,
+@@ -94,3 +95,65 @@ pub fn ThreadOwner(comptime Base: type) type {
+         }
+     };
+ }
++
++/// Shape-enforcing owner: the caller's `Fields` type is the compile-time
++/// contract, so the prepared render plan needs no per-record shape check.
++pub fn FormatOwner(comptime R: type, comptime Fields: type) type {
++    return struct {
++        const Self = @This();
++        pub const value_owner = true;
++        pub const field_names = std.meta.fieldNames(Fields);
++        runtime: *R,
++        binding: Binding,
++
++        pub fn enabled(self: Self, level: logger.Level, scope: []const u8) bool {
++            return self.runtime.enabled(level, scope);
++        }
++
++        pub fn begin(self: Self, level: logger.Level, scope: []const u8) logger.BeginResult {
++            return self.runtime.begin(level, scope);
++        }
++
++        pub fn end(self: Self) void {
++            self.runtime.end();
++        }
++
++        pub fn nowNs(self: Self) i64 {
++            return self.runtime.nowNs();
++        }
++
++        pub fn submit(self: Self, admission: logger.Admission, event: logger.Event) anyerror!logger.EmitResult {
++            const definition = self.binding.definition;
++            const message = definition.message orelse return error.MissingPreparedMessage;
++            const plan = common.RenderPlan{ .keys = field_names, .scope = definition.scope, .message = message };
++            return self.runtime.submitWithFormat(admission, event, self.binding, &plan);
++        }
++
++        pub fn captureFailed(self: Self, err: anyerror) void {
++            self.runtime.captureFailed(err);
++        }
++
++        pub fn reportError(self: Self, err: anyerror) void {
++            self.runtime.reportError(err);
++        }
++    };
++}
++
++pub fn FormatLogger(comptime R: type, comptime Fields: type) type {
++    return struct {
++        frontend: logger.Logger(FormatOwner(R, Fields), .trace),
++        message: []const u8,
++
++        pub fn emit(self: *const @This(), level: logger.Level, fields: Fields) !logger.EmitResult {
++            return self.frontend.tryEmit(level, self.message, fields);
++        }
++
++        /// Generic-frontend compatibility: the message is fixed by the
++        /// prepared binding, so callers of the shared worker loop can pass it
++        /// and are ignored only after the compile-time Fields contract holds.
++        pub fn tryEmit(self: *const @This(), level: logger.Level, message: []const u8, fields: Fields) !logger.EmitResult {
++            _ = message;
++            return self.emit(level, fields);
++        }
++    };
++}
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index e56db2b..c87184f 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -252,6 +252,15 @@ pub const Runtime = struct {
+         return .init(.{ .runtime = self, .binding = canonical }, canonical.definition.scope);
+     }
+ 
++    pub fn loggerWithFormat(self: *Runtime, comptime Fields: type, binding: SchemaBinding) !prepared_module.FormatLogger(Runtime, Fields) {
++        if (binding.owner != @as(*anyopaque, @ptrCast(self)) or binding.journal != self.journal) return error.InvalidSchemaBinding;
++        var canonical = binding;
++        canonical.definition = try binding.journal.resolveSchema(binding.reference);
++        const message = canonical.definition.message orelse return error.MissingPreparedMessage;
++        if (!common.jsonSafe(canonical.definition.scope) or !common.jsonSafe(message)) return error.UnsafePreparedShape;
++        return .{ .frontend = .init(.{ .runtime = self, .binding = canonical }, canonical.definition.scope), .message = message };
++    }
++
+     pub fn threadLoggerWithSchema(self: *Runtime, attached: LoggerModule.Logger(thread_module.ThreadOwner(Runtime), .trace), binding: SchemaBinding) !LoggerModule.Logger(prepared_module.ThreadOwner(thread_module.ThreadOwner(Runtime)), .trace) {
+         if (binding.owner != @as(*anyopaque, @ptrCast(self)) or binding.journal != attached.owner.producer_token.journal or attached.owner.registry.owner != self) return error.InvalidSchemaBinding;
+         return .init(.{ .base = attached.owner, .binding = binding }, "attached");
+@@ -591,24 +600,29 @@ pub const Runtime = struct {
+     }
+ 
+     pub fn submit(self: *Runtime, admission: Admission, original: Event) !EmitResult {
+-        return self.submitDestination(admission, original, self.journal, null, null);
++        return self.submitDestination(admission, original, self.journal, null, null, null);
+     }
+ 
+     pub fn submitToJournal(self: *Runtime, admission: Admission, original: Event, journal: *Journal, producer_token: ?JournalModule.SingleProducerToken) !EmitResult {
+-        return self.submitDestination(admission, original, journal, producer_token, null);
++        return self.submitDestination(admission, original, journal, producer_token, null, null);
+     }
+ 
+     pub fn submitWithSchema(self: *Runtime, admission: Admission, original: Event, binding: SchemaBinding) !EmitResult {
+         if (binding.owner != @as(*anyopaque, @ptrCast(self)) or binding.journal != self.journal) return error.InvalidSchemaBinding;
+-        return self.submitDestination(admission, original, binding.journal, null, binding.reference);
++        return self.submitDestination(admission, original, binding.journal, null, binding.reference, null);
++    }
++
++    pub fn submitWithFormat(self: *Runtime, admission: Admission, original: Event, binding: SchemaBinding, plan: *const common.RenderPlan) !EmitResult {
++        if (binding.owner != @as(*anyopaque, @ptrCast(self)) or binding.journal != self.journal) return error.InvalidSchemaBinding;
++        return self.submitDestination(admission, original, binding.journal, null, binding.reference, plan);
+     }
+ 
+     pub fn submitToJournalWithSchema(self: *Runtime, admission: Admission, original: Event, journal: *Journal, token: ?JournalModule.SingleProducerToken, binding: SchemaBinding) !EmitResult {
+         if (binding.owner != @as(*anyopaque, @ptrCast(self)) or binding.journal != journal) return error.InvalidSchemaBinding;
+-        return self.submitDestination(admission, original, journal, token, binding.reference);
++        return self.submitDestination(admission, original, journal, token, binding.reference, null);
+     }
+ 
+-    fn submitDestination(self: *Runtime, admission: Admission, original: Event, destination: ?*Journal, producer_token: ?JournalModule.SingleProducerToken, binding: ?schema_module.Ref) !EmitResult {
++    fn submitDestination(self: *Runtime, admission: Admission, original: Event, destination: ?*Journal, producer_token: ?JournalModule.SingleProducerToken, binding: ?schema_module.Ref, plan: ?*const common.RenderPlan) !EmitResult {
+         if (producer_token == null and original.channel != 0) return error.InvalidChannel;
+         if (producer_token != null and (original.channel == 0 or original.channel > (if (self.thread_registry) |registry| registry.channelCount() else 0))) return error.InvalidChannel;
+         const snapshot = try self.admittedSnapshot(admission);
+@@ -625,7 +639,7 @@ pub const Runtime = struct {
+             try validator.arguments(original.format_args);
+             break :blk null;
+         };
+-        const context: SubmissionContext = .{ .admission = admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding, .encoded_size = measured, .tree_validated = measured != null };
++        const context: SubmissionContext = .{ .admission = admission, .snapshot = snapshot, .destination = destination, .producer_token = producer_token, .binding = binding, .plan = plan, .encoded_size = measured, .tree_validated = measured != null };
+         if (snapshot.redactor.rule_count != 0)
+             return @import("runtime_redaction.zig").submit(self, &snapshot.redactor, &event, &context, submitSafeDestination);
+         return self.submitSafeDestination(&event, &context);
+@@ -640,6 +654,7 @@ pub const Runtime = struct {
+         // stable reference is needed here; the caller's definition is untrusted
+         // and the canonical definition is resolved at the original boundary.
+         binding: ?schema_module.Ref,
++        plan: ?*const common.RenderPlan = null,
+         encoded_size: ?usize = null,
+         tree_validated: bool = false,
+     };
+@@ -743,7 +758,11 @@ pub const Runtime = struct {
+                     std.mem.writeInt(u64, reservation.buffer()[8..16], snapshot.fingerprint, .little);
+                     std.mem.writeInt(u32, reservation.buffer()[16..20], event.channel, .little);
+                     var writer = std.Io.Writer.fixed(reservation.buffer()[header_bytes..]);
+-                    common.encodeDecoded(.json, event.*, route.timestamp, &writer) catch |err| {
++                    const rendered = if (context.plan) |plan|
++                        (if (route.timestamp == null) plan.render(event.*, &writer) else common.encodeDecoded(.json, event.*, route.timestamp, &writer))
++                    else
++                        common.encodeDecoded(.json, event.*, route.timestamp, &writer);
++                    rendered catch |err| {
+                         reservation.abort();
+                         self.notify();
+                         if (err == error.WriteFailed or err == error.BufferTooSmall) {
+diff --git a/src/core/tests/runtime_delivery.zig b/src/core/tests/runtime_delivery.zig
+index 2dcf133..54f32eb 100644
+--- a/src/core/tests/runtime_delivery.zig
++++ b/src/core/tests/runtime_delivery.zig
+@@ -128,6 +128,42 @@ fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
+     return allocator.dupe(u8, sink.written());
+ }
+ 
++const PlanShape = struct { a: u64, b: u64 };
++
++fn formatPlanRun(allocator: std.mem.Allocator, use_plan: bool) ![]u8 {
++    var bytes: [8192]u8 = undefined;
++    var sink = MemorySink.initBuffer(&bytes);
++    const runtime = try Runtime.create(allocator, std.testing.io, .{
++        .submission = .asynchronous,
++        .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024, .verify_crc = false, .text_format = true },
++        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
++        .clock = Clock.zeroTimestamp(),
++    });
++    defer runtime.destroy();
++    runtime.session = 42;
++    if (use_plan) {
++        const binding = try runtime.prewarmFormat("cache", null, "schema", struct {}, PlanShape);
++        const log = try runtime.loggerWithFormat(PlanShape, binding);
++        _ = try log.emit(.info, .{ .a = @as(u64, 1), .b = @as(u64, 2) });
++    } else {
++        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("a", @as(u64, 1)), field.kv("b", @as(u64, 2)) } };
++        const binding = try runtime.prewarmSchema(event);
++        const log = try runtime.loggerWithSchema(binding);
++        _ = try log.tryEmit(.info, "schema", .{ .a = @as(u64, 1), .b = @as(u64, 2) });
++    }
++    try runtime.flush(.written);
++    try runtime.shutdown(.drain);
++    return allocator.dupe(u8, sink.written());
++}
++
++test "shape-enforcing prepared logger matches generic schema output" {
++    const planned = try formatPlanRun(std.testing.allocator, true);
++    defer std.testing.allocator.free(planned);
++    const generic = try formatPlanRun(std.testing.allocator, false);
++    defer std.testing.allocator.free(generic);
++    try std.testing.expectEqualStrings(generic, planned);
++}
++
+ test "text queue output matches deferred render for spsc" {
+     const text = try textFormatSpscRun(std.testing.allocator, true);
+     defer std.testing.allocator.free(text);
+diff --git a/src/encoder/common.zig b/src/encoder/common.zig
+index 17c0112..deb28bc 100644
+--- a/src/encoder/common.zig
++++ b/src/encoder/common.zig
+@@ -146,6 +146,54 @@ pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *st
+     try writer.writeAll("}}\n");
+ }
+ 
++/// Shape-enforcing prepared JSON renderer. The caller guarantees the event's
++/// fields match `keys` (the prepared logger's comptime Fields type), so the
++/// hot path skips per-record shape checks and key escaping.
++pub const RenderPlan = struct {
++    keys: []const [:0]const u8,
++    scope: []const u8,
++    message: []const u8,
++
++    pub fn render(self: *const RenderPlan, event: Event, writer: *std.Io.Writer) std.Io.Writer.Error!void {
++        std.debug.assert(event.fields.len == self.keys.len);
++        try writer.writeAll("{\"timestamp_ns\":");
++        try writeTaggedValue(writer, .timestamp_ns, event.timestamp_ns, .json);
++        try writer.writeAll(jsonSeverityField(event.level));
++        try writer.writeAll(",\"scope\":\"");
++        try writer.writeAll(self.scope);
++        try writer.writeAll("\",\"message\":\"");
++        try writer.writeAll(self.message);
++        try writer.writeAll("\",\"session\":");
++        try writeTaggedValue(writer, .unsigned, event.session, .json);
++        try writer.writeAll(",\"channel\":");
++        try decimal.write(writer, event.channel);
++        try writer.writeAll(",\"sequence\":");
++        try writeTaggedValue(writer, .unsigned, event.sequence, .json);
++        try writer.writeAll(",\"route_mask\":");
++        try writeTaggedValue(writer, .unsigned, event.route_mask, .json);
++        try writer.writeAll(",\"config_generation\":");
++        try writeTaggedValue(writer, .unsigned, event.config_generation, .json);
++        try writer.writeAll(",\"trace_flags\":");
++        try decimal.write(writer, event.trace_flags);
++        try writer.writeAll(",\"attributes\":{");
++        for (event.fields, 0..) |field, index| {
++            if (index != 0) try writer.writeByte(',');
++            try writer.writeByte('"');
++            try writer.writeAll(self.keys[index]);
++            try writer.writeAll("\":");
++            try valueInner(writer, field.value, .json);
++        }
++        try writer.writeAll("}}\n");
++    }
++};
++
++pub fn jsonSafe(bytes: []const u8) bool {
++    for (bytes) |byte| {
++        if (byte < 0x20 or byte > 0x7e or byte == '"' or byte == '\\') return false;
++    }
++    return true;
++}
++
+ fn encodeText(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+     return encodeTextWithAttributes(event, readable, writer, &event, struct {
+         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {

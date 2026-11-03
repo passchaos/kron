@@ -67,6 +67,8 @@ specialized JSON render诊断：shadow把benchmark固定shape（5个u64字段、
 
 通用prepared JSON render plan候选已实现并撤回：在`prewarmSchema`时预计算safe key/scope/message，渲染时跳过key escaping，但每record用`matches`校验shape。P1/P4 async mmap text fast path 5轮A/B中schema轴明显回退（P1 batch 0.9061、P1 sampled 0.9393、P4 batch 0.8309、P4 sampled 0.9912），inline control约1.00；每record matches与分段metadata写入超过key escaping收益。生产恢复generic render。下一步若要继续该方向，需要shape-enforcing prepared logger（取消每record matches）或更激进的prepared template。证据见[prepared plan报告](../bench/evidence/2026-11-04-prepared-plan/README.md)。
 
+shape-enforcing prepared format logger也已测试并撤回：compile-time`Fields`取消per-record matches，runtime frontend、P1/P4 async memory schema text fast path 5轮A/B为P1 batch 0.9662、P1 sampled 1.0339、P4 batch 1.2281、P4 sampled 0.9754，全部inconclusive且方向混合，无稳定qualified lead。generic render本身已高效，分段plan写入没有稳定收益；prepared render方向（matches版与shape-enforcing版）均未取得领先。生产恢复generic render；下一步转向mmap spool + writer output backend。证据见[format plan报告](../bench/evidence/2026-11-04-format-plan/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
