@@ -14,6 +14,7 @@
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
 | Journal/archive随机fuzz | `test-journal-fuzz`；20,000随机commit/peek/release、mmap reopen/recovery、随机archive record/message round-trip；seed打印，Debug/Safe/Fast |
 | Journal槽位/generation坐标 | `test-journal-coordinates`；共享/SPSC八容量、完整序号/环回与有效CRC错误generation保留证据 |
+| v1/v2 journal升级兼容 | 根test/`test-logging`；真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写 |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
 | TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
 | CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |

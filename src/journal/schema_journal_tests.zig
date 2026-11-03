@@ -397,3 +397,54 @@ test "schema SPSC reserve stays exclusive and warm reserve commit has no allocat
     }
     try testing.expectEqual(allocation_count, failing.alloc_index);
 }
+
+test "v1 and v2 journals remain readable and writable under the current source" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var v1_buffer: [128]u8 = undefined;
+    var v2_buffer: [128]u8 = undefined;
+
+    var v1_options = try optionsFor(&tmp, &v1_buffer);
+    v1_options.path = try std.fmt.bufPrint(&v1_buffer, ".zig-cache/tmp/{s}/v1.journal", .{tmp.sub_path});
+    v1_options.schema_capacity = 0;
+    const v1_store = try journal.Journal.create(testing.allocator, testing.io, v1_options);
+    try testing.expectEqual(@as(u32, 1), format.get(u32, v1_store.mapping.bytes, 8));
+    try append(v1_store, null, "v1 payload");
+    const v1_record = (try v1_store.peekChecked()).?;
+    const v1_slot = v1_store.mapping.bytes[format.header_bytes..][0..v1_store.stride];
+    try testing.expectEqual(format.checksum(v1_record.sequence, v1_record.generation, v1_record.payload), format.get(u32, v1_slot, 28));
+    try testing.expect(std.mem.allEqual(u8, v1_slot[32..64], 0));
+    try testing.expectEqualStrings("v1 payload", v1_record.payload);
+    v1_store.deinit();
+    const v1_reopen = try journal.Journal.create(testing.allocator, testing.io, v1_options);
+    try testing.expectEqual(@as(u32, 1), format.get(u32, v1_reopen.mapping.bytes, 8));
+    const v1_recovered = (try v1_reopen.peekChecked()).?;
+    try testing.expectEqualStrings("v1 payload", v1_recovered.payload);
+    try v1_reopen.release(v1_recovered);
+    v1_reopen.deinit();
+
+    var v2_options = try optionsFor(&tmp, &v2_buffer);
+    v2_options.path = try std.fmt.bufPrint(&v2_buffer, ".zig-cache/tmp/{s}/v2.journal", .{tmp.sub_path});
+    const seed = try journal.Journal.create(testing.allocator, testing.io, v2_options);
+    const identity = seed.sessionIdentity();
+    const table = seed.getSchemaLayout().?;
+    format.initializeV2(seed.mapping.bytes, seed.capacity, seed.max_record_bytes, seed.stride, identity);
+    schema.writeExtension(seed.mapping.bytes[0..format.header_bytes], table, identity);
+    seed.deinit();
+    const v2_store = try journal.Journal.create(testing.allocator, testing.io, v2_options);
+    try testing.expectEqual(@as(u32, 2), format.get(u32, v2_store.mapping.bytes, 8));
+    const ref = try v2_store.registerSchema(try metadata("v2.upgrade"));
+    try append(v2_store, ref, "v2 payload");
+    const v2_record = (try v2_store.peekChecked()).?;
+    const v2_slot = v2_store.mapping.bytes[format.header_bytes..][0..v2_store.stride];
+    try testing.expectEqual(format.checksumV2(v2_record.sequence, v2_record.generation, v2_slot[32..56], v2_record.payload), format.get(u32, v2_slot, 28));
+    try testing.expectEqualStrings("v2 payload", v2_record.payload);
+    v2_store.deinit();
+    const v2_reopen = try journal.Journal.create(testing.allocator, testing.io, v2_options);
+    try testing.expectEqual(@as(u32, 2), format.get(u32, v2_reopen.mapping.bytes, 8));
+    const v2_recovered = (try v2_reopen.peekChecked()).?;
+    try testing.expectEqualStrings("v2 payload", v2_recovered.payload);
+    try v2_reopen.release(v2_recovered);
+    v2_reopen.deinit();
+}
