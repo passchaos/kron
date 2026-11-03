@@ -13,7 +13,7 @@
 | 内部提交参数与调用者快照 | `test-submission-snapshot`、`test-capture`、`test-redaction-paths`、prepared/binding 重点回归 |
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
 | 并发共享producer交付 | `test-async-storage`；4线程×250记录×2轮、Memory block queue、accepted=written、pending=0；mid-flight `shutdown(.drain)`下rejected_closing与state=closed；mmap并发后clean reopen；1000次重复soak |
-| Journal/archive随机fuzz | `test-journal-fuzz`；20,000随机commit/peek/release、mmap reopen/recovery、随机archive record/message round-trip；seed打印，Debug/Safe/Fast；扩展100-seed ReleaseSafe扫描 |
+| Journal/archive随机fuzz | `test-journal-fuzz`；20,000随机commit/peek/release、mmap reopen/recovery、随机archive record/message round-trip；seed打印，Debug/Safe/Fast；扩展1000-seed ReleaseSafe扫描 |
 | Journal槽位/generation坐标 | `test-journal-coordinates`；共享/SPSC八容量、完整序号/环回与有效CRC错误generation保留证据 |
 | v1/v2 journal升级兼容 | 根test/`test-logging`；真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写 |
 | 旧二进制journal fixture | [fixtures/journal](../tests/fixtures/journal/README.md)、根test/`test-logging`；`5b1fd7c`实际二进制写出的v1与v2 schema journal在V3源码`recover=true`下读取 |

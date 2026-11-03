@@ -41,7 +41,7 @@ ext4/XFS/Btrfs/F2FS child-VM abrupt-loss campaign均扩展到16个ACK边界（17
 
 并发测试重复soak：冻结ReleaseSafe async-storage binary执行**1000 iterations、0 failures**（每次10 tests，含2轮delivery/shutdown/mmap并发）；configuration replacement binary执行**200 iterations、0 failures**（每次13 tests，含4 producer×500记录与20次替换）。该soak是重复进程执行，不是ASan/TSan或crash/power-loss资格。证据见[concurrency soak](../bench/evidence/2026-11-03-concurrency-soak/README.md)。
 
-journal/archive fuzz在冻结的ReleaseSafe binary上扩展100个连续seed（0x1..0x64）：100/100通过，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[100-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-100-seeds/README.md)。
+journal/archive fuzz在冻结的ReleaseSafe binary上扩展到1000个连续seed（0x1..0x3e8）：**1000/1000通过**，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[1000-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-1000-seeds/README.md)。
 
 新增aarch64-linux-musl静态二进制的QEMU用户态执行：root suite **455 passed/7 skipped/0 failed**（462项），journal/archive fuzz 20/20 seed通过；独立`b.dependency` package consumer五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）均2条记录、pending=0、输出/redaction/journal文件数核对通过，`qualify`确认5模式file durable、inline/schema journal reopen与rolling retention。skip项为x86 PCLMUL、qemu下不可用的io_uring路径与system local time。唯一失败来自tsc capability test假设host为x86，已改为显式`platform_supported=true`的test-only修正，生产源码未改。证据见[aarch64 QEMU报告](../bench/evidence/2026-11-03-aarch64-qemu/README.md)。
 
@@ -178,7 +178,7 @@ shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS 
 | 1 | 尾延迟和过载对应用的影响 | 合成200µs慢sink/64槽诊断已记录：block P1/P4 p99约15–16ms且无丢失，P16 p99约59–81ms；drop p99亚微秒但丢936/1000或1535/1600，fallback p50约0.24ms；仍需burst、积压年龄、CPU/cache/调度竞争及无logger基线。见 [过载尾部诊断](../bench/evidence/2026-11-02-overload-tail/README.md) |
 | 1 | Mmap 启动与资源成本 | fresh Linux mmap只写header初始化已把16.8MB journal init中位54.2/53.8ms降到8.2/6.9ms；仍需更广文件系统/设备、dirty-page与持久化边界验证。见 [fresh mmap证据](../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)与 [启动诊断](../bench/evidence/2026-11-02-current-init-profile/README.md) |
 | 2 | 更广业务/durable 回归覆盖 | 0/5/10 fields、长短字符串、P1/P4/P16、warm/cold、attach/detach、reload/rolling 与独立 durable 测量 |
-| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与100-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink错误已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer/更长soak |
+| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与1000-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink错误已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer/更长soak |
 | 2 | 非 Linux 平台运行 | aarch64-linux-musl已在QEMU用户态执行root suite与fuzz；Windows/macOS/Android/iOS仍缺目标设备实际日志、生命周期、journal恢复及durable报告 |
 
 当前主要功能有验证，完整的“业界最佳”目标仍在推进。后续状态更新只记录实际源码、运行结果或明确的平台能力拒绝。
