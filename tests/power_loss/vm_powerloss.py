@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Abrupt-QEMU power-loss gate for the kron journal/file sink.
 
-This script never mounts the image on the host. It creates a new ext4 raw file,
-boots it under QEMU TCG, waits for a durability acknowledgement from the guest,
-SIGKILLs QEMU, then verifies through a temporary QEMU snapshot overlay.
+This script never mounts the image on the host. It creates a new ext4 or xfs
+raw file, boots it under QEMU TCG, waits for a durability acknowledgement from
+the guest, SIGKILLs QEMU, then verifies through a temporary QEMU snapshot
+overlay.
 """
 
 from __future__ import annotations
@@ -149,11 +150,15 @@ def module_name(path: str) -> str:
     return re.sub(r"\.ko(?:\..*)?$", "", Path(path).name).replace("-", "_")
 
 
-def ext4_module_closure(release: str, work: Path, config: dict[str, str]) -> list[Path]:
-    if config.get("CONFIG_EXT4_FS") == "y":
+def filesystem_module_closure(release: str, work: Path, config: dict[str, str], filesystem: str) -> list[Path]:
+    config_key, root_name = {
+        "ext4": ("CONFIG_EXT4_FS", "ext4"),
+        "xfs": ("CONFIG_XFS_FS", "xfs"),
+    }[filesystem]
+    if config.get(config_key) == "y":
         return []
-    if config.get("CONFIG_EXT4_FS") != "m":
-        raise RuntimeError("kernel has no ext4 support")
+    if config.get(config_key) != "m":
+        raise RuntimeError(f"kernel has no {filesystem} support")
 
     module_root = Path(f"/lib/modules/{release}")
     if not (module_root / "modules.dep").is_file():
@@ -182,9 +187,9 @@ def ext4_module_closure(release: str, work: Path, config: dict[str, str]) -> lis
         owner, raw_dependencies = line.split(":", 1)
         dependencies[owner] = raw_dependencies.split()
         by_name[module_name(owner)] = owner
-    root_module = by_name.get("ext4")
+    root_module = by_name.get(root_name)
     if root_module is None:
-        raise RuntimeError("CONFIG_EXT4_FS=m but ext4 module is absent")
+        raise RuntimeError(f"{config_key}=m but {root_name} module is absent")
 
     ordered: list[str] = []
     visited: set[str] = set()
@@ -269,6 +274,7 @@ def qemu_command(
     disk_interface: str = "virtio",
     disk_device: str = "/dev/vda",
     schema: bool = False,
+    filesystem: str = "ext4",
 ) -> list[str]:
     command = [
         require_tool("qemu-system-x86_64"),
@@ -281,7 +287,8 @@ def qemu_command(
         "-initrd", str(initramfs),
         "-append", (
             f"console=ttyS0 panic=-1 loglevel=3 kron.mode={mode} "
-            f"kron.acked={acked} kron.device={disk_device} kron.schema={int(schema)}"
+            f"kron.acked={acked} kron.device={disk_device} kron.schema={int(schema)} "
+            f"kron.fs={filesystem}"
         ),
         "-drive", f"file={disk},format=raw,if={disk_interface},cache=writeback",
         "-display", "none",
@@ -356,6 +363,36 @@ def run_verify(command: list[str], log: Path, timeout: float, acked: int) -> Non
         raise RuntimeError("verification VM did not confirm the acknowledged sequence")
 
 
+def resolve_mkfs(filesystem: str, work: Path) -> list[str]:
+    if filesystem == "ext4":
+        return [require_tool("mkfs.ext4"), "-q", "-F", "-L", "KRONTEST"]
+    if filesystem == "xfs":
+        tool = shutil.which("mkfs.xfs")
+        if tool is None:
+            package = "xfsprogs"
+            tool_work = work / "xfsprogs"
+            tool_work.mkdir(parents=True, exist_ok=True)
+            subprocess.run(
+                [require_tool("apt-get"), "download", package],
+                cwd=tool_work,
+                check=True,
+            )
+            debs = sorted(tool_work.glob(f"{package}_*.deb"))
+            if not debs:
+                raise RuntimeError(f"apt downloaded no .deb for {package}")
+            extracted = tool_work / "extracted"
+            extracted.mkdir(exist_ok=True)
+            subprocess.run(
+                [require_tool("dpkg-deb"), "-x", str(debs[-1]), str(extracted)],
+                check=True,
+            )
+            tool = str(extracted / "sbin" / "mkfs.xfs")
+            if not Path(tool).is_file():
+                raise RuntimeError("xfsprogs package has no sbin/mkfs.xfs")
+        return [tool, "-q", "-f", "-L", "KRONTEST"]
+    raise RuntimeError(f"unsupported filesystem: {filesystem}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--testwriter", required=True, type=Path)
@@ -364,6 +401,7 @@ def main() -> int:
     parser.add_argument("--busybox", type=Path, default=Path("/usr/bin/busybox"))
     parser.add_argument("--work-dir", type=Path, default=Path(f"/tmp/kron-power-loss-{os.getpid()}"))
     parser.add_argument("--disk-mib", type=int, default=256)
+    parser.add_argument("--filesystem", choices=("ext4", "xfs"), default="ext4")
     parser.add_argument("--kill-after-acks", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=90.0)
     parser.add_argument("--schema", action="store_true", help="Exercise the v2 persistent schema-reference path")
@@ -377,7 +415,7 @@ def main() -> int:
     kernel = resolve_kernel(args.kernel, work)
     config = read_kernel_config(args.kernel_config, release)
     disk_interface, disk_device = choose_disk_interface(config)
-    modules = ext4_module_closure(release, work, config)
+    modules = filesystem_module_closure(release, work, config, args.filesystem)
     busybox = resolve_busybox(args.busybox, work)
     initramfs = build_initramfs(
         work,
@@ -389,9 +427,14 @@ def main() -> int:
     disk = work / "scratch.raw"
     if disk.exists():
         raise RuntimeError(f"refusing to overwrite existing crash evidence: {disk}")
+    disk_mib = args.disk_mib
+    if args.filesystem == "xfs" and disk_mib < 512:
+        # mkfs.xfs rejects images at or below 300 MiB; keep the gate usable
+        # with its smaller default while recording the actual image size.
+        disk_mib = 512
     with disk.open("wb") as stream:
-        stream.truncate(args.disk_mib * 1024 * 1024)
-    subprocess.run([require_tool("mkfs.ext4"), "-q", "-F", "-L", "KRONTEST", str(disk)], check=True)
+        stream.truncate(disk_mib * 1024 * 1024)
+    subprocess.run(resolve_mkfs(args.filesystem, work) + [str(disk)], check=True)
 
     writer, acked = run_until_ack(
         qemu_command(
@@ -399,6 +442,7 @@ def main() -> int:
             disk_interface=disk_interface,
             disk_device=disk_device,
             schema=args.schema,
+            filesystem=args.filesystem,
         ),
         work / "writer-serial.log",
         args.timeout,
@@ -407,13 +451,14 @@ def main() -> int:
     kill_vm(writer)
     crash_hash = sha256(disk)
 
-    # Read-only diagnostic: -n never repairs or modifies the image.
-    check = subprocess.run(
-        [require_tool("e2fsck"), "-f", "-n", str(disk)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    (work / "e2fsck-readonly.log").write_bytes(check.stdout)
+    if args.filesystem == "ext4":
+        # Read-only diagnostic: -n never repairs or modifies the image.
+        check = subprocess.run(
+            [require_tool("e2fsck"), "-f", "-n", str(disk)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        (work / "e2fsck-readonly.log").write_bytes(check.stdout)
 
     run_verify(
         qemu_command(
@@ -421,6 +466,7 @@ def main() -> int:
             disk_interface=disk_interface,
             disk_device=disk_device,
             schema=args.schema,
+            filesystem=args.filesystem,
         ),
         work / "verify-serial.log",
         args.timeout,
