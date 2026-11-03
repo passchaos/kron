@@ -154,6 +154,7 @@ def filesystem_module_closure(release: str, work: Path, config: dict[str, str], 
     config_key, root_name = {
         "ext4": ("CONFIG_EXT4_FS", "ext4"),
         "xfs": ("CONFIG_XFS_FS", "xfs"),
+        "btrfs": ("CONFIG_BTRFS_FS", "btrfs"),
     }[filesystem]
     if config.get(config_key) == "y":
         return []
@@ -366,31 +367,35 @@ def run_verify(command: list[str], log: Path, timeout: float, acked: int) -> Non
 def resolve_mkfs(filesystem: str, work: Path) -> list[str]:
     if filesystem == "ext4":
         return [require_tool("mkfs.ext4"), "-q", "-F", "-L", "KRONTEST"]
-    if filesystem == "xfs":
-        tool = shutil.which("mkfs.xfs")
-        if tool is None:
-            package = "xfsprogs"
-            tool_work = work / "xfsprogs"
-            tool_work.mkdir(parents=True, exist_ok=True)
-            subprocess.run(
-                [require_tool("apt-get"), "download", package],
-                cwd=tool_work,
-                check=True,
-            )
-            debs = sorted(tool_work.glob(f"{package}_*.deb"))
-            if not debs:
-                raise RuntimeError(f"apt downloaded no .deb for {package}")
-            extracted = tool_work / "extracted"
-            extracted.mkdir(exist_ok=True)
-            subprocess.run(
-                [require_tool("dpkg-deb"), "-x", str(debs[-1]), str(extracted)],
-                check=True,
-            )
-            tool = str(extracted / "sbin" / "mkfs.xfs")
-            if not Path(tool).is_file():
-                raise RuntimeError("xfsprogs package has no sbin/mkfs.xfs")
-        return [tool, "-q", "-f", "-L", "KRONTEST"]
-    raise RuntimeError(f"unsupported filesystem: {filesystem}")
+    tools = {
+        "xfs": ("mkfs.xfs", "xfsprogs"),
+        "btrfs": ("mkfs.btrfs", "btrfs-progs"),
+    }
+    if filesystem not in tools:
+        raise RuntimeError(f"unsupported filesystem: {filesystem}")
+    tool_name, package = tools[filesystem]
+    tool = shutil.which(tool_name)
+    if tool is None:
+        tool_work = work / package
+        tool_work.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [require_tool("apt-get"), "download", package],
+            cwd=tool_work,
+            check=True,
+        )
+        debs = sorted(tool_work.glob(f"{package}_*.deb"))
+        if not debs:
+            raise RuntimeError(f"apt downloaded no .deb for {package}")
+        extracted = tool_work / "extracted"
+        extracted.mkdir(exist_ok=True)
+        subprocess.run(
+            [require_tool("dpkg-deb"), "-x", str(debs[-1]), str(extracted)],
+            check=True,
+        )
+        tool = str(extracted / "sbin" / tool_name)
+        if not Path(tool).is_file():
+            raise RuntimeError(f"{package} package has no sbin/{tool_name}")
+    return [tool, "-q", "-f", "-L", "KRONTEST"]
 
 
 def main() -> int:
@@ -401,7 +406,7 @@ def main() -> int:
     parser.add_argument("--busybox", type=Path, default=Path("/usr/bin/busybox"))
     parser.add_argument("--work-dir", type=Path, default=Path(f"/tmp/kron-power-loss-{os.getpid()}"))
     parser.add_argument("--disk-mib", type=int, default=256)
-    parser.add_argument("--filesystem", choices=("ext4", "xfs"), default="ext4")
+    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs"), default="ext4")
     parser.add_argument("--kill-after-acks", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=90.0)
     parser.add_argument("--schema", action="store_true", help="Exercise the v2 persistent schema-reference path")
@@ -428,7 +433,7 @@ def main() -> int:
     if disk.exists():
         raise RuntimeError(f"refusing to overwrite existing crash evidence: {disk}")
     disk_mib = args.disk_mib
-    if args.filesystem == "xfs" and disk_mib < 512:
+    if args.filesystem in ("xfs", "btrfs") and disk_mib < 512:
         # mkfs.xfs rejects images at or below 300 MiB; keep the gate usable
         # with its smaller default while recording the actual image size.
         disk_mib = 512

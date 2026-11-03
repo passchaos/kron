@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--busybox", required=True, type=pathlib.Path)
     parser.add_argument("--output-dir", required=True, type=pathlib.Path)
     parser.add_argument("--runs", type=int, default=4)
-    parser.add_argument("--filesystem", choices=("ext4", "xfs"), default="ext4")
+    parser.add_argument("--filesystem", choices=("ext4", "xfs", "btrfs"), default="ext4")
     parser.add_argument("--seed", type=int, default=0x4B524F4E)
     parser.add_argument("--timeout", type=float, default=90)
     options = parser.parse_args()
@@ -47,7 +47,7 @@ def main():
         "busybox_sha256": digest(options.busybox),
         "runs": [],
     }
-    disk_mib = "512" if options.filesystem == "xfs" else "128"
+    disk_mib = "512" if options.filesystem in ("xfs", "btrfs") else "128"
     for index, acknowledged in enumerate(acknowledgement_counts):
         trial = output / f"run-{index:02d}-ack-{acknowledged}"
         command = [

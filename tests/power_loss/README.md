@@ -46,9 +46,10 @@ python3 tests/power_loss/vm_powerloss.py \
   --work-dir /tmp/kron-power-loss-run
 ```
 
-Pass `--filesystem xfs` to run the same gate on XFS; the harness then uses a
-512 MiB image (mkfs.xfs rejects images at or below 300 MiB) and downloads
-`xfsprogs` with `apt-get download` if `mkfs.xfs` is not on the host. The
+Pass `--filesystem xfs` or `--filesystem btrfs` to run the same gate on those
+filesystems; the harness then uses a 512 MiB image (mkfs.xfs rejects images at
+or below 300 MiB) and downloads `xfsprogs` or `btrfs-progs` with
+`apt-get download` if the matching `mkfs` tool is not on the host. The
 filesystem type is also passed to the guest as `kron.fs`.
 
 The harness uses TCG explicitly; KVM is not required. A readable kernel can be
@@ -62,10 +63,10 @@ matching readable `/boot/config-$(uname -r)` is inspected before boot:
 
 - built-in virtio-blk uses `/dev/vda`;
 - otherwise a built-in QEMU IDE/SCSI path uses `/dev/sda`;
-- if ext4 or XFS is a module, the matching `linux-modules-$(uname -r)` package
-  is used when necessary; only the requested filesystem and its dependency
-  closure are copied into the initramfs, decompressed, and loaded before
-  mounting.
+- if ext4, XFS or Btrfs is a module, the matching `linux-modules-$(uname -r)`
+  package is used when necessary; only the requested filesystem and its
+  dependency closure are copied into the initramfs, decompressed, and loaded
+  before mounting.
 
 For a non-host kernel, pass its matching config with `--kernel-config`; kernel
 and modules must have exactly matching release/ABI values.
@@ -99,3 +100,6 @@ The XFS path was exercised with a 512 MiB image: a single non-schema ACK1 run
 and a four-trial schema campaign passed ACK17/31/8/3, and the ext4 path was
 rechecked after the harness change. See
 [the XFS campaign report](../../bench/evidence/2026-11-03-powerloss-xfs/README.md).
+Btrfs was exercised the same way (single ACK1 and four-trial schema campaign
+ACK17/31/8/3); see
+[the Btrfs campaign report](../../bench/evidence/2026-11-03-powerloss-btrfs/README.md).

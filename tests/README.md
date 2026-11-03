@@ -29,7 +29,7 @@
 | 正则 | regex_differential/fuzz/equivalence | Python差分、有界mutation、coverage-guided入口；不同资格范围分别记录 |
 | 负向编译 | [compile_fail/](compile_fail/)、[run_compile_fail.py](run_compile_fail.py) | 不支持输入/格式、字段选择边界、禁止直接改opaque配置 |
 | 进程恢复 | crash_writer/recovery、async_storage_crash、recovery_campaign、runtime_crash_campaign | 真实SIGKILL，完整commit/预留缺口/热route、随机ACK覆盖 |
-| 子VM停机 | [power_loss/](power_loss/README.md) | QEMU停机及journal/output确认；当前HEAD V3 schema 4-run campaign（ACK 3/8/17/31）、XFS schema 4-run campaign与单次非schema ACK1通过；具体文件系统/设备，非物理断电普遍资格 |
+| 子VM停机 | [power_loss/](power_loss/README.md) | QEMU停机及journal/output确认；当前HEAD V3 schema 4-run campaign（ACK 3/8/17/31）、XFS/Btrfs schema 4-run campaigns与单次非schema ACK1通过；具体文件系统/设备，非物理断电普遍资格 |
 | aarch64 QEMU用户态 | [aarch64-qemu证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) | aarch64-linux-musl static root suite 455 pass/7 skip/0 fail；journal/archive fuzz 20 seeds；独立package consumer五模式与qualification通过；非真实设备 |
 | 独立包与设备宿主 | [package_consumer/](package_consumer/build.zig)、[package_consumer.py](package_consumer.py) | b.dependency、五模式、single-thread、local选项、源码分发与目标原生自校验 |
 | 基准工具oracle | `test_*.py`、time/local oracle | 拒绝不完整输出、后端fallback、错误比较/回归结果，独立应用模型 |

@@ -33,10 +33,10 @@ fi
 # During verification QEMU supplies a temporary snapshot overlay. The
 # filesystem may replay its journal, but no write reaches the crash-evidence
 # base image.
-if [ "$filesystem" = "xfs" ]; then
-    mount_options=""
-else
+if [ "$filesystem" = "ext4" ]; then
     mount_options="-o data=ordered"
+else
+    mount_options=""
 fi
 busybox mount -t "$filesystem" $mount_options "$device" /mnt || {
     echo KRON_GUEST_MOUNT_FAILED
