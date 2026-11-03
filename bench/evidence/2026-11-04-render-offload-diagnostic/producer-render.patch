@@ -1,0 +1,21 @@
+--- src/core/runtime.zig	2026-11-03 23:52:33.882535571 +0800
++++ .zig-cache/diag-norender/src/core/runtime.zig	2026-11-04 00:53:13.755616742 +0800
+@@ -12,6 +12,7 @@
+ const schema_site = @import("../submit/schema_site.zig");
+ pub const SchemaBinding = prepared_module.Binding;
+ const encoder = @import("../encoder/root.zig");
++const common = @import("../encoder/common.zig");
+ const delivery = @import("delivery.zig");
+ const delivery_batch = @import("delivery_batch.zig");
+ const configurations = @import("../config/routes.zig");
+@@ -732,6 +733,10 @@
+                     self.reportError(err);
+                     return err;
+                 };
++                // DIAGNOSTIC ONLY: add producer-side JSON render and discard it.
++                var diag_render_buffer: [512]u8 = undefined;
++                var diag_render_writer = std.Io.Writer.fixed(&diag_render_buffer);
++                _ = common.encodeDecoded(.json, event.*, snapshot.routes[0].timestamp, &diag_render_writer) catch {};
+                 // Retain before publishing: the collector can consume the
+                 // record immediately after the release commit marker.
+                 snapshot.retainChannel(event.channel);
