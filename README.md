@@ -12,6 +12,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 等待者计数通知候选完成两核 320 项流程、3,232 万条 JSON 核对，但有稳定吞吐与尾部退步，已拒绝，见 [progress 报告](bench/evidence/2026-11-03-progress-waiters/README.md)。最新平坦 CRC 直接索引版消除了旧表重复，两核 640 项流程核对 6,464 万条 JSON，E/P 分别有 27/6 个 written 组局部领先；仍有 p99/p50 稳定反例，按门槛拒绝，见 [direct-index 报告](bench/evidence/2026-11-03-crc-flat-segments/direct-index/README.md)。生产原算法和默认协议保持，尚未全面超过两个 Foundation 前端。
 
+可靠性证据已扩展：ext4/XFS/Btrfs/F2FS 16-run child-VM abrupt-loss、9p共享文件系统行为、真实ENOSPC/只读FS/Journal预分配拒绝、1000-seed journal/archive fuzz、并发delivery/shutdown/mmap/配置替换与1000/200次soak；sanitizer仍受Zig TSan/Helgrind工具链限制。逐项源码、正负和资格见 [当前验收状态](docs/implementation-status.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始
