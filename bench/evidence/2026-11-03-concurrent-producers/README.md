@@ -22,16 +22,22 @@
 
 该测试执行2轮，覆盖shutdown与并发admission/queue blocking的竞争。
 
+## Concurrent mmap journal
+
+新增第三个测试：4个producer各提交100条记录到`capacity=64`的mmap journal（`.recover=true`，route `recovery_identity`显式设置），consumer写出到MemorySink。join后`flush(.written)`/`shutdown(.drain)`，断言`accepted==written==400`、`journal_pending==0`、sink records==400；随后`runtime.destroy()`释放journal锁，以同一路径`recover=true`重开，断言`pending()==0`且`peekChecked()==null`。
+
+该测试覆盖shared MPSC reserve/commit、consumer release与mmap recovery路径在真实并发下的组合，不模拟crash或掉电。
+
 ## 结果
 
-- `zig build test-async-storage -Doptimize=ReleaseSafe`：**9/9 tests passed**。
-- Debug：9/9；ReleaseFast：9/9。
-- 独立Safe binary对seed `0x1..0x5`（delivery test）与`0x1..0xa`（shutdown test）重复执行：全部通过。
-- 完整`test`：**65/65 steps、750/751 tests（1项local skip）**。
-- `verify-local`：**159/159 steps、784/785 tests（1项local skip）**，`verify-local success`。
+- `zig build test-async-storage -Doptimize=ReleaseSafe`：**10/10 tests passed**。
+- Debug：10/10；ReleaseFast：10/10。
+- 独立Safe binary对delivery/shutdown/mmap测试的`0x1..0xa` seed重复执行：全部通过。
+- 完整`test`：**65/65 steps、751/752 tests（1项local skip）**。
+- `verify-local`：**159/159 steps、785/786 tests（1项local skip）**，`verify-local success`。
 
-日志见[safe.log](safe.log)、[debug.log](debug.log)、[fast.log](fast.log)、[safe-build.log](safe-build.log)、[seeds.log](seeds.log)、[shutdown-safe.log](shutdown-safe.log)、[shutdown-debug.log](shutdown-debug.log)、[shutdown-fast.log](shutdown-fast.log)、[shutdown-seeds.log](shutdown-seeds.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。
+日志见[safe.log](safe.log)、[debug.log](debug.log)、[fast.log](fast.log)、[safe-build.log](safe-build.log)、[seeds.log](seeds.log)、[shutdown-safe.log](shutdown-safe.log)、[shutdown-debug.log](shutdown-debug.log)、[shutdown-fast.log](shutdown-fast.log)、[shutdown-seeds.log](shutdown-seeds.log)、[mmap-safe.log](mmap-safe.log)、[mmap-debug.log](mmap-debug.log)、[mmap-fast.log](mmap-fast.log)、[mmap-seeds.log](mmap-seeds.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。
 
 ## 边界
 
-覆盖Memory queue、共享async、固定4 producer、mid-flight `shutdown(.drain)`；没有mmap journal recovery、掉电或随机fuzz seed，也没有在mid-flight调用cut/reload。它补充多producer交付与关闭竞争，不替代SIGKILL/child-VM/多文件系统资格。整体“业界最佳”目标仍未完成。
+覆盖Memory queue、mmap clean reopen、共享async、固定4 producer、mid-flight `shutdown(.drain)`；没有crash/掉电、随机fuzz seed，也没有在mid-flight调用cut/reload。它补充多producer交付、关闭竞争与mmap并发，不替代SIGKILL/child-VM/多文件系统资格。整体“业界最佳”目标仍未完成。

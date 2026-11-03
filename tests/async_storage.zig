@@ -471,3 +471,49 @@ test "async storage: shutdown drains accepted records and rejects concurrent pro
         try testing.expect(rejected != 0);
     }
 }
+
+test "async storage: concurrent shared producers drain an mmap journal and reopen cleanly" {
+    if (builtin.single_threaded) return error.SkipZigTest;
+    if (builtin.os.tag != .linux) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_bytes: [128]u8 = undefined;
+    const path = try std.fmt.bufPrint(&path_bytes, ".zig-cache/tmp/{s}/concurrent.journal", .{tmp.sub_path});
+    const producer_count = 4;
+    const per_producer = 100;
+    const total = producer_count * per_producer;
+    var bytes: [512 * 1024]u8 = undefined;
+    var memory = kron.MemorySink.initBuffer(&bytes);
+    const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+        .submission = .asynchronous,
+        .journal = .{ .path = path, .capacity = 64, .max_record_bytes = 512, .recover = true },
+        .overflow = .block,
+        .consumer_batches_per_queue = 4,
+        .routes = &.{.{ .name = "output", .sink = memory.sink(), .recovery_identity = "concurrent-mmap" }},
+    });
+    var live = true;
+    defer if (live) runtime.destroy();
+    var gate: std.atomic.Value(bool) = .init(false);
+    var workers: [producer_count]ConcurrentProducer = undefined;
+    var threads: [producer_count]std.Thread = undefined;
+    for (&workers, 0..) |*worker, index| {
+        worker.* = .{ .runtime = runtime, .id = index, .records = per_producer, .gate = &gate };
+        threads[index] = try std.Thread.spawn(.{}, ConcurrentProducer.run, .{worker});
+    }
+    gate.store(true, .release);
+    for (&threads) |thread| thread.join();
+    for (&workers) |*worker| if (worker.failure) |err| return err;
+    try runtime.flush(.written);
+    try runtime.shutdown(.drain);
+    const health = runtime.health();
+    try testing.expectEqual(@as(u64, total), health.accepted);
+    try testing.expectEqual(@as(u64, total), health.written);
+    try testing.expectEqual(@as(usize, 0), health.journal_pending);
+    try testing.expectEqual(total, memory.records);
+    runtime.destroy();
+    live = false;
+    const reopened = try kron.Journal.create(testing.allocator, testing.io, .{ .path = path, .capacity = 64, .max_record_bytes = 512, .recover = true });
+    defer reopened.deinit();
+    try testing.expectEqual(@as(usize, 0), reopened.pending());
+    try testing.expect((try reopened.peekChecked()) == null);
+}
