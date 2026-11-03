@@ -58,6 +58,14 @@ binary `5966ae97e82bed1754a02ed231d54c65073eaad0dd7bfa8bad121dfb8c1f30d5`，ELF 
 
 qualification scope明确为host file/runtime/queue/journal reopen检查，不是process-kill或power-loss资格。
 
+## Current HEAD package consumer重跑
+
+在提交`a31f73`/`a2aae77`之后（源码与package paths更新），重新交叉构建`tests/package_consumer`并执行：
+
+- 五个模式（sync/memory/mmap/spsc_memory/spsc_mmap）各2条、pending=0、输出/redaction/journal文件数核对通过。
+- `qualify`：5 modes `file_durable=confirmed`、inline/schema journal各`recovered=1`、rolling `archives=2`且`rolling_durable=confirmed`。
+- 原始输出见[package-current.log](package-current.log)。
+
 ## test-only修正
 
 `platform.tsc_clock.test.invalid options and rejected capabilities remain explicit`原先假设`Capability.platform_supported`默认为true；aarch64上默认false，导致`rdtscp_unavailable`断言先被`unsupported_platform`拦截。修正为该test的两个capability显式设置`.platform_supported = true`，使rejection顺序与host无关。x86语义不变，生产代码未改。
