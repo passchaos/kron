@@ -1,0 +1,107 @@
+{
+  "review": "Independent read-only CAS failure PAUSE native audit",
+  "binaries": {
+    "before": "be069a0c8255afc6ec34a12fb6cfef958c6c2fba5eb96f13ffea905b44e019d1",
+    "candidate": "02943441e61ffa04fa44f356943367374c36a96bba47b6c8bf56b1324589d6ed"
+  },
+  "pause_inventory": {
+    "before_total": 10,
+    "candidate_total": 12,
+    "new_instances": [
+      {
+        "owner": "Journal.reserve",
+        "CAS": "0x10fb667",
+        "PAUSE": "0x10fb67a",
+        "success": "JE0x10fb678 ->0x10fb6d0 skips PAUSE",
+        "failure": "PAUSE -> RAX actual copiedRCX -> retry"
+      },
+      {
+        "owner": "Runtime.begin",
+        "CAS": "0x11105f2",
+        "PAUSE": "0x1110606",
+        "success": "JE0x1110604 ->0x1110647 skips PAUSE",
+        "failure": "PAUSE -> actualRAX flags check -> retry"
+      }
+    ],
+    "existing_begin_release_pauses": [
+      "0x1110690",
+      "0x11107ce"
+    ],
+    "other_owner_pause_counts_changed": false
+  },
+  "affected_functions": {
+    "reserve": {
+      "bytes_both": 546,
+      "before_instructions": 126,
+      "candidate_instructions": 127,
+      "frame_both": 0,
+      "stackrefs_both": 2,
+      "calls_both": 0,
+      "other_changes": "PaddingNOP near highwater loop; no highwater/turn/Full hint"
+    },
+    "begin": {
+      "before_bytes": 1269,
+      "candidate_bytes": 1285,
+      "before_instructions": 293,
+      "candidate_instructions": 296,
+      "frame_both": 72,
+      "stackrefs_both": 39,
+      "calls_both": 8,
+      "ordered_call_operands_equal": true,
+      "control_change": "OldJNEfailure+JMPsuccess becomesJE success; failure-side flagtest duplicated, layout not identical",
+      "TLS_callback_relocation": "releaseAdmissionView11109d0 ->11109e0; same14B"
+    }
+  },
+  "success_paths": "no newcalls/frame/spills, continuation retained, branch/layout changes real",
+  "atomic_orders": "admissionacq_rel/acquire and tailmonotonic/monotonic unchanged; weakspuriousfailure alsohints",
+  "normalized_equal_controls": [
+    "reserveSingleProducer574B/133instr/frame0/stackrefs0/calls0",
+    "reserveWithSchema",
+    "submitSafeDestination5784B/1048instr/frame0xd18/stackrefs372/calls30",
+    "drainJournal11132B/2132instr/frame0x9e28/stackrefs448/calls43",
+    "slotChecksum",
+    "validateSlot",
+    "peekChecked",
+    "CRCupdate1412B/310instr/20staticCLMUL",
+    "emitWireFused",
+    "JSON/logfmt/wire renderers"
+  ],
+  "CRC": {
+    "checks": 3,
+    "segments": "header20/ref24/payload/finalXOR",
+    "loaded_rows": "42actual1024Browrefs/16rowvalues equal; no contiguous16KiB assumption",
+    "six_old_fold_constants_equal": true
+  },
+  "objects": {
+    "Runtime": [
+      12800,
+      64
+    ],
+    "Journal": [
+      768,
+      64
+    ],
+    "Field": [
+      48,
+      16
+    ],
+    "Value": [
+      32,
+      16
+    ],
+    "all_direct_member_offsets_sizes_and_alignments_equal": true
+  },
+  "source_archives": {
+    "files_each": 129,
+    "only_changed_source": [
+      "core/admission.zig",
+      "journal/journal.zig"
+    ],
+    "no_extra_or_missing_files": true,
+    "both_roots_and_archives_match_provenance": true,
+    "before_archive_sha256": "7795804c109e464831a0710d1145b9f019467f40f88abe6e22ac3656c952adf1",
+    "candidate_archive_sha256": "0aa7667e28228f253f1be8df5bacb4fd21b015105a8c019af769793d6ad2977b"
+  },
+  "size_accounting": "nmst_size equals decodedinstructionextent; Binutils2.42/readelfDWARF",
+  "limits": "No dynamicretry counts, cause/speed inference, compile/test/benchmark/edit ornewvariant byreviewer; parentperformance rejectionunchanged"
+}

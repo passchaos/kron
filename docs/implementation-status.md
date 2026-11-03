@@ -13,6 +13,8 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
+CAS失败后的两处有限pause候选已拒绝：四配置各8个关闭/cut/并发reserve/flush故障/共享与SPSC关闭回归实际通过，native两个hint仅在失败边，原atomic/CRC/预算及Runtime12800B/Journal768B对象布局保持；begin的branch/layout确有变化。双拓扑160项完整managed shared流程逐条核验16160000JSON，E-core Memory P1 batch的written/written+flush/lifecycle速度比分别0.98615/0.98511/0.98439，均稳定负向；其他E-core49轴与P-core52轴不确定。按预定门槛未扩展SPSC/schema/Foundation，未将局部中位或静态变化推断为因果，生产仍原算法，详见[CAS报告](../bench/evidence/2026-11-03-cas-failure-pause/README.md)。后续独立考察progress通知，整体性能目标未完成。
+
 精确20/24字节直接尾折叠的通用分派和固定journal入口均拒绝，生产保持185e700算法。两版各完成70长度×两header形状的双拓扑控制，各14000个完整checksum计时batch；通用版E-core64组领先/12组稳定退步/64组不确定，固定版95/21/24，P-core两版各140组全不确定。固定版通用update源码及实际310条指令/1412B保持原样，仍有192/240/512B等边界反例；169B局部收益不覆盖默认241B不确定与负向控制。native Debug/Safe/Fast、legacy Safe各8项相关具名case及generic Safe5项typed/format/guard通过；generic gate实际SKIP，非法reference域、惰性发现与wrapper误判均保留并纠正资格。零完整JSON/Foundation trial，不更新排名，完整证据见[固定段报告](../bench/evidence/2026-11-03-crc-fixed-segments/README.md)与[通用首版](../bench/evidence/2026-11-03-crc-direct-tail/README.md)。整体目标未完成。
 
 短16/32/48CRC单lane两种候选均拒绝，production保原64B threshold/native4lane和portable16/8/byte，默认三检查/IEEE/完整seed/原20/24/payload段界保持。新raw GF2/seed/32alignment与root实际4cases、baselinewrapper和guard通过；70matchedlength/双headerpattern两topology firstinline140组Ecore76/Pcore12negative、outlinedEcore126/Pcore114negative，localshort/Pcorewin不覆盖所有反例，零fullJSON/Foundationtrial。actualslotChecksum/producerinlining和probeowner代码形状变，opcode/source身份不替代收益，原始证据见[短CRC报告](../bench/evidence/2026-11-03-short-crc/README.md)。新增public crc32_segment_tests三case与test-crc-segments入口，原CRC源码逐字节保持。恢复后Safe12steps65tests、原CRC9tests、新三cases的Debug/Fast/generic实际执行通过，源码分发五fresh模式和九目标对象12steps通过；productionCRC字节原样。整体性能目标仍未完成。

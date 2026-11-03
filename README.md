@@ -14,6 +14,8 @@ Zig 0.16 原生日志库，提供结构化字段、同步与有界异步提交�
 
 精确 20/24 字节直接折叠的通用分派与固定 journal 入口也已拒绝：E-core 跨长度控制分别有 12 和 21 组稳定退步，P-core 均不确定。局部短段收益未形成保留资格，全部源码、测试与正负数据见 [固定段报告](bench/evidence/2026-11-03-crc-fixed-segments/README.md)。
 
+随后 CAS 失败 pause 候选完成双拓扑 160 项流程、1,616 万条 JSON 核对，但 E-core Memory P1 batch 吞吐与生命周期稳定退步，已拒绝。原协议与算法保持，完整结果见 [CAS 报告](bench/evidence/2026-11-03-cas-failure-pause/README.md)。
+
 应用从 **`kron.Logging`** 接入。默认 stderr、同步、text、info；单文件、多输出、轮转、Memory/Mmap 和 SPSC 使用同一套初始化、logger 获取与关闭方法。
 
 ## 快速开始

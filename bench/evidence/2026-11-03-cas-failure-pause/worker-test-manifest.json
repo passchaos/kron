@@ -1,0 +1,275 @@
+{
+  "scope": "Exactly one spinLoopHint after each updated local CAS failure value in admission.acquire and shared Journal.reserve. Existing tests only; no performance qualification.",
+  "source_sha256": {
+    "core/admission.zig": "86593da40c700f2ba69eeca14139d7634f8ea8a081b5532a0f072a4f8b4724e8",
+    "journal/journal.zig": "7e5cf9148d112a3fbced72538ed3e9351417eb8b1db4d1a0a99cbe2dbe9017a1"
+  },
+  "source_diff": "worker-source.diff",
+  "source_checks": "worker-source-checks.txt",
+  "commands": "worker-commands.txt",
+  "all_sessions_ended": true,
+  "session_exit_codes": {
+    "81685": 0,
+    "91979": 0,
+    "45432": 0
+  },
+  "configurations": {
+    "native_Debug": {
+      "selected_cases": [
+        {
+          "name": "closed admission preserves outstanding count and denies new producers",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "2/24 core.admission.test.closed admission preserves outstanding count and denies new producers...OK"
+        },
+        {
+          "name": "channel gate balances all outcomes without acquiring global runtime admission",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "22/24 core.tests.thread_registry.test.channel gate balances all outcomes without acquiring global runtime admission...OK"
+        },
+        {
+          "name": "channel cut drains admitted events blocks producers and prevents attachment until endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "23/24 core.tests.thread_registry.test.channel cut drains admitted events blocks producers and prevents attachment until endCut...OK"
+        },
+        {
+          "name": "retireAll wakes a producer blocked by cut and preserves closing through endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "24/24 core.tests.thread_registry.test.retireAll wakes a producer blocked by cut and preserves closing through endCut...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "14/24 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "shared runtime final admission wakes sleeping closing worker without submitting a record",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "21/24 core.tests.runtime_admission_shutdown.test.shared runtime final admission wakes sleeping closing worker without submitting a record...OK"
+        },
+        {
+          "name": "coalesced flush failure retains every slot and pin of a retired configuration",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "16/24 core.tests.runtime_coalesced.test.coalesced flush failure retains every slot and pin of a retired configuration...OK"
+        },
+        {
+          "name": "runtime SPSC closing publication drains every successfully accepted event",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-debug.log",
+          "actual_output": "18/24 core.tests.runtime.test.runtime SPSC closing publication drains every successfully accepted event...OK"
+        }
+      ],
+      "selected_passed": 8,
+      "anonymous_and_selected_total_passed": 24,
+      "skips": [],
+      "exit_code": 0
+    },
+    "native_ReleaseSafe": {
+      "selected_cases": [
+        {
+          "name": "closed admission preserves outstanding count and denies new producers",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "2/24 core.admission.test.closed admission preserves outstanding count and denies new producers...OK"
+        },
+        {
+          "name": "channel gate balances all outcomes without acquiring global runtime admission",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "22/24 core.tests.thread_registry.test.channel gate balances all outcomes without acquiring global runtime admission...OK"
+        },
+        {
+          "name": "channel cut drains admitted events blocks producers and prevents attachment until endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "23/24 core.tests.thread_registry.test.channel cut drains admitted events blocks producers and prevents attachment until endCut...OK"
+        },
+        {
+          "name": "retireAll wakes a producer blocked by cut and preserves closing through endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "24/24 core.tests.thread_registry.test.retireAll wakes a producer blocked by cut and preserves closing through endCut...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "14/24 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "shared runtime final admission wakes sleeping closing worker without submitting a record",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "21/24 core.tests.runtime_admission_shutdown.test.shared runtime final admission wakes sleeping closing worker without submitting a record...OK"
+        },
+        {
+          "name": "coalesced flush failure retains every slot and pin of a retired configuration",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "16/24 core.tests.runtime_coalesced.test.coalesced flush failure retains every slot and pin of a retired configuration...OK"
+        },
+        {
+          "name": "runtime SPSC closing publication drains every successfully accepted event",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-safe.log",
+          "actual_output": "18/24 core.tests.runtime.test.runtime SPSC closing publication drains every successfully accepted event...OK"
+        }
+      ],
+      "selected_passed": 8,
+      "anonymous_and_selected_total_passed": 24,
+      "skips": [],
+      "exit_code": 0
+    },
+    "native_ReleaseFast": {
+      "selected_cases": [
+        {
+          "name": "closed admission preserves outstanding count and denies new producers",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "2/24 core.admission.test.closed admission preserves outstanding count and denies new producers...OK"
+        },
+        {
+          "name": "channel gate balances all outcomes without acquiring global runtime admission",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "22/24 core.tests.thread_registry.test.channel gate balances all outcomes without acquiring global runtime admission...OK"
+        },
+        {
+          "name": "channel cut drains admitted events blocks producers and prevents attachment until endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "23/24 core.tests.thread_registry.test.channel cut drains admitted events blocks producers and prevents attachment until endCut...OK"
+        },
+        {
+          "name": "retireAll wakes a producer blocked by cut and preserves closing through endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "24/24 core.tests.thread_registry.test.retireAll wakes a producer blocked by cut and preserves closing through endCut...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "14/24 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "shared runtime final admission wakes sleeping closing worker without submitting a record",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "21/24 core.tests.runtime_admission_shutdown.test.shared runtime final admission wakes sleeping closing worker without submitting a record...OK"
+        },
+        {
+          "name": "coalesced flush failure retains every slot and pin of a retired configuration",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "16/24 core.tests.runtime_coalesced.test.coalesced flush failure retains every slot and pin of a retired configuration...OK"
+        },
+        {
+          "name": "runtime SPSC closing publication drains every successfully accepted event",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-native-fast.log",
+          "actual_output": "18/24 core.tests.runtime.test.runtime SPSC closing publication drains every successfully accepted event...OK"
+        }
+      ],
+      "selected_passed": 8,
+      "anonymous_and_selected_total_passed": 24,
+      "skips": [],
+      "exit_code": 0
+    },
+    "generic_ReleaseSafe": {
+      "selected_cases": [
+        {
+          "name": "closed admission preserves outstanding count and denies new producers",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "2/24 core.admission.test.closed admission preserves outstanding count and denies new producers...OK"
+        },
+        {
+          "name": "channel gate balances all outcomes without acquiring global runtime admission",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "22/24 core.tests.thread_registry.test.channel gate balances all outcomes without acquiring global runtime admission...OK"
+        },
+        {
+          "name": "channel cut drains admitted events blocks producers and prevents attachment until endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "23/24 core.tests.thread_registry.test.channel cut drains admitted events blocks producers and prevents attachment until endCut...OK"
+        },
+        {
+          "name": "retireAll wakes a producer blocked by cut and preserves closing through endCut",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "24/24 core.tests.thread_registry.test.retireAll wakes a producer blocked by cut and preserves closing through endCut...OK"
+        },
+        {
+          "name": "parallel producers wrap without duplicates or payload damage",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "14/24 journal.tests.test.parallel producers wrap without duplicates or payload damage...OK"
+        },
+        {
+          "name": "shared runtime final admission wakes sleeping closing worker without submitting a record",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "21/24 core.tests.runtime_admission_shutdown.test.shared runtime final admission wakes sleeping closing worker without submitting a record...OK"
+        },
+        {
+          "name": "coalesced flush failure retains every slot and pin of a retired configuration",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "16/24 core.tests.runtime_coalesced.test.coalesced flush failure retains every slot and pin of a retired configuration...OK"
+        },
+        {
+          "name": "runtime SPSC closing publication drains every successfully accepted event",
+          "executed": true,
+          "result": "passed",
+          "log": "worker-generic-safe.log",
+          "actual_output": "18/24 core.tests.runtime.test.runtime SPSC closing publication drains every successfully accepted event...OK"
+        }
+      ],
+      "selected_passed": 8,
+      "anonymous_and_selected_total_passed": 24,
+      "skips": [],
+      "exit_code": 0
+    }
+  },
+  "qualification_limit": "These are existing behavioral and real-concurrency cases; there is no new instrumentation counting execution of CAS failure hints. Admission is shared by relevant SPSC runtime paths; this candidate does not establish that complete SPSC behavior or performance is unaffected."
+}
