@@ -1,6 +1,6 @@
 # Sharded admission候选诊断
 
-尝试把shared async producer的admission gate从单个cacheline RMW改为per-thread分片计数，以降低P4 begin/end争用。两版候选均完成正确性门禁，但当前host负载窗口无法取得qualified吞吐，且Runtime对象超出既有预算，生产已撤回。
+尝试把shared async producer的admission gate从单个cacheline RMW改为per-thread分片计数，以降低P4 begin/end争用。两版候选均完成正确性门禁；E-core空闲窗口20对A/B显示v2稳定回退，且Runtime对象超出既有预算，生产已撤回。
 
 ## 设计
 
@@ -27,6 +27,16 @@
 
 原始row见[ab-p4-v1.jsonl](ab-p4-v1.jsonl)、[ab-p1-v1.jsonl](ab-p1-v1.jsonl)、[ab-p4-v2.jsonl](ab-p4-v2.jsonl)、[ab-p1-v2.jsonl](ab-p1-v2.jsonl)。该窗口不满足CV/spread资格，不能据此声称领先或回退。
 
+## Idle E-core确认窗口
+
+host高负载时P-core被sibling构建占满，但`mpstat`显示E-core（16–31）大多空闲。使用仓库既有E-core affinity `[16,18,20,22,24,26]`、runtime async memory P4 batch、500k events、20对baseline/candidate交替：
+
+- baseline written中位**1,756,758** records/s；
+- candidate written中位**1,710,756** records/s；
+- 成对ratio median **0.9672**、mean **0.9595**、stdev **0.047**；20对中18对低于baseline。
+
+这是一个稳定回退信号，v2分片admission在更安静的E-core窗口没有吞吐收益。原始row见[ab-p4-v2-ecore.jsonl](ab-p4-v2-ecore.jsonl)。
+
 ## 对象预算
 
 - baseline `Runtime=12800`、`Journal=768`、`Field=48`。
@@ -34,8 +44,8 @@
 
 ## 决策
 
-按预定门槛与对象预算，候选**撤回**；`src/core/admission.zig`与`src/core/runtime.zig`恢复基线，生产无改动。保存patch与全部原始数据，供host安静窗口重新测量；在此之前不更新Foundation排名。
+E-core安静窗口的20对A/B显示v2稳定回退（median ratio 0.9672、18/20 negative），加上Runtime对象+576B超出既有预算，候选**拒绝并撤回**；`src/core/admission.zig`与`src/core/runtime.zig`恢复基线，生产无改动。保存patch与全部原始数据；不再以P-core高负载窗口的cycles信号作为保留依据，也不更新Foundation排名。
 
 ## 边界
 
-没有完整managed dual-topology trial或Foundation对照；PMU与A/B都受当前host负载影响。候选仅在进程内shared async路径尝试，SPSC/thread-registry gate未改。整体“业界最佳”目标仍未完成。
+没有完整managed dual-topology trial或Foundation对照；E-core A/B是runtime frontend的500k event诊断，不是正式双拓扑资格。候选仅在进程内shared async路径尝试，SPSC/thread-registry gate未改。整体“业界最佳”目标仍未完成。
