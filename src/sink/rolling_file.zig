@@ -39,7 +39,7 @@ pub const RollingFileSink = struct {
         /// truncates at rollover. Automatic retention is intentionally bounded.
         retention: u16,
         buffer_bytes: usize = 64 * 1024,
-        backend: BackendKind = .auto,
+        backend: BackendKind = .portable,
         queue_depth: u16 = 4,
         /// Optional monotonic interval, checked only at nonempty record
         /// boundaries. null retains size-only rolling without clock reads.

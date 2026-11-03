@@ -157,7 +157,7 @@ const logging = try kron.Logging.create(allocator, io, .{
 
 默认 Memory 参数为 capacity256、max_record_bytes8192、schema_capacity0、max_schema_bytes8192。每个 SPSC 管线还保留普通共享队列，总队列数为 `max_threads + 1`。合计队列预算不包含文件 staging、Runtime 配置 metadata、输出 scratch 或 logger context。
 
-FileSink.Options 包含 `path`、`dir`、`buffer_bytes=64 KiB`、`backend=.auto`、`queue_depth=4`、`append=true`。Linux 可显式选择 `.linux_uring`；按实际所选后端核对证据，见 [文件可靠性](file-reliability.md)。本指南示例采用 portable。
+FileSink.Options 包含 `path`、`dir`、`buffer_bytes=64 KiB`、`backend=.portable`、`queue_depth=4`、`append=true`。Linux 可显式选择 `.linux_uring` 或 `.auto`；当前deferred consumer批量写出中portable为实测默认，见[文件可靠性](file-reliability.md)与[后端诊断](../bench/evidence/2026-11-03-io-uring-diagnostic/README.md)。本指南示例采用 portable。
 
 创建失败会释放已获得的内存、句柄与 Runtime。非法策略和 queue 预算在打开输出前检查；合法配置后续发生 OOM/I/O 错误时，已经创建或截断的文件内容不会被恢复。
 

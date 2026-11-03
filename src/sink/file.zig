@@ -29,7 +29,10 @@ pub const FileSink = struct {
         /// cwd is the default.
         dir: ?std.Io.Dir = null,
         buffer_bytes: usize = 64 * 1024,
-        backend: BackendKind = .auto,
+        /// Portable is the measured default for deferred consumer batches: the
+        /// Linux ring path adds submission/completion cost without overlapping
+        /// formatting here. Select .auto or .linux_uring explicitly.
+        backend: BackendKind = .portable,
         queue_depth: u16 = 4,
         append: bool = true,
     };
@@ -209,6 +212,16 @@ test "file buffering flush append sync and oversize records" {
     try reopened.shutdown();
     try reopened.shutdown();
     try std.testing.expectError(error.Closed, reopened.writeRecord("late\n"));
+}
+
+test "file sink default backend is portable and remains writable" {
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const output = try FileSink.create(std.testing.allocator, std.testing.io, .{ .path = "default.log", .dir = tmp.dir });
+    defer output.deinit();
+    try std.testing.expectEqual(BackendKind.portable, output.selectedBackend());
+    try output.writeRecord("default\n");
+    try output.flush();
 }
 
 test "auto selects a visible backend and explicit unsupported io_uring does not fall back" {

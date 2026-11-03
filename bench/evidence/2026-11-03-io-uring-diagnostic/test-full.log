@@ -1,0 +1,81 @@
+System local oracle: 6 zones × 5 modes, 372 complete timestamps; DST/half-hour/quarter-hour/rollback/future, changed-zone recovery rejection and historical offset checked
+test
++- run test kron-compression w
+incompressible pilot: raw=65536 compressed=65646 ratio=1.0017
+compressed archive pilot: raw=27520 compressed=2650 ratio=0.0963 wall_ns=458432 cpu_ns=457038
+failed command: ./.zig-cache/o/462fdceb571843d804adc2d5eb17f77b/kron-compression --cache-dir=./.zig-cache --seed=0x2e0172ab --listen=-
+
+Independent time oracle passed: 4166 nanosecond/offset timestamps, 5845 civil dates; sha256=55e96071bb0b9209918a7ec0378bb037595d7bed712ca0b9ccd9a4854535eeec
+test
++- run test kron-journal-fuzz w
+journal fuzz seed=0x2e0172ab
+archive fuzz seed=0x2e0172ab
+failed command: ./.zig-cache/o/aa917fd42bc8ad2e93ee3dfe55a5f4da/kron-journal-fuzz --cache-dir=./.zig-cache --seed=0x2e0172ab --listen=-
+
+Build Summary: 65/65 steps succeeded; 748/749 tests passed (1 skipped)
+test success
++- run test 466 pass, 1 skip (467 total) 1s MaxRSS:27M
+|  +- compile test ReleaseSafe native success 40s MaxRSS:1G
++- run test kron-admission-lifecycle 20 pass (20 total) 2ms MaxRSS:5M
+|  +- compile test kron-admission-lifecycle ReleaseSafe native success 11s MaxRSS:535M
++- run test kron-journal-coordinates 17 pass (17 total) 8ms MaxRSS:6M
+|  +- compile test kron-journal-coordinates ReleaseSafe native success 13s MaxRSS:559M
++- run test kron-escaping-tails 17 pass (17 total) 21ms MaxRSS:6M
+|  +- compile test kron-escaping-tails ReleaseSafe native success 11s MaxRSS:519M
++- run test kron-wire-scratch 17 pass (17 total) 2ms MaxRSS:7M
+|  +- compile test kron-wire-scratch ReleaseSafe native success 13s MaxRSS:562M
++- run test kron-crc-segments 18 pass (18 total) 22ms MaxRSS:8M
+|  +- compile test kron-crc-segments ReleaseSafe native success 12s MaxRSS:524M
++- run test kron-adapter 5 pass (5 total) 19ms MaxRSS:6M
+|  +- compile test kron-adapter ReleaseSafe native success 19s MaxRSS:670M
++- run test kron-redaction-paths 3 pass (3 total) 12ms MaxRSS:5M
+|  +- compile test kron-redaction-paths ReleaseSafe native success 19s MaxRSS:689M
++- run test kron-submission-snapshot 4 pass (4 total) 18ms MaxRSS:6M
+|  +- compile test kron-submission-snapshot ReleaseSafe native success 21s MaxRSS:690M
++- run test kron-async-storage 7 pass (7 total) 25ms MaxRSS:5M
+|  +- compile test kron-async-storage ReleaseSafe native success 21s MaxRSS:761M
++- run test kron-file-delivery-failures 6 pass (6 total) 37ms MaxRSS:7M
+|  +- compile test kron-file-delivery-failures ReleaseSafe native success 20s MaxRSS:675M
++- run test kron-capture-integration 8 pass (8 total) 14ms MaxRSS:6M
+|  +- compile test kron-capture-integration ReleaseSafe native success 21s MaxRSS:727M
++- run test kron-field-keys 9 pass (9 total) 3ms MaxRSS:7M
+|  +- compile test kron-field-keys ReleaseSafe native success 12s MaxRSS:515M
++- run test kron-journal-peak 8 pass (8 total) 82ms MaxRSS:7M
+|  +- compile test kron-journal-peak ReleaseSafe native success 14s MaxRSS:565M
++- run test kron-journal-progress 9 pass (9 total) 139ms MaxRSS:7M
+|  +- compile test kron-journal-progress ReleaseSafe native success 14s MaxRSS:597M
++- run test kron-journal-fuzz 2 pass (2 total) 21ms MaxRSS:8M
+|  +- compile test kron-journal-fuzz ReleaseSafe native success 13s MaxRSS:568M
++- run test kron-clock-dispatch 9 pass (9 total) 7ms MaxRSS:5M
+|  +- compile test kron-clock-dispatch ReleaseSafe native success 21s MaxRSS:750M
++- run test kron-integration 13 pass (13 total) 518ms MaxRSS:9M
+|  +- compile test kron-integration ReleaseSafe native success 19s MaxRSS:661M
++- run test kron-time 5 pass (5 total) 52ms MaxRSS:5M
+|  +- compile test kron-time ReleaseSafe native success 20s MaxRSS:708M
++- run python3 success 51ms
+|  +- compile exe kron-time-oracle ReleaseSafe native success 11s MaxRSS:488M
++- run test kron-local-time 2 pass (2 total) 99ms MaxRSS:7M
+|  +- compile test kron-local-time ReleaseSafe native success 18s MaxRSS:715M
++- run python3 success 255ms
+|  +- compile exe kron-local-time-oracle ReleaseSafe native success 18s MaxRSS:683M
++- run test kron-configurations 12 pass (12 total) 152ms MaxRSS:7M
+|  +- compile test kron-configurations ReleaseSafe native success 21s MaxRSS:776M
++- run test kron-transactions 8 pass (8 total) 14ms MaxRSS:6M
+|  +- compile test kron-transactions ReleaseSafe native success 19s MaxRSS:699M
++- run test kron-independent-outputs 16 pass (16 total) 269ms MaxRSS:51M
+|  +- compile test kron-independent-outputs ReleaseSafe native success 22s MaxRSS:728M
++- run test kron-route-policies 11 pass (11 total) 66ms MaxRSS:9M
+|  +- compile test kron-route-policies ReleaseSafe native success 23s MaxRSS:783M
++- run test kron-route-filters 1 pass (1 total) 39ms MaxRSS:8M
+|  +- compile test kron-route-filters ReleaseSafe native success 19s MaxRSS:682M
++- run test kron-predicates 8 pass (8 total) 91ms MaxRSS:8M
+|  +- compile test kron-predicates ReleaseSafe native success 19s MaxRSS:710M
++- run test kron-tsc-qualification 3 pass (3 total) 52ms MaxRSS:8M
+|  +- compile test kron-tsc-qualification ReleaseSafe native cached 7ms MaxRSS:41M
++- run test kron-compression 10 pass (10 total) 9ms MaxRSS:7M
+|  +- compile test kron-compression ReleaseSafe native success 13s MaxRSS:566M
++- run test kron-deadline 11 pass (11 total) 116ms MaxRSS:5M
+|  +- compile test kron-deadline ReleaseSafe native success 18s MaxRSS:687M
++- run test kron-query 23 pass (23 total) 170ms MaxRSS:36M
+   +- compile test kron-query ReleaseSafe native success 19s MaxRSS:736M
+
