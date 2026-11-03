@@ -61,6 +61,8 @@ P1 text-mmap profile：producer约43%总cycles（render约20%、submit 10.5%、j
 
 text fast path跳过`codec.measure`候选已撤回：8组5轮A/B中位1.00–1.06，全部inconclusive；`common.encodeDecoded`在`tree_validated=false`时的树校验抵消了measure节省，且可能改变无效字段的早期拒绝边界。生产保持measure。证据见[measure报告](../bench/evidence/2026-11-04-text-nomeasure/README.md)。
 
+dedicated FastRuntime候选（独立SPSC text ring、无admission/measure/journal）也已测试并撤回：P1 async 100k为sleep **2.119M**、spin **2.281M**，没有超过现有text fast path（1.89M–2.23M）或缩小tracing mmap P1（2.4M–2.97M）差距。瓶颈是producer render+capture约2.3M上限与tracing mmap backend的spool/writer重叠，不是ring本身；候选未进入生产，模块/参考保留在证据中。下一步应做mmap spool + writer output backend。证据见[FastRuntime报告](../bench/evidence/2026-11-04-fast-runtime/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
