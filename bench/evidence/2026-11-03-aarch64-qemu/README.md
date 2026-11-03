@@ -56,4 +56,4 @@ qualification scope明确为host file/runtime/queue/journal reopen检查，不�
 
 ## 边界
 
-QEMU用户态执行不是真实aarch64硬件、设备驱动或掉电资格；没有运行Windows/macOS/Android/iOS，也没有覆盖被skip的io_uring、PCLMUL或system local time路径。没有性能测量或Foundation排名更新。整体“业界最佳”目标仍未完成。
+QEMU用户态执行不是真实aarch64硬件、设备驱动或掉电资格；没有运行Windows/macOS/Android/iOS，也没有覆盖被skip的io_uring、PCLMUL或system local time路径。单线程`-Dsingle-threaded=true`consumer不能作为有效资格：`/proc/self/task`反映qemu进程自身线程，`sync`会在完成后触发`UnexpectedBackgroundThread`；async模式仍在创建文件前以`ThreadsUnavailable`拒绝。没有性能测量或Foundation排名更新。整体“业界最佳”目标仍未完成。
