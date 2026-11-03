@@ -29,6 +29,8 @@ shared async admission分片候选（v1 state+per-shard counters、v2 per-shard 
 
 Queue capacity诊断（同一E-core窗口）：kron 512 vs 256在8配置written中位+1.2%–5.5%，但Foundation 512在memory +9.6%/+8.9%、mmap sampled +3.2%；256 vs 1024时Foundation memory +10.7%、mmap +8.3%，仍大于kron的+3.8%/+6.3%。相对差距未缩小，默认capacity保持256；证据见[queue capacity诊断](../bench/evidence/2026-11-03-queue-capacity/README.md)。
 
+FileSink buffer 64KiB vs 128KiB诊断（同一E-core窗口）：kron 128KiB在4配置written中位+0.4%–2.1%，Foundation同配置基本持平或略负；幅度小且memory sampled spread较大，未达到完整managed dual-topology资格，默认buffer保持64KiB。证据见[file buffer诊断](../bench/evidence/2026-11-03-file-buffer-128k/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
