@@ -37,6 +37,8 @@ consumer next-record payload `@prefetch`候选在E-core P4 20对A/B中written中
 
 consumer bounded-spin idle候选（`.sleep`前最多256次epoch检查spin）在E-core P4 20对A/B中written中位0.9748–0.9977（4/4为负），按门槛撤回；与既有`.spin`结果一致，P4关键路径不是idle wake延迟。证据见[idle bounded-spin诊断](../bench/evidence/2026-11-03-idle-bounded-spin/README.md)。
 
+consumer session JSON缓存候选（每batch缓存Runtime session的JSON字节，record session匹配时直接写出）在E-core P4 20对A/B中written中位1.0025–1.0146、mean混合，幅度约0.3%–1.5%，未达qualified门槛，撤回；生产无改动。证据见[session cache诊断](../bench/evidence/2026-11-03-session-cache/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
