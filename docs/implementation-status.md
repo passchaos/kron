@@ -33,6 +33,8 @@ Queue capacity诊断（同一E-core窗口）：kron 512 vs 256在8配置written�
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
 
+ext4 child-VM abrupt-loss campaign扩展到16个ACK边界（17/31/8/3/9/40/63/59/14/23/29/19/13/57/37/14），**16/16通过**；每次verify确认最高generation checkpoint、journal/output high-water mark与通过ACK的完整JSON。仍是child-VM SIGKILL，不是host物理掉电；证据见[ext4 16-run报告](../bench/evidence/2026-11-03-powerloss-ext4-16/README.md)。
+
 新增并发共享producer端到端回归：4个OS线程同时提交250条×2轮到Memory block queue，consumer持续写出；断言`accepted==written==1000`、`pending=0`、sink records=1000。另有mid-flight `shutdown(.drain)`测试：4个producer循环提交直到`rejected_closing`，断言producer累计accepted与health一致、accepted==written、pending=0、state=closed且至少一个closing rejection。第三项在`capacity=64`的mmap journal上并发提交400条，clean shutdown后destroy并`recover=true`重开，断言`pending=0`且无可读记录。`test-async-storage`在Safe/Debug/Fast各10/10，Safe独立binary多seed全部通过。完整`test`为**65/65 steps、751/752 tests（1项local skip）**；`verify-local`为**159/159 steps、785/786 tests（1项local skip）**，`verify-local success`。证据见[并发producer报告](../bench/evidence/2026-11-03-concurrent-producers/README.md)。
 
 新增shared async配置替换并发回归：4个producer各提交500条，主线程交替安装两个MemorySink route并切换redaction mask/drop共20次；`replaceConfiguration`的cut/旧lease保留/collect期间producer继续提交。断言accepted==written==2000、两个sink records之和==accepted、输出不含raw password。`test-configurations`在Safe/Debug/Fast各13/13，Safe独立binary 10 seeds 10/10。完整`test`为**65/65 steps、752/753 tests（1项local skip）**；`verify-local`为**159/159 steps、786/787 tests（1项local skip）**，`verify-local success`。证据见[shared replacement报告](../bench/evidence/2026-11-03-shared-replacement/README.md)。
@@ -163,7 +165,7 @@ shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS 
 | 线程与生命周期 | 线程 token/generation、admission cut、deadline、关闭/失败唤醒；[生命周期](lifecycle.md)、[调度](consumer-scheduling.md) | timeout 不取消后台任务，destroy 是阻塞清理 |
 | 文件、轮转与 io_uring | 短写、CQE/在途所有权、size/time/retention/reopen、实际同步；默认portable，io_uring显式可选；[文件](file-reliability.md) | 后端实现、设备能力与断电资格分别判断 |
 | 进程恢复 | committed/reserved/gap/schema/热路由及随机 ACK 的真实 SIGKILL | 进程崩溃测试不能替代系统掉电测试 |
-| Durable | 输出/checkpoint 同步顺序、fault sink、子 QEMU 停机恢复（V3 schema 4-run campaign、XFS/Btrfs/F2FS 4-run campaigns）；[电源测试](../tests/power_loss/README.md) | 物理断电、NFS/设备仍需更广资格 |
+| Durable | 输出/checkpoint 同步顺序、fault sink、子 QEMU 停机恢复（ext4 16-run campaign、XFS/Btrfs/F2FS 4-run campaigns）；[电源测试](../tests/power_loss/README.md) | 物理断电、NFS/设备仍需更广资格 |
 | 时间、std.log、trace | RFC3339/固定偏移、独立 oracle、Bridge、显式 TraceContext；[时间](time.md)、[接口](api-design.md) | 固定偏移保持纯Zig，local采用系统DST规则；不内置IANA数据库或完整tracing任务/span生态 |
 | 平台与单线程 | 九目标对象/部分链接；Linux 真实文件/恢复与单 OS 线程；[平台](platforms.md) | Windows/macOS/Android/iOS 仍缺设备运行 |
 | 性能与应用影响 | 完整文件、用户态 PMU、同轮跨库、应用结果 oracle；[基准导航](../bench/README.md) | 多数完整吞吐/尾部组仍 inconclusive，无普遍最快保证 |
