@@ -31,7 +31,7 @@ Queue capacity诊断（同一E-core窗口）：kron 512 vs 256在8配置written�
 
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
-新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush与Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
+新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
 
 新增并发共享producer端到端回归：4个OS线程同时提交250条×2轮到Memory block queue，consumer持续写出；断言`accepted==written==1000`、`pending=0`、sink records=1000。另有mid-flight `shutdown(.drain)`测试：4个producer循环提交直到`rejected_closing`，断言producer累计accepted与health一致、accepted==written、pending=0、state=closed且至少一个closing rejection。第三项在`capacity=64`的mmap journal上并发提交400条，clean shutdown后destroy并`recover=true`重开，断言`pending=0`且无可读记录。`test-async-storage`在Safe/Debug/Fast各10/10，Safe独立binary多seed全部通过。完整`test`为**65/65 steps、751/752 tests（1项local skip）**；`verify-local`为**159/159 steps、785/786 tests（1项local skip）**，`verify-local success`。证据见[并发producer报告](../bench/evidence/2026-11-03-concurrent-producers/README.md)。
 

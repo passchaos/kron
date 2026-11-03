@@ -41,6 +41,11 @@ fn enospc(init: std.process.Init, output_path: []const u8) !void {
     });
     defer runtime.destroy();
     const log = runtime.scoped("enospc");
+    const rolling_path = try std.fmt.allocPrint(init.gpa, "{s}.rolling", .{output_path});
+    defer init.gpa.free(rolling_path);
+    const rolling = try kron.RollingFileSink.create(init.gpa, init.io, .{ .path = rolling_path, .max_bytes = 64 * 1024, .retention = 2, .backend = .portable });
+    defer rolling.deinit();
+    try rolling.writeRecord("rolling-before-full\n");
     const filler_path = try std.fmt.allocPrint(init.gpa, "{s}.filler", .{output_path});
     defer init.gpa.free(filler_path);
     const filler = try std.Io.Dir.cwd().createFile(init.io, filler_path, .{});
@@ -56,17 +61,30 @@ fn enospc(init: std.process.Init, output_path: []const u8) !void {
         offset += written;
     }
     std.debug.print("KRON_ENOSPC_FILLED bytes={d}\n", .{offset});
+    var direct_failed = false;
     file.flush() catch |err| {
         std.debug.print("KRON_ENOSPC_LATCHED err={s}\n", .{@errorName(err)});
-        if (try log.tryEmit(.info, "runtime-after-full", .{}) != .accepted) return error.RecordRejected;
-        runtime.flush(.durable) catch |runtime_err| {
-            std.debug.print("KRON_ENOSPC_RUNTIME_LATCHED err={s}\n", .{@errorName(runtime_err)});
-            return;
-        };
+        direct_failed = true;
+    };
+    if (!direct_failed) {
+        std.debug.print("KRON_ENOSPC_UNEXPECTED\n", .{});
+        return error.UnexpectedSuccess;
+    }
+    if (try log.tryEmit(.info, "runtime-after-full", .{}) != .accepted) return error.RecordRejected;
+    var runtime_failed = false;
+    runtime.flush(.durable) catch |runtime_err| {
+        std.debug.print("KRON_ENOSPC_RUNTIME_LATCHED err={s}\n", .{@errorName(runtime_err)});
+        runtime_failed = true;
+    };
+    if (!runtime_failed) {
         std.debug.print("KRON_ENOSPC_RUNTIME_UNEXPECTED\n", .{});
         return error.UnexpectedSuccess;
+    }
+    rolling.flush() catch |rolling_err| {
+        std.debug.print("KRON_ENOSPC_ROLLING_LATCHED err={s}\n", .{@errorName(rolling_err)});
+        return;
     };
-    std.debug.print("KRON_ENOSPC_UNEXPECTED\n", .{});
+    std.debug.print("KRON_ENOSPC_ROLLING_UNEXPECTED\n", .{});
     return error.UnexpectedSuccess;
 }
 
