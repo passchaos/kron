@@ -15,6 +15,10 @@ pub fn main(init: std.process.Init) !void {
         if (index + 1 >= args.len) return error.MissingValue;
         if (std.mem.eql(u8, args[index], "--journal")) journal_path = args[index + 1] else if (std.mem.eql(u8, args[index], "--output")) output_path = args[index + 1] else if (std.mem.eql(u8, args[index], "--acked")) acked = try std.fmt.parseInt(u64, args[index + 1], 10) else if (std.mem.eql(u8, args[index], "--schema")) schema_enabled = std.mem.eql(u8, args[index + 1], "1") else return error.UnknownOption;
     }
+    if (std.mem.eql(u8, args[1], "journal-enospc")) {
+        const journal = journal_path orelse return error.MissingJournal;
+        return journalEnospc(init, journal);
+    }
     const output = output_path orelse return error.MissingOutput;
     if (std.mem.eql(u8, args[1], "enospc")) return enospc(init, output);
     if (std.mem.eql(u8, args[1], "readonly")) {
@@ -27,6 +31,31 @@ pub fn main(init: std.process.Init) !void {
     } else if (std.mem.eql(u8, args[1], "verify")) {
         try verify(init, journal, output, acked orelse return error.MissingAcknowledgement, schema_enabled);
     } else return error.UnknownMode;
+}
+
+fn journalEnospc(init: std.process.Init, journal_path: []const u8) !void {
+    const filler_path = try std.fmt.allocPrint(init.gpa, "{s}.filler", .{journal_path});
+    defer init.gpa.free(filler_path);
+    const filler = try std.Io.Dir.cwd().createFile(init.io, filler_path, .{});
+    defer filler.close(init.io);
+    var chunk: [4096]u8 = @splat('x');
+    var offset: u64 = 0;
+    while (true) {
+        const written = filler.writePositional(init.io, &.{&chunk}, offset) catch |err| switch (err) {
+            error.NoSpaceLeft => break,
+            else => return err,
+        };
+        if (written == 0) return error.FillZero;
+        offset += written;
+    }
+    std.debug.print("KRON_JOURNAL_ENOSPC_FILLED bytes={d}\n", .{offset});
+    if (kron.Journal.create(init.gpa, init.io, .{ .path = journal_path, .capacity = 16, .max_record_bytes = 2048 })) |journal| {
+        journal.deinit();
+        std.debug.print("KRON_JOURNAL_ENOSPC_UNEXPECTED\n", .{});
+        return error.UnexpectedSuccess;
+    } else |err| {
+        std.debug.print("KRON_JOURNAL_ENOSPC_REJECTED err={s}\n", .{@errorName(err)});
+    }
 }
 
 fn readonly(init: std.process.Init, journal_path: []const u8, output_path: []const u8) !void {

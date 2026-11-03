@@ -37,6 +37,8 @@ ext4/XFS/Btrfs/F2FS child-VM abrupt-loss campaign均扩展到16个ACK边界（17
 
 新增只读文件系统初始化故障测试：child VM以只读ext4挂载，`FileSink.create`与`Journal.create`均返回`error.ReadOnlyFileSystem`，没有误报初始化成功；证据见[read-only fault报告](../bench/evidence/2026-11-03-readonly-fault/README.md)。
 
+新增Journal ENOSPC预分配拒绝测试：64MiB ext4 image填满57,311,232B后，`Journal.create`返回`error.NoSpaceLeft`，没有误报成功或创建半初始化journal；证据见[journal ENOSPC报告](../bench/evidence/2026-11-03-journal-enospc/README.md)。
+
 新增并发共享producer端到端回归：4个OS线程同时提交250条×2轮到Memory block queue，consumer持续写出；断言`accepted==written==1000`、`pending=0`、sink records=1000。另有mid-flight `shutdown(.drain)`测试：4个producer循环提交直到`rejected_closing`，断言producer累计accepted与health一致、accepted==written、pending=0、state=closed且至少一个closing rejection。第三项在`capacity=64`的mmap journal上并发提交400条，clean shutdown后destroy并`recover=true`重开，断言`pending=0`且无可读记录。`test-async-storage`在Safe/Debug/Fast各10/10，Safe独立binary多seed全部通过。完整`test`为**65/65 steps、751/752 tests（1项local skip）**；`verify-local`为**159/159 steps、785/786 tests（1项local skip）**，`verify-local success`。证据见[并发producer报告](../bench/evidence/2026-11-03-concurrent-producers/README.md)。
 
 新增shared async配置替换并发回归：4个producer各提交500条，主线程交替安装两个MemorySink route并切换redaction mask/drop共20次；`replaceConfiguration`的cut/旧lease保留/collect期间producer继续提交。断言accepted==written==2000、两个sink records之和==accepted、输出不含raw password。`test-configurations`在Safe/Debug/Fast各13/13，Safe独立binary 10 seeds 10/10。完整`test`为**65/65 steps、752/753 tests（1项local skip）**；`verify-local`为**159/159 steps、786/787 tests（1项local skip）**，`verify-local success`。证据见[shared replacement报告](../bench/evidence/2026-11-03-shared-replacement/README.md)。
@@ -180,7 +182,7 @@ shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS 
 | 1 | 尾延迟和过载对应用的影响 | 合成200µs慢sink/64槽诊断已记录：block P1/P4 p99约15–16ms且无丢失，P16 p99约59–81ms；drop p99亚微秒但丢936/1000或1535/1600，fallback p50约0.24ms；仍需burst、积压年龄、CPU/cache/调度竞争及无logger基线。见 [过载尾部诊断](../bench/evidence/2026-11-02-overload-tail/README.md) |
 | 1 | Mmap 启动与资源成本 | fresh Linux mmap只写header初始化已把16.8MB journal init中位54.2/53.8ms降到8.2/6.9ms；仍需更广文件系统/设备、dirty-page与持久化边界验证。见 [fresh mmap证据](../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)与 [启动诊断](../bench/evidence/2026-11-02-current-init-profile/README.md) |
 | 2 | 更广业务/durable 回归覆盖 | 0/5/10 fields、长短字符串、P1/P4/P16、warm/cold、attach/detach、reload/rolling 与独立 durable 测量 |
-| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与1000-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink错误与只读FS初始化拒绝已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer/更长soak |
+| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与1000-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink/Journal预分配错误与只读FS初始化拒绝已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer/更长soak |
 | 2 | 非 Linux 平台运行 | aarch64-linux-musl已在QEMU用户态执行root suite与fuzz；Windows/macOS/Android/iOS仍缺目标设备实际日志、生命周期、journal恢复及durable报告 |
 
 当前主要功能有验证，完整的“业界最佳”目标仍在推进。后续状态更新只记录实际源码、运行结果或明确的平台能力拒绝。
