@@ -6,6 +6,49 @@ const MemorySink = @import("../../sink/memory.zig").MemorySink;
 const Sink = @import("../../sink/interface.zig").Sink;
 const routes = @import("../../config/routes.zig");
 const batch_module = @import("../delivery_batch.zig");
+const field = @import("../field.zig");
+const Event = @import("../event.zig").Event;
+const Clock = @import("../../platform/clock.zig").Clock;
+
+fn renderCacheRun(allocator: std.mem.Allocator, cache: bool) ![]u8 {
+    var bytes: [16 * 1024]u8 = undefined;
+    var sink = MemorySink.initBuffer(&bytes);
+    const runtime = try Runtime.create(allocator, std.testing.io, .{
+        .submission = .asynchronous,
+        .memory_queue = .{ .capacity = 8, .max_record_bytes = 1024, .schema_capacity = 2, .max_schema_bytes = 1024 },
+        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
+        .clock = Clock.zeroTimestamp(),
+        .render_cache = cache,
+        .render_cache_record_bytes = if (cache) 512 else 0,
+    });
+    defer runtime.destroy();
+    runtime.session = 42;
+    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, 8)) })) } });
+    for (0..4) |index| {
+        _ = try runtime.scoped("cache").tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
+        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, index + 8)) })) } };
+        const admission = switch (runtime.begin(.info, "cache")) {
+            .ready => |ready| ready,
+            else => return error.UnexpectedAdmission,
+        };
+        var admitted = true;
+        defer if (admitted) runtime.end();
+        _ = try runtime.submitWithSchema(admission, event, schema_binding);
+        runtime.end();
+        admitted = false;
+    }
+    try runtime.flush(.written);
+    try runtime.shutdown(.drain);
+    return allocator.dupe(u8, sink.written());
+}
+
+test "render cache output matches deferred render for inline and schema" {
+    const cached = try renderCacheRun(std.testing.allocator, true);
+    defer std.testing.allocator.free(cached);
+    const deferred = try renderCacheRun(std.testing.allocator, false);
+    defer std.testing.allocator.free(deferred);
+    try std.testing.expectEqualStrings(deferred, cached);
+}
 
 const ObservedSink = struct {
     memory: MemorySink,

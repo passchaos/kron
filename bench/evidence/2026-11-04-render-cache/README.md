@@ -6,14 +6,15 @@
 
 - `RenderCache`：`capacity == journal.capacity`，每slot `render_cache_record_bytes`；producer claim → render → publish（release store），commit失败或render失败时abort；consumer lookup（acquire load）→ 写出 → clear。
 - journal格式、binary CRC、三检查点、recovery、queue capacity不变；缓存是volatile，恢复时为空并自动回退。
-- 仅支持shared asynchronous journal、单route、inline JSON；schema/SPSC/multi-route不启用。
+- 仅支持shared asynchronous journal、单route、JSON（inline与schema）；SPSC/multi-route不启用。
 - 默认`render_cache=false`；`Logging.Route.render_cache`与benchmark `--render-cache=true`可显式开启。
 
 ## 正确性
 
-- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、760/761 tests（1项skip）**，success。
-- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、794/795 tests（1项skip）**，`verify-local success`。
+- `zig build test -Doptimize=ReleaseSafe -j1`：**65/65 steps、761/762 tests（1项skip）**，success。
+- `zig build verify-local -Doptimize=ReleaseSafe -j1`：**159/159 steps、795/796 tests（1项skip）**，`verify-local success`。
 - `test-integration` 13/13、`test-async-storage` 10/10、`test-configurations` 14/14。
+- 新增`render cache output matches deferred render for inline and schema`：固定clock/session下，inline与nested schema的输出与deferred路径byte-identical。
 - 两个E-core完整矩阵各逐条核验24,240,000条完整JSON；cache-on路径的输出通过同一`verify`。
 
 ## 性能
@@ -28,7 +29,18 @@
 | p4-mmap-sampled | 1.5142 | 1.4767..1.6495 | 2.768M | 1.817M | inconclusive |
 | p1-memory/mmap | 1.02–1.13 | 多数跨1 | 1.84–2.14M | 1.77–1.89M | inconclusive |
 
-P1在cache-on时producer承担render，可能从~1.9M回退到~1.74M；因此cache不默认开启，benchmark只对P4 async inline传入`--render-cache=true`。
+P1在cache-on时producer承担render，可能从~1.9M回退到~1.74M；因此cache不默认开启，benchmark只对P4 async inline启用。
+
+schema route也已验证：producer用同一`common.encodeDecoded`渲染schema event，输出通过`verify`。P4 async schema A/B（7轮，cache off/on）：
+
+| case | written ratio | 95% CI | cache-on | cache-off |
+| --- | ---: | --- | ---: | ---: |
+| p4-memory-batch | 1.4018 | 1.3824..1.5068 | 2.630M | 1.878M |
+| p4-memory-sampled | 1.4008 | 1.3893..1.4505 | 2.690M | 1.896M |
+| p4-mmap-batch | 1.4597 | 1.3321..1.4825 | 2.712M | 1.885M |
+| p4-mmap-sampled | 1.5096 | 1.4909..1.5204 | 2.886M | 1.894M |
+
+四组均因spread/区间保持inconclusive，但中位增益1.40–1.51，且没有qualified negative；原始行见[schema-results.jsonl](schema-results.jsonl)。
 
 当前host负载较高时的managed A/B（P4 async inline，7轮）比值为1.2484/1.4170/1.4845/1.5260，但paired spread/区间均未通过10%门槛，全部inconclusive；没有qualified negative。
 

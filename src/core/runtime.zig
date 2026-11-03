@@ -753,7 +753,7 @@ pub const Runtime = struct {
                 // write pre-rendered bytes. Publish before commit so a
                 // committed record always has a visible render.
                 var render_claim: ?RenderCache.Claim = null;
-                if (definition == null and binding == null and producer_token == null and destination == self.journal and event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
+                if (producer_token == null and destination == self.journal and event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
                     const route = &snapshot.routes[0];
                     const redacted = if (route.policy) |policy| policy.redactor != null else false;
                     if (!redacted) if (self.renderCache()) |cache| if (cache.claim(reservation.sequence)) |claim| {
