@@ -1,0 +1,196 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 450  of event 'cpu_atom/cycles/u'
+# Event count (approx.): 271097902
+#
+# Overhead  Symbol                                                         IPC   [IPC Coverage]
+# ........  .............................................................  ....................
+#
+    15.93%  [.] platform.crc32.Crc32.update                                -      -            
+            |          
+            |--5.85%--journal.journal.Journal.slotChecksum
+            |          journal.journal.Journal.validateSlot
+            |          core.runtime.Runtime.drainJournal
+            |          Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--5.76%--core.runtime.Runtime.releaseWrittenRun
+            |          core.runtime.Runtime.drainJournal
+            |          Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --4.32%--core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       logging.handle.Owner.submitOne
+                       kron_reference.Worker.emit__anon_38412
+                       Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+                       os.linux.x86_64.clone
+
+    10.15%  [.] encoder.common.encodeJsonWithAttributes__anon_40144        -      -            
+            |
+            ---core.delivery.emitWireFused
+               core.runtime.Runtime.drainJournal
+               Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     7.73%  [.] core.runtime.Runtime.submitSafeDestination                 -      -            
+            |
+            ---core.runtime.Runtime.submitDestination
+               logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     7.62%  [.] encoder.decimal.writeNative                                -      -            
+            |          
+             --7.37%--encoder.common.encodeJsonWithAttributes__anon_40144
+                       core.delivery.emitWireFused
+                       core.runtime.Runtime.drainJournal
+                       Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     5.87%  [.] compiler_rt.memcpy.memcpyFast                              -      -            
+            |          
+            |--2.10%--core.codec.encodeSized
+            |          core.runtime.Runtime.submitSafeDestination
+            |          core.runtime.Runtime.submitDestination
+            |          logging.handle.Owner.submitOne
+            |          kron_reference.Worker.emit__anon_38412
+            |          Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--1.28%--sink.file.FileSink.writeErased
+            |          core.delivery.emitWireFused
+            |          core.runtime.Runtime.drainJournal
+            |          Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+            |--1.15%--encoder.common.encodeJsonWithAttributes__anon_40144
+            |          core.delivery.emitWireFused
+            |          core.runtime.Runtime.drainJournal
+            |          Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+            |          os.linux.x86_64.clone
+            |          
+             --1.02%--encoder.escaping.jsonMember
+                       encoder.common.encodeJsonWithAttributes__anon_40144
+                       core.delivery.emitWireFused
+                       core.runtime.Runtime.drainJournal
+                       Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     4.96%  [.] encoder.escaping.jsonMember                                -      -            
+            |
+            ---encoder.common.encodeJsonWithAttributes__anon_40144
+               core.delivery.emitWireFused
+               core.runtime.Runtime.drainJournal
+               Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     4.45%  [.] core.codec.encodeSized                                     -      -            
+            |
+            ---core.runtime.Runtime.submitSafeDestination
+               core.runtime.Runtime.submitDestination
+               logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     4.29%  [.] core.runtime.Runtime.begin                                 -      -            
+            |
+            ---kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     4.27%  [.] core.runtime.Runtime.drainJournal                          -      -            
+            |
+            ---Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     3.31%  [.] core.delivery.emitWireFused                                -      -            
+            |
+            ---core.runtime.Runtime.drainJournal
+               Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     3.30%  [.] kron_reference.Worker.emit__anon_38412                     -      -            
+            |
+            ---Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     3.20%  [.] encoder.decimal.writeLargeNative                           -      -            
+            |
+            ---encoder.common.encodeJsonWithAttributes__anon_40144
+               core.delivery.emitWireFused
+               core.runtime.Runtime.drainJournal
+               Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     3.18%  [.] core.field.ValueValidator.valueWith__anon_37876            -      -            
+            |
+            ---core.codec.measure
+               core.runtime.Runtime.submitDestination
+               logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     2.88%  [.] journal.journal.Journal.reserve                            -      -            
+            |
+            ---core.runtime.Runtime.submitSafeDestination
+               core.runtime.Runtime.submitDestination
+               logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     2.71%  [.] core.codec.measure                                         -      -            
+            |
+            ---core.runtime.Runtime.submitDestination
+               logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     2.19%  [.] core.runtime.Runtime.submitDestination                     -      -            
+            |
+            ---logging.handle.Owner.submitOne
+               kron_reference.Worker.emit__anon_38412
+               Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+               os.linux.x86_64.clone
+
+     1.42%  [.] core.wire_write.writeValueTo__anon_35059                   -      -            
+            |          
+             --1.20%--core.codec.encodeSized
+                       core.runtime.Runtime.submitSafeDestination
+                       core.runtime.Runtime.submitDestination
+                       logging.handle.Owner.submitOne
+                       kron_reference.Worker.emit__anon_38412
+                       Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+                       os.linux.x86_64.clone
+
+     1.24%  [.] 0x0000000000000b03                                         -      -            
+            |
+            ---Io.Threaded.now
+               |          
+                --1.09%--platform.clock.realDefault
+                          kron_reference.Worker.emit__anon_38412
+                          Thread.LinuxThreadImpl.spawn__anon_32732.Instance.entryFn
+                          os.linux.x86_64.clone
+
+     1.17%  [.] encoder.escaping.quoted                                    -      -            
+            |
+            ---encoder.common.encodeJsonWithAttributes__anon_40144
+               core.delivery.emitWireFused
+               core.runtime.Runtime.drainJournal
+               Thread.LinuxThreadImpl.spawn__anon_39252.Instance.entryFn
+               os.linux.x86_64.clone
+
+     1.01%  [.] encoder.escaping.quotedAscii                               -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
