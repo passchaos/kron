@@ -20,7 +20,7 @@
 | 4 | `0xd0aa6dda` | 3/3 steps; 2/2 tests |
 | 5 | `0x46aa35cc` | 3/3 steps; 2/2 tests |
 
-另以`-Doptimize=Debug`和`-Doptimize=ReleaseFast`各实际执行2/2 tests通过。测试runner对fuzz step仍打印cosmetic `failed command`行；build summary与exit status确认成功。
+另以`-Doptimize=Debug`和`-Doptimize=ReleaseFast`各实际执行2/2 tests通过。完整`zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all`实际通过**159/159 steps、777/778 tests（1项local skip）**，`verify-local success`；日志见[verify-local.log](verify-local.log)。测试runner对fuzz step仍打印cosmetic `failed command`行；build summary与exit status确认成功。
 
 ## 边界
 
