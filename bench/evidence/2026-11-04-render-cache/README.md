@@ -40,11 +40,11 @@ schema route也已验证：producer用同一`common.encodeDecoded`渲染schema e
 | p4-mmap-batch | 1.4597 | 1.3321..1.4825 | 2.712M | 1.885M |
 | p4-mmap-sampled | 1.5096 | 1.4909..1.5204 | 2.886M | 1.894M |
 
-四组均因spread/区间保持inconclusive，但中位增益1.40–1.51，且没有qualified negative；原始行见[schema-results.jsonl](schema-results.jsonl)。
+四组均因spread/区间保持inconclusive，但中位增益1.40–1.51，且没有qualified negative；原始行见[schema results](schema/results.jsonl)。
 
 当前host负载较高时的managed A/B（P4 async inline，7轮）比值为1.2484/1.4170/1.4845/1.5260，但paired spread/区间均未通过10%门槛，全部inconclusive；没有qualified negative。
 
-两个E-core完整矩阵（cache对所有async inline开启 / 仅P4开启）均在该高负载窗口运行，分别为1 lead/12 peer/51 inc与0 lead/3 peer/61 inc；绝对吞吐低于安静窗口，不能用于更新跨库排名。原始行见[runtime-results.jsonl](runtime-results.jsonl)、[managed-results.jsonl](managed-results.jsonl)，完整矩阵见[all-async](../2026-11-04-current-foundation-full-ecore-render-cache/comparison.md)与[P4-only](../2026-11-04-current-foundation-full-ecore-render-cache-p4/comparison.md)。
+两个E-core完整矩阵（cache对所有async inline开启 / 仅P4开启）均在该高负载窗口运行，分别为1 lead/12 peer/51 inc与0 lead/3 peer/61 inc；绝对吞吐低于安静窗口，不能用于更新跨库排名。原始行见[runtime results](runtime/results.jsonl)、[managed results](managed/results.jsonl)，完整矩阵见[all-async](../2026-11-04-current-foundation-full-ecore-render-cache/comparison.md)与[P4-only](../2026-11-04-current-foundation-full-ecore-render-cache-p4/comparison.md)。
 
 ## 决策与边界
 
