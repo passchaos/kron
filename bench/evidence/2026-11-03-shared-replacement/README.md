@@ -16,6 +16,7 @@
 - `zig build test-configurations -Doptimize=ReleaseSafe`：**13/13 tests passed**。
 - Debug：13/13；ReleaseFast：13/13。
 - 独立Safe binary对seed `0x1..0xa`重复执行：10/10通过，每次13/13。
+- 同一binary重复soak 200 iterations：0 failures，见[../2026-11-03-concurrency-soak/configuration-200.log](../2026-11-03-concurrency-soak/configuration-200.log)。
 - 完整`test`与`verify-local`结果见[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。
 
 日志见[safe.log](safe.log)、[debug.log](debug.log)、[fast.log](fast.log)、[seeds.log](seeds.log)。

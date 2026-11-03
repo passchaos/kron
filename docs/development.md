@@ -12,14 +12,14 @@
 | 字段/context/对象适配 | `test-field-keys`、`test-capture`、`test-adapter`、`test-redaction-paths`、`test-compile-fail` |
 | 内部提交参数与调用者快照 | `test-submission-snapshot`、`test-capture`、`test-redaction-paths`、prepared/binding 重点回归 |
 | Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
-| 并发共享producer交付 | `test-async-storage`；4线程×250记录×2轮、Memory block queue、accepted=written、pending=0；mid-flight `shutdown(.drain)`下rejected_closing与state=closed；mmap并发后clean reopen |
+| 并发共享producer交付 | `test-async-storage`；4线程×250记录×2轮、Memory block queue、accepted=written、pending=0；mid-flight `shutdown(.drain)`下rejected_closing与state=closed；mmap并发后clean reopen；1000次重复soak |
 | Journal/archive随机fuzz | `test-journal-fuzz`；20,000随机commit/peek/release、mmap reopen/recovery、随机archive record/message round-trip；seed打印，Debug/Safe/Fast；扩展100-seed ReleaseSafe扫描 |
 | Journal槽位/generation坐标 | `test-journal-coordinates`；共享/SPSC八容量、完整序号/环回与有效CRC错误generation保留证据 |
 | v1/v2 journal升级兼容 | 根test/`test-logging`；真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写 |
 | 旧二进制journal fixture | [fixtures/journal](../tests/fixtures/journal/README.md)、根test/`test-logging`；`5b1fd7c`实际二进制写出的v1与v2 schema journal在V3源码`recover=true`下读取 |
 | nested/轮转/schema组合恢复 | 根test/`test-logging`；prepared nested group/array经rolling输出+mmap schema journal，durable后同journal reopen、pending=0与replay追加 |
 | 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
-| 配置替换并发 | `test-configurations`；shared async 4 producer×500、20次route/redaction替换与cut、accepted=written=2000 |
+| 配置替换并发 | `test-configurations`；shared async 4 producer×500、20次route/redaction替换与cut、accepted=written=2000；200次重复soak |
 | TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
 | CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |
 | CRC分段/seed/读边界 | `test-crc-segments`；0..512长度与32对齐、20/24分段、任意seed、两端真实guard page |
