@@ -29,7 +29,7 @@ shared async admission分片候选（v1 state+per-shard counters、v2 per-shard 
 
 Queue capacity诊断（同一E-core窗口）：kron 512 vs 256在8配置written中位+1.2%–5.5%，但Foundation 512在memory +9.6%/+8.9%、mmap sampled +3.2%；256 vs 1024时Foundation memory +10.7%、mmap +8.3%，仍大于kron的+3.8%/+6.3%。相对差距未缩小，默认capacity保持256；证据见[queue capacity诊断](../bench/evidence/2026-11-03-queue-capacity/README.md)。
 
-FileSink buffer 64KiB vs 128KiB诊断（同一E-core窗口）：kron 128KiB在4配置written中位+0.4%–2.1%，Foundation同配置基本持平或略负；幅度小且memory sampled spread较大，未达到完整managed dual-topology资格，默认buffer保持64KiB。证据见[file buffer诊断](../bench/evidence/2026-11-03-file-buffer-128k/README.md)。
+FileSink buffer 64KiB vs 128KiB诊断（同一E-core窗口）：kron 128KiB在runtime 4配置written中位+0.4%–2.1%，Foundation同配置基本持平或略负；但managed P4 mmap batch 4-way interleave中kron128/Foundation64=0.5270略低于kron64/Foundation64=0.5325，未转化为相对领先。默认buffer保持64KiB。证据见[file buffer诊断](../bench/evidence/2026-11-03-file-buffer-128k/README.md)。
 
 Sanitizer工具诊断：Zig 0.16的`-fsanitize-thread`构建成功但不instrument本项目Zig代码（无`__tsan` runtime，故意race无报告）；Valgrind Helgrind能检测普通race，但对Zig atomic load/store误报约163万errors并在async-storage测试中abort。sanitizer覆盖仍是工具链限制，未修改生产；证据见[sanitizer诊断](../bench/evidence/2026-11-03-sanitizer-diagnostic/README.md)。
 

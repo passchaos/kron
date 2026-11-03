@@ -45,3 +45,16 @@ kron 128KiB的中位收益约0.4%–2.1%，Foundation在同配置下基本持平
 ## 边界
 
 E-core runtime/foundation producer_format诊断，不是完整双拓扑managed矩阵；Foundation 128KiB是临时reference patch，不是其库默认。没有durable flush或真实设备。整体“业界最佳”目标仍未完成。
+
+## Managed 4-way确认（P4 mmap batch）
+
+runtime frontend的收益没有在managed路径转化为相对领先。E-core 20轮，每轮固定顺序kron64、kron128、Foundation64、Foundation128，300k events：
+
+| 组合 | written中位 | 相对Foundation64 median ratio |
+| --- | ---: | ---: |
+| kron 64KiB | 1,719,447 | 0.5325 |
+| kron 128KiB | 1,704,496 | 0.5270 |
+| Foundation 64KiB | 3,243,475 | — |
+| Foundation 128KiB | 3,062,809 | — |
+
+kron128/Foundation64（0.5270）略低于kron64/Foundation64（0.5325）；kron128/Foundation128为0.5435。该窗口Foundation绝对吞吐明显高于前一轮，说明跨窗口绝对值不可比，必须用同轮interleave。结论不变：128KiB不带来managed相对资格，默认保持64KiB。原始row见[managed-4way-p4-mmap-batch.jsonl](managed-4way-p4-mmap-batch.jsonl)。
