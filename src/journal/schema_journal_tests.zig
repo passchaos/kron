@@ -448,3 +448,54 @@ test "v1 and v2 journals remain readable and writable under the current source" 
     try v2_reopen.release(v2_recovered);
     v2_reopen.deinit();
 }
+
+test "journal written by pre-V3 binary reopens with schema and pending records" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const fixture = try std.Io.Dir.cwd().readFileAlloc(testing.io, "tests/fixtures/journal/v2-old-binary-5b1fd7c.journal", testing.allocator, .limited(16384));
+    defer testing.allocator.free(fixture);
+    try tmp.dir.writeFile(testing.io, .{ .sub_path = "schema.journal", .data = fixture });
+    var path_buffer: [128]u8 = undefined;
+    const options = try optionsFor(&tmp, &path_buffer);
+    const store = try journal.Journal.create(testing.allocator, testing.io, options);
+    defer store.deinit();
+    try testing.expectEqual(@as(u32, 2), format.get(u32, store.mapping.bytes, 8));
+    var schema_payload: ?[]const u8 = null;
+    var ordinary_payload: ?[]const u8 = null;
+    while (try store.peekChecked()) |record| {
+        if (record.schema_ref) |reference| {
+            schema_payload = record.payload;
+            const definition = try store.resolveSchema(reference);
+            try testing.expectEqualStrings("old.binary.v2", definition.scope);
+            try testing.expectEqualStrings("old registered event", definition.message.?);
+        } else {
+            ordinary_payload = record.payload;
+        }
+        try store.release(record);
+    }
+    try testing.expectEqualStrings("old binary v2 schema payload", schema_payload.?);
+    try testing.expectEqualStrings("old binary v2 ordinary payload", ordinary_payload.?);
+}
+
+test "v1 journal written by pre-V3 binary reopens with pending record" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const fixture = try std.Io.Dir.cwd().readFileAlloc(testing.io, "tests/fixtures/journal/v1-old-binary-5b1fd7c.journal", testing.allocator, .limited(8192));
+    defer testing.allocator.free(fixture);
+    try tmp.dir.writeFile(testing.io, .{ .sub_path = "schema.journal", .data = fixture });
+    var path_buffer: [128]u8 = undefined;
+    var options = try optionsFor(&tmp, &path_buffer);
+    options.schema_capacity = 0;
+    options.max_schema_bytes = 0;
+    const store = try journal.Journal.create(testing.allocator, testing.io, options);
+    defer store.deinit();
+    try testing.expectEqual(@as(u32, 1), format.get(u32, store.mapping.bytes, 8));
+    try testing.expect(store.schema == null);
+    const record = (try store.peekChecked()).?;
+    try testing.expect(record.schema_ref == null);
+    try testing.expectEqualStrings("old binary v1 payload", record.payload);
+    try store.release(record);
+    try testing.expect((try store.peekChecked()) == null);
+}

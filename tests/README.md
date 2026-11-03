@@ -13,6 +13,7 @@
 | written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |
 | Journal/archive随机fuzz | [journal_fuzz.zig](journal_fuzz.zig)、`test-journal-fuzz` | 20,000随机commit/peek/release、mmap reopen/recovery、随机archive record count/message round-trip；seed打印、Debug/Safe/Fast |
 | v1/v2 journal升级兼容 | [journal/schema_journal_tests.zig](../src/journal/schema_journal_tests.zig)、根test/`test-logging` | 真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写；未释放记录恢复 |
+| 旧二进制journal fixture | [fixtures/journal](fixtures/journal/README.md)、根test/`test-logging` | 提交`5b1fd7c`实际二进制写出的v1 journal与v2 schema journal；待恢复记录在V3源码`recover=true`下读取并解析旧scope/message |
 | nested/轮转/schema组合恢复 | [logging/tests.zig](../src/logging/tests.zig)、根test/`test-logging` | prepared nested group/array经rolling输出与mmap schema journal；flushDurable/shutdown后同journal reopen、pending=0与replay追加 |
 | Clock与Io调用边界 | [clock_dispatch.zig](clock_dispatch.zig)、`test-clock-dispatch` | 精确clamp、callback内/外切换、Io身份/参数快照、zero/monotonic、public函数指针与capture/full边界 |
 | TLS admission生命周期 | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig)、`test-admission-lifecycle` | owned/bare/borrowed复用、回调中的outer所有权、64层栈与溢出、OS线程隔离、全部Level与完整generation/channel边界 |
