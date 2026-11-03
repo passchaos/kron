@@ -20,4 +20,11 @@
 
 kron在该组使用更少的用户态指令和周期，但wall-clock更慢；差距不是CPU工作量，而是流水线并行/调度/内存停顿。Foundation使用`producer_format`（producer格式化、consumer写出），kron使用`typed_capture_deferred_json`（consumer解码+格式化+写出），P4时consumer格式化与文件写出没有像Foundation那样与producer并行。该trial的kron mmap init为917ms，Foundation为14ms；init是独立的lifecycle差距，不能解释written稳态。单trial PMU不是稳定资格；下一候选应验证producer-format或consumer/IO重叠，而不是继续减少指令数。
 
+扩展PMU（同trial，增加cache/page-fault/context-switch）：
+
+- kron：786,021,953 instructions、493,468,532 cycles、27,268 cache-misses、3,305,723 cache-references、842 page-faults、3,061 context-switches，wall 55.1ms。
+- Foundation：1,827,525,127 instructions、870,767,263 cycles、56,118 cache-misses、2,785,566 cache-references、609 page-faults、7,053 context-switches，wall 40.1ms。
+
+kron的指令、周期、cache-miss和context-switch都更少，但wall-clock更慢；差距不是CPU或cache miss，而是consumer单线程的decode+format+write关键路径和文件写吞吐（kron约543MB/s，Foundation约745MB/s）。producer-format候选把格式化移到4个producer，但producer已有capture/encode/CRC/commit，critical path反而变长（已拒绝）。下一步应研究consumer格式化与文件写的双缓冲/重叠，而不是继续改CRC、idle、页策略或同步原语。
+
 原始`results.jsonl`、`manifest.json`、`analysis.json`、`comparison.md`和三个参考binary身份分别保留在 [E-core](.) 与 [P-core](../2026-11-03-current-foundation-full-pcore/)。完整文档入口见[当前验收状态](../../../docs/implementation-status.md)。
