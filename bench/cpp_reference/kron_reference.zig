@@ -18,6 +18,7 @@ const Options = struct {
     consumer_batches: usize = 4,
     backend: BackendKind = .portable,
     render_cache: bool = false,
+    text_format: bool = false,
 };
 
 const Gate = struct {
@@ -147,7 +148,7 @@ pub fn main(init: std.process.Init) !void {
             .name = "reference",
             .target = .{ .file = .{ .path = options.output, .buffer_bytes = 65536, .backend = .portable, .append = false } },
             .mode = if (is_spsc) .spsc else .asynchronous,
-            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
+            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
             .max_threads = options.producers,
             .max_journal_bytes = 32 * 1024 * 1024,
             .max_encoded_record_bytes = 512,
@@ -343,6 +344,8 @@ fn parse(arguments: []const []const u8) !Options {
             result.backend = std.meta.stringToEnum(BackendKind, value) orelse return error.InvalidBackend;
         } else if (std.mem.eql(u8, key, "--render-cache")) {
             result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
+        } else if (std.mem.eql(u8, key, "--text-format")) {
+            result.text_format = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidTextFormat;
         } else {
             const count = try std.fmt.parseInt(usize, value, 10);
             if (std.mem.eql(u8, key, "--events")) {
@@ -365,6 +368,7 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
+    if (result.text_format and (!std.mem.eql(u8, result.storage, "memory") or std.mem.eql(u8, result.mode, "spsc"))) return error.TextFormatUnsupported;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {

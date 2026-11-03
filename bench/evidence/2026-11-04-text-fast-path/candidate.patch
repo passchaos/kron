@@ -1,0 +1,257 @@
+diff --git a/bench/cpp_reference/kron_reference.zig b/bench/cpp_reference/kron_reference.zig
+index 488881e..5e4a9d2 100644
+--- a/bench/cpp_reference/kron_reference.zig
++++ b/bench/cpp_reference/kron_reference.zig
+@@ -18,6 +18,7 @@ const Options = struct {
+     consumer_batches: usize = 4,
+     backend: BackendKind = .portable,
+     render_cache: bool = false,
++    text_format: bool = false,
+ };
+ 
+ const Gate = struct {
+@@ -147,7 +148,7 @@ pub fn main(init: std.process.Init) !void {
+             .name = "reference",
+             .target = .{ .file = .{ .path = options.output, .buffer_bytes = 65536, .backend = .portable, .append = false } },
+             .mode = if (is_spsc) .spsc else .asynchronous,
+-            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
++            .queue = if (memory) .{ .memory = .{ .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096, .verify_crc = !options.text_format, .text_format = options.text_format } } else .{ .mmap = .{ .path = journal_path, .capacity = options.queue_slots, .max_record_bytes = options.max_record_bytes, .recover = false, .schema_capacity = if (options.schema) 2 else 0, .max_schema_bytes = 4096 } },
+             .max_threads = options.producers,
+             .max_journal_bytes = 32 * 1024 * 1024,
+             .max_encoded_record_bytes = 512,
+@@ -343,6 +344,8 @@ fn parse(arguments: []const []const u8) !Options {
+             result.backend = std.meta.stringToEnum(BackendKind, value) orelse return error.InvalidBackend;
+         } else if (std.mem.eql(u8, key, "--render-cache")) {
+             result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
++        } else if (std.mem.eql(u8, key, "--text-format")) {
++            result.text_format = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidTextFormat;
+         } else {
+             const count = try std.fmt.parseInt(usize, value, 10);
+             if (std.mem.eql(u8, key, "--events")) {
+@@ -365,6 +368,7 @@ fn parse(arguments: []const []const u8) !Options {
+         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
+         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
+     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
++    if (result.text_format and (!std.mem.eql(u8, result.storage, "memory") or std.mem.eql(u8, result.mode, "spsc"))) return error.TextFormatUnsupported;
+     return result;
+ }
+ fn share(total: usize, producers: usize, id: usize) usize {
+diff --git a/src/core/runtime.zig b/src/core/runtime.zig
+index 6009258..a1d7489 100644
+--- a/src/core/runtime.zig
++++ b/src/core/runtime.zig
+@@ -71,6 +71,7 @@ pub const Runtime = struct {
+     pub const Caches = struct {
+         render_caches: []?*RenderCache = &.{},
+         render_journals: []?*Journal = &.{},
++        text_format: bool = false,
+         channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
+     };
+     pub const TestingHooks = if (@import("builtin").is_test) struct {
+@@ -734,6 +735,39 @@ pub const Runtime = struct {
+                 };
+                 defer reservation.abort();
+                 event.sequence = reservation.sequence;
++                if (self.runtimeCaches().text_format) {
++                    const route = &snapshot.routes[0];
++                    const header_bytes = 16;
++                    if (reservation.buffer().len < header_bytes) return error.EncodedRecordTooLarge;
++                    std.mem.writeInt(u64, reservation.buffer()[0..8], snapshot.generation, .little);
++                    std.mem.writeInt(u64, reservation.buffer()[8..16], snapshot.fingerprint, .little);
++                    var writer = std.Io.Writer.fixed(reservation.buffer()[header_bytes..]);
++                    common.encodeDecoded(.json, event.*, route.timestamp, &writer) catch |err| {
++                        reservation.abort();
++                        self.notify();
++                        if (err == error.WriteFailed or err == error.BufferTooSmall) {
++                            _ = counters.dropped_oversize.fetchAdd(1, .monotonic);
++                            return .dropped_oversize;
++                        }
++                        self.reportError(err);
++                        return err;
++                    };
++                    if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (writer.buffered().len > limit) {
++                        reservation.abort();
++                        self.notify();
++                        _ = counters.dropped_oversize.fetchAdd(1, .monotonic);
++                        return .dropped_oversize;
++                    };
++                    const text_length = header_bytes + writer.buffered().len;
++                    snapshot.retainChannel(event.channel);
++                    reservation.commit(text_length) catch |err| {
++                        snapshot.releaseChannel(event.channel);
++                        return err;
++                    };
++                    _ = counters.accepted.fetchAdd(1, .monotonic);
++                    self.notify();
++                    return .accepted;
++                }
+                 const encoded = if (definition) |canonical|
+                     (if (context.encoded_size) |values_bytes|
+                         @import("reference_encoding.zig").writeMeasured(event.*, canonical, values_bytes, reservation.buffer())
+@@ -942,6 +976,24 @@ pub const Runtime = struct {
+             defer versions.deinit();
+             var written_counts: delivery_batch.WrittenCounts = .{};
+             defer written_counts.flush();
++            if (self.runtimeCaches().text_format and journal == self.journal) {
++                for (batch, 0..) |record, index| {
++                    if (record.payload.len < 16) return error.CorruptRecord;
++                    const generation = std.mem.readInt(u64, record.payload[0..8], .little);
++                    const fingerprint = std.mem.readInt(u64, record.payload[8..16], .little);
++                    const group = try versions.select(generation, fingerprint);
++                    const snapshot = group.snapshot();
++                    if (snapshot.routes.len != 1) return error.UnknownRoute;
++                    const route = &snapshot.routes[0];
++                    route.sink.writeRecord(record.payload[16..]) catch |err| {
++                        recordDeliveryError(@ptrCast(self), err, .write);
++                        if (route.delivery == .required) return err;
++                    };
++                    channels[index] = 0;
++                    snapshots[index] = snapshot;
++                    boundaries[index] = group.include(1);
++                }
++            } else {
+             for (batch, 0..) |record, index| {
+                 var fields: [codec.decode_scratch_fields]Field = undefined;
+                 const preformatted = if (render_cache) |cache| cache.lookup(record.sequence) else null;
+@@ -991,6 +1043,7 @@ pub const Runtime = struct {
+                 snapshots[index] = snapshot;
+                 boundaries[index] = group.include(event.route_mask);
+             }
++            }
+             for (versions.groups()) |*group| {
+                 try self.flushWith(group.snapshot(), group.route_mask, .written, false);
+                 if (group.durable_mask != 0) try self.flushWith(group.snapshot(), group.durable_mask, .durable, true);
+diff --git a/src/core/runtime_init.zig b/src/core/runtime_init.zig
+index 3a283f3..cdb802d 100644
+--- a/src/core/runtime_init.zig
++++ b/src/core/runtime_init.zig
+@@ -25,7 +25,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
+     for (options.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
+     if (options.consumer_batches_per_queue == 0 or options.consumer_batches_per_queue > 4) return error.InvalidOptions;
+     if (options.journal != null and options.memory_queue != null) return error.ConflictingQueueStorage;
+-    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false, .verify_crc = memory.verify_crc } else options.journal;
++    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false, .verify_crc = memory.verify_crc, .text_format = memory.text_format } else options.journal;
+     if (options.submission != .sync and queue_options == null) return error.JournalRequired;
+     if (options.submission == .sync and queue_options != null) return error.InvalidOptions;
+     if (options.max_thread_channels > 64 or (options.max_thread_channels != 0 and queue_options == null)) return error.InvalidOptions;
+@@ -36,6 +36,11 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
+         if (queue_options == null) return error.RenderCacheUnsupported;
+         if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
+     }
++    if (options.memory_queue) |memory| {
++        if (memory.text_format) {
++            if (options.submission != .asynchronous or options.max_thread_channels != 0 or options.routes.len != 1 or options.routes[0].format != .json or memory.verify_crc or options.render_cache) return error.InvalidTextFormat;
++        }
++    }
+     if (queue_options) |journal_options| {
+         const layout = try @import("../journal/format.zig").layout(journal_options.capacity, journal_options.max_record_bytes);
+         var total = if (journal_options.schema_capacity == 0) layout.size else (try schema_module.layout(layout.size, journal_options.schema_capacity, journal_options.max_schema_bytes)).size;
+@@ -74,7 +79,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
+     }
+     const caches = try allocator.create(Runtime.Caches);
+     errdefer allocator.destroy(caches);
+-    caches.* = .{};
++    caches.* = .{ .text_format = if (options.memory_queue) |memory| memory.text_format else false };
+     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
+     errdefer if (journal) |j| j.deinit();
+     var identity: [8]u8 = undefined;
+diff --git a/src/core/runtime_types.zig b/src/core/runtime_types.zig
+index 1042156..d42e4c0 100644
+--- a/src/core/runtime_types.zig
++++ b/src/core/runtime_types.zig
+@@ -26,6 +26,11 @@ pub const MemoryQueueOptions = struct {
+     /// false, the journal neither writes nor validates slot CRC. Recovery and
+     /// durable paths reject this option; the default keeps full checksums.
+     verify_crc: bool = true,
++    /// Opt-in volatile text fast path. The producer renders the final JSON into
++    /// the queue slot and the consumer writes it directly. Requires a memory
++    /// queue, no CRC, a single JSON route and the shared asynchronous pipeline;
++    /// the default durable journal path is unchanged.
++    text_format: bool = false,
+ };
+ pub const Overflow = enum { block, drop_newest, fallback_sync };
+ pub const Flush = enum { drain, written, durable };
+diff --git a/src/core/tests/runtime_delivery.zig b/src/core/tests/runtime_delivery.zig
+index 5378c02..22cc9cc 100644
+--- a/src/core/tests/runtime_delivery.zig
++++ b/src/core/tests/runtime_delivery.zig
+@@ -83,6 +83,51 @@ fn renderCacheSpscRun(allocator: std.mem.Allocator, cache: bool) ![]u8 {
+     return allocator.dupe(u8, sink.written());
+ }
+ 
++test "text queue output matches deferred render for inline and schema" {
++    const text = try textFormatRun(std.testing.allocator, true);
++    defer std.testing.allocator.free(text);
++    const deferred = try textFormatRun(std.testing.allocator, false);
++    defer std.testing.allocator.free(deferred);
++    try std.testing.expectEqualStrings(deferred, text);
++}
++
++fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
++    var bytes: [16 * 1024]u8 = undefined;
++    var sink = MemorySink.initBuffer(&bytes);
++    const runtime = try Runtime.create(allocator, std.testing.io, .{
++        .submission = .asynchronous,
++        .memory_queue = .{
++            .capacity = 8,
++            .max_record_bytes = 1024,
++            .schema_capacity = 2,
++            .max_schema_bytes = 1024,
++            .verify_crc = !text_format,
++            .text_format = text_format,
++        },
++        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
++        .clock = Clock.zeroTimestamp(),
++    });
++    defer runtime.destroy();
++    runtime.session = 42;
++    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, 8)) })) } });
++    for (0..4) |index| {
++        _ = try runtime.scoped("cache").tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
++        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, index + 8)) })) } };
++        const admission = switch (runtime.begin(.info, "cache")) {
++            .ready => |ready| ready,
++            else => return error.UnexpectedAdmission,
++        };
++        var admitted = true;
++        defer if (admitted) runtime.end();
++        _ = try runtime.submitWithSchema(admission, event, schema_binding);
++        runtime.end();
++        admitted = false;
++    }
++    try runtime.flush(.written);
++    try runtime.shutdown(.drain);
++    return allocator.dupe(u8, sink.written());
++}
++
+ test "render cache does not hide journal recovery" {
+     if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
+     var tmp = std.testing.tmpDir(.{});
+diff --git a/src/journal/journal.zig b/src/journal/journal.zig
+index 1d7c832..735d727 100644
+--- a/src/journal/journal.zig
++++ b/src/journal/journal.zig
+@@ -45,6 +45,9 @@ pub const Options = struct {
+     max_schema_bytes: usize = 8192,
+     /// Volatile-memory-only opt-out. Mapped/recoverable journals reject it.
+     verify_crc: bool = true,
++    /// Volatile text fast path marker. The journal only carries the slot ring;
++    /// Runtime interprets the payload as rendered text.
++    text_format: bool = false,
+ };
+ pub const ReclaimBoundary = enum { written, durable };
+ pub const ProducerMode = enum { shared, single };
+diff --git a/src/logging/configuration.zig b/src/logging/configuration.zig
+index ee27e6d..33ebf57 100644
+--- a/src/logging/configuration.zig
++++ b/src/logging/configuration.zig
+@@ -93,6 +93,9 @@ pub fn validate(options: Options) !void {
+         if (d.mode == .spsc and (d.max_threads == 0 or d.max_threads > 64)) return error.InvalidThreadBudget;
+         if (d.consumer_batches_per_queue == 0 or d.consumer_batches_per_queue > 4 or d.max_encoded_record_bytes == 0 or d.max_encoded_record_bytes > std.math.maxInt(u32)) return error.InvalidOptions;
+         if (d.render_cache and (d.mode == .sync or d.format != .json or d.render_cache_record_bytes == 0 or d.render_cache_record_bytes > d.max_encoded_record_bytes)) return error.InvalidRenderCache;
++        if (d.queue.? == .memory and d.queue.?.memory.text_format) {
++            if (d.mode != .asynchronous or d.format != .json or d.queue.?.memory.verify_crc) return error.InvalidTextFormat;
++        }
+         if (d.queue.? == .mmap and (d.queue.?.mmap.path.len == 0 or (route.target != .file and route.target != .rolling_file))) return error.MmapRequiresFileOutput;
+         if (d.mode != .sync and d.reclaim_after == .durable and d.queue.? != .mmap) return error.DurableReclaimRequiresMmap;
+         try validatePaths(options, index, d);

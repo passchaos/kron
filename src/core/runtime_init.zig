@@ -25,7 +25,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     for (options.routes) |route| if (route.max_encoded_record_bytes) |limit| if (limit > options.max_encoded_record_bytes) return error.EncodedRecordBudgetExceeded;
     if (options.consumer_batches_per_queue == 0 or options.consumer_batches_per_queue > 4) return error.InvalidOptions;
     if (options.journal != null and options.memory_queue != null) return error.ConflictingQueueStorage;
-    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false, .verify_crc = memory.verify_crc } else options.journal;
+    const queue_options: ?@import("../journal/journal.zig").Options = if (options.memory_queue) |memory| .{ .path = "", .capacity = memory.capacity, .max_record_bytes = memory.max_record_bytes, .schema_capacity = memory.schema_capacity, .max_schema_bytes = memory.max_schema_bytes, .recover = false, .verify_crc = memory.verify_crc, .text_format = memory.text_format } else options.journal;
     if (options.submission != .sync and queue_options == null) return error.JournalRequired;
     if (options.submission == .sync and queue_options != null) return error.InvalidOptions;
     if (options.max_thread_channels > 64 or (options.max_thread_channels != 0 and queue_options == null)) return error.InvalidOptions;
@@ -35,6 +35,11 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     if (options.render_cache) {
         if (queue_options == null) return error.RenderCacheUnsupported;
         if (options.render_cache_record_bytes == 0 or options.render_cache_record_bytes > options.max_encoded_record_bytes) return error.InvalidRenderCache;
+    }
+    if (options.memory_queue) |memory| {
+        if (memory.text_format) {
+            if (options.submission != .asynchronous or options.max_thread_channels != 0 or options.routes.len != 1 or options.routes[0].format != .json or memory.verify_crc or options.render_cache) return error.InvalidTextFormat;
+        }
     }
     if (queue_options) |journal_options| {
         const layout = try @import("../journal/format.zig").layout(journal_options.capacity, journal_options.max_record_bytes);
@@ -74,7 +79,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     }
     const caches = try allocator.create(Runtime.Caches);
     errdefer allocator.destroy(caches);
-    caches.* = .{};
+    caches.* = .{ .text_format = if (options.memory_queue) |memory| memory.text_format else false };
     const journal = if (queue_options) |opts| (if (options.memory_queue != null) try Journal.createMemory(allocator, io, opts) else try Journal.create(allocator, io, opts)) else null;
     errdefer if (journal) |j| j.deinit();
     var identity: [8]u8 = undefined;

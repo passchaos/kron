@@ -45,6 +45,9 @@ pub const Options = struct {
     max_schema_bytes: usize = 8192,
     /// Volatile-memory-only opt-out. Mapped/recoverable journals reject it.
     verify_crc: bool = true,
+    /// Volatile text fast path marker. The journal only carries the slot ring;
+    /// Runtime interprets the payload as rendered text.
+    text_format: bool = false,
 };
 pub const ReclaimBoundary = enum { written, durable };
 pub const ProducerMode = enum { shared, single };

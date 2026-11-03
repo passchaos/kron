@@ -83,6 +83,51 @@ fn renderCacheSpscRun(allocator: std.mem.Allocator, cache: bool) ![]u8 {
     return allocator.dupe(u8, sink.written());
 }
 
+test "text queue output matches deferred render for inline and schema" {
+    const text = try textFormatRun(std.testing.allocator, true);
+    defer std.testing.allocator.free(text);
+    const deferred = try textFormatRun(std.testing.allocator, false);
+    defer std.testing.allocator.free(deferred);
+    try std.testing.expectEqualStrings(deferred, text);
+}
+
+fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
+    var bytes: [16 * 1024]u8 = undefined;
+    var sink = MemorySink.initBuffer(&bytes);
+    const runtime = try Runtime.create(allocator, std.testing.io, .{
+        .submission = .asynchronous,
+        .memory_queue = .{
+            .capacity = 8,
+            .max_record_bytes = 1024,
+            .schema_capacity = 2,
+            .max_schema_bytes = 1024,
+            .verify_crc = !text_format,
+            .text_format = text_format,
+        },
+        .routes = &.{.{ .name = "out", .sink = sink.sink(), .format = .json }},
+        .clock = Clock.zeroTimestamp(),
+    });
+    defer runtime.destroy();
+    runtime.session = 42;
+    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, 8)) })) } });
+    for (0..4) |index| {
+        _ = try runtime.scoped("cache").tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
+        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, index + 8)) })) } };
+        const admission = switch (runtime.begin(.info, "cache")) {
+            .ready => |ready| ready,
+            else => return error.UnexpectedAdmission,
+        };
+        var admitted = true;
+        defer if (admitted) runtime.end();
+        _ = try runtime.submitWithSchema(admission, event, schema_binding);
+        runtime.end();
+        admitted = false;
+    }
+    try runtime.flush(.written);
+    try runtime.shutdown(.drain);
+    return allocator.dupe(u8, sink.written());
+}
+
 test "render cache does not hide journal recovery" {
     if (!@import("../../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = std.testing.tmpDir(.{});

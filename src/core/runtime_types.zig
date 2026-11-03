@@ -26,6 +26,11 @@ pub const MemoryQueueOptions = struct {
     /// false, the journal neither writes nor validates slot CRC. Recovery and
     /// durable paths reject this option; the default keeps full checksums.
     verify_crc: bool = true,
+    /// Opt-in volatile text fast path. The producer renders the final JSON into
+    /// the queue slot and the consumer writes it directly. Requires a memory
+    /// queue, no CRC, a single JSON route and the shared asynchronous pipeline;
+    /// the default durable journal path is unchanged.
+    text_format: bool = false,
 };
 pub const Overflow = enum { block, drop_newest, fallback_sync };
 pub const Flush = enum { drain, written, durable };

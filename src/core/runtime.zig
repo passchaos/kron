@@ -71,6 +71,7 @@ pub const Runtime = struct {
     pub const Caches = struct {
         render_caches: []?*RenderCache = &.{},
         render_journals: []?*Journal = &.{},
+        text_format: bool = false,
         channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
     };
     pub const TestingHooks = if (@import("builtin").is_test) struct {
@@ -734,6 +735,39 @@ pub const Runtime = struct {
                 };
                 defer reservation.abort();
                 event.sequence = reservation.sequence;
+                if (self.runtimeCaches().text_format) {
+                    const route = &snapshot.routes[0];
+                    const header_bytes = 16;
+                    if (reservation.buffer().len < header_bytes) return error.EncodedRecordTooLarge;
+                    std.mem.writeInt(u64, reservation.buffer()[0..8], snapshot.generation, .little);
+                    std.mem.writeInt(u64, reservation.buffer()[8..16], snapshot.fingerprint, .little);
+                    var writer = std.Io.Writer.fixed(reservation.buffer()[header_bytes..]);
+                    common.encodeDecoded(.json, event.*, route.timestamp, &writer) catch |err| {
+                        reservation.abort();
+                        self.notify();
+                        if (err == error.WriteFailed or err == error.BufferTooSmall) {
+                            _ = counters.dropped_oversize.fetchAdd(1, .monotonic);
+                            return .dropped_oversize;
+                        }
+                        self.reportError(err);
+                        return err;
+                    };
+                    if (route.policy) |policy| if (policy.max_encoded_record_bytes) |limit| if (writer.buffered().len > limit) {
+                        reservation.abort();
+                        self.notify();
+                        _ = counters.dropped_oversize.fetchAdd(1, .monotonic);
+                        return .dropped_oversize;
+                    };
+                    const text_length = header_bytes + writer.buffered().len;
+                    snapshot.retainChannel(event.channel);
+                    reservation.commit(text_length) catch |err| {
+                        snapshot.releaseChannel(event.channel);
+                        return err;
+                    };
+                    _ = counters.accepted.fetchAdd(1, .monotonic);
+                    self.notify();
+                    return .accepted;
+                }
                 const encoded = if (definition) |canonical|
                     (if (context.encoded_size) |values_bytes|
                         @import("reference_encoding.zig").writeMeasured(event.*, canonical, values_bytes, reservation.buffer())
@@ -942,6 +976,24 @@ pub const Runtime = struct {
             defer versions.deinit();
             var written_counts: delivery_batch.WrittenCounts = .{};
             defer written_counts.flush();
+            if (self.runtimeCaches().text_format and journal == self.journal) {
+                for (batch, 0..) |record, index| {
+                    if (record.payload.len < 16) return error.CorruptRecord;
+                    const generation = std.mem.readInt(u64, record.payload[0..8], .little);
+                    const fingerprint = std.mem.readInt(u64, record.payload[8..16], .little);
+                    const group = try versions.select(generation, fingerprint);
+                    const snapshot = group.snapshot();
+                    if (snapshot.routes.len != 1) return error.UnknownRoute;
+                    const route = &snapshot.routes[0];
+                    route.sink.writeRecord(record.payload[16..]) catch |err| {
+                        recordDeliveryError(@ptrCast(self), err, .write);
+                        if (route.delivery == .required) return err;
+                    };
+                    channels[index] = 0;
+                    snapshots[index] = snapshot;
+                    boundaries[index] = group.include(1);
+                }
+            } else {
             for (batch, 0..) |record, index| {
                 var fields: [codec.decode_scratch_fields]Field = undefined;
                 const preformatted = if (render_cache) |cache| cache.lookup(record.sequence) else null;
@@ -990,6 +1042,7 @@ pub const Runtime = struct {
                 channels[index] = event.channel;
                 snapshots[index] = snapshot;
                 boundaries[index] = group.include(event.route_mask);
+            }
             }
             for (versions.groups()) |*group| {
                 try self.flushWith(group.snapshot(), group.route_mask, .written, false);
