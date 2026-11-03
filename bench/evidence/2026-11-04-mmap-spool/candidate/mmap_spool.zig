@@ -1,0 +1,265 @@
+//! Candidate single-producer volatile output path: the producer renders the
+//! final JSON directly into a file-backed shared mapping, while one writer
+//! thread publishes dirty ranges with msync so writeback overlaps rendering.
+//! There is no journal, CRC, recovery or ring handoff; the durable Runtime
+//! remains the default owner. This module is an isolated measurement candidate
+//! and is not part of the production API.
+
+const std = @import("std");
+const builtin = @import("builtin");
+const Level = @import("level.zig").Level;
+const Clock = @import("../platform/clock.zig").Clock;
+const Event = @import("event.zig").Event;
+const common = @import("../encoder/common.zig");
+const LoggerModule = @import("logger.zig");
+const types = @import("runtime_types.zig");
+const Mapping = @import("../platform/mapping.zig").Mapping;
+
+const Atomic = std.atomic.Value;
+const sync_threshold = 1024 * 1024;
+
+pub const State = enum(u8) { running, closing, closed };
+
+pub const Health = struct {
+    accepted: u64,
+    written: u64,
+    dropped_full: u64,
+    dropped_oversize: u64,
+    pending: usize,
+    errors: u64,
+    state: State,
+};
+
+pub const Options = struct {
+    path: []const u8,
+    capacity_bytes: usize = 64 * 1024 * 1024,
+    timestamp: ?*@import("../time/root.zig").Formatter = null,
+    min_level: Level = .info,
+    clock: Clock = .{},
+    session: u64 = std.math.maxInt(u64),
+    idle: types.Idle = .sleep,
+};
+
+pub const MmapSpool = struct {
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    mapping: Mapping,
+    offset: usize = 0,
+    timestamp: ?*@import("../time/root.zig").Formatter,
+    clock: Clock,
+    min_level: Level,
+    session: u64,
+    idle: types.Idle,
+    sequence: u64 = 0,
+    accepted: u64 = 0,
+    written: u64 = 0,
+    dropped_full: u64 = 0,
+    dropped_oversize: u64 = 0,
+    errors: Atomic(u64) = .init(0),
+    last_error: Atomic(u16) = .init(0),
+    published: Atomic(usize) = .init(0),
+    synced: Atomic(usize) = .init(0),
+    state: Atomic(State) = .init(.running),
+    flush_requested: Atomic(bool) = .init(false),
+    flush_epoch: Atomic(u32) = .init(0),
+    wake_epoch: Atomic(u32) = .init(0),
+    worker_sleeping: Atomic(bool) = .init(false),
+    worker: ?std.Thread = null,
+
+    pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*MmapSpool {
+        if (builtin.single_threaded) return error.ThreadsUnavailable;
+        if (options.path.len == 0 or options.capacity_bytes == 0) return error.InvalidOptions;
+        if (options.capacity_bytes > std.math.maxInt(i64)) return error.InvalidOptions;
+
+        // The mapping helper opens an existing file with an exact size and
+        // rejects a mismatched layout. A benchmark artifact is recreated per
+        // trial, so remove a stale entry through its parent directory first.
+        const parent = std.fs.path.dirname(options.path) orelse ".";
+        const dir = try std.Io.Dir.cwd().openDir(io, parent, .{});
+        defer dir.close(io);
+        dir.deleteFile(io, std.fs.path.basename(options.path)) catch |err| switch (err) {
+            error.FileNotFound => {},
+            else => return err,
+        };
+
+        const self = try allocator.create(MmapSpool);
+        errdefer allocator.destroy(self);
+        self.* = .{
+            .allocator = allocator,
+            .io = io,
+            .mapping = try Mapping.open(io, options.path, options.capacity_bytes),
+            .timestamp = options.timestamp,
+            .clock = options.clock,
+            .min_level = options.min_level,
+            .session = options.session,
+            .idle = options.idle,
+        };
+        errdefer self.mapping.deinit();
+        self.worker = try std.Thread.spawn(.{}, workerMain, .{self});
+        return self;
+    }
+
+    pub fn destroy(self: *MmapSpool) void {
+        self.shutdown() catch {};
+        self.mapping.deinit();
+        const allocator = self.allocator;
+        allocator.destroy(self);
+    }
+
+    pub fn logger(self: *MmapSpool, scope: []const u8) LoggerModule.Logger(MmapSpool, .trace) {
+        return .init(self, scope);
+    }
+
+    pub fn health(self: *MmapSpool) Health {
+        return .{
+            .accepted = self.accepted,
+            .written = self.written,
+            .dropped_full = self.dropped_full,
+            .dropped_oversize = self.dropped_oversize,
+            .pending = self.published.load(.acquire) - self.synced.load(.acquire),
+            .errors = self.errors.load(.acquire),
+            .state = self.state.load(.acquire),
+        };
+    }
+
+    pub fn writtenBytes(self: *const MmapSpool) usize {
+        return self.offset;
+    }
+
+    pub fn flush(self: *MmapSpool, boundary: types.Flush) !void {
+        if (boundary == .durable) return error.UnsupportedDurability;
+        if (self.last_error.load(.acquire) != 0) return error.DeliveryFailed;
+        const observed = self.flush_epoch.load(.seq_cst);
+        self.flush_requested.store(true, .release);
+        self.wake();
+        while (self.flush_epoch.load(.seq_cst) == observed) {
+            if (self.state.load(.acquire) == .closed) break;
+            self.io.futexWaitUncancelable(u32, &self.flush_epoch.raw, observed);
+        }
+        if (self.last_error.load(.acquire) != 0) return error.DeliveryFailed;
+    }
+
+    pub fn shutdown(self: *MmapSpool) !void {
+        if (self.worker) |thread| {
+            self.state.store(.closing, .release);
+            self.wake();
+            thread.join();
+            self.worker = null;
+        }
+        self.state.store(.closed, .release);
+        const offset = self.published.load(.acquire);
+        self.syncTo(offset) catch {};
+        // Publish exactly the rendered bytes. The mapping stays alive until
+        // deinit; no page beyond the new length is touched.
+        self.mapping.file.setLength(self.io, offset) catch |err| {
+            self.recordError(err);
+        };
+        if (self.last_error.load(.acquire) != 0) return error.DeliveryFailed;
+    }
+
+    // Logger owner interface.
+    pub fn enabled(self: *MmapSpool, level: Level, _: []const u8) bool {
+        return self.state.load(.acquire) == .running and self.min_level.allows(level);
+    }
+
+    pub fn begin(self: *MmapSpool, level: Level, _: []const u8) LoggerModule.BeginResult {
+        if (self.state.load(.acquire) != .running) return .closed;
+        if (!self.min_level.allows(level)) return .filtered;
+        return .{ .ready = .{ .route_mask = 1, .config_generation = 1 } };
+    }
+
+    pub fn end(self: *MmapSpool) void {
+        _ = self;
+    }
+
+    pub fn endAdmission(self: *MmapSpool, _: LoggerModule.Admission) void {
+        _ = self;
+    }
+
+    pub fn nowNs(self: *MmapSpool) i64 {
+        return self.clock.realNow(self.io);
+    }
+
+    pub fn captureFailed(self: *MmapSpool, err: anyerror) void {
+        self.recordError(err);
+    }
+
+    pub fn submit(self: *MmapSpool, _: LoggerModule.Admission, event: Event) !LoggerModule.EmitResult {
+        if (self.state.load(.acquire) != .running) return .rejected_closing;
+        if (self.last_error.load(.acquire) != 0) return error.DeliveryFailed;
+        if (self.offset == self.mapping.bytes.len) {
+            self.dropped_full += 1;
+            return .dropped_full;
+        }
+        var submitted = event;
+        submitted.session = self.session;
+        self.sequence += 1;
+        submitted.sequence = self.sequence;
+        var writer = std.Io.Writer.fixed(self.mapping.bytes[self.offset..]);
+        common.encodeDecoded(.json, submitted, self.timestamp, &writer) catch |err| {
+            if (err == error.WriteFailed) {
+                self.dropped_oversize += 1;
+                return .dropped_oversize;
+            }
+            self.recordError(err);
+            return err;
+        };
+        self.offset += writer.buffered().len;
+        self.published.store(self.offset, .release);
+        self.accepted += 1;
+        self.written += 1;
+        if (self.offset - self.synced.load(.monotonic) >= sync_threshold) self.wake();
+        return .accepted;
+    }
+
+    fn recordError(self: *MmapSpool, err: anyerror) void {
+        _ = self.errors.fetchAdd(1, .monotonic);
+        self.last_error.store(@intFromError(err), .release);
+    }
+
+    fn wake(self: *MmapSpool) void {
+        _ = self.wake_epoch.fetchAdd(1, .seq_cst);
+        if (self.worker_sleeping.load(.seq_cst)) self.io.futexWake(u32, &self.wake_epoch.raw, std.math.maxInt(u32));
+    }
+
+    fn syncTo(self: *MmapSpool, target: usize) !void {
+        const from = self.synced.load(.monotonic);
+        if (target <= from) return;
+        self.mapping.syncMappedRangeAsync(from, target) catch |err| {
+            self.recordError(err);
+            return err;
+        };
+        self.synced.store(target, .release);
+    }
+
+    fn workerMain(self: *MmapSpool) void {
+        while (true) {
+            const published = self.published.load(.acquire);
+            if (published - self.synced.load(.monotonic) >= sync_threshold) {
+                self.syncTo(published) catch {};
+                continue;
+            }
+            if (self.flush_requested.swap(false, .acq_rel)) {
+                self.syncTo(published) catch {};
+                _ = self.flush_epoch.fetchAdd(1, .release);
+                self.io.futexWake(u32, &self.flush_epoch.raw, std.math.maxInt(u32));
+                continue;
+            }
+            if (self.state.load(.acquire) == .closing) {
+                self.syncTo(self.published.load(.acquire)) catch {};
+                _ = self.flush_epoch.fetchAdd(1, .release);
+                self.io.futexWake(u32, &self.flush_epoch.raw, std.math.maxInt(u32));
+                self.state.store(.closed, .release);
+                return;
+            }
+            if (self.idle == .spin) {
+                std.atomic.spinLoopHint();
+                continue;
+            }
+            self.worker_sleeping.store(true, .seq_cst);
+            const observed = self.wake_epoch.load(.seq_cst);
+            if (self.wake_epoch.load(.seq_cst) == observed) self.io.futexWaitUncancelable(u32, &self.wake_epoch.raw, observed);
+            self.worker_sleeping.store(false, .seq_cst);
+        }
+    }
+};
