@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 模块与内部回归 | `src/` 内test、[core/tests](../src/core/tests/runtime.zig)、[logging/tests](../src/logging/tests.zig) | 字段/codec、token/gate、配置缓存、批次、错误/allocator；由根模块纳入 |
 | 公共日志管线 | runtime/capture/adapter/redaction/async_storage integration | 真实sync/shared/SPSC，typed快照、context、无分配与错误 |
-| 并发共享producer交付 | [async_storage.zig](async_storage.zig)、`test-async-storage` | 4线程×250记录×2轮、Memory block queue、accepted=written=1000、pending=0；Safe/Debug/Fast与5 seeds |
+| 并发共享producer交付 | [async_storage.zig](async_storage.zig)、`test-async-storage` | 4线程×250记录×2轮、Memory block queue、accepted=written=1000、pending=0；mid-flight `shutdown(.drain)`下accepted=written、rejected_closing、state=closed；Safe/Debug/Fast与多seeds |
 | 字段键与错误顺序 | [field_key_validation.zig](field_key_validation.zig)、`test-field-keys` | 独立eql字节oracle、精确pair/node计数、重复与cycle/depth/budget先后、Linux两端真实guard page |
 | 队列精确峰值 | [journal_peak.zig](journal_peak.zig)、`test-journal-peak` | Memory/Mmap普通/schema并发持有量与高水位、Full/oversize/abort/CRC失败、恢复重建与完整序号/数据 |
 | written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |

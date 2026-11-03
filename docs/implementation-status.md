@@ -27,7 +27,7 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 shared async admission分片候选（v1 state+per-shard counters、v2 per-shard flags）完成65/65 steps、748/749 tests正确性门禁；v1 P4 cycles约降10%–20%但instructions略增，v2 cycles方向不稳。当前host load约125（sibling repo构建与长测试占用多核），P1/P4快速A/B成对ratio 0.58–1.60，无CV/spread资格；且Runtime 12800→13376B（+576B）超对象预算。按门槛撤回，生产恢复基线；patch与全部原始数据见[sharded admission诊断](../bench/evidence/2026-11-03-sharded-admission/README.md)，待安静窗口重测。
 
-新增并发共享producer端到端回归：4个OS线程同时提交250条×2轮到Memory block queue，consumer持续写出；断言`accepted==written==1000`、`pending=0`、sink records=1000。`test-async-storage`在Safe/Debug/Fast各8/8，Safe独立binary对5个seed 5/5。完整`test`为**65/65 steps、749/750 tests（1项local skip）**；`verify-local`为**159/159 steps、783/784 tests（1项local skip）**，`verify-local success`。证据见[并发producer报告](../bench/evidence/2026-11-03-concurrent-producers/README.md)。
+新增并发共享producer端到端回归：4个OS线程同时提交250条×2轮到Memory block queue，consumer持续写出；断言`accepted==written==1000`、`pending=0`、sink records=1000。另有mid-flight `shutdown(.drain)`测试：4个producer循环提交直到`rejected_closing`，断言producer累计accepted与health一致、accepted==written、pending=0、state=closed且至少一个closing rejection。`test-async-storage`在Safe/Debug/Fast各9/9，Safe独立binary多seed全部通过。完整`test`为**65/65 steps、750/751 tests（1项local skip）**；`verify-local`为**159/159 steps、784/785 tests（1项local skip）**，`verify-local success`。证据见[并发producer报告](../bench/evidence/2026-11-03-concurrent-producers/README.md)。
 
 journal/archive fuzz在冻结的ReleaseSafe binary上扩展100个连续seed（0x1..0x64）：100/100通过，每个seed实际执行20,000次journal随机reserve/commit/peek/release+recovery与随机archive block round-trip。该扫描补充seed覆盖，仍是进程内操作/恢复，不替代sanitizer、长时间soak、真实SIGKILL或掉电。证据见[100-seed fuzz扫描](../bench/evidence/2026-11-03-fuzz-100-seeds/README.md)。
 

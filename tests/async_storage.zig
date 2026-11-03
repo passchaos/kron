@@ -401,3 +401,73 @@ test "async storage: concurrent shared producers deliver every accepted record" 
         try testing.expectEqual(total, memory.records);
     }
 }
+
+const ClosingProducer = struct {
+    runtime: *kron.Runtime,
+    id: usize,
+    accepted: usize = 0,
+    rejected: usize = 0,
+    failure: ?anyerror = null,
+
+    fn run(self: *@This()) void {
+        while (true) {
+            const result = self.runtime.scoped("closing-concurrent").tryEmit(.info, "producer", .{ .producer = self.id, .index = self.accepted }) catch |err| {
+                self.failure = err;
+                return;
+            };
+            switch (result) {
+                .accepted => self.accepted += 1,
+                .rejected_closing => {
+                    self.rejected += 1;
+                    return;
+                },
+                else => {
+                    self.failure = error.UnexpectedEmitResult;
+                    return;
+                },
+            }
+        }
+    }
+};
+
+test "async storage: shutdown drains accepted records and rejects concurrent producers" {
+    if (builtin.single_threaded) return error.SkipZigTest;
+    const producer_count = 4;
+    var round: usize = 0;
+    while (round < 2) : (round += 1) {
+        var bytes: [1024 * 1024]u8 = undefined;
+        var memory = kron.MemorySink.initBuffer(&bytes);
+        const runtime = try kron.Runtime.create(testing.allocator, testing.io, .{
+            .submission = .asynchronous,
+            .memory_queue = .{ .capacity = 64, .max_record_bytes = 512 },
+            .overflow = .block,
+            .consumer_batches_per_queue = 4,
+            .routes = &.{.{ .name = "output", .sink = memory.sink() }},
+        });
+        defer runtime.destroy();
+        var workers: [producer_count]ClosingProducer = undefined;
+        var threads: [producer_count]std.Thread = undefined;
+        for (&workers, 0..) |*worker, index| {
+            worker.* = .{ .runtime = runtime, .id = index };
+            threads[index] = try std.Thread.spawn(.{}, ClosingProducer.run, .{worker});
+        }
+        var spins: usize = 0;
+        while (runtime.health().accepted == 0 and spins < 10_000_000) : (spins += 1) std.atomic.spinLoopHint();
+        try runtime.shutdown(.drain);
+        for (&threads) |thread| thread.join();
+        var accepted: u64 = 0;
+        var rejected: u64 = 0;
+        for (&workers) |*worker| {
+            if (worker.failure) |err| return err;
+            accepted += worker.accepted;
+            rejected += worker.rejected;
+        }
+        const health = runtime.health();
+        try testing.expectEqual(accepted, health.accepted);
+        try testing.expectEqual(health.accepted, health.written);
+        try testing.expectEqual(@as(usize, 0), health.journal_pending);
+        try testing.expectEqual(@as(usize, @intCast(health.written)), memory.records);
+        try testing.expectEqual(.closed, health.state);
+        try testing.expect(rejected != 0);
+    }
+}
