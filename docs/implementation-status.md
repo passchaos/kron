@@ -31,6 +31,8 @@ Queue capacity诊断（同一E-core窗口）：kron 512 vs 256在8配置written�
 
 FileSink buffer 64KiB vs 128KiB诊断（同一E-core窗口）：kron 128KiB在4配置written中位+0.4%–2.1%，Foundation同配置基本持平或略负；幅度小且memory sampled spread较大，未达到完整managed dual-topology资格，默认buffer保持64KiB。证据见[file buffer诊断](../bench/evidence/2026-11-03-file-buffer-128k/README.md)。
 
+Sanitizer工具诊断：Zig 0.16的`-fsanitize-thread`构建成功但不instrument本项目Zig代码（无`__tsan` runtime，故意race无报告）；Valgrind Helgrind能检测普通race，但对Zig atomic load/store误报约163万errors并在async-storage测试中abort。sanitizer覆盖仍是工具链限制，未修改生产；证据见[sanitizer诊断](../bench/evidence/2026-11-03-sanitizer-diagnostic/README.md)。
+
 新增QEMU virtio-9p共享文件系统行为：sync/memory/spsc_memory各2条、pending=0；mmap/spsc_mmap与`qualify`在创建可恢复journal时以`PreallocationUnsupported`拒绝，host share仅留下70,656B journal与0B output。9p不提供fallocate，现有错误路径阻止未预分配文件被当作可恢复journal继续使用。该测试不是NFS/crash/掉电资格；证据见[9p shared FS报告](../bench/evidence/2026-11-03-9p-shared-fs/README.md)。
 
 新增真实ENOSPC故障测试：child VM内1MiB tmpfs填满1,048,576B后，直接FileSink flush、Runtime（Memory queue + FileSink）在填满后提交记录的`flush(.durable)`、以及RollingFileSink flush都返回`error.NoSpaceLeft`并latch，没有误报成功。该测试覆盖真实文件写错误路径，不涉及mmap journal/recovery/掉电；证据见[ENOSPC fault报告](../bench/evidence/2026-11-03-enospc-fault/README.md)。
@@ -184,7 +186,7 @@ shared profile与filter reader实验完成244项、6420.4万条JSON核对。TLS 
 | 1 | 尾延迟和过载对应用的影响 | 合成200µs慢sink/64槽诊断已记录：block P1/P4 p99约15–16ms且无丢失，P16 p99约59–81ms；drop p99亚微秒但丢936/1000或1535/1600，fallback p50约0.24ms；仍需burst、积压年龄、CPU/cache/调度竞争及无logger基线。见 [过载尾部诊断](../bench/evidence/2026-11-02-overload-tail/README.md) |
 | 1 | Mmap 启动与资源成本 | fresh Linux mmap只写header初始化已把16.8MB journal init中位54.2/53.8ms降到8.2/6.9ms；仍需更广文件系统/设备、dirty-page与持久化边界验证。见 [fresh mmap证据](../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)与 [启动诊断](../bench/evidence/2026-11-02-current-init-profile/README.md) |
 | 2 | 更广业务/durable 回归覆盖 | 0/5/10 fields、长短字符串、P1/P4/P16、warm/cold、attach/detach、reload/rolling 与独立 durable 测量 |
-| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与1000-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink/Journal预分配错误与只读FS初始化拒绝已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer/更长soak |
+| 2 | 更广故障、升级与持续 fuzz | journal/archive随机fuzz已加入`test-journal-fuzz`与1000-seed ReleaseSafe扫描，v1/v2升级兼容、pre-V3旧二进制v1/v2 fixture、nested prepared+rolling+schema journal+reopen组合、V3 child-VM abrupt-loss campaign与XFS/Btrfs/F2FS child-VM campaigns已加入回归；并发soak已有1000/200次重复；tmpfs/ext4与9p共享FS行为已对照；真实ENOSPC FileSink/Journal预分配错误与只读FS初始化拒绝已覆盖；仍缺跨平台旧二进制/更早历史格式fixture、NFS/CIFS/FUSE/设备系统停机、物理掉电与sanitizer（Zig TSan未instrument/Helgrind不兼容Zig atomics）/更长soak |
 | 2 | 非 Linux 平台运行 | aarch64-linux-musl已在QEMU用户态执行root suite与fuzz；Windows/macOS/Android/iOS仍缺目标设备实际日志、生命周期、journal恢复及durable报告 |
 
 当前主要功能有验证，完整的“业界最佳”目标仍在推进。后续状态更新只记录实际源码、运行结果或明确的平台能力拒绝。
