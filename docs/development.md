@@ -33,7 +33,7 @@
 | 只读文件系统初始化 | `tests/faults/vm_readonly.py`；child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem` |
 | Journal ENOSPC预分配 | `tests/faults/vm_journal_enospc.py`；64MiB ext4填满后`Journal.create`返回`NoSpaceLeft` |
 | 子VM停机 | [power_loss](../tests/power_loss/README.md)；ext4/XFS/Btrfs/F2FS 16-run child-VM SIGKILL campaigns；非物理掉电 |
-| wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |
+| wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`（runner-seed-driven，200-seed扫描）、`test-query`、`test-compression` |
 | fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
 | 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence`；fuzz corpus由runner seed驱动，1000-seed扫描 |
 | build/dependency/分发 | `test-package`、`test-package-single-threaded`、`test-package-distribution`、`check-platforms` |

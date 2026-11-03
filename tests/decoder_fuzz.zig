@@ -9,7 +9,7 @@ test {
 }
 
 test "bounded decoder mutation corpus never escapes its input or emits invalid JSON" {
-    var random = std.Random.DefaultPrng.init(0x6b726f6e66757a7a);
+    var random = std.Random.DefaultPrng.init(0x6b726f6e66757a7a ^ @as(u64, std.testing.random_seed));
     const rng = random.random();
     var original: [4096]u8 = undefined;
     var mutated: [4096]u8 = undefined;
@@ -53,7 +53,7 @@ test "bounded decoder mutation corpus never escapes its input or emits invalid J
 }
 
 test "bounded arbitrary input rejects malformed codec data without allocation" {
-    var random = std.Random.DefaultPrng.init(0x756e747275737465);
+    var random = std.Random.DefaultPrng.init(0x756e747275737465 ^ @as(u64, std.testing.random_seed));
     const rng = random.random();
     var bytes: [512]u8 = undefined;
     var scratch: [128]kron.Field = undefined;
@@ -65,7 +65,7 @@ test "bounded arbitrary input rejects malformed codec data without allocation" {
 }
 
 test "bounded malformed deferred formats fail through the writer error boundary" {
-    var random = std.Random.DefaultPrng.init(0x666f726d61746675);
+    var random = std.Random.DefaultPrng.init(0x666f726d61746675 ^ @as(u64, std.testing.random_seed));
     const rng = random.random();
     var template: [96]u8 = undefined;
     var output_buffer: [32 * 1024]u8 = undefined;
