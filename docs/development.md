@@ -25,6 +25,7 @@
 | 时钟与时间转换/恢复 | `test-clock-dispatch`、`test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
 | flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
 | 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |
+| 多文件系统行为 | tmpfs vs ext4 package consumer；tmpfs mmap journal按设计拒绝`VolatileFilesystem`，见[多文件系统证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) |
 | wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`、`test-query`、`test-compression` |
 | fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
 | 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence` |
