@@ -363,6 +363,14 @@ fn Frontend(comptime Owner: type, comptime min_level: Level, comptime Context: t
                 event.span_id = context.span_id;
                 if (@hasField(Event, "trace_flags")) event.trace_flags = context.flags;
             }
+            // Empty-context capture validates the complete field tree in
+            // appendFields (keys, values, node budget and cycles). Reuse that
+            // proof for the internal render hint instead of walking the same
+            // tree again. Formatting arguments have their own repeat-key
+            // contract and keep the validating path.
+            if (comptime Context == contexts.EmptyContext) {
+                if (format_args.len == 0) event.tree_validated = true;
+            }
             return self.owner.submit(admission, event);
         }
     };
