@@ -34,6 +34,11 @@
 | `p1-ab-pcore-smt-r5` | 同上 | 3.252M / 2.928M | Foundation 两对稳定；tracing sampled spread 15.8% → inconclusive |
 | `p1-ab-pcore-smt-r6` | 同上 | batch outlier | spool batch spread 97% → batch 对 inconclusive；sampled vs tracing 1.215 qualified |
 | `p1-ab-pcore-smt-ts64` | P-core SMT，`timestamp_period=64` | 3.325M / 2.988M | sampled 两对 qualified（1.588/1.217）；batch 中位 1.631/1.275，但 peer batch spread 15.6%/12.8% → inconclusive |
+| `p1-ab-pcore-smt-ts64-tv` | P-core SMT，ts64 + `tree_validated` | **3.671M / 3.210M** | batch vs Foundation 1.759、batch vs tracing 1.406、sampled vs Foundation 1.756 均 qualified；sampled vs tracing 1.319 但 tracing sampled spread 14.45% → inconclusive |
+| `p1-ab-pcore-smt-ts64-tv-r1` | 同上 | 3.774M / 3.294M | sampled 两对 qualified（1.737/1.383）；batch 中位 1.807/1.374，但 tracing batch spread 10.2%/paired → inconclusive |
+| `p1-ab-pcore-smt-ts64-tv-r2` | 同上 | 3.749M / 3.331M | sampled vs Foundation 1.818 qualified；其余因 spool batch 9.7%/paired 10.1%、tracing 11.6%/10.1% → inconclusive |
+| `p1-ab-pcore-smt-ts64-tv-r3` | 同上 | 3.737M / 3.192M | batch vs Foundation 1.826、sampled vs tracing 1.330 qualified；batch vs tracing（tracing 18.1%）、sampled vs Foundation（paired 16.9%）inconclusive |
+| `p1-ab-pcore8-ts64-tv` | P-core 8-thread `[1,3,5,7,9,11,13,15]` | **3.853M / 3.351M** | spool 最高中位；但 peer spread 8.6–18.1%、paired ratio 10.2–27.7%，四对全部 inconclusive |
 | `p1-ab-ecore-ts64` | E-core，`timestamp_period=64` | **2.730M / 2.424M** | batch vs Foundation 1.274、batch vs tracing **1.025**、sampled vs Foundation 1.251 均 qualified；sampled vs tracing **0.998** inconclusive（CI 0.980..1.012）；所有 spread ≤4.1% |
 | `p1-ab-ecore-ts64-r2` | E-core，`timestamp_period=64` | 2.816M / 2.462M | Foundation 两对 qualified（1.334/1.267）；tracing batch 1.013（CI 0.991..1.035）、sampled 1.004（CI 0.922..1.028）均 inconclusive；tracing sampled spread 10.3% |
 | `p1-ab-ecore-ts128` | E-core，`timestamp_period=128` | 2.713M / 2.404M | tracing batch 单点 outlier（spread 97%）；sampled vs tracing 1.003 inconclusive；Foundation 两对 qualified |
@@ -45,7 +50,7 @@
 
 ## 结论
 
-- **P-core**：spool 对 Foundation/tracing 有稳定的中位领先（1.2–1.6x）；sampled 两对在 r1、r3、ts64 等窗口均 qualified lead，batch 中位 1.27–1.63 但常被 peer batch spread（10–18%）卡成 inconclusive。r1–r7 中每个 pair 都至少在一个窗口 qualified lead，**没有 qualified peer lead**；没有单一窗口四对全部 qualified。
+- **P-core**：spool 对 Foundation/tracing 有稳定的中位领先；tree_validated 后 P-core tv 窗口 spool batch **3.74–3.77M**、sampled **3.19–3.33M**，8-thread 窗口进一步到 **3.853M / 3.351M**；对 Foundation/tracing 中位 1.33–1.83x。6-thread tv 主窗口 3/4 qualified；r1–r3 各 2/4 qualified，每个 pair 都至少在一个窗口 qualified，**没有 qualified peer lead**；四对全 qualified 仍被 peer spread（10.1%–18.1%）卡住。8-thread 窗口虽然吞吐最高，但 peer/paired spread 更大（10.2%–27.7%），不改善 qualification。
 - **E-core**：period 1 时 tracing peer lead（0.96）；`timestamp_period=64` 后 batch 对 tracing 1.013–1.025、sampled 0.998–1.004 parity。加入 `tree_validated` capture proof 后 producer render 快约 7%–8%：batch vs tracing 1.072–1.086、sampled vs tracing 1.047–1.071，中位已超过 tracing；对 Foundation 1.32–1.45 lead。r3 已拿到 3/4 qualified lead，剩下 batch vs Foundation 被 Foundation 自身 15.1% batch spread 卡住；没有任何 qualified peer lead。
 - `tree_validated` 优化已通过完整 `test` **65/65 steps、766/767 tests（1 skip）**；只对 empty-context、无 format_args 的 capture 生效，`appendFields` 已证明完整 tree（key/value/node/cycle），renderer 不再重复 `validateEvent`。
 - **TSC clock** 更慢（P-core 2.54–2.60M vs native 2.59–2.66M，init 25–26ms vs 15–30ms），未采用。
@@ -68,6 +73,11 @@ git apply bench/evidence/2026-11-04-mmap-spool/candidate/harness.patch
 python3 bench/cpp_reference/run.py --output-dir=/tmp/spool-ab \
   --libraries=foundation,foundation_tracing,kron --events=100000 --warmup=1000 \
   --repeats=5 --producers=1 --kron-modes=spool --kron-storages=mmap \
+  --kron-schema=off --kron-spool-timestamp-period=64 \
+  --affinity=23,25,27,29,31,21 --discard-artifacts
+python3 bench/cpp_reference/analyze.py /tmp/spool-ab
+```
+es=mmap \
   --kron-schema=off --kron-spool-timestamp-period=64 \
   --affinity=23,25,27,29,31,21 --discard-artifacts
 python3 bench/cpp_reference/analyze.py /tmp/spool-ab
