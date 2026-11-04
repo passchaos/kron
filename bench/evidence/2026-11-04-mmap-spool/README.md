@@ -37,13 +37,17 @@
 | `p1-ab-ecore-ts64` | E-core，`timestamp_period=64` | **2.730M / 2.424M** | batch vs Foundation 1.274、batch vs tracing **1.025**、sampled vs Foundation 1.251 均 qualified；sampled vs tracing **0.998** inconclusive（CI 0.980..1.012）；所有 spread ≤4.1% |
 | `p1-ab-ecore-ts64-r2` | E-core，`timestamp_period=64` | 2.816M / 2.462M | Foundation 两对 qualified（1.334/1.267）；tracing batch 1.013（CI 0.991..1.035）、sampled 1.004（CI 0.922..1.028）均 inconclusive；tracing sampled spread 10.3% |
 | `p1-ab-ecore-ts128` | E-core，`timestamp_period=128` | 2.713M / 2.404M | tracing batch 单点 outlier（spread 97%）；sampled vs tracing 1.003 inconclusive；Foundation 两对 qualified |
+| `p1-ab-ecore-ts64-tv` | E-core，ts64 + `tree_validated` capture | 2.919M / 2.569M | batch vs Foundation 1.424、batch vs tracing 1.072、sampled vs Foundation 1.323 均 qualified；sampled vs tracing 1.047 但 paired spread 10.4% → inconclusive |
+| `p1-ab-ecore-ts64-tv-r2` | 同上 | 2.981M / 2.595M | batch vs Foundation 1.450 qualified；batch vs tracing 1.084、sampled vs tracing 1.071、sampled vs Foundation 1.387 中位领先，但 paired spread 10.9–13.5% → inconclusive |
+| `p1-ab-ecore-ts64-tv-r3` | 同上 | 3.014M / 2.619M | batch vs tracing 1.086、sampled vs Foundation 1.398、sampled vs tracing 1.066 均 qualified；batch vs Foundation 1.442 中位领先，但 Foundation batch spread 15.1% → inconclusive |
 
 每个窗口的完整 min/max、paired ratio、95% CI 与逐条 JSON 核验在各自目录的 `analysis.json`/`comparison.md`/`results.jsonl`。
 
 ## 结论
 
 - **P-core**：spool 对 Foundation/tracing 有稳定的中位领先（1.2–1.6x）；sampled 两对在 r1、r3、ts64 等窗口均 qualified lead，batch 中位 1.27–1.63 但常被 peer batch spread（10–18%）卡成 inconclusive。r1–r7 中每个 pair 都至少在一个窗口 qualified lead，**没有 qualified peer lead**；没有单一窗口四对全部 qualified。
-- **E-core**：period 1 时 tracing peer lead（0.96）；`timestamp_period=64` 后 batch 对 tracing 变成 qualified lead（1.025），sampled 为 0.998 parity（CI 跨 1）。这是当前最接近“P1 全面领先”的窗口，但 sampled 仍差约 0.2%。
+- **E-core**：period 1 时 tracing peer lead（0.96）；`timestamp_period=64` 后 batch 对 tracing 1.013–1.025、sampled 0.998–1.004 parity。加入 `tree_validated` capture proof 后 producer render 快约 7%–8%：batch vs tracing 1.072–1.086、sampled vs tracing 1.047–1.071，中位已超过 tracing；对 Foundation 1.32–1.45 lead。r3 已拿到 3/4 qualified lead，剩下 batch vs Foundation 被 Foundation 自身 15.1% batch spread 卡住；没有任何 qualified peer lead。
+- `tree_validated` 优化已通过完整 `test` **65/65 steps、766/767 tests（1 skip）**；只对 empty-context、无 format_args 的 capture 生效，`appendFields` 已证明完整 tree（key/value/node/cycle），renderer 不再重复 `validateEvent`。
 - **TSC clock** 更慢（P-core 2.54–2.60M vs native 2.59–2.66M，init 25–26ms vs 15–30ms），未采用。
 - **coarse publish**（每 64 条 publish 一次）与 per-record 版本持平（2.773M vs 2.792M median），未采用；最终候选保留 per-record release store。
 
@@ -52,8 +56,8 @@
 - spool 是**非 durable、无 recovery、单 producer** 的 opt-in fast mode；崩溃可能留下部分尾部记录。`flush(.durable)` 返回 `UnsupportedDurability`。
 - 55.9MiB 映射远大于默认 256-slot queue；这是用内存换 producer/consumer 解耦，必须作为资源预算记录。
 - `timestamp_period>1` 复用时间戳，staleness 以 clock-call 计数而非时间为界；生产化需要时间界（例如 1ms refresher）或明确文档。
-- 严格“所有选中 case 全部 qualified lead”门槛仍未满足：E-core 对 tracing 为 parity（0.998–1.013，CI 跨 1）；P-core 缺一个单窗口四对全 qualified。默认 durable 路径仍未全面超过两个前端。
-- 下一步：做通用 fast render 以跨过 E-core parity（specialized template 诊断曾显示 P1 +10%–23% 的 render 空间）；把 timestamp cache 改成有界时间（1ms refresher/专用线程）以保留语义；再评估 P4/durable 路径。
+- 严格“所有选中 case 全部 qualified lead”门槛仍未满足：E-core 对 tracing 的中位已到 1.047–1.084，但 peer/paired spread 仍会超过 10%；P-core 缺一个单窗口四对全 qualified。默认 durable 路径仍未全面超过两个前端。
+- 下一步：把 timestamp cache 改成有界时间（1ms refresher/专用线程）以保留语义；继续用安静窗口把 E-core/P-core 四对 qualification 收齐；再评估 P4/durable 路径。
 
 ## 复现
 
