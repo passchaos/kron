@@ -392,11 +392,12 @@ max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁�
 | 场景 | 推荐模式 | 当前证据 |
 | --- | --- | --- |
 | 需要 recovery、CRC、三检查点、多 route、rolling 或 durable | 默认 `Logging`/`Runtime` | durable 默认路径；P4 mmap 仍落后 Foundation（0.54–0.62），P1 sampled tracing 领先 |
-| P1 memory 或 P4 高吞吐，可接受无 recovery | `text_format=true` opt-in | E-core P1 memory batch 2.307M，对 Foundation/tracing 1.286/1.038 qualified；P4 中位 3.4–3.6M 领先，窗口 spread 未 qualified |
+| P4 高吞吐，仍需 journal/CRC/recovery | `render_cache` opt-in | 安静窗口 P4 memory batch/sampled 1.63/1.58 qualified；mmap 中位 1.51–1.61 因 spread inconclusive；最新噪声窗口 2.93–3.44M 中位领先。cache 是 volatile，journal/CRC/recovery 保留，恢复时回退 deferred render |
+| P1 memory 或 P4 最高吞吐，可接受无 recovery | `text_format=true` opt-in | E-core P1 memory batch 2.307M，对 Foundation/tracing 1.286/1.038 qualified；P4 中位 3.4–3.6M 领先，窗口 spread 未 qualified |
 | P1 mmap 最高吞吐、单 producer、无 recovery | `MmapSpool` opt-in | P-core batch 3.74–3.85M、sampled 3.19–3.35M；E-core 2.92–3.01M/2.57–2.62M；对两个前端中位 1.05–1.83x；无 qualified peer lead，部分配对 inconclusive |
 | P1 mmap 需要 journal/recovery | 默认 durable `Runtime` | 不是最快；生产 `text_format` P1 mmap 对 tracing 为 0.888 |
 
-选择原则：先按 recovery/durable 需求决定默认路径；只有明确接受“崩溃可能丢失尾部记录”时才用 `text_format` 或 `MmapSpool`。`text_format` 适合 P1 memory/P4，`MmapSpool` 适合单 producer 的 P1 mmap 最高吞吐。
+选择原则：先按 recovery/durable 需求决定默认路径；P4 需要保留 journal/CRC/recovery 时用 `render_cache`；只有明确接受“崩溃可能丢失尾部记录”时才用 `text_format` 或 `MmapSpool`。`text_format` 适合 P1 memory/P4 最高吞吐，`MmapSpool` 适合单 producer 的 P1 mmap 最高吞吐。
 
 ## Mmap spool fast mode
 
