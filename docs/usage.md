@@ -387,6 +387,17 @@ max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁�
 
 默认路径保持无每事件分配，但多输出增加各自复制、编码、配置和后台线程成本。只用一个目标的热点可取scopedOutput；多个独立队列之间不能复用已经编码的record。同格式复用仍可在高级Runtime的共享管线多route中使用，需自行管理sink生命周期。
 
+## 性能模式选择
+
+| 场景 | 推荐模式 | 当前证据 |
+| --- | --- | --- |
+| 需要 recovery、CRC、三检查点、多 route、rolling 或 durable | 默认 `Logging`/`Runtime` | durable 默认路径；P4 mmap 仍落后 Foundation（0.54–0.62），P1 sampled tracing 领先 |
+| P1 memory 或 P4 高吞吐，可接受无 recovery | `text_format=true` opt-in | E-core P1 memory batch 2.307M，对 Foundation/tracing 1.286/1.038 qualified；P4 中位 3.4–3.6M 领先，窗口 spread 未 qualified |
+| P1 mmap 最高吞吐、单 producer、无 recovery | `MmapSpool` opt-in | P-core batch 3.74–3.85M、sampled 3.19–3.35M；E-core 2.92–3.01M/2.57–2.62M；对两个前端中位 1.05–1.83x；无 qualified peer lead，部分配对 inconclusive |
+| P1 mmap 需要 journal/recovery | 默认 durable `Runtime` | 不是最快；生产 `text_format` P1 mmap 对 tracing 为 0.888 |
+
+选择原则：先按 recovery/durable 需求决定默认路径；只有明确接受“崩溃可能丢失尾部记录”时才用 `text_format` 或 `MmapSpool`。`text_format` 适合 P1 memory/P4，`MmapSpool` 适合单 producer 的 P1 mmap 最高吞吐。
+
 ## Mmap spool fast mode
 
 `kron.MmapSpool` 是单 producer、非 durable 的 opt-in fast mode：producer 把最终 JSON 直接渲染进 file-backed 映射，一个 writer 线程按约 1MiB 调度 `msync(MS_ASYNC)`，`shutdown` 把文件截断到已渲染字节。没有 journal、CRC、recovery、ring 或 consumer；默认 `Logging`/`Runtime` durable 路径不变。
