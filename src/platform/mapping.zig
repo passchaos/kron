@@ -57,6 +57,28 @@ pub const Mapping = struct {
         return .{ .file = file, .directory = directory, .io = io, .bytes = bytes, .fresh = fresh, .fresh_zeroed = fresh_zeroed };
     }
 
+    /// Flush dirty shared pages in `[start, end)` without a file durability
+    /// barrier. The start is aligned down to a page boundary.
+    pub fn syncMappedRange(self: *Mapping, start: usize, end: usize) !void {
+        if (end > self.bytes.len or start > end) return error.InvalidSize;
+        if (start == end) return;
+        const aligned_start = start & ~@as(usize, 4095);
+        const ptr: [*]align(4096) u8 = @alignCast(self.bytes.ptr + aligned_start);
+        try backend.sync(ptr[0 .. end - aligned_start]);
+    }
+
+    /// Schedule dirty-page writeback in `[start, end)` without waiting for it.
+    /// This is the non-durable `written` boundary; platforms without an
+    /// asynchronous mapping flush fall back to the synchronous barrier.
+    pub fn syncMappedRangeAsync(self: *Mapping, start: usize, end: usize) !void {
+        if (end > self.bytes.len or start > end) return error.InvalidSize;
+        if (start == end) return;
+        const aligned_start = start & ~@as(usize, 4095);
+        const ptr: [*]align(4096) u8 = @alignCast(self.bytes.ptr + aligned_start);
+        const slice = ptr[0 .. end - aligned_start];
+        if (comptime @hasDecl(backend, "syncAsync")) try backend.syncAsync(slice) else try backend.sync(slice);
+    }
+
     /// Publish complete file contents and length. This is used for schema-ready
     /// publication; directory durability is a separate explicit capability.
     pub fn syncFile(self: *Mapping) !void {

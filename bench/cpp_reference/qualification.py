@@ -56,7 +56,7 @@ def foundation_comparisons(grouped):
         if library != "kron":
             continue
         parts = configuration.split("-")
-        if len(parts) != 3 or parts[0] not in ("async", "spsc") or parts[1] not in ("memory", "mmap"):
+        if len(parts) != 3 or parts[0] not in ("async", "spsc", "spool") or parts[1] not in ("memory", "mmap"):
             raise ValueError("unknown kron comparison configuration")
         storage = parts[1]
         for peer in PEERS:

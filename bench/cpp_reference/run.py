@@ -132,13 +132,21 @@ def verify(row, artifact, events, warmup):
     if row.get("metadata") == "native_tracing":
         assert row["library"] == "foundation_tracing"
     assert row["status"] == "ok" and row["events"] == events, row
-    assert row["warmup_events"] == warmup and row["queue_policy"] == "block" and row["file_buffer_bytes"] == 65536
+    assert row["warmup_events"] == warmup and row["queue_policy"] == "block"
+    if row.get("mode") == "spool":
+        assert row["sync_threshold_bytes"] >= 65536 and row["mapping_reserved_bytes"] > row["written_bytes"]
+    else:
+        assert row["file_buffer_bytes"] == 65536
     if row["library"] in {"foundation", "foundation_tracing"}:
         assert row["foundation_submitted_records"] == row["foundation_written_records"] == events + warmup
         assert row["has_process_crash_recovery"] is (row["storage"] == "mmap")
     if row["library"] == "kron":
-        assert row["has_process_crash_recovery"] is (row["storage"] == "mmap")
-        assert row["journal_reserved_bytes"] == (0 if row["storage"] == "memory" else row["queue_reserved_bytes"])
+        if row.get("mode") == "spool":
+            assert row["has_process_crash_recovery"] is False
+            assert row["journal_reserved_bytes"] == 0 and row["queue_reserved_bytes"] == row["mapping_reserved_bytes"]
+        else:
+            assert row["has_process_crash_recovery"] is (row["storage"] == "mmap")
+            assert row["journal_reserved_bytes"] == (0 if row["storage"] == "memory" else row["queue_reserved_bytes"])
     assert row["accepted"] == row["written"] == events and row["drop"] == row["final_pending"] == 0, row
     assert row["total_ns"] >= row["producer_wall_ns"] + row["flush_ns"] + row["shutdown_ns"], row
     if row.get("schema_version") == 2:
@@ -237,6 +245,7 @@ def main():
     parser.add_argument("--kron-schema", choices=("off", "on", "both"), default="off")
     parser.add_argument("--kron-render-cache", action="store_true")
     parser.add_argument("--kron-text-format", action="store_true")
+    parser.add_argument("--kron-spool-timestamp-period", type=int, default=1)
     parser.add_argument("--metadata", choices=("minimal", "full", "default_text", "native_tracing"), default="full")
     parser.add_argument("--affinity", default="auto")
     parser.add_argument("--discard-artifacts", action="store_true")
@@ -248,12 +257,17 @@ def main():
     modes = options.kron_modes.split(",")
     storages = options.kron_storages.split(",")
     if (not set(libraries) <= {"spdlog", "quill", "kron", "foundation", "foundation_tracing"} or not set(producers) <= {1, 4}
-            or not set(modes) <= {"async", "spsc"} or not set(storages) <= {"memory", "mmap"} or not 1 <= options.events <= 1000000
+            or not set(modes) <= {"async", "spsc", "spool"} or not set(storages) <= {"memory", "mmap"} or not 1 <= options.events <= 1000000
             or not 0 <= options.warmup <= 1000000 or not 1 <= options.repeats <= 10
             or not 1 <= options.timeout_seconds <= 120):
         parser.error("invalid bounded comparison options")
     if any(not values or len(set(values)) != len(values) for values in (libraries, producers, modes, storages)):
         parser.error("comparison lists must be nonempty and contain no duplicates")
+    if "spool" in modes and (producers != [1] or storages != ["mmap"] or options.kron_schema != "off"
+                             or options.kron_frontend != "runtime" or options.kron_render_cache or options.kron_text_format):
+        parser.error("spool mode is single-producer mmap inline only")
+    if not 1 <= options.kron_spool_timestamp_period <= 1024:
+        parser.error("spool timestamp period must be 1..1024")
     if options.metadata == "default_text" and libraries != ["foundation"]:
         parser.error("default_text is a separate Foundation-only control; other references use the common full JSON workload")
     if options.metadata == "native_tracing" and libraries != ["foundation_tracing"]:
@@ -332,7 +346,7 @@ def main():
                 artifact = artifacts / f"{name}-{strategy}-p{producer}-{phase}-r{repetition}.jsonl"
                 command = [str(binaries[name]), f"--output={artifact}", f"--events={options.events}", f"--warmup={options.warmup}",
                            f"--producers={producer}", f"--phase={phase}", "--queue-slots=256",
-                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}", *(["--render-cache=true"] if options.kron_render_cache and producer == 4 else []), *(["--text-format=true"] if options.kron_text_format else [])] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
+                           *([f"--frontend={options.kron_frontend}", f"--mode={strategy.split('-')[0]}", f"--storage={strategy.split('-')[1]}", f"--schema={str(strategy.endswith('-schema')).lower()}", *(["--render-cache=true"] if options.kron_render_cache and producer == 4 else []), *(["--text-format=true"] if options.kron_text_format else []), *([f"--spool-timestamp-period={options.kron_spool_timestamp_period}"] if strategy.startswith("spool-") else [])] if name == "kron" else ["--strategy=producer_format", f"--storage={strategy}", f"--metadata={options.metadata}"] if name in {"foundation", "foundation_tracing"} else [f"--strategy={strategy}", f"--metadata={options.metadata}"])]
                 row = {"status": "failed", "library": name, "strategy": strategy, "phase": phase,
                        "producers": producer, "repetition": repetition, "command": command, "artifact": str(artifact)}
                 if name in timed_out_libraries:

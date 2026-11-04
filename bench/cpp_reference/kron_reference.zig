@@ -19,6 +19,8 @@ const Options = struct {
     backend: BackendKind = .portable,
     render_cache: bool = false,
     text_format: bool = false,
+    spool_clock: []const u8 = "native",
+    spool_timestamp_period: usize = 1,
 };
 
 const Gate = struct {
@@ -129,12 +131,140 @@ const shape: kron.Event = .{
     .fields = &.{ kron.kv("field0", @as(u64, 0)), kron.kv("field1", @as(u64, 1)), kron.kv("field2", @as(u64, 2)), kron.kv("field3", @as(u64, 3)), kron.kv("field4", @as(u64, 4)) },
 };
 
+fn emitSpool(log: anytype, n: usize) !kron.EmitResult {
+    return log.tryEmit(.info, "event", .{
+        .field0 = @as(u64, @intCast(n)),
+        .field1 = @as(u64, @intCast(n + 1)),
+        .field2 = @as(u64, @intCast(n + 2)),
+        .field3 = @as(u64, @intCast(n + 3)),
+        .field4 = @as(u64, @intCast(n + 4)),
+    });
+}
+
+/// Single-producer non-durable mmap spool: render directly into the output
+/// mapping and let one writer thread schedule dirty-page writeback. Warmup
+/// records use `events..events+warmup`, matching the shared reference contract.
+fn runSpool(io: std.Io, allocator: std.mem.Allocator, options: Options, lifecycle_start: std.Io.Timestamp) !void {
+    const capacity_bytes = (options.events + options.warmup) * 512 + 4 * 1024 * 1024;
+    const tsc = if (std.mem.eql(u8, options.spool_clock, "tsc")) kron.TscClock.create(allocator, io, .{}) catch null else null;
+    defer if (tsc) |value| value.destroy();
+    const clock = if (tsc) |value| value.clock() else kron.Clock{};
+    const spool = try kron.MmapSpool.create(allocator, io, .{
+        .path = options.output,
+        .capacity_bytes = capacity_bytes,
+        .min_level = .info,
+        .idle = .sleep,
+        .clock = clock,
+        .timestamp_period = options.spool_timestamp_period,
+    });
+    var spool_live = true;
+    defer if (spool_live) spool.destroy();
+    const initialized = std.Io.Clock.awake.now(io);
+    const log = spool.logger("reference");
+    for (0..options.warmup) |index| _ = try emitSpool(log, options.events + index);
+    try spool.flush(.written);
+    const before_health = spool.health();
+    const warmup_offset = spool.writtenBytes();
+    const start = std.Io.Clock.awake.now(io);
+    const samples = try allocator.alloc(u64, if (std.mem.eql(u8, options.phase, "sampled")) options.events else 0);
+    defer allocator.free(samples);
+    @memset(samples, 0);
+    for (0..options.events) |index| {
+        const before = if (samples.len != 0) std.Io.Clock.awake.now(io) else null;
+        _ = try emitSpool(log, index);
+        if (before) |value| samples[index] = elapsed(value, std.Io.Clock.awake.now(io));
+    }
+    const produced = std.Io.Clock.awake.now(io);
+    try spool.flush(.written);
+    const flushed = std.Io.Clock.awake.now(io);
+    const measured_offset = spool.writtenBytes();
+    try spool.shutdown();
+    const end = std.Io.Clock.awake.now(io);
+    const health = spool.health();
+    const accepted = health.accepted - before_health.accepted;
+    const written = health.written - before_health.written;
+    if (accepted != options.events or written != options.events or health.pending != 0) return error.CounterMismatch;
+    if (health.dropped_full != 0 or health.dropped_oversize != 0 or health.errors != 0) return error.DeliveryError;
+    spool.destroy();
+    spool_live = false;
+    const cleaned = std.Io.Clock.awake.now(io);
+    const artifact_bytes = (try std.Io.Dir.cwd().statFile(io, options.output, .{})).size;
+    const written_bytes = measured_offset - warmup_offset;
+    std.mem.sort(u64, samples, {}, std.sort.asc(u64));
+    var noop: [10000]u64 = undefined;
+    for (&noop, 0..) |*value, index| {
+        const before = std.Io.Clock.awake.now(io);
+        std.mem.doNotOptimizeAway(index);
+        value.* = elapsed(before, std.Io.Clock.awake.now(io));
+    }
+    std.mem.sort(u64, &noop, {}, std.sort.asc(u64));
+    const result = .{
+        .schema_version = 2,
+        .status = "ok",
+        .library = "kron",
+        .frontend = "spool",
+        .consumer_idle = "sleep",
+        .version = "workspace",
+        .strategy = "spool_mmap_async",
+        .phase = options.phase,
+        .mode = options.mode,
+        .storage = options.storage,
+        .prepared_schema = false,
+        .consumer_batches_per_queue = options.consumer_batches,
+        .backend_requested = "mmap_spool",
+        .backend_selected = "mmap_spool",
+        .metadata = "full",
+        .events = options.events,
+        .producers = options.producers,
+        .warmup_events = options.warmup,
+        .accepted = accepted,
+        .written = written,
+        .drop = @as(u64, 0),
+        .final_pending = health.pending,
+        .producer_wall_ns = elapsed(start, produced),
+        .flush_ns = elapsed(produced, flushed),
+        .shutdown_ns = elapsed(flushed, end),
+        .cleanup_ns = elapsed(end, cleaned),
+        .init_ns = elapsed(lifecycle_start, initialized),
+        .preparation_ns = elapsed(initialized, start),
+        .total_ns = elapsed(start, cleaned),
+        .lifecycle_ns = elapsed(lifecycle_start, cleaned),
+        .lifecycle_records_per_sec = @as(f64, @floatFromInt(options.events + options.warmup)) * 1e9 / @as(f64, @floatFromInt(elapsed(lifecycle_start, cleaned))),
+        .written_bytes = written_bytes,
+        .artifact_bytes = artifact_bytes,
+        .written_records_per_sec = @as(f64, @floatFromInt(accepted)) * 1e9 / @as(f64, @floatFromInt(elapsed(start, cleaned))),
+        .sample_count = samples.len,
+        .p50_ns = quantile(samples, 500),
+        .p99_ns = quantile(samples, 990),
+        .p999_ns = quantile(samples, 999),
+        .noop_clock_pair_p50_ns = quantile(&noop, 500),
+        .noop_clock_pair_p99_ns = quantile(&noop, 990),
+        .queue_policy = "block",
+        .queue_slots = @as(usize, 0),
+        .max_record_bytes = options.max_record_bytes,
+        .file_buffer_bytes = @as(usize, 0),
+        .sync_threshold_bytes = @as(usize, 1024 * 1024),
+        .mapping_reserved_bytes = capacity_bytes,
+        .has_process_crash_recovery = false,
+        .queue_reserved_bytes = capacity_bytes,
+        .journal_reserved_bytes = @as(u64, 0),
+        .event_clock = "std.Io_dynamic_system",
+        .optimize = @tagName(@import("builtin").mode),
+    };
+    var buffer: [8192]u8 = undefined;
+    var output = std.Io.File.stdout().writerStreaming(io, &buffer);
+    try std.json.Stringify.value(result, .{}, &output.interface);
+    try output.interface.writeByte('\n');
+    try output.interface.flush();
+}
+
 pub fn main(init: std.process.Init) !void {
     const arguments = try init.minimal.args.toSlice(init.arena.allocator());
     const options = try parse(arguments[1..]);
     const io = init.io;
     const allocator = init.gpa;
     const lifecycle_start = std.Io.Clock.awake.now(io);
+    if (std.mem.eql(u8, options.mode, "spool")) return runSpool(io, allocator, options, lifecycle_start);
     const file = if (options.frontend == .runtime) try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = options.backend, .append = false }) else null;
     var file_live = file != null;
     defer if (file_live) file.?.deinit();
@@ -346,6 +476,12 @@ fn parse(arguments: []const []const u8) !Options {
             result.render_cache = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidRenderCache;
         } else if (std.mem.eql(u8, key, "--text-format")) {
             result.text_format = if (std.mem.eql(u8, value, "true")) true else if (std.mem.eql(u8, value, "false")) false else return error.InvalidTextFormat;
+        } else if (std.mem.eql(u8, key, "--spool-clock")) {
+            if (!std.mem.eql(u8, value, "native") and !std.mem.eql(u8, value, "tsc")) return error.InvalidClock;
+            result.spool_clock = value;
+        } else if (std.mem.eql(u8, key, "--spool-timestamp-period")) {
+            result.spool_timestamp_period = try std.fmt.parseInt(usize, value, 10);
+            if (result.spool_timestamp_period == 0 or result.spool_timestamp_period > 1024) return error.InvalidOptions;
         } else {
             const count = try std.fmt.parseInt(usize, value, 10);
             if (std.mem.eql(u8, key, "--events")) {
@@ -364,10 +500,13 @@ fn parse(arguments: []const []const u8) !Options {
     }
     if (result.output.len == 0 or result.events == 0 or result.events > 1000000 or result.warmup > 1000000 or
         (result.producers != 1 and result.producers != 4) or result.queue_slots == 0 or result.queue_slots > 65536 or
-        (!std.mem.eql(u8, result.mode, "async") and !std.mem.eql(u8, result.mode, "spsc")) or
+        (!std.mem.eql(u8, result.mode, "async") and !std.mem.eql(u8, result.mode, "spsc") and !std.mem.eql(u8, result.mode, "spool")) or
         (!std.mem.eql(u8, result.storage, "memory") and !std.mem.eql(u8, result.storage, "mmap")) or
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
+    if (std.mem.eql(u8, result.mode, "spool") and
+        (result.producers != 1 or !std.mem.eql(u8, result.storage, "mmap") or result.schema or
+            result.frontend != .runtime or result.render_cache or result.text_format)) return error.InvalidOptions;
     return result;
 }
 fn share(total: usize, producers: usize, id: usize) usize {

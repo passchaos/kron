@@ -56,6 +56,7 @@ pub const Deadline = @import("core/control.zig").Deadline;
 pub const Sink = @import("sink/interface.zig").Sink;
 pub const MemorySink = @import("sink/memory.zig").MemorySink;
 pub const FileSink = @import("sink/file.zig").FileSink;
+pub const MmapSpool = @import("core/mmap_spool.zig").MmapSpool;
 pub const WriterSink = @import("sink/writer.zig").WriterSink;
 pub const MultiSink = @import("sink/multi.zig").MultiSink;
 pub const RollingFileSink = @import("sink/rolling_file.zig").RollingFileSink;

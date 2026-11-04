@@ -59,6 +59,16 @@ pub fn sync(bytes: []align(4096) u8) !void {
     };
 }
 
+/// Schedule writeback without waiting for it. This is sufficient for a
+/// non-durable `written` boundary; readers still observe the dirty pages.
+pub fn syncAsync(bytes: []align(4096) u8) !void {
+    while (true) switch (linux.errno(linux.msync(bytes.ptr, bytes.len, linux.MSF.ASYNC))) {
+        .SUCCESS => return,
+        .INTR => continue,
+        else => return error.MappingSyncFailed,
+    };
+}
+
 pub fn unmap(bytes: []align(4096) u8) void {
     _ = linux.munmap(bytes.ptr, bytes.len);
 }

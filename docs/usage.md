@@ -387,6 +387,33 @@ max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁�
 
 默认路径保持无每事件分配，但多输出增加各自复制、编码、配置和后台线程成本。只用一个目标的热点可取scopedOutput；多个独立队列之间不能复用已经编码的record。同格式复用仍可在高级Runtime的共享管线多route中使用，需自行管理sink生命周期。
 
+## Mmap spool fast mode
+
+`kron.MmapSpool` 是单 producer、非 durable 的 opt-in fast mode：producer 把最终 JSON 直接渲染进 file-backed 映射，一个 writer 线程按约 1MiB 调度 `msync(MS_ASYNC)`，`shutdown` 把文件截断到已渲染字节。没有 journal、CRC、recovery、ring 或 consumer；默认 `Logging`/`Runtime` durable 路径不变。
+
+```zig
+const spool = try kron.MmapSpool.create(allocator, io, .{
+    .path = "app-fast.jsonl",
+    .capacity_bytes = 64 * 1024 * 1024,
+    .timestamp_period = 64, // optional: reuse one capture for 64 clock calls
+});
+defer spool.destroy();
+const log = spool.logger("app");
+_ = try log.tryEmit(.info, "event", .{ .field0 = @as(u64, 1) });
+try spool.flush(.written);
+try spool.shutdown();
+```
+
+边界：
+
+- 只支持一个 producer；`channel` 固定 0，`sequence` 从 1 递增。
+- `flush(.written)` 只保证 dirty page 对读者可见，不是设备 durable；`flush(.durable)` 返回 `UnsupportedDurability`。进程崩溃可能留下部分尾部记录，`shutdown` 会截断到最后一条完整记录。
+- `capacity_bytes` 是映射/内存预算；容量耗尽返回 `dropped_full`，单条超出剩余空间返回 `dropped_oversize`，不会发布部分记录。
+- `timestamp_period>1` 会复用一次 clock capture；staleness 以 clock-call 计数而非时间为界，需要精确时间时保持 1。
+- 需要 recovery、CRC、三检查点、rolling/多 route 或 durable 时使用默认 `Logging`/`Runtime`。
+
+性能证据：P-core spool batch 3.74–3.85M、sampled 3.19–3.35M；E-core batch 2.92–3.01M、sampled 2.57–2.62M；对 Foundation/tracing 中位 1.05–1.83x，没有 qualified peer lead；部分同窗口配对因 peer spread 保持 inconclusive。见 [mmap spool A/B](../bench/evidence/2026-11-04-mmap-spool/README.md)。
+
 可运行示例索引见 [examples](../examples/README.md)。相关验证：
 
 ```sh
