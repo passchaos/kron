@@ -38,6 +38,13 @@ pub const Options = struct {
     clock: Clock = .{},
     session: u64 = std.math.maxInt(u64),
     idle: types.Idle = .sleep,
+    /// When false, the producer owns the mapping and `flush` schedules the
+    /// dirty range directly; no writer thread competes for the core budget.
+    writer_thread: bool = true,
+    /// Reuse one captured timestamp for this many calls. One keeps exact
+    /// timestamps; larger values trade timestamp freshness for fewer clock
+    /// reads in the volatile fast path.
+    timestamp_period: usize = 1,
 };
 
 pub const MmapSpool = struct {
@@ -50,6 +57,9 @@ pub const MmapSpool = struct {
     min_level: Level,
     session: u64,
     idle: types.Idle,
+    timestamp_period: usize = 1,
+    timestamp_counter: usize = 0,
+    cached_now: i64 = 0,
     sequence: u64 = 0,
     accepted: u64 = 0,
     written: u64 = 0,
@@ -93,6 +103,7 @@ pub const MmapSpool = struct {
             .min_level = options.min_level,
             .session = options.session,
             .idle = options.idle,
+            .timestamp_period = options.timestamp_period,
         };
         errdefer self.mapping.deinit();
         self.worker = try std.Thread.spawn(.{}, workerMain, .{self});
@@ -129,6 +140,12 @@ pub const MmapSpool = struct {
     pub fn flush(self: *MmapSpool, boundary: types.Flush) !void {
         if (boundary == .durable) return error.UnsupportedDurability;
         if (self.last_error.load(.acquire) != 0) return error.DeliveryFailed;
+        // Publish the exact tail before the writer is asked to observe it.
+        self.published.store(self.offset, .release);
+        if (self.worker == null) {
+            self.syncTo(self.published.load(.acquire)) catch |err| return err;
+            return;
+        }
         const observed = self.flush_epoch.load(.seq_cst);
         self.flush_requested.store(true, .release);
         self.wake();
@@ -177,7 +194,11 @@ pub const MmapSpool = struct {
     }
 
     pub fn nowNs(self: *MmapSpool) i64 {
-        return self.clock.realNow(self.io);
+        if (self.timestamp_period <= 1) return self.clock.realNow(self.io);
+        if (self.timestamp_counter == 0) self.cached_now = self.clock.realNow(self.io);
+        self.timestamp_counter += 1;
+        if (self.timestamp_counter == self.timestamp_period) self.timestamp_counter = 0;
+        return self.cached_now;
     }
 
     pub fn captureFailed(self: *MmapSpool, err: anyerror) void {
@@ -208,7 +229,7 @@ pub const MmapSpool = struct {
         self.published.store(self.offset, .release);
         self.accepted += 1;
         self.written += 1;
-        if (self.offset - self.synced.load(.monotonic) >= sync_threshold) self.wake();
+        if (self.worker != null and self.offset - self.synced.load(.monotonic) >= sync_threshold) self.wake();
         return .accepted;
     }
 
