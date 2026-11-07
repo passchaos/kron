@@ -217,7 +217,7 @@ pub const MmapSpool = struct {
         self.sequence += 1;
         submitted.sequence = self.sequence;
         var writer = std.Io.Writer.fixed(self.mapping.bytes[self.offset..]);
-        common.encodeDecoded(.json, submitted, self.timestamp, &writer) catch |err| {
+        common.encodeDecodedPtr(.json, &submitted, self.timestamp, &writer) catch |err| {
             if (err == error.WriteFailed) {
                 self.dropped_oversize += 1;
                 return .dropped_oversize;

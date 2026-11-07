@@ -73,10 +73,31 @@ fn digits(buffer: []u8, end: usize, value: u64, minimum: usize) usize {
 
 fn writeMagnitude(comptime T: type, writer: *std.Io.Writer, magnitude: T, negative: bool) std.Io.Writer.Error!void {
     if (T == u64 and writer.buffer.len - writer.end >= 21) {
+        // Channel, route mask, generation and trace flags are usually small.
+        // One or two direct stores skip digit-count estimation and the pair
+        // loop for those fields.
+        if (magnitude < 100) {
+            writeSmallNative(writer, @intCast(magnitude), negative);
+            return;
+        }
         if (magnitude >= 100_000_000) writeLargeNative(writer, magnitude, negative) else writeNative(writer, magnitude, negative);
         return;
     }
     return writeBuffered(T, writer, magnitude, negative);
+}
+
+inline fn writeSmallNative(writer: *std.Io.Writer, magnitude: u8, negative: bool) void {
+    const digits_len: usize = if (magnitude < 10) 1 else 2;
+    const length = digits_len + @intFromBool(negative);
+    const destination = writer.buffer[writer.end..][0..length];
+    const start: usize = @intFromBool(negative);
+    if (negative) destination[0] = '-';
+    if (magnitude < 10) {
+        destination[start] = '0' + magnitude;
+    } else {
+        destination[start..][0..2].* = std.fmt.digits2(magnitude);
+    }
+    writer.end += length;
 }
 
 // Streaming, short buffers and wide integers keep their bounded temporary

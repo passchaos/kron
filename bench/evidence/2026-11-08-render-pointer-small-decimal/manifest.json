@@ -1,0 +1,70 @@
+{
+  "captured_unix_seconds": 1794086833.120787,
+  "host": {
+    "system": "Linux",
+    "node": "robot-NUC13RNGi5",
+    "release": "6.8.0-147-generic",
+    "machine": "x86_64"
+  },
+  "loadavg": [
+    "8.18",
+    "7.38",
+    "6.67",
+    "7/2343",
+    "454937"
+  ],
+  "logical_cpus": 32,
+  "child_affinity": [
+    16,
+    18,
+    20,
+    22,
+    24,
+    26
+  ],
+  "git_head": "25aa203bb9afc5eddc87f1d272acbec17e33a66c",
+  "changed_source_sha256": {
+    "src/core/delivery.zig": "b1dcf1707c796313c0f99dc26bf3cf0500f89e03785163c22a4b33ec5b5e71ac",
+    "src/core/mmap_spool.zig": "23657be20b7ed8ef2dd5ea5f83c22e1f1d277a2d35f80edd1073911d5ec02099",
+    "src/core/runtime.zig": "7f930e48529a1992f340770410e46f1c7809d861f391108f0bb2fbda119548ca",
+    "src/encoder/common.zig": "818b753aa7a39b9df096ba1114c116e31c072c76fb467392296d006f6f99f99f",
+    "src/encoder/decimal.zig": "d9b94601570f4a20ce02ad2b507952a99f309d28fe297d6838e0f6cfc5075e65",
+    "src/encoder/wire_json.zig": "935f52c0c2784312f45ead0e8ca6996ccb6be6d2673b2fd8a6d5efb976981925"
+  },
+  "binaries": {
+    "kron_before": {
+      "path": "/tmp/kron-opt/reference-kron",
+      "sha256": "633abdfe7bae83da5326e887200bf0f99287a4e2f2305eab1bf11712140bef41"
+    },
+    "kron_after": {
+      "path": "/tmp/kron-opt/reference-kron-small",
+      "sha256": "5be1b09746b631a314223cfe5de712ba73f611c810999e7ffcfeee39d3c1586b"
+    },
+    "foundation": {
+      "path": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation",
+      "sha256": "9ba6ea69a875d18d84251b166e8f3cc7569a133abc5a6c76dff255c134d17868"
+    },
+    "foundation_tracing": {
+      "path": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation_tracing",
+      "sha256": "fc86100246eaffe2716fad49f24067d38405ad60c3d17a2c2ca8408edb804714"
+    }
+  },
+  "foundation_repository_head": "0d1f5b0c5689a3fdc502b1c4c7ed8496eb1d5a94",
+  "peer_source_note": "Cached Foundation binaries from the 2026-11-04 full E-core matrix; the pinned Foundation workspace HEAD is unchanged and matches that manifest.",
+  "configuration": {
+    "events": 100000,
+    "warmup": 1000,
+    "queue_slots": 256,
+    "rounds_ab": 7,
+    "rounds_peer": 5,
+    "metadata": "full"
+  },
+  "verification": {
+    "ab_rows": 140,
+    "peer_rows": 270,
+    "records_per_run": 101000,
+    "total_records_verified": 41410000
+  },
+  "source_diff_sha256": "fb4888298b227039be23d58efb1687826ec10b4bfcaf71e466cafddb7890666e",
+  "source_diff_note": "git diff --binary -- src at measurement time; evidence/docs are excluded."
+}

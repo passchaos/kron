@@ -743,7 +743,7 @@ pub const Runtime = struct {
                     std.mem.writeInt(u64, reservation.buffer()[8..16], snapshot.fingerprint, .little);
                     std.mem.writeInt(u32, reservation.buffer()[16..20], event.channel, .little);
                     var writer = std.Io.Writer.fixed(reservation.buffer()[header_bytes..]);
-                    common.encodeDecoded(.json, event.*, route.timestamp, &writer) catch |err| {
+                    common.encodeDecodedPtr(.json, event, route.timestamp, &writer) catch |err| {
                         reservation.abort();
                         self.notify();
                         if (err == error.WriteFailed or err == error.BufferTooSmall) {
@@ -798,7 +798,7 @@ pub const Runtime = struct {
                     const redacted = if (route.policy) |policy| policy.redactor != null else false;
                     if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.claim(reservation.sequence)) |claim| {
                         var writer = std.Io.Writer.fixed(claim.buffer);
-                        if (common.encodeDecoded(.json, event.*, route.timestamp, &writer)) |_| {
+                        if (common.encodeDecodedPtr(.json, event, route.timestamp, &writer)) |_| {
                             claim.publish(writer.buffered().len);
                             render_claim = claim;
                         } else |_| {

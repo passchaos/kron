@@ -52,9 +52,9 @@ pub fn emit(routes: []const types.Route, scratch: []u8, event: Event, diagnostic
 fn encodeRecord(route: *const types.Route, scratch: []u8, event: Event) ![]const u8 {
     var output = std.Io.Writer.fixed(scratch);
     switch (route.format) {
-        .text => try common.encodeDecoded(.text, event, route.timestamp, &output),
-        .json => try common.encodeDecoded(.json, event, route.timestamp, &output),
-        .logfmt => try common.encodeDecoded(.logfmt, event, route.timestamp, &output),
+        .text => try common.encodeDecodedPtr(.text, &event, route.timestamp, &output),
+        .json => try common.encodeDecodedPtr(.json, &event, route.timestamp, &output),
+        .logfmt => try common.encodeDecodedPtr(.logfmt, &event, route.timestamp, &output),
         .binary => if (route.timestamp) |cache| try encoder.encodeWithTime(.binary, event, cache, &output) else try encoder.encode(.binary, event, &output),
     }
     return output.buffered();

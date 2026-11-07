@@ -23,6 +23,12 @@ pub const logfmtKey = escaping_primitives.logfmtKey;
 /// Validate the entire borrowed tree before an encoder writes its first byte.
 /// Attributes and deferred arguments share the same bounded node budget.
 pub fn validateEvent(event: Event) std.Io.Writer.Error!void {
+    return validateEventPtr(&event);
+}
+
+/// Pointer form for hot delivery paths. The event stays borrowed and must not
+/// be mutated for the duration of the call.
+pub fn validateEventPtr(event: *const Event) std.Io.Writer.Error!void {
     var validator: fields.ValueValidator = .{};
     validator.fields(event.fields) catch return error.WriteFailed;
     validator.arguments(event.format_args) catch return error.WriteFailed;
@@ -31,6 +37,10 @@ pub fn validateEvent(event: Event) std.Io.Writer.Error!void {
 /// Escapes a message while deferred formatting writes it. No complete-message
 /// scratch allocation or arbitrary truncation limit is needed.
 pub fn message(writer: *std.Io.Writer, event: Event, escaping: Escaping) std.Io.Writer.Error!void {
+    return messagePtr(writer, &event, escaping);
+}
+
+pub fn messagePtr(writer: *std.Io.Writer, event: *const Event, escaping: Escaping) std.Io.Writer.Error!void {
     if (!event.message_template) return quoted(writer, event.message, escaping);
     var output = try QuotedWriter.init(writer, escaping);
     try formatting.render(event.message, event.format_args, &output.interface);
@@ -43,23 +53,33 @@ pub const RecordFormat = enum { text, json, logfmt };
 /// for this call, including during writer callbacks. Validation cannot escape
 /// the call; the recursive renderer remains private.
 pub fn encode(comptime format: RecordFormat, event: Event, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    return encodeWithTime(format, event, null, writer);
+    return encodeWithTimePtr(format, &event, null, writer);
 }
 
 pub fn encodeWithTime(comptime format: RecordFormat, event: Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    try validateEvent(event);
-    return renderWithTime(format, event, formatter, writer);
+    return encodeWithTimePtr(format, &event, formatter, writer);
+}
+
+pub fn encodeWithTimePtr(comptime format: RecordFormat, event: *const Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    try validateEventPtr(event);
+    return renderWithTimePtr(format, event, formatter, writer);
 }
 
 /// Internal delivery entry point. A checked decoder sets `tree_validated` only
 /// after proving every attribute/argument invariant; public encoders never
 /// consult the hint. An unproven event takes the normal validating path.
 pub fn encodeDecoded(comptime format: RecordFormat, event: Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    if (!event.tree_validated) return encodeWithTime(format, event, formatter, writer);
-    return renderWithTime(format, event, formatter, writer);
+    return encodeDecodedPtr(format, &event, formatter, writer);
 }
 
-fn renderWithTime(comptime format: RecordFormat, event: Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+/// Pointer form used by the runtime, fused wire renderer and spool producer so
+/// a borrowed event is not copied through the render call chain.
+pub fn encodeDecodedPtr(comptime format: RecordFormat, event: *const Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    if (!event.tree_validated) return encodeWithTimePtr(format, event, formatter, writer);
+    return renderWithTimePtr(format, event, formatter, writer);
+}
+
+fn renderWithTimePtr(comptime format: RecordFormat, event: *const Event, formatter: ?*time.Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
     var time_bytes: [time.rfc3339.max_length]u8 = undefined;
     const readable = if (formatter) |cache| cache.format(.{ .nanoseconds = event.timestamp_ns }, &time_bytes) catch return error.WriteFailed else null;
     switch (format) {
@@ -69,8 +89,8 @@ fn renderWithTime(comptime format: RecordFormat, event: Event, formatter: ?*time
     }
 }
 
-fn encodeJson(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    return encodeJsonWithAttributes(event, readable, writer, &event, struct {
+fn encodeJson(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    return encodeJsonWithAttributesPtr(event, readable, writer, event, struct {
         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
             for (ctx.fields, 0..) |field, index| {
                 try jsonMember(output, field.key, index != 0);
@@ -95,6 +115,10 @@ fn jsonSeverityField(level: Level) []const u8 {
 }
 
 pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+    return encodeJsonWithAttributesPtr(&event, readable, writer, context, writeAttributes);
+}
+
+pub fn encodeJsonWithAttributesPtr(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("{\"timestamp_ns\":");
     try writeTaggedValue(writer, .timestamp_ns, event.timestamp_ns, .json);
     if (readable) |timestamp| {
@@ -105,7 +129,7 @@ pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *st
     try writer.writeAll(",\"scope\":");
     try quoted(writer, event.scope, .json);
     try writer.writeAll(",\"message\":");
-    try message(writer, event, .json);
+    try messagePtr(writer, event, .json);
     try writer.writeAll(",\"session\":");
     try writeTaggedValue(writer, .unsigned, event.session, .json);
     try writer.writeAll(",\"channel\":");
@@ -146,8 +170,8 @@ pub fn encodeJsonWithAttributes(event: Event, readable: ?[]const u8, writer: *st
     try writer.writeAll("}}\n");
 }
 
-fn encodeText(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    return encodeTextWithAttributes(event, readable, writer, &event, struct {
+fn encodeText(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    return encodeTextWithAttributesPtr(event, readable, writer, event, struct {
         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
             for (ctx.fields) |field| {
                 try output.writeByte(' ');
@@ -160,13 +184,17 @@ fn encodeText(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.I
 }
 
 pub fn encodeTextWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+    return encodeTextWithAttributesPtr(&event, readable, writer, context, writeAttributes);
+}
+
+pub fn encodeTextWithAttributesPtr(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     if (readable) |timestamp| try writer.writeAll(timestamp) else try decimal.write(writer, event.timestamp_ns);
     try writer.writeByte(' ');
     try writer.writeAll(@tagName(event.level));
     try writer.writeAll(" scope= ");
     try quoted(writer, event.scope, .text);
     try writer.writeAll(" message= ");
-    try message(writer, event, .text);
+    try messagePtr(writer, event, .text);
     try writer.writeAll(" session= ");
     try decimal.write(writer, event.session);
     try writer.writeAll(" channel= ");
@@ -193,8 +221,8 @@ pub fn encodeTextWithAttributes(event: Event, readable: ?[]const u8, writer: *st
     try writer.writeByte('\n');
 }
 
-fn encodeLogfmt(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    return encodeLogfmtWithAttributes(event, readable, writer, &event, struct {
+fn encodeLogfmt(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    return encodeLogfmtWithAttributesPtr(event, readable, writer, event, struct {
         fn write(ctx: *const Event, output: *std.Io.Writer) std.Io.Writer.Error!void {
             for (ctx.fields) |field| {
                 try output.writeAll(" attr.");
@@ -213,6 +241,10 @@ fn encodeLogfmt(event: Event, readable: ?[]const u8, writer: *std.Io.Writer) std
 }
 
 pub fn encodeLogfmtWithAttributes(event: Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
+    return encodeLogfmtWithAttributesPtr(&event, readable, writer, context, writeAttributes);
+}
+
+pub fn encodeLogfmtWithAttributesPtr(event: *const Event, readable: ?[]const u8, writer: *std.Io.Writer, context: anytype, comptime writeAttributes: fn (@TypeOf(context), *std.Io.Writer) std.Io.Writer.Error!void) std.Io.Writer.Error!void {
     try writer.writeAll("timestamp_ns=");
     try decimal.write(writer, event.timestamp_ns);
     if (readable) |timestamp| {
@@ -224,7 +256,7 @@ pub fn encodeLogfmtWithAttributes(event: Event, readable: ?[]const u8, writer: *
     try writer.writeAll(" scope=");
     try quoted(writer, event.scope, .text);
     try writer.writeAll(" message=");
-    try message(writer, event, .text);
+    try messagePtr(writer, event, .text);
     try writer.writeAll(" session=");
     try decimal.write(writer, event.session);
     try writer.writeAll(" channel=");

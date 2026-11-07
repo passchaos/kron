@@ -130,9 +130,9 @@ fn renderFormat(comptime format: Format, comptime referenced: bool, payload: []c
     var writer = std.Io.Writer.fixed(output);
     var context: Context(referenced) = .{ .input = &input, .count = header.field_count, .keys = if (referenced) definition.fields() else key_scratch };
     const result = switch (format) {
-        .json => common.encodeJsonWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
-        .text => common.encodeTextWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
-        .logfmt => common.encodeLogfmtWithAttributes(event, readable, &writer, &context, Attributes(format, referenced).write),
+        .json => common.encodeJsonWithAttributesPtr(&event, readable, &writer, &context, Attributes(format, referenced).write),
+        .text => common.encodeTextWithAttributesPtr(&event, readable, &writer, &context, Attributes(format, referenced).write),
+        .logfmt => common.encodeLogfmtWithAttributesPtr(&event, readable, &writer, &context, Attributes(format, referenced).write),
     };
     result catch |err| switch (err) {
         error.WriteFailed => return context.failure orelse error.WriteFailed,
