@@ -40,6 +40,28 @@ pub const StreamOutput = struct {
     }
 };
 
+/// Concrete fixed-buffer output for measured payloads. Avoids the dynamic
+/// `std.Io.Writer` vtable and its out-of-line small copies on the hot encode
+/// path; the caller already validated the exact total size.
+pub const FixedOutput = struct {
+    pub const Error = error{BufferTooSmall};
+    buffer: []u8,
+    index: usize = 0,
+
+    pub fn put(self: *FixedOutput, bytes: []const u8) Error!void {
+        if (self.index + bytes.len > self.buffer.len) return error.BufferTooSmall;
+        @memcpy(self.buffer[self.index..][0..bytes.len], bytes);
+        self.index += bytes.len;
+    }
+
+    pub fn int(self: *FixedOutput, comptime T: type, value: T) Error!void {
+        const width = @sizeOf(T);
+        if (self.index + width > self.buffer.len) return error.BufferTooSmall;
+        std.mem.writeInt(T, self.buffer[self.index..][0..width], value, .little);
+        self.index += width;
+    }
+};
+
 pub fn writeBlob(output: anytype, bytes: []const u8) @TypeOf(output.*).Error!void {
     try output.int(u32, @intCast(bytes.len));
     try output.put(bytes);

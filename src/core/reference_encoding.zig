@@ -71,22 +71,16 @@ const ReferenceSizeVisitor = struct {
 pub fn writeMeasured(event: Event, definition: Definition, values_bytes: u64, destination: []u8) EncodeError![]const u8 {
     const size = try sizeMeasured(event, definition, values_bytes);
     if (destination.len < size) return error.BufferTooSmall;
-    var output = std.Io.Writer.fixed(destination[0..size]);
-    codec.writeHeader(event, size, version, &output) catch |err| switch (err) {
-        error.WriteFailed => return error.BufferTooSmall,
-        else => |other| return other,
-    };
-    if (event.trace_id) |id| output.writeAll(&id) catch return error.BufferTooSmall;
-    if (event.span_id) |id| output.writeAll(&id) catch return error.BufferTooSmall;
+    var output: wire.FixedOutput = .{ .buffer = destination[0..size] };
+    try codec.writeHeaderTo(&output, event, size, version);
+    if (event.trace_id) |id| try output.put(&id);
+    if (event.span_id) |id| try output.put(&id);
     if (definition.message == null) {
-        var length: [4]u8 = undefined;
-        std.mem.writeInt(u32, &length, @intCast(event.message.len), .little);
-        output.writeAll(&length) catch return error.BufferTooSmall;
-        output.writeAll(event.message) catch return error.BufferTooSmall;
+        try output.int(u32, @intCast(event.message.len));
+        try output.put(event.message);
     }
-    var values_output: wire.StreamOutput = .{ .writer = &output };
-    for (event.fields) |field| wire.writeValueTo(&values_output, field.value) catch return error.BufferTooSmall;
-    for (event.format_args) |argument| wire.writeValueTo(&values_output, argument.value) catch return error.BufferTooSmall;
-    std.debug.assert(output.end == size);
+    for (event.fields) |field| try wire.writeValueTo(&output, field.value);
+    for (event.format_args) |argument| try wire.writeValueTo(&output, argument.value);
+    std.debug.assert(output.index == size);
     return destination[0..size];
 }

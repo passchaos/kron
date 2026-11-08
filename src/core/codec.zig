@@ -127,7 +127,9 @@ pub fn writeHeader(event: Event, size: usize, wire_version: u16, writer: *std.Io
     try writeHeaderTo(&output, event, size, wire_version);
 }
 
-fn writeHeaderTo(output: anytype, event: Event, size: usize, wire_version: u16) @TypeOf(output.*).Error!void {
+/// Caller must have validated `event.level` and measured the exact `size`;
+/// unlike `writeHeader`, this writes directly without re-checking the level.
+pub fn writeHeaderTo(output: anytype, event: Event, size: usize, wire_version: u16) @TypeOf(output.*).Error!void {
     try output.put(magic);
     try output.int(u16, wire_version);
     const flags: u16 = @as(u16, @intFromBool(event.source != null)) |
