@@ -5,8 +5,19 @@
   "host": {
     "kernel": "Linux 6.8.0-147-generic #147-Ubuntu SMP PREEMPT_DYNAMIC x86_64",
     "cpu": "13th Gen Intel(R) Core(TM) i9-13900K",
-    "affinity": [16, 18, 20, 22, 24, 26],
-    "load_average_during_run": [6.47, 7.89, 8.63]
+    "affinity": [
+      16,
+      18,
+      20,
+      22,
+      24,
+      26
+    ],
+    "load_average_during_run": [
+      6.47,
+      7.89,
+      8.63
+    ]
   },
   "base_commit": "16c6801",
   "binaries": {
@@ -17,14 +28,24 @@
     "after": {
       "path": "/tmp/kron-opt/reference-kron-prefetch2",
       "sha256": "be77aa0fd9f6846202c74ed4bdc07013a1f16b623af43c8a99629ec8f1f505f9"
+    },
+    "after_inloop": {
+      "path": "/tmp/kron-opt/reference-kron-prefetch3",
+      "sha256": "67eddf77ff6de9dca096f20f277c66022ae85277c45d0a4be53bcc3557362d25"
     }
   },
   "benchmark": {
     "frontend": "managed",
     "schema": true,
     "render_cache": true,
-    "modes": ["spsc", "async"],
-    "storage": ["memory", "mmap"],
+    "modes": [
+      "spsc",
+      "async"
+    ],
+    "storage": [
+      "memory",
+      "mmap"
+    ],
     "producers": 4,
     "events": 500000,
     "warmup": 1000,
@@ -32,13 +53,28 @@
     "rounds": 5,
     "cases": 4,
     "runs": 40,
-    "verified_records": 20040000
+    "verified_records": 20040000,
+    "inloop": {
+      "events": 500000,
+      "warmup": 1000,
+      "rounds": 5,
+      "cases": 4,
+      "runs": 40,
+      "verified_records": 20040000,
+      "file": "inloop/results.jsonl"
+    }
   },
   "result": {
     "spsc_mmap_p4": "0.9868 inconclusive",
     "async_memory_p4": "0.9894 inconclusive",
     "async_mmap_p4": "1.0060 inconclusive",
     "qualified_leads": 0,
-    "decision": "revert"
+    "decision": "revert",
+    "inloop": {
+      "spsc_mmap_p4": "0.9974 inconclusive",
+      "async_memory_p4": "0.9697 peer_leads (control, no prefetch path -> layout effect)",
+      "async_mmap_p4": "1.0018 inconclusive",
+      "decision": "revert both placements"
+    }
   }
 }
