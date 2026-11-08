@@ -112,6 +112,52 @@ kron 全部 async inline/schema 配置开启自适应 `render_cache`；peer 二�
 - **P1 mmap 仍是最大剩余缺口**：inline 对 tracing 0.765–0.840，schema 0.780–0.791；自适应 cache 把 P1 mmap durable 从 0.706/0.811 改善到 0.79/0.84，但没有改变 tracing 的 mmap 后端优势。P1 mmap 最优生产模式仍是 `text_format`（0.917）或 `MmapSpool`（sampled 1.11 qualified）。
 - 本表是选定 case 的同窗口对照，不是 240-trial 完整双拓扑矩阵；不更新完整排名。
 
+## SPSC peer 资格（5 轮）
+
+SPSC 配置同样开启自适应 `render_cache`；240 次试验、逐条核验 **24,240,000** 条完整 JSON。
+
+| kron 配置 | producers | phase | peer | ratio | 95% CI | 资格 | kron | peer |
+| --- | ---: | --- | --- | ---: | --- | --- | ---: | ---: |
+| spsc-memory-inline | 1 | batch | foundation | 1.2729 | 1.247..1.321 | **kron_leads** | 2.379M | 1.852M |
+| spsc-memory-inline | 1 | batch | foundation_tracing | 1.0882 | 1.070..7.547 | inconclusive | 2.379M | 2.187M |
+| spsc-memory-inline | 1 | sampled | foundation | 1.2734 | 1.238..1.296 | **kron_leads** | 2.177M | 1.721M |
+| spsc-memory-inline | 1 | sampled | foundation_tracing | 1.0759 | 1.075..1.084 | **kron_leads** | 2.177M | 2.024M |
+| spsc-memory-inline | 4 | batch | foundation | 1.2335 | 1.206..1.241 | **kron_leads** | 2.862M | 2.320M |
+| spsc-memory-inline | 4 | batch | foundation_tracing | 1.3156 | 1.270..1.331 | **kron_leads** | 2.862M | 2.233M |
+| spsc-memory-inline | 4 | sampled | foundation | 1.1990 | 1.176..1.260 | **kron_leads** | 2.843M | 2.356M |
+| spsc-memory-inline | 4 | sampled | foundation_tracing | 1.2815 | 1.258..1.330 | **kron_leads** | 2.843M | 2.207M |
+| spsc-mmap-inline | 1 | batch | foundation | 1.0529 | 1.032..1.072 | **kron_leads** | 2.369M | 2.221M |
+| spsc-mmap-inline | 1 | batch | foundation_tracing | 0.8290 | 0.816..0.844 | peer_leads | 2.369M | 2.828M |
+| spsc-mmap-inline | 1 | sampled | foundation | 1.1297 | 1.049..1.137 | **kron_leads** | 2.230M | 2.001M |
+| spsc-mmap-inline | 1 | sampled | foundation_tracing | 0.9058 | 0.884..0.942 | peer_leads | 2.230M | 2.462M |
+| spsc-mmap-inline | 4 | batch | foundation | 0.9951 | 0.938..1.090 | inconclusive | 2.845M | 2.859M |
+| spsc-mmap-inline | 4 | batch | foundation_tracing | 0.9822 | 0.962..1.064 | inconclusive | 2.845M | 2.875M |
+| spsc-mmap-inline | 4 | sampled | foundation | 0.9605 | 0.921..1.010 | inconclusive | 2.912M | 2.964M |
+| spsc-mmap-inline | 4 | sampled | foundation_tracing | 1.0221 | 0.985..1.083 | inconclusive | 2.912M | 2.852M |
+| spsc-memory-schema | 1 | batch | foundation | 1.1676 | 1.152..1.179 | **kron_leads** | 2.120M | 1.825M |
+| spsc-memory-schema | 1 | batch | foundation_tracing | 0.9742 | 0.950..0.985 | peer_leads | 2.120M | 2.178M |
+| spsc-memory-schema | 1 | sampled | foundation | 1.1794 | 1.178..1.203 | **kron_leads** | 2.037M | 1.726M |
+| spsc-memory-schema | 1 | sampled | foundation_tracing | 1.0077 | 0.999..18.009 | inconclusive | 2.037M | 1.992M |
+| spsc-memory-schema | 4 | batch | foundation | 0.9819 | 0.966..1.017 | inconclusive | 2.291M | 2.321M |
+| spsc-memory-schema | 4 | batch | foundation_tracing | 1.0310 | 1.010..1.055 | **kron_leads** | 2.291M | 2.192M |
+| spsc-memory-schema | 4 | sampled | foundation | 0.9629 | 0.934..1.015 | inconclusive | 2.263M | 2.364M |
+| spsc-memory-schema | 4 | sampled | foundation_tracing | 1.0446 | 1.016..1.056 | **kron_leads** | 2.263M | 2.188M |
+| spsc-mmap-schema | 1 | batch | foundation | 0.9739 | 0.962..0.994 | peer_leads | 2.121M | 2.163M |
+| spsc-mmap-schema | 1 | batch | foundation_tracing | 0.7713 | 0.748..0.779 | peer_leads | 2.121M | 2.789M |
+| spsc-mmap-schema | 1 | sampled | foundation | 1.0128 | 0.992..1.046 | inconclusive | 2.014M | 1.977M |
+| spsc-mmap-schema | 1 | sampled | foundation_tracing | 0.8241 | 0.798..0.845 | peer_leads | 2.014M | 2.443M |
+| spsc-mmap-schema | 4 | batch | foundation | 0.8157 | 0.799..0.867 | peer_leads | 2.263M | 2.774M |
+| spsc-mmap-schema | 4 | batch | foundation_tracing | 0.7869 | 0.738..0.841 | inconclusive | 2.263M | 2.875M |
+| spsc-mmap-schema | 4 | sampled | foundation | 0.7760 | 0.735..0.844 | inconclusive | 2.316M | 2.977M |
+| spsc-mmap-schema | 4 | sampled | foundation_tracing | 0.7986 | 0.747..0.886 | inconclusive | 2.316M | 2.881M |
+
+### 结论
+
+- **SPSC P1 memory inline 对两个前端领先**：batch 1.273/1.088、sampled 1.273/1.076；sampled 两组 qualified，batch 对 tracing 因 CI 尾部保持 inconclusive。
+- **SPSC P1 memory schema 对 Foundation 1.17–1.18 qualified**；对 tracing batch 0.974（小幅 peer lead）、sampled 约 parity。
+- **SPSC P4 memory inline 四组全部 qualified lead**（1.20–1.32）；schema 对 tracing 1.03–1.04 qualified，对 Foundation inconclusive。
+- **SPSC mmap 仍落后 tracing**：P1 inline 0.829–0.906、schema 0.771–0.824；P4 mmap inline parity/inconclusive，schema 0.776–0.816。与 async 结论一致：P1/P4 mmap 是剩余缺口，memory 路径已取得领先。
+
 ## 边界
 
 - `render_cache` 仍是 volatile、单 route JSON、async/SPSC；恢复时 cache 为空并回退 deferred render。
@@ -123,4 +169,5 @@ kron 全部 async inline/schema 配置开启自适应 `render_cache`；peer 二�
 
 - [manifest.json](manifest.json)：host/load、git HEAD、源码与 binary sha256、Foundation HEAD、配置。
 - [ab/results.jsonl](ab/results.jsonl)：32 配置 × 2 variant × 5 轮（320 次）。
-- [peer/results.jsonl](peer/results.jsonl)：kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
+- [peer/results.jsonl](peer/results.jsonl)：async kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
+- [peer-spsc/results.jsonl](peer-spsc/results.jsonl)：SPSC kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
