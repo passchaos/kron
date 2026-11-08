@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-08",
+  "status": "rejected",
+  "candidate": "direct render-cache index lookup instead of the linear journal scan",
+  "host": {
+    "kernel": "Linux 6.8.0-147-generic #147-Ubuntu SMP PREEMPT_DYNAMIC x86_64",
+    "cpu": "13th Gen Intel(R) Core(TM) i9-13900K",
+    "affinity": [16, 18, 20, 22, 24, 26],
+    "load_average_during_run": [7.35, 8.63, 9.16]
+  },
+  "base_commit": "a2af5d1",
+  "binaries": {
+    "before": {
+      "path": "/tmp/kron-opt/reference-kron-fixedout2",
+      "sha256": "d1e6da7d41d3f03f80b8aa8cf3ed5a7cb1089bbc028b3e7bc665439af24ea613"
+    },
+    "after": {
+      "path": "/tmp/kron-opt/reference-kron-cacheidx",
+      "sha256": "5f880ecea41866d3922271ba5e3d8a7cb62856abdfe3419c7257479005e89b36"
+    }
+  },
+  "benchmark": {
+    "frontend": "managed",
+    "schema": true,
+    "render_cache": true,
+    "modes": ["async", "spsc"],
+    "storage": ["memory", "mmap"],
+    "producers": [1, 4],
+    "events": 500000,
+    "warmup": 1000,
+    "queue_slots": 256,
+    "rounds": 5,
+    "cases": 8,
+    "runs": 80,
+    "verified_records": 40080000
+  },
+  "result": {
+    "spsc_mmap_p4_stable": "0.9973 inconclusive",
+    "async_mmap_p1_stable": "1.0044 inconclusive",
+    "async_mmap_p4_stable": "1.0003 inconclusive",
+    "qualified_leads": 0,
+    "decision": "revert"
+  }
+}
