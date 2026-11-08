@@ -688,8 +688,12 @@ pub const Runtime = struct {
         if (destination) |journal| {
             while (true) {
                 const progress = if (producer_token != null) journal.single.space_epoch.load(.seq_cst) else self.progress_epoch.load(.acquire);
+                // `definition` above was resolved from this exact binding via
+                // resolveReadySchema, so the ready/marker/id/version/hash
+                // checks already ran for this submission; reserve only stamps
+                // the slot instead of repeating the registry lookup.
                 const attempt = if (binding) |prepared|
-                    (if (producer_token) |token| journal.reserveSingleProducerWithSchema(token, prepared) else journal.reserveWithSchema(prepared))
+                    (if (producer_token) |token| journal.reserveSingleProducerWithSchemaReady(token, prepared) else journal.reserveWithSchemaReady(prepared))
                 else
                     (if (producer_token) |token| journal.reserveSingleProducer(token) else journal.reserve());
                 var reservation = attempt catch |err| switch (err) {

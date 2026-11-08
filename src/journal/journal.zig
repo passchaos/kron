@@ -3,6 +3,7 @@
 //! handles and must not be copied, used twice, or retained after release/deinit.
 //! No allocator or syscall occurs on reserve/commit/abort/written release.
 const std = @import("std");
+const builtin = @import("builtin");
 const Storage = @import("storage.zig").Storage;
 const format = @import("format.zig");
 const schema_format = @import("schema.zig");
@@ -505,6 +506,18 @@ pub const Journal = struct {
         return reservation;
     }
 
+    /// Caller contract: this exact reference was already resolved through
+    /// `resolveReadySchema` on this journal in the current submission, which
+    /// performed the ready/marker/id/version/hash checks. Skips that duplicate
+    /// lookup on the hot path; Debug builds still re-check to catch misuse.
+    pub fn reserveWithSchemaReady(self: *Journal, reference: SchemaRef) !Reservation {
+        if (builtin.mode == .Debug) try self.validateSchemaReady(reference);
+        var reservation = try self.reserve();
+        reservation.schema_ref = reference;
+        self.writeSlotSchema(self.slotBytes(reservation.slot), reference);
+        return reservation;
+    }
+
     pub fn singleProducerControl(self: *Journal) !*const SingleProducerControl {
         if (self.producer_mode != .single) return error.WrongProducerMode;
         return &self.single;
@@ -559,6 +572,15 @@ pub const Journal = struct {
 
     pub fn reserveSingleProducerWithSchema(self: *Journal, token: SingleProducerToken, reference: SchemaRef) !Reservation {
         try self.validateSchemaReady(reference);
+        var reservation = try self.reserveSingleProducer(token);
+        reservation.schema_ref = reference;
+        self.writeSlotSchema(self.slotBytes(reservation.slot), reference);
+        return reservation;
+    }
+
+    /// Same contract as `reserveWithSchemaReady`, for the SPSC channel path.
+    pub fn reserveSingleProducerWithSchemaReady(self: *Journal, token: SingleProducerToken, reference: SchemaRef) !Reservation {
+        if (builtin.mode == .Debug) try self.validateSchemaReady(reference);
         var reservation = try self.reserveSingleProducer(token);
         reservation.schema_ref = reference;
         self.writeSlotSchema(self.slotBytes(reservation.slot), reference);
