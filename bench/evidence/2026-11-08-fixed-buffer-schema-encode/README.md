@@ -59,6 +59,21 @@ peer 二进制复用 2026-11-04 冻结的 Foundation/spdlog 与 Foundation/traci
 
 关键变化：P1 memory schema 对 tracing 从落后/parity 变为 **qualified lead**；P1 mmap schema 对 Foundation 变为 **qualified lead**；P4 mmap schema 对 tracing **qualified lead**、对 Foundation parity。剩余 durable 差距集中到 **P1 mmap schema 对 tracing（0.796）**。本表是选定 case 的同窗口对照，不是 260-trial 完整矩阵；不更新整体跨库排名。
 
+### SPSC 补充（5 轮，500k）
+
+| kron 配置 | peer | ratio | 95% CI | 资格 | kron | peer |
+| --- | --- | ---: | --- | --- | ---: | ---: |
+| spsc-memory-schema P1 | foundation | 1.2376 | 1.2180..1.5559 | inconclusive（peer spread 20.8%） | 2.254M | 1.819M |
+| spsc-memory-schema P1 | foundation_tracing | **1.0215** | 1.0091..1.0259 | **kron_leads** | 2.254M | 2.204M |
+| spsc-mmap-schema P1 | foundation | **1.0408** | 1.0387..1.0676 | **kron_leads** | 2.285M | 2.177M |
+| spsc-mmap-schema P1 | foundation_tracing | 0.8128 | 0.7865..0.8379 | peer_leads | 2.285M | 2.811M |
+| spsc-memory-schema P4 | foundation | 1.0833 | 0.9565..1.1820 | inconclusive（kron spread 15.0%） | 2.574M | 2.325M |
+| spsc-memory-schema P4 | foundation_tracing | 1.1674 | 1.0271..1.2015 | inconclusive（kron spread 15.0%） | 2.574M | 2.153M |
+| spsc-mmap-schema P4 | foundation | 0.8715 | 0.7970..0.9616 | inconclusive（spread 11.1%–18.9%） | 2.579M | 2.915M |
+| spsc-mmap-schema P4 | foundation_tracing | 0.9283 | 0.8931..1.0924 | inconclusive（spread 19.3%–21.5%） | 2.579M | 2.579M |
+
+SPSC 结论与 async 一致：P1 memory 对 tracing **qualified lead**，P1 mmap 对 Foundation **qualified lead**，但对 tracing 仍为 **0.813 peer lead**。至此剩余唯一稳定的 durable peer lead 是 **P1 mmap schema 对 tracing**（async 0.796、SPSC 0.813）；该轴的 tracing mmap 本身比 tracing memory 快约 25%–27%，差距来自对方 mmap 后端，而不是 kron mmap 相对自身 memory 的回退。
+
 ## Instructions
 
 `perf stat -e instructions`，同一 E-core affinity，交替 5 次取中位：
@@ -84,3 +99,5 @@ peer 二进制复用 2026-11-04 冻结的 Foundation/spdlog 与 Foundation/traci
 - [ab-p1/results.jsonl](ab-p1/results.jsonl)：P1 4 配置 × 5 轮 × 2 binary（40 次，2,004 万条完整 JSON）。
 - [ab-p4/results.jsonl](ab-p4/results.jsonl)：P4 4 配置 × 5 轮 × 2 binary（40 次，2,004 万条完整 JSON）。
 - [ab-confirm/results.jsonl](ab-confirm/results.jsonl)：最终源码重建后在 async-memory P1 的 5 轮确认（10 次，501 万条完整 JSON）。
+- [peer/results.jsonl](peer/results.jsonl)：async schema 4 配置 × 3 library × 5 轮（60 次，3,006 万条完整 JSON）。
+- [peer-spsc/results.jsonl](peer-spsc/results.jsonl)：SPSC schema 4 配置 × 3 library × 5 轮（60 次，3,006 万条完整 JSON）。

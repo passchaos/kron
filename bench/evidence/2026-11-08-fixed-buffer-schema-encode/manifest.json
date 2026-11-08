@@ -107,6 +107,18 @@
         "foundation": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation",
         "foundation_tracing": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation_tracing"
       }
+    },
+    "peer_check_spsc": {
+      "rounds": 5,
+      "cases": 4,
+      "libraries": [
+        "kron",
+        "foundation",
+        "foundation_tracing"
+      ],
+      "runs": 60,
+      "verified_records": 30060000,
+      "file": "peer-spsc/results.jsonl"
     }
   },
   "qualification": {
@@ -195,6 +207,13 @@
       "async_mmap_schema_p4_vs_tracing": "1.1850 kron_leads",
       "async_mmap_schema_p4_vs_foundation": "1.0087 inconclusive",
       "note": "Focused peer check only; the 260-trial full matrix was not rerun."
+    },
+    "peer_highlights_spsc": {
+      "spsc_memory_schema_p1_vs_tracing": "1.0215 kron_leads",
+      "spsc_mmap_schema_p1_vs_foundation": "1.0408 kron_leads",
+      "spsc_mmap_schema_p1_vs_tracing": "0.8128 peer_leads",
+      "spsc_mmap_schema_p4_vs_foundation": "0.8715 inconclusive",
+      "note": "Consistent with async: the only stable durable peer lead is P1 mmap schema vs tracing."
     }
   }
 }
