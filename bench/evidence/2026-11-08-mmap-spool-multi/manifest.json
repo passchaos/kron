@@ -1,0 +1,66 @@
+{
+  "captured_unix_seconds": 1794100867.588677,
+  "host": {
+    "system": "Linux",
+    "node": "robot-NUC13RNGi5",
+    "release": "6.8.0-147-generic",
+    "machine": "x86_64"
+  },
+  "loadavg": [
+    "8.27",
+    "8.59",
+    "7.01",
+    "3/2312",
+    "1510527"
+  ],
+  "logical_cpus": 32,
+  "child_affinity": [
+    16,
+    18,
+    20,
+    22,
+    24,
+    26
+  ],
+  "git_head": "88d9b0ef87e5ae8b58d2674f17041e42545667b6",
+  "binaries": {
+    "kron_spool_multi": {
+      "path": "/tmp/kron-opt/reference-kron-spoolmulti",
+      "sha256": "329200463fb747bd36c823233a8d6f97723b83917cf5f3d78b01f57cec9d8895"
+    },
+    "foundation": {
+      "path": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation",
+      "sha256": "9ba6ea69a875d18d84251b166e8f3cc7569a133abc5a6c76dff255c134d17868"
+    },
+    "foundation_tracing": {
+      "path": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation_tracing",
+      "sha256": "fc86100246eaffe2716fad49f24067d38405ad60c3d17a2c2ca8408edb804714"
+    }
+  },
+  "changed_source_sha256": {
+    "src/core/mmap_spool.zig": "b545aa669af2bc04352dad20135f1b6e3349f0cab5758dc17f978de5c9f9c746",
+    "bench/cpp_reference/kron_reference.zig": "9b4f53cc75bb38520eadbad0c351ec9451b1fb39fa2b8f7fe7afcd6da1e5b484",
+    "bench/cpp_reference/run.py": "917398a25fd22f9d2ec9ac942c4076e3b3cff38f401f2865da5da74b24621b94"
+  },
+  "source_diff_sha256": "305cc108f3f2fdd2426bd6eaebeb09707261293ee480b4c327a84fe422e4806e",
+  "foundation_repository_head": "0d1f5b0c5689a3fdc502b1c4c7ed8496eb1d5a94",
+  "configuration": {
+    "events": 100000,
+    "warmup": 1000,
+    "queue_slots": 256,
+    "rounds": 5,
+    "producers": [
+      1,
+      4
+    ],
+    "spool_timestamp_period": 64,
+    "metadata": "full"
+  },
+  "verification": {
+    "rows": 60,
+    "records_per_run": 101000,
+    "total_records_verified": 6060000,
+    "test": "65/65 steps, 771/772 tests (1 skipped)",
+    "verify_local": "159/159 steps, 805/806 tests (1 skipped), verify-local success"
+  }
+}

@@ -160,7 +160,11 @@ def verify(row, artifact, events, warmup):
         assert row["p50_ns"] <= row["p99_ns"] <= row["p999_ns"], row
     else:
         assert row["p50_ns"] is None and row["p99_ns"] is None and row["p999_ns"] is None, row
-    contents = artifact.read_bytes()
+    if row.get("mode") == "spool" and row.get("producers", 1) > 1:
+        region_files = [pathlib.Path(str(artifact) + f".thread-{index}") for index in range(row["producers"])]
+        contents = b"".join(path.read_bytes() for path in region_files)
+    else:
+        contents = artifact.read_bytes()
     assert len(contents) == row["artifact_bytes"], row
     if row["library"] in {"foundation", "foundation_tracing"}:
         assert row["foundation_written_bytes"] == len(contents)
@@ -263,9 +267,9 @@ def main():
         parser.error("invalid bounded comparison options")
     if any(not values or len(set(values)) != len(values) for values in (libraries, producers, modes, storages)):
         parser.error("comparison lists must be nonempty and contain no duplicates")
-    if "spool" in modes and (producers != [1] or storages != ["mmap"] or options.kron_schema != "off"
+    if "spool" in modes and (not set(producers) <= {1, 4} or storages != ["mmap"] or options.kron_schema != "off"
                              or options.kron_frontend != "runtime" or options.kron_render_cache or options.kron_text_format):
-        parser.error("spool mode is single-producer mmap inline only")
+        parser.error("spool mode is mmap inline only for 1 or 4 producers")
     if not 1 <= options.kron_spool_timestamp_period <= 1024:
         parser.error("spool timestamp period must be 1..1024")
     if options.metadata == "default_text" and libraries != ["foundation"]:
@@ -388,6 +392,8 @@ def main():
                         journal.unlink()
                     for spool in artifacts.glob(artifact.name + "*.spool"):
                         spool.unlink()
+                    for region in artifacts.glob(artifact.name + ".thread-*"):
+                        region.unlink()
     manifest["loadavg_after"] = os.getloadavg()
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     groups = collections.defaultdict(list)

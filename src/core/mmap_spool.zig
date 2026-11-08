@@ -37,6 +37,10 @@ pub const Options = struct {
     min_level: Level = .info,
     clock: Clock = .{},
     session: u64 = std.math.maxInt(u64),
+    /// Producer channel written into each event. Multi-threaded applications
+    /// that use one spool per thread can give each spool a distinct channel
+    /// while keeping per-spool sequences.
+    channel: u32 = 0,
     idle: types.Idle = .sleep,
     /// When false, the producer owns the mapping and `flush` schedules the
     /// dirty range directly; no writer thread competes for the core budget.
@@ -56,6 +60,7 @@ pub const MmapSpool = struct {
     clock: Clock,
     min_level: Level,
     session: u64,
+    channel: u32,
     idle: types.Idle,
     timestamp_period: usize = 1,
     timestamp_counter: usize = 0,
@@ -102,6 +107,7 @@ pub const MmapSpool = struct {
             .clock = options.clock,
             .min_level = options.min_level,
             .session = options.session,
+            .channel = options.channel,
             .idle = options.idle,
             .timestamp_period = options.timestamp_period,
         };
@@ -214,6 +220,7 @@ pub const MmapSpool = struct {
         }
         var submitted = event;
         submitted.session = self.session;
+        submitted.channel = self.channel;
         self.sequence += 1;
         submitted.sequence = self.sequence;
         var writer = std.Io.Writer.fixed(self.mapping.bytes[self.offset..]);
@@ -313,6 +320,33 @@ test "mmap spool output matches durable deferred render" {
     try runtime.flush(.written);
     try runtime.shutdown(.drain);
     try std.testing.expectEqualStrings(sink.written(), spool_bytes);
+}
+
+test "mmap spool channel option is written into each record" {
+    if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var path_buffer: [128]u8 = undefined;
+    const path = try std.fmt.bufPrint(&path_buffer, ".zig-cache/tmp/{s}/spool-channel.log", .{tmp.sub_path});
+    const spool = MmapSpool.create(std.testing.allocator, std.testing.io, .{
+        .path = path,
+        .capacity_bytes = 16 * 1024,
+        .clock = Clock.zeroTimestamp(),
+        .session = 42,
+        .channel = 3,
+    }) catch |err| switch (err) {
+        error.VolatileFilesystem => return error.SkipZigTest,
+        else => return err,
+    };
+    defer spool.destroy();
+    const log = spool.logger("cache");
+    _ = try log.tryEmit(.info, "inline", .{ .n = @as(u64, 7) });
+    try spool.flush(.written);
+    try spool.shutdown();
+    const bytes = try tmp.dir.readFileAlloc(std.testing.io, "spool-channel.log", std.testing.allocator, .limited(16 * 1024));
+    defer std.testing.allocator.free(bytes);
+    try std.testing.expect(std.mem.indexOf(u8, bytes, "\"channel\":3") != null);
+    try std.testing.expect(std.mem.indexOf(u8, bytes, "\"sequence\":1") != null);
 }
 
 fn spoolRun(allocator: std.mem.Allocator, path: []const u8, dir: std.Io.Dir) ![]u8 {

@@ -401,7 +401,7 @@ max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁�
 
 ## Mmap spool fast mode
 
-`kron.MmapSpool` 是单 producer、非 durable 的 opt-in fast mode：producer 把最终 JSON 直接渲染进 file-backed 映射，一个 writer 线程按约 1MiB 调度 `msync(MS_ASYNC)`，`shutdown` 把文件截断到已渲染字节。没有 journal、CRC、recovery、ring 或 consumer；默认 `Logging`/`Runtime` durable 路径不变。
+`kron.MmapSpool` 是每个 spool 单 producer、非 durable 的 opt-in fast mode：producer 把最终 JSON 直接渲染进 file-backed 映射，一个 writer 线程按约 1MiB 调度 `msync(MS_ASYNC)`，`shutdown` 把文件截断到已渲染字节。没有 journal、CRC、recovery、ring 或 consumer；默认 `Logging`/`Runtime` durable 路径不变。
 
 ```zig
 const spool = try kron.MmapSpool.create(allocator, io, .{
@@ -416,15 +416,31 @@ try spool.flush(.written);
 try spool.shutdown();
 ```
 
+多线程应用使用“每线程一个 spool”：每个线程创建自己的 path 和 channel，避免共享 tail/queue；文件数等于 producer 数，应用负责合并或分别归档。
+
+```zig
+const spool = try kron.MmapSpool.create(allocator, io, .{
+    .path = try std.fmt.allocPrint(allocator, "app-fast.thread-{d}.jsonl", .{thread_id}),
+    .capacity_bytes = 64 * 1024 * 1024,
+    .channel = thread_id + 1,
+    .timestamp_period = 64,
+});
+defer spool.destroy();
+const log = spool.logger("app");
+// 该线程独占 spool；结束时 flush(.written) + shutdown()。
+```
+
 边界：
 
-- 只支持一个 producer；`channel` 固定 0，`sequence` 从 1 递增。
+- 每个 spool 只支持一个 producer；`channel` 可配置（多线程时建议每线程不同），`sequence` 在每个 spool 内从 1 递增。
 - `flush(.written)` 只保证 dirty page 对读者可见，不是设备 durable；`flush(.durable)` 返回 `UnsupportedDurability`。进程崩溃可能留下部分尾部记录，`shutdown` 会截断到最后一条完整记录。
 - `capacity_bytes` 是映射/内存预算；容量耗尽返回 `dropped_full`，单条超出剩余空间返回 `dropped_oversize`，不会发布部分记录。
 - `timestamp_period>1` 会复用一次 clock capture；staleness 以 clock-call 计数而非时间为界，需要精确时间时保持 1。
 - 需要 recovery、CRC、三检查点、rolling/多 route 或 durable 时使用默认 `Logging`/`Runtime`。
 
 性能证据：P-core spool batch 3.74–3.85M、sampled 3.19–3.35M；E-core batch 2.92–3.01M、sampled 2.57–2.62M；对 Foundation/tracing 中位 1.05–1.83x，没有 qualified peer lead；部分同窗口配对因 peer spread 保持 inconclusive。见 [mmap spool A/B](../bench/evidence/2026-11-04-mmap-spool/README.md)。
+
+多 producer 每线程一个 spool（E-core，ts64，5 轮）：P1 batch 3.24M、sampled 2.78M，对 Foundation 1.39–1.47 qualified、对 tracing sampled 1.11 qualified；**P4 batch 8.20M、sampled 7.62M，对 Foundation 2.57–2.72x、对 tracing 2.91–3.22x**。这是非 durable fast mode，不能替代 durable 排名；见 [multi-producer spool](../bench/evidence/2026-11-08-mmap-spool-multi/README.md)。
 
 可运行示例索引见 [examples](../examples/README.md)。相关验证：
 

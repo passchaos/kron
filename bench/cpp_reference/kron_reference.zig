@@ -258,13 +258,218 @@ fn runSpool(io: std.Io, allocator: std.mem.Allocator, options: Options, lifecycl
     try output.interface.flush();
 }
 
+const SpoolWorker = struct {
+    io: std.Io,
+    allocator: std.mem.Allocator,
+    options: *const Options,
+    gate: *Gate,
+    id: usize,
+    capacity: usize,
+    accepted: u64 = 0,
+    written: u64 = 0,
+    written_bytes: u64 = 0,
+    produced_ns: u64 = 0,
+    flushed_ns: u64 = 0,
+    end_ns: u64 = 0,
+    samples: []u64 = &.{},
+    failure: ?anyerror = null,
+
+    fn run(self: *SpoolWorker) void {
+        self.runInner() catch |err| {
+            self.failure = err;
+        };
+    }
+
+    fn runInner(self: *SpoolWorker) !void {
+        const io = self.io;
+        const allocator = self.allocator;
+        const options = self.options;
+        const path = try std.fmt.allocPrint(allocator, "{s}.thread-{d}", .{ options.output, self.id });
+        defer allocator.free(path);
+        const spool = try kron.MmapSpool.create(allocator, io, .{
+            .path = path,
+            .capacity_bytes = self.capacity,
+            .min_level = .info,
+            .idle = .sleep,
+            .clock = .{},
+            .channel = @intCast(self.id + 1),
+            .timestamp_period = options.spool_timestamp_period,
+        });
+        var live = true;
+        defer if (live) spool.destroy();
+        const log = spool.logger("reference");
+        const warmup = share(options.warmup, options.producers, self.id);
+        const events = share(options.events, options.producers, self.id);
+        for (0..warmup) |index| _ = try emitSpool(log, options.events + index * options.producers + self.id);
+        try spool.flush(.written);
+        const before = spool.health();
+        const warmup_offset = spool.writtenBytes();
+        _ = self.gate.ready.fetchAdd(1, .acq_rel);
+        std.Io.futexWake(io, u32, &self.gate.ready.raw, std.math.maxInt(u32));
+        while (self.gate.start.load(.acquire) == 0) std.Io.futexWaitUncancelable(io, u32, &self.gate.start.raw, 0);
+        const start = std.Io.Clock.awake.now(io);
+        for (0..events) |index| {
+            const before_call = if (self.samples.len != 0) std.Io.Clock.awake.now(io) else null;
+            _ = try emitSpool(log, index * options.producers + self.id);
+            if (before_call) |value| self.samples[index] = elapsed(value, std.Io.Clock.awake.now(io));
+        }
+        const produced = std.Io.Clock.awake.now(io);
+        try spool.flush(.written);
+        const flushed = std.Io.Clock.awake.now(io);
+        const measured_offset = spool.writtenBytes();
+        try spool.shutdown();
+        const end = std.Io.Clock.awake.now(io);
+        const health = spool.health();
+        self.accepted = health.accepted - before.accepted;
+        self.written = health.written - before.written;
+        self.written_bytes = measured_offset - warmup_offset;
+        self.produced_ns = elapsed(start, produced);
+        self.flushed_ns = elapsed(start, flushed);
+        self.end_ns = elapsed(start, end);
+        if (self.accepted != events or self.written != events or health.pending != 0) return error.CounterMismatch;
+        if (health.dropped_full != 0 or health.dropped_oversize != 0 or health.errors != 0) return error.DeliveryError;
+        spool.destroy();
+        live = false;
+    }
+};
+
+/// Multi-producer non-durable spool: one spool and one output file per
+/// producer thread, concatenated into the reference artifact after shutdown.
+/// Each spool owns a distinct channel so per-spool sequences stay unique.
+fn runSpoolMulti(io: std.Io, allocator: std.mem.Allocator, options: Options, lifecycle_start: std.Io.Timestamp) !void {
+    const capacity_bytes = (options.events + options.warmup) * 512 + 4 * 1024 * 1024;
+    var gate: Gate = .{};
+    const workers = try allocator.alloc(SpoolWorker, options.producers);
+    defer allocator.free(workers);
+    const threads = try allocator.alloc(std.Thread, options.producers);
+    defer allocator.free(threads);
+    var sample_arrays: [64][]u64 = undefined;
+    defer for (sample_arrays[0..options.producers]) |samples| allocator.free(samples);
+    for (workers, 0..) |*worker, id| {
+        const samples = try allocator.alloc(u64, if (std.mem.eql(u8, options.phase, "sampled")) share(options.events, options.producers, id) else 0);
+        @memset(samples, 0);
+        sample_arrays[id] = samples;
+        worker.* = .{ .io = io, .allocator = allocator, .options = &options, .gate = &gate, .id = id, .capacity = capacity_bytes, .samples = samples };
+        threads[id] = try std.Thread.spawn(.{}, SpoolWorker.run, .{worker});
+    }
+    while (gate.ready.load(.acquire) != options.producers) {
+        const ready = gate.ready.load(.acquire);
+        std.Io.futexWaitUncancelable(io, u32, &gate.ready.raw, ready);
+    }
+    const start = std.Io.Clock.awake.now(io);
+    gate.start.store(1, .release);
+    std.Io.futexWake(io, u32, &gate.start.raw, std.math.maxInt(u32));
+    for (threads) |thread| thread.join();
+    var max_produced: u64 = 0;
+    var max_flushed: u64 = 0;
+    var max_end: u64 = 0;
+    var accepted: u64 = 0;
+    var written: u64 = 0;
+    var written_bytes: u64 = 0;
+    for (workers) |worker| {
+        if (worker.failure) |err| return err;
+        max_produced = @max(max_produced, worker.produced_ns);
+        max_flushed = @max(max_flushed, worker.flushed_ns);
+        max_end = @max(max_end, worker.end_ns);
+        accepted += worker.accepted;
+        written += worker.written;
+        written_bytes += worker.written_bytes;
+    }
+    // The multi-producer mode keeps one artifact per producer channel, like
+    // the SPSC journal. The reference validator reads them in channel order.
+    var artifact_bytes: u64 = 0;
+    for (0..options.producers) |id| {
+        const path = try std.fmt.allocPrint(allocator, "{s}.thread-{d}", .{ options.output, id });
+        defer allocator.free(path);
+        artifact_bytes += (try std.Io.Dir.cwd().statFile(io, path, .{})).size;
+    }
+    const cleaned = std.Io.Clock.awake.now(io);
+    var combined = try allocator.alloc(u64, if (std.mem.eql(u8, options.phase, "sampled")) options.events else 0);
+    defer allocator.free(combined);
+    var combined_len: usize = 0;
+    for (sample_arrays[0..options.producers]) |samples| {
+        @memcpy(combined[combined_len..][0..samples.len], samples);
+        combined_len += samples.len;
+    }
+    std.mem.sort(u64, combined, {}, std.sort.asc(u64));
+    var noop: [10000]u64 = undefined;
+    for (&noop, 0..) |*value, index| {
+        const before = std.Io.Clock.awake.now(io);
+        std.mem.doNotOptimizeAway(index);
+        value.* = elapsed(before, std.Io.Clock.awake.now(io));
+    }
+    std.mem.sort(u64, &noop, {}, std.sort.asc(u64));
+    const total_ns = elapsed(start, cleaned);
+    const result = .{
+        .schema_version = 2,
+        .status = "ok",
+        .library = "kron",
+        .frontend = "spool",
+        .consumer_idle = "sleep",
+        .version = "workspace",
+        .strategy = "spool_mmap_async",
+        .phase = options.phase,
+        .mode = options.mode,
+        .storage = options.storage,
+        .prepared_schema = false,
+        .consumer_batches_per_queue = options.consumer_batches,
+        .backend_requested = "mmap_spool",
+        .backend_selected = "mmap_spool",
+        .metadata = "full",
+        .events = options.events,
+        .producers = options.producers,
+        .warmup_events = options.warmup,
+        .accepted = accepted,
+        .written = written,
+        .drop = @as(u64, 0),
+        .final_pending = @as(usize, 0),
+        .producer_wall_ns = max_produced,
+        .flush_ns = max_flushed - max_produced,
+        .shutdown_ns = max_end - max_flushed,
+        .cleanup_ns = total_ns - max_end,
+        .init_ns = @as(u64, 0),
+        .preparation_ns = elapsed(lifecycle_start, start),
+        .total_ns = total_ns,
+        .lifecycle_ns = elapsed(lifecycle_start, cleaned),
+        .lifecycle_records_per_sec = @as(f64, @floatFromInt(options.events + options.warmup)) * 1e9 / @as(f64, @floatFromInt(elapsed(lifecycle_start, cleaned))),
+        .written_bytes = written_bytes,
+        .artifact_bytes = artifact_bytes,
+        .written_records_per_sec = @as(f64, @floatFromInt(accepted)) * 1e9 / @as(f64, @floatFromInt(total_ns)),
+        .sample_count = combined.len,
+        .p50_ns = quantile(combined, 500),
+        .p99_ns = quantile(combined, 990),
+        .p999_ns = quantile(combined, 999),
+        .noop_clock_pair_p50_ns = quantile(&noop, 500),
+        .noop_clock_pair_p99_ns = quantile(&noop, 990),
+        .queue_policy = "block",
+        .queue_slots = @as(usize, 0),
+        .max_record_bytes = options.max_record_bytes,
+        .file_buffer_bytes = @as(usize, 0),
+        .sync_threshold_bytes = @as(usize, 1024 * 1024),
+        .mapping_reserved_bytes = capacity_bytes * options.producers,
+        .has_process_crash_recovery = false,
+        .queue_reserved_bytes = capacity_bytes * options.producers,
+        .journal_reserved_bytes = @as(u64, 0),
+        .event_clock = "std.Io_dynamic_system",
+        .optimize = @tagName(@import("builtin").mode),
+    };
+    var buffer: [8192]u8 = undefined;
+    var stdout = std.Io.File.stdout().writerStreaming(io, &buffer);
+    try std.json.Stringify.value(result, .{}, &stdout.interface);
+    try stdout.interface.writeByte('\n');
+    try stdout.interface.flush();
+}
+
 pub fn main(init: std.process.Init) !void {
     const arguments = try init.minimal.args.toSlice(init.arena.allocator());
     const options = try parse(arguments[1..]);
     const io = init.io;
     const allocator = init.gpa;
     const lifecycle_start = std.Io.Clock.awake.now(io);
-    if (std.mem.eql(u8, options.mode, "spool")) return runSpool(io, allocator, options, lifecycle_start);
+    if (std.mem.eql(u8, options.mode, "spool")) {
+        if (options.producers == 1) return runSpool(io, allocator, options, lifecycle_start);
+        return runSpoolMulti(io, allocator, options, lifecycle_start);
+    }
     const file = if (options.frontend == .runtime) try kron.FileSink.create(allocator, io, .{ .path = options.output, .buffer_bytes = 65536, .backend = options.backend, .append = false }) else null;
     var file_live = file != null;
     defer if (file_live) file.?.deinit();
@@ -505,7 +710,7 @@ fn parse(arguments: []const []const u8) !Options {
         (!std.mem.eql(u8, result.phase, "sampled") and !std.mem.eql(u8, result.phase, "batch"))) return error.InvalidOptions;
     if (result.frontend == .managed and result.backend != .portable) return error.ManagedBenchmarkRequiresPortable;
     if (std.mem.eql(u8, result.mode, "spool") and
-        (result.producers != 1 or !std.mem.eql(u8, result.storage, "mmap") or result.schema or
+        (!std.mem.eql(u8, result.storage, "mmap") or result.schema or
             result.frontend != .runtime or result.render_cache or result.text_format)) return error.InvalidOptions;
     return result;
 }
