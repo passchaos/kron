@@ -792,11 +792,18 @@ pub const Runtime = struct {
                 // recovery source; the volatile cache only lets the consumer
                 // write pre-rendered bytes. Publish before commit so a
                 // committed record always has a visible render.
+                //
+                // Offload only while the ring has visible backlog. A lone
+                // producer that is itself the bottleneck keeps the ring near
+                // empty and leaves the render on the consumer; several
+                // producers or a slow consumer fill the ring and the producers
+                // absorb it. `backlogged` compares one monotonic occupancy
+                // load against the cache's precomputed backlog threshold.
                 var render_claim: ?RenderCache.Claim = null;
                 if (destination) |cache_journal| if (event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
                     const route = &snapshot.routes[0];
                     const redacted = if (route.policy) |policy| policy.redactor != null else false;
-                    if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.claim(reservation.sequence)) |claim| {
+                    if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.backlogged(cache_journal.pending(), binding != null, cache_journal.producer_mode == .single)) if (cache.claim(reservation.sequence)) |claim| {
                         var writer = std.Io.Writer.fixed(claim.buffer);
                         if (common.encodeDecodedPtr(.json, event, route.timestamp, &writer)) |_| {
                             claim.publish(writer.buffered().len);

@@ -3,7 +3,9 @@
 //! reused until the consumer releases it, so the producer owns the matching
 //! cache slot exclusively. The consumer clears the entry before releasing the
 //! journal record. Recovery starts with an empty cache and falls back to the
-//! deferred renderer.
+//! deferred renderer. Producers only populate the cache while the ring has
+//! visible backlog, so the feature adapts to the producer/consumer balance
+//! instead of always moving render work onto a lone saturated producer.
 
 const std = @import("std");
 const Atomic = std.atomic.Value;
@@ -12,6 +14,20 @@ pub const RenderCache = struct {
     allocator: std.mem.Allocator,
     capacity: usize,
     record_bytes: usize,
+    /// Offload render only after the journal has visible backlog. With one
+    /// producer that is itself the bottleneck the ring stays near empty and
+    /// the consumer keeps the render; with several producers or a slow
+    /// consumer the ring fills and the producers absorb it. One quarter of the
+    /// ring is enough to distinguish those regimes without delaying offload
+    /// until the ring is almost full.
+    offload_threshold: usize,
+    /// Schema payloads encode more cheaply on the producer than inline ones,
+    /// so a lone schema producer is closer to the consumer break-even point.
+    /// Shared async schema needs half the ring; the single-producer SPSC ring
+    /// is drained in place and needs three quarters to stay out of the
+    /// producer's critical path in sampled runs.
+    schema_offload_threshold: usize,
+    schema_single_threshold: usize,
     slots: []Slot,
     storage: []u8,
 
@@ -53,8 +69,25 @@ pub const RenderCache = struct {
         @memset(slots, .{});
         const storage = try allocator.alloc(u8, capacity * record_bytes);
         errdefer allocator.free(storage);
-        self.* = .{ .allocator = allocator, .capacity = capacity, .record_bytes = record_bytes, .slots = slots, .storage = storage };
+        self.* = .{
+            .allocator = allocator,
+            .capacity = capacity,
+            .record_bytes = record_bytes,
+            .offload_threshold = @max(capacity / 4, 2),
+            .schema_offload_threshold = @max(capacity / 2, 4),
+            .schema_single_threshold = @max(capacity * 3 / 4, 4),
+            .slots = slots,
+            .storage = storage,
+        };
         return self;
+    }
+
+    /// The journal includes the caller's just-reserved slot in `pending`.
+    /// Requiring a visible backlog keeps a lone producer on the deferred
+    /// consumer render until it has actually outrun the consumer.
+    pub fn backlogged(self: *const RenderCache, pending: usize, schema: bool, single_producer: bool) bool {
+        if (!schema) return pending > self.offload_threshold;
+        return pending > if (single_producer) self.schema_single_threshold else self.schema_offload_threshold;
     }
 
     pub fn destroy(self: *RenderCache) void {
@@ -117,6 +150,33 @@ test "render cache claim publish lookup clear and stale claim" {
     try std.testing.expectEqualStrings("next", cache.lookup(5).?);
     next.abort();
     try std.testing.expectEqual(@as(?[]const u8, null), cache.lookup(5));
+}
+
+test "render cache backlog gate scales with ring capacity and schema headroom" {
+    const small = try RenderCache.create(std.testing.allocator, 8, 8);
+    defer small.destroy();
+    // Inline needs a quarter ring; shared schema a half, SPSC schema three
+    // quarters. All clamp to a small positive value for tiny queues.
+    try std.testing.expectEqual(@as(usize, 2), small.offload_threshold);
+    try std.testing.expectEqual(@as(usize, 4), small.schema_offload_threshold);
+    try std.testing.expectEqual(@as(usize, 6), small.schema_single_threshold);
+    try std.testing.expect(!small.backlogged(2, false, false));
+    try std.testing.expect(small.backlogged(3, false, false));
+    try std.testing.expect(!small.backlogged(4, true, false));
+    try std.testing.expect(small.backlogged(5, true, false));
+    try std.testing.expect(!small.backlogged(6, true, true));
+    try std.testing.expect(small.backlogged(7, true, true));
+    const large = try RenderCache.create(std.testing.allocator, 256, 8);
+    defer large.destroy();
+    try std.testing.expectEqual(@as(usize, 64), large.offload_threshold);
+    try std.testing.expectEqual(@as(usize, 128), large.schema_offload_threshold);
+    try std.testing.expectEqual(@as(usize, 192), large.schema_single_threshold);
+    try std.testing.expect(!large.backlogged(64, false, false));
+    try std.testing.expect(large.backlogged(65, false, false));
+    try std.testing.expect(!large.backlogged(128, true, false));
+    try std.testing.expect(large.backlogged(129, true, false));
+    try std.testing.expect(!large.backlogged(192, true, true));
+    try std.testing.expect(large.backlogged(193, true, true));
 }
 
 test "render cache wraps by capacity and keeps distinct sequences separate" {
