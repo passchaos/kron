@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-08",
+  "status": "rejected",
+  "candidate": "cache the last resolved schema definition inside Runtime.drainJournal",
+  "host": {
+    "kernel": "Linux 6.8.0-147-generic #147-Ubuntu SMP PREEMPT_DYNAMIC x86_64",
+    "cpu": "13th Gen Intel(R) Core(TM) i9-13900K",
+    "affinity": [16, 18, 20, 22, 24, 26],
+    "load_average_during_run": [9.43, 7.61, 7.18]
+  },
+  "base_commit": "2b3f123",
+  "binaries": {
+    "before": {
+      "path": "/tmp/kron-opt/reference-kron-fixedout2",
+      "sha256": "d1e6da7d41d3f03f80b8aa8cf3ed5a7cb1089bbc028b3e7bc665439af24ea613"
+    },
+    "after": {
+      "path": "/tmp/kron-opt/reference-kron-defcache",
+      "sha256": "945679959d9c4f9783deb18322461c6c2a78c1efba7b865fa89123a83563188c"
+    }
+  },
+  "benchmark": {
+    "frontend": "managed",
+    "mode": "async",
+    "schema": true,
+    "render_cache": true,
+    "events": 500000,
+    "warmup": 1000,
+    "queue_slots": 256,
+    "rounds": 5,
+    "cases": 4,
+    "runs": 40,
+    "verified_records": 20040000
+  },
+  "result": {
+    "async_memory_p1": "1.0006 inconclusive",
+    "async_mmap_p1": "1.0094 inconclusive",
+    "async_memory_p4": "0.9621 inconclusive (peer spread 76.6%)",
+    "async_mmap_p4": "0.9425 peer_leads (CI 0.9343..0.9602)",
+    "decision": "revert"
+  }
+}
