@@ -88,6 +88,10 @@ pub fn Registry(comptime R: type) type {
         controls: []Control,
         journals: []*Journal,
         closing: Atomic(bool) = .init(false),
+        /// Number of channels whose producer is currently attached. Read by
+        /// the render-cache backlog gate to distinguish a lone SPSC producer
+        /// from a multi-producer SPSC route without scanning channel states.
+        attached_count: Atomic(usize) = .init(0),
         lifecycle_mutex: std.Io.Mutex = .init,
 
         pub fn create(allocator: std.mem.Allocator, io: std.Io, owner: *R, options: Options) !*Self {
@@ -156,6 +160,7 @@ pub fn Registry(comptime R: type) type {
                     control.state.store(.available, .release);
                     return error.Closing;
                 }
+                _ = self.attached_count.fetchAdd(1, .monotonic);
                 return .init(.{
                     .registry = self,
                     .control_index = index,
@@ -180,6 +185,10 @@ pub fn Registry(comptime R: type) type {
 
         pub fn channelCount(self: *const Self) usize {
             return self.journals.len;
+        }
+
+        pub fn attachedCount(self: *const Self) usize {
+            return self.attached_count.load(.monotonic);
         }
 
         /// Hold the lifecycle mutex until endCut, so attachment cannot add a
@@ -230,7 +239,9 @@ pub fn Registry(comptime R: type) type {
             self.closing.store(true, .release);
             for (self.controls) |*control| {
                 _ = control.admission_gate.fetchOr(closing_bit, .acq_rel);
-                _ = control.state.cmpxchgStrong(.attached, .retiring, .acq_rel, .acquire);
+                if (control.state.cmpxchgStrong(.attached, .retiring, .acq_rel, .acquire) == null) {
+                    _ = self.attached_count.fetchSub(1, .monotonic);
+                }
                 control.wake(self.io);
             }
         }
@@ -415,7 +426,9 @@ pub fn ThreadOwner(comptime R: type) type {
             if (control.activeAdmissions() != 0) return error.OutstandingAdmission;
             try control.channel.journal.retireSingleProducer(self.producer_token);
             if (@hasDecl(R, "releaseThreadConfigurationCache")) self.registry.owner.releaseThreadConfigurationCache(@intCast(self.control_index + 1));
-            control.state.store(.available, .release);
+            if (control.state.swap(.available, .release) == .attached) {
+                _ = self.registry.attached_count.fetchSub(1, .monotonic);
+            }
         }
     };
 }

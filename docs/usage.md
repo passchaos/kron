@@ -392,7 +392,7 @@ max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁�
 | 场景 | 推荐模式 | 当前证据 |
 | --- | --- | --- |
 | 需要 recovery、CRC、三检查点、多 route、rolling 或 durable | 默认 `Logging`/`Runtime` | durable 默认路径；完整 E-core 240-trial 矩阵（kron 全配置开启自适应 cache）为 19 lead/9 peer/36 inc，剩余 peer lead 全部在 mmap |
-| async JSON 高吞吐，仍需 journal/CRC/recovery | `render_cache` opt-in（backlog 自适应） | E-core 32配置×5轮：P1 inline +8.5%–17.9%、P1 schema −2.3%–+3.9%、P4 inline +38.9%–57.1%、P4 schema +7.9%–51.2%，32个配对无peer lead。5轮 peer：P1 memory inline sampled 对两前端 1.219/1.029 qualified（SPSC 1.273/1.076），SPSC P4 memory inline 1.20–1.32 qualified；P1 mmap durable 0.765–0.906（仍 peer lead）。cache 是 volatile，journal/CRC/recovery 保留，恢复时回退 deferred render |
+| async JSON 高吞吐，仍需 journal/CRC/recovery | `render_cache` opt-in（backlog 自适应） | E-core 32配置×5轮：P1 inline +8.5%–17.9%、P1 schema −2.3%–+3.9%、P4 inline +38.9%–57.1%、P4 schema +7.9%–51.2%，32个配对无peer lead。SPSC多producer schema通过`attached_count`使用shared 1/2环（P4 memory batch +2.5%中位、P1 parity）。5轮 peer：P1 memory inline sampled 对两前端 1.219/1.029 qualified（SPSC 1.273/1.076），SPSC P4 memory inline 1.20–1.32 qualified；P1 mmap durable 0.765–0.906（仍 peer lead）。cache 是 volatile，journal/CRC/recovery 保留，恢复时回退 deferred render |
 | P1 memory 或 P4 最高吞吐，可接受无 recovery | `text_format=true` opt-in | E-core 5轮 peer：P1 memory batch 2.522M，对 Foundation/tracing 1.386/1.140 qualified；P4 memory 4.09M，对两前端 1.79–1.90 qualified；P1 mmap 2.525M，对 Foundation 1.179 lead、对 tracing 0.917 peer lead |
 | P1 mmap 最高吞吐、单 producer、无 recovery | `MmapSpool` opt-in | E-core 5轮 peer：batch 3.22M、sampled 2.75M；sampled 对 Foundation/tracing 1.400/1.110 qualified；batch 中位 1.52/1.13，因 spread inconclusive |
 | P1 mmap 需要 journal/recovery | 默认 durable `Runtime` | 不是最快；生产 `text_format` P1 mmap 对 tracing 为 0.917 |

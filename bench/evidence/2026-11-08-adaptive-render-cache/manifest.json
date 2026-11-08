@@ -26,8 +26,9 @@
   "source_diff_sha256": "993f9483f6391383c1848c1a0d4822f8176657620574fd4a877f7fdc44f1cb26",
   "changed_source_sha256": {
     "src/core/render_cache.zig": "6e12c1b2b6ce64ca804f4730968714fb851f33cd2f03a8c07079684b7be0925f",
-    "src/core/runtime.zig": "81fe4c6ed732a6bf39bdab028e40246b6bade2289e10c662e0e71e8897f9c080",
-    "bench/cpp_reference/run.py": "bfeddc2ceeadb7b9a1b7fd95896dd53e5f4a3af2cebe16b5c0ac8073c4e6290e"
+    "src/core/runtime.zig": "95b1dd5a987a8552c860de7164e5a87e1410b527bbcda2b1a3b29ff9078c7fd1",
+    "bench/cpp_reference/run.py": "bfeddc2ceeadb7b9a1b7fd95896dd53e5f4a3af2cebe16b5c0ac8073c4e6290e",
+    "src/core/thread_registry.zig": "374531b5f7578de7b58393a6b334c6246d4833dcb653b0574706e01375e5d40a"
   },
   "binaries": {
     "kron_adaptive": {
@@ -45,6 +46,10 @@
     "foundation_tracing": {
       "path": "bench/evidence/2026-11-04-current-foundation-full-ecore/reference-foundation_tracing",
       "sha256": "fc86100246eaffe2716fad49f24067d38405ad60c3d17a2c2ca8408edb804714"
+    },
+    "kron_spsc_count": {
+      "path": "/tmp/kron-opt/reference-kron-spsc-count",
+      "sha256": "e5a9243e1fe234aafe56cc2e749e3a8377bc32f94342c497eb16a8ce790c46a1"
     }
   },
   "foundation_repository_head": "0d1f5b0c5689a3fdc502b1c4c7ed8496eb1d5a94",
@@ -65,5 +70,10 @@
     "verify_local": "159/159 steps, 804/805 tests (1 skipped), verify-local success",
     "peer_spsc_rows": 240
   },
-  "measurement_note": "The measured kron binary was rebuilt from the committed source after a comment-only runtime.zig edit and reproduced sha256 ad2bab2b2f6b9638f9f2bf5df4789d9ada9e28a12a677ae5b0aea818727b5d2c exactly."
+  "measurement_note": "The measured kron binary was rebuilt from the committed source after a comment-only runtime.zig edit and reproduced sha256 ad2bab2b2f6b9638f9f2bf5df4789d9ada9e28a12a677ae5b0aea818727b5d2c exactly.",
+  "spsc_count_ab": {
+    "rounds": 11,
+    "rows": 44,
+    "result": "spsc-memory-p4-schema-batch 1.0249 median, spsc-memory-p1-schema-sampled 0.9954 parity; no regression"
+  }
 }

@@ -803,7 +803,14 @@ pub const Runtime = struct {
                 if (destination) |cache_journal| if (event.route_mask == 1 and snapshot.routes.len == 1 and snapshot.routes[0].format == .json) {
                     const route = &snapshot.routes[0];
                     const redacted = if (route.policy) |policy| policy.redactor != null else false;
-                    if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.backlogged(cache_journal.pending(), binding != null, cache_journal.producer_mode == .single)) if (cache.claim(reservation.sequence)) |claim| {
+                    // SPSC channels are preallocated, so channelCount cannot
+                    // distinguish one attached producer from several. The
+                    // registry's attached count lets a lone SPSC producer keep
+                    // the higher schema threshold while a multi-producer SPSC
+                    // route uses the shared-async threshold.
+                    const single_producer = cache_journal.producer_mode == .single and
+                        (if (self.thread_registry) |registry| registry.attachedCount() <= 1 else true);
+                    if (!redacted) if (self.renderCacheFor(cache_journal)) |cache| if (cache.backlogged(cache_journal.pending(), binding != null, single_producer)) if (cache.claim(reservation.sequence)) |claim| {
                         var writer = std.Io.Writer.fixed(claim.buffer);
                         if (common.encodeDecodedPtr(.json, event, route.timestamp, &writer)) |_| {
                             claim.publish(writer.buffered().len);

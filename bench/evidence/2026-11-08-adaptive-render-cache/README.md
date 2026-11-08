@@ -4,13 +4,13 @@
 
 `render_cache` 之前一旦开启就由 producer 渲染每一条记录。P1 下 producer 本身是瓶颈，把 render 从 consumer 移过去会稳定回退（约 0.94）；P4 或 consumer 落后时则大幅领先（约 1.6）。本轮把 producer 渲染改为**按 journal backlog 自适应**：
 
-- `RenderCache` 预计算三个阈值：inline `capacity/4`；shared async schema `capacity/2`；SPSC schema `capacity*3/4`（最小 2/4/4）；
+- `RenderCache` 预计算三个阈值：inline `capacity/4`；shared async schema `capacity/2`；SPSC schema 单 producer `capacity*3/4`、多 producer 使用 shared 的 `capacity/2`（最小 2/4/4）；
 - `Runtime` 在 claim 前只做一次 monotonic `pending()` 读取，`pending > threshold` 时才由 producer 渲染；
 - 未触发时 consumer 继续 deferred render；触发时行为与原来的 render cache 完全相同；
 - cache 命中、发布、abort、恢复回退、journal/CRC/recovery/queue 契约均不变；
 - benchmark `--kron-render-cache` 现在对所有 producer 启用自适应 cache（此前只对 P4 启用）。
 
-schema producer 的 binary encode 比 inline 便宜，单 producer 更接近 break-even；shared async schema 用半环确认 consumer 落后，SPSC schema 的队列由单 producer/consumer 就地推进，需要 3/4 环才能避免 sampled 轴上的稳定回退。阈值是容量相对值，不依赖固定的 256 槽配置。
+schema producer 的 binary encode 比 inline 便宜，单 producer 更接近 break-even；shared async schema 用半环确认 consumer 落后，SPSC 单 producer 的队列就地推进，需要 3/4 环才能避免 sampled 轴上的稳定回退。SPSC 多 producer 通过 `ThreadRegistry.attached_count` 识别并切换到半环。阈值是容量相对值，不依赖固定的 256 槽配置。
 
 ## 正确性
 
@@ -64,6 +64,22 @@ schema producer 的 binary encode 比 inline 便宜，单 producer 更接近 bre
 - **P1 schema**：中位 **−2.3%–+3.9%**；batch 全部正向（4 个 qualified lead），sampled 在 −2.3% 到 +0.7% 之间且区间跨 1，均为 inconclusive；没有 peer_leads。
 - **P4 inline**：中位 **+38.9%–57.1%**；**P4 schema** +7.9%–51.2%。门控没有损失 P4 的原有收益。
 - 三个阈值分别覆盖 inline（1/4 环）、shared async schema（1/2 环）和 SPSC schema（3/4 环）；32 个配对中没有稳定负向。schema 的 1/2 环版本能把 P4 schema 推到约 1.5x，但会在 SPSC P1 sampled schema 留下 0.9605 的稳定负向；3/4 环消除该负向，同时保留 P4 schema 的 1.08–1.51x。
+
+## SPSC multi-producer schema threshold（11 轮）
+
+SPSC 的 channel 是预分配的，`channelCount()` 不能区分“1 个已 attach 的 producer”和“4 个”。`ThreadRegistry` 新增 `attached_count`（attach +1，detach/retireAll −1），render-cache gate 对 SPSC schema 使用：
+
+- attached ≤ 1：3/4 环（单 producer，避免 sampled 回退）；
+- attached > 1：1/2 环（多 producer，使用 shared async 阈值，增加 render offload）。
+
+同 binary A/B（E-core，11 轮）：
+
+| case | new | old | ratio 中位 | 说明 |
+| --- | ---: | ---: | ---: | --- |
+| spsc-memory-p4-schema-batch | 3.314M | 3.244M | 1.0249 | 方向混合，中位 +2.5% |
+| spsc-memory-p1-schema-sampled | 1.460M | 1.460M | 0.9954 | parity，无回退 |
+
+7 轮补充：spsc-mmap-p4-schema-batch 1.0011、spsc-memory-p4-schema-sampled 1.0100、spsc-mmap-p4-schema-sampled 1.0056、spsc-mmap-p1-schema-batch 1.0020。整体是小幅正向/中性，未达到 qualified 门槛；保留是因为策略更准确（多 producer SPSC 不再误用单 producer 阈值），且 P1 单 producer 行为不变。原始行见 [ab/spsc-count-results.jsonl](ab/spsc-count-results.jsonl)。
 
 ## peer 资格（5 轮，Foundation HEAD `0d1f5b0`）
 
@@ -169,5 +185,6 @@ SPSC 配置同样开启自适应 `render_cache`；240 次试验、逐条核验 *
 
 - [manifest.json](manifest.json)：host/load、git HEAD、源码与 binary sha256、Foundation HEAD、配置。
 - [ab/results.jsonl](ab/results.jsonl)：32 配置 × 2 variant × 5 轮（320 次）。
+- [ab/spsc-count-results.jsonl](ab/spsc-count-results.jsonl)：SPSC attached-count 阈值 2 配置 × 2 binary × 11 轮（44 次）。
 - [peer/results.jsonl](peer/results.jsonl)：async kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
 - [peer-spsc/results.jsonl](peer-spsc/results.jsonl)：SPSC kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
