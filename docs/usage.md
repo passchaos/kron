@@ -329,6 +329,21 @@ pub const std_options: std.Options = .{
 
 初始化之后bindStdLog，停止全部std.log用户后unbindStdLog。Logging.destroy只解除自己的绑定。桥接使用有界16KiB producer格式化缓冲；检查LogBridge.statistics()的unbound/oversize/errors。完整例子见 [std_log.zig](../examples/std_log.zig)。
 
+## 全局 owner（可选）
+
+库代码无法逐层传递 logger 时，应用可以安装一个进程级 `Logging` owner；scope 由调用点决定，因此不同库可以各用自己的稳定名称：
+
+```zig
+kron.setGlobalLogging(logging);
+defer kron.clearGlobalLogging();
+
+kron.info("mylib", "connected", .{ .host = host });
+kron.infoAt(@src(), "mylib.http", "request done", .{ .status = @as(u16, 200) });
+kron.logfAt(@src(), .info, "mylib.db", "pool size {d}", .{@as(u8, 10)}, .{});
+```
+
+`global.scoped(scope)` 返回 `?Logger`，未安装时为 null；`enabled(level, scope)` 可在构造昂贵字段前检查。全局槽只保存一个 `*Logging`，必须在启动 worker 前安装、所有使用者停止后清除；测试或多实例场景应显式注入 `Logging.Logger`。未安装时所有全局调用为 no-op。`logAt`/`logfAt`/`infoAt` 等带 `At` 的入口显式接收 `@src()`，用于保留结构化 source。
+
 ## 时间、trace 与源位置
 
 route.timestamp可设置 `.{} `（可读UTC）、固定offset/precision或 `.{ .zone = .local }`。local采用OS时区/DST规则，按事件整秒缓存；异步在消费者转换，sync/fallback_sync在调用线程转换。Linux依赖启用 `.@"system-local-time"=true` 或应用link_libc，运行期间保持TZ稳定，见 [时间处理](time.md)。

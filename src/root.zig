@@ -5,6 +5,28 @@ const std = @import("std");
 // Application entry and structured events.
 pub const Logging = @import("logging/root.zig").Logging;
 pub const Level = @import("core/level.zig").Level;
+
+// Optional process-wide owner for libraries that do not thread a logger
+// through their APIs. Applications install one Logging once.
+pub const global = @import("global.zig");
+pub const setGlobalLogging = global.setLogging;
+pub const clearGlobalLogging = global.clearLogging;
+pub const globalLogging = global.getLogging;
+pub const log = global.log;
+pub const logf = global.logf;
+pub const logAt = global.logAt;
+pub const logfAt = global.logfAt;
+pub const err = global.err;
+pub const warn = global.warn;
+pub const info = global.info;
+pub const debug = global.debug;
+pub const trace = global.trace;
+pub const errAt = global.errAt;
+pub const warnAt = global.warnAt;
+pub const infoAt = global.infoAt;
+pub const debugAt = global.debugAt;
+pub const traceAt = global.traceAt;
+
 pub const Event = @import("core/event.zig").Event;
 pub const Field = @import("core/field.zig").Field;
 pub const Value = @import("core/field.zig").Value;
@@ -89,6 +111,7 @@ pub const TscClock = @import("platform/tsc_clock.zig").TscClock;
 
 test {
     std.testing.refAllDecls(@This());
+    _ = global;
     _ = @import("core/level.zig");
     _ = @import("core/admission.zig");
     _ = @import("encoder/escaping.zig");
