@@ -14,7 +14,7 @@
 | core/codec、schema_codec、reference_encoding、wire_size/write | 自包含/引用载荷与历史版本、checked解析、完整树验证/长度统计、共有wire写入 |
 | [core/delivery.zig](../src/core/delivery.zig)、delivery_batch | 已固定配置的编码fanout、required written/durable屏障、准确前缀统计与回收 |
 | [config/](../src/config/routes.zig) | filter/cache/reload、来源合并与有界JSON、不可变route快照、按需output_policy采样/脱敏/限制、reader/record pins和sink leases |
-| [journal/](../src/journal/journal.zig) | Memory/Mmap backing、布局、CRC/generation、reserve/commit/abort/peek/reclaim、schema-ready/checkpoint和独占恢复 |
+| [journal/](../src/journal/journal.zig) | Memory/Mmap backing、布局、CRC/generation、reserve/commit/abort/peek/reclaim、schema-ready/checkpoint和独占恢复；协议见 [Journal 协议](journal-protocol.md) |
 | [pipeline/](../src/pipeline/predicate.zig) | 采样、递归脱敏、predicate/有界NFA正则、flight recorder |
 | [encoder/](../src/encoder/root.zig) | text/JSON/logfmt，共有数字/转义和source路径输出，checked wire/reference融合与fallback |
 | [archive/](../src/archive/reader.zig) | 自包含frame、只读Reader/follow、标准zlib压缩 |

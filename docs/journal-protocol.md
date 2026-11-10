@@ -3,7 +3,7 @@
 `journal.zig` owns a bounded, fixed-slot file mapping. `Journal.create` takes
 `std.Io`, a path, slot capacity and maximum payload size. Little-endian 64-bit
 Linux, Windows, macOS, Android and iOS targets have native file-mapping backends.
-The exact compile/runtime evidence is in [platforms.md](../../docs/platforms.md).
+The exact compile/runtime evidence is in [platforms.md](platforms.md).
 Linux/Android reserve disk space with fallocate; Windows uses allocation-size
 metadata and file mapping; Darwin uses F_PREALLOCATE and MAP_SHARED. Known
 volatile filesystems or unsupported preallocation return explicit errors.

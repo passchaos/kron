@@ -31,6 +31,7 @@
 | 目录职责、依赖、测试位置与扩展边界 | [代码结构](code-structure.md) |
 | 常用 gate、精细验证与证据维护 | [开发与验证](development.md) |
 | 整体产品目标、协议与验收要求 | [整体设计](design.md) |
+| Journal 槽位、CRC、恢复与所有权协议 | [Journal 协议](journal-protocol.md) |
 | 已有能力、最近门禁、剩余优先级 | [当前验收状态](implementation-status.md) |
 | 本地项目调研与复用边界 | [本地复用](local-reuse.md) |
 | 示例、集成/故障测试、基准与工具 | [examples](../examples/README.md)、[tests](../tests/README.md)、[bench](../bench/README.md)、[tools](../tools/README.md) |
