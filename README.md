@@ -65,7 +65,7 @@ mode/queue/overflow/redaction/sampling等均逐route设置，未填写字段采�
 | 开始使用、查参数和生命周期 | [使用指南](docs/usage.md)、[包接入](docs/package.md)、[默认接入建议](docs/default-logging.md) |
 | 理解接口与内部实现 | [接口架构](docs/api-design.md)、[代码结构](docs/code-structure.md)、[整体设计](docs/design.md) |
 | 修改源码、选择测试和维护证据 | [开发与验证](docs/development.md)、[测试目录](tests/README.md)、[基准目录](bench/README.md) |
-| 查能力、平台和剩余工作 | [当前验收状态](docs/implementation-status.md)、[平台支持](docs/platforms.md) |
+| 查能力、平台和剩余工作 | [能力矩阵](docs/capability-matrix.md)、[当前验收状态](docs/implementation-status.md)、[平台支持](docs/platforms.md) |
 | 查全部专题与历史记录 | [文档导航](docs/README.md)、[历史记录](docs/history/README.md) |
 | 查版本与近期变更 | [变更记录](CHANGELOG.md) |
 

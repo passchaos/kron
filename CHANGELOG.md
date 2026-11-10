@@ -21,6 +21,7 @@ verification note.
 ### Added
 
 - MIT license.
+- Capability matrix for mode/storage/format/recovery/durable combinations.
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
   template.
 - `zig build fmt`, `bench-index`, `hygiene`, `docs` and `verify-fast` steps.

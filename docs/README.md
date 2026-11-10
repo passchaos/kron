@@ -16,6 +16,7 @@
 | 全局采样、phase 与 bypass | [采样](sampling.md) |
 | UTC/固定偏移/系统local、RFC3339、日期和时长 | [时间](time.md) |
 | Memory/Mmap 的选择 | [异步存储](async-storage.md) |
+| 模式/存储/格式/恢复/durable 组合 | [能力矩阵](capability-matrix.md) |
 | flush、durable、deadline、shutdown | [生命周期](lifecycle.md) |
 | 文件短写、轮转、同步与错误锁存 | [文件可靠性](file-reliability.md) |
 | 四种编码与协议版本 | [编码](encoding.md) |
