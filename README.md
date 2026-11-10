@@ -81,8 +81,10 @@ zig build run-mmap
 zig build run-source-location
 zig build run-route-policies
 zig build test-logging -Doptimize=ReleaseSafe -j1
+zig build verify-fast -Doptimize=ReleaseSafe -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1
+zig build fmt bench-index -j1
 ```
 
 `zig build` 安装 `kroncat` 和 `kron-bench`；依赖消费只导入库模块。`verify-local` 包括单元/集成、负向编译、真实 SIGKILL、独立包、单线程、工具与示例编译；源码分发另外运行 `test-package-distribution`。按修改范围选择的完整命令见 [开发与验证](docs/development.md)。

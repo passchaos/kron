@@ -23,33 +23,17 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run kron unit and integration tests");
     test_step.dependOn(&run_tests.step);
 
-    const logging_tests = b.addTest(.{ .name = "kron-logging", .root_module = module, .filters = &.{"managed logging"} });
-    b.step("test-logging", "Verify application logging ownership, outputs and lifetime").dependOn(&b.addRunArtifact(logging_tests).step);
+    addTestStep(b, "test-logging", "kron-logging", module, &.{"managed logging"}, "Verify application logging ownership, outputs and lifetime", null);
+    addTestStep(b, "test-admission-lifecycle", "kron-admission-lifecycle", module, &.{"admission lifecycle:"}, "Verify TLS owner reuse, release callback nesting and thread isolation", test_step);
+    addTestStep(b, "test-journal-coordinates", "kron-journal-coordinates", module, &.{ "reserve coordinates", "checksum valid generation" }, "Verify full width shared/SPSC ring coordinates and generation corruption evidence", test_step);
+    addTestStep(b, "test-escaping-tails", "kron-escaping-tails", module, &.{"ASCII short tail"}, "Verify ASCII tail first matches and public writer failure prefixes", test_step);
+    addTestStep(b, "test-wire-scratch", "kron-wire-scratch", module, &.{"fused scratch lifecycle:"}, "Verify fused scratch reuse, errors and exact descriptor budgets", test_step);
+    addTestStep(b, "test-crc-segments", "kron-crc-segments", module, &.{"CRC segments:"}, "Verify arbitrary-seed CRC segment boundaries and guard pages", test_step);
 
-    const admission_lifecycle_tests = b.addTest(.{ .name = "kron-admission-lifecycle", .root_module = module, .filters = &.{"admission lifecycle:"} });
-    const run_admission_lifecycle = b.addRunArtifact(admission_lifecycle_tests);
-    b.step("test-admission-lifecycle", "Verify TLS owner reuse, release callback nesting and thread isolation").dependOn(&run_admission_lifecycle.step);
-    test_step.dependOn(&run_admission_lifecycle.step);
-
-    const journal_coordinate_tests = b.addTest(.{ .name = "kron-journal-coordinates", .root_module = module, .filters = &.{ "reserve coordinates", "checksum valid generation" } });
-    const run_journal_coordinates = b.addRunArtifact(journal_coordinate_tests);
-    b.step("test-journal-coordinates", "Verify full width shared/SPSC ring coordinates and generation corruption evidence").dependOn(&run_journal_coordinates.step);
-    test_step.dependOn(&run_journal_coordinates.step);
-
-    const escaping_tail_tests = b.addTest(.{ .name = "kron-escaping-tails", .root_module = module, .filters = &.{"ASCII short tail"} });
-    const run_escaping_tails = b.addRunArtifact(escaping_tail_tests);
-    b.step("test-escaping-tails", "Verify ASCII tail first matches and public writer failure prefixes").dependOn(&run_escaping_tails.step);
-    test_step.dependOn(&run_escaping_tails.step);
-
-    const wire_scratch_tests = b.addTest(.{ .name = "kron-wire-scratch", .root_module = module, .filters = &.{"fused scratch lifecycle:"} });
-    const run_wire_scratch = b.addRunArtifact(wire_scratch_tests);
-    b.step("test-wire-scratch", "Verify fused scratch reuse, errors and exact descriptor budgets").dependOn(&run_wire_scratch.step);
-    test_step.dependOn(&run_wire_scratch.step);
-
-    const crc_segment_tests = b.addTest(.{ .name = "kron-crc-segments", .root_module = module, .filters = &.{"CRC segments:"} });
-    const run_crc_segments = b.addRunArtifact(crc_segment_tests);
-    b.step("test-crc-segments", "Verify arbitrary-seed CRC segment boundaries and guard pages").dependOn(&run_crc_segments.step);
-    test_step.dependOn(&run_crc_segments.step);
+    const fmt = b.addSystemCommand(&.{ b.graph.zig_exe, "fmt", "--check", "build.zig", "build.zig.zon", "src", "tests", "examples.zig", "tools" });
+    b.step("fmt", "Check Zig formatting").dependOn(&fmt.step);
+    const bench_index = b.addSystemCommand(&.{ "python3", "tools/bench_index.py", "--check" });
+    b.step("bench-index", "Verify the generated benchmark evidence index").dependOn(&bench_index.step);
 
     validation.addPlatforms(b);
 
@@ -371,6 +355,12 @@ pub fn build(b: *std.Build) void {
     verify.dependOn(&run_single.step);
     b.step("verify-local", "Verify standalone logging").dependOn(verify);
 
+    const verify_fast = b.step("verify-fast", "Run the fast correctness gate: tests, compile-fail, fuzz and single-threaded");
+    verify_fast.dependOn(test_step);
+    verify_fast.dependOn(&compile_fail.step);
+    verify_fast.dependOn(&run_fuzz.step);
+    verify_fast.dependOn(&run_single.step);
+
     const regression_tests = b.addSystemCommand(&.{ "python3", "tests/test_regression.py" });
     b.step("test-regression", "Verify controlled performance regression accounting").dependOn(&regression_tests.step);
     verify.dependOn(&regression_tests.step);
@@ -560,4 +550,19 @@ pub fn build(b: *std.Build) void {
 
     const check_tests = b.addTest(.{ .root_module = module });
     b.step("check", "Compile the public module and tests").dependOn(&check_tests.step);
+}
+
+fn addTestStep(
+    b: *std.Build,
+    step_name: []const u8,
+    test_name: []const u8,
+    root_module: *std.Build.Module,
+    filters: []const []const u8,
+    description: []const u8,
+    also_depend: ?*std.Build.Step,
+) void {
+    const tests = b.addTest(.{ .name = test_name, .root_module = root_module, .filters = filters });
+    const run = b.addRunArtifact(tests);
+    b.step(step_name, description).dependOn(&run.step);
+    if (also_depend) |step| step.dependOn(&run.step);
 }
