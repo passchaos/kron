@@ -15,9 +15,8 @@ verification note.
 - Runtime route/channel limits use shared constants instead of 64/65 literals.
 - The optional global logging owner uses an atomic acquire/release slot.
 - Rewrote `main` history to remove reference binaries, tar snapshots and raw
-  profiling data; pre-rewrite history is preserved in the temporary
-  `backup/pre-evidence-rewrite` branch and
-  `/tmp/kron-pre-evidence-rewrite.bundle`.
+  profiling data; pre-rewrite history is preserved in
+  `/nav_env/project-z/kron-pre-evidence-rewrite.bundle` (outside Git).
 
 ### Added
 

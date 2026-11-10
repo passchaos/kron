@@ -19,14 +19,17 @@ links and raw measurement identity stay available.
 | --- | --- |
 | Pre-rewrite `main` | `ce96b6e` |
 | Rewritten `main` at rewrite time | `5952ec1a` |
-| Pre-rewrite backup branch | `backup/pre-evidence-rewrite` (temporary) |
-| Pre-rewrite bundle | `/tmp/kron-pre-evidence-rewrite.bundle` (not in Git) |
-| Tracked size after rewrite | about 156 MiB / 14,627 files |
+| Pre-rewrite backup branch | removed after verification |
+| Pre-rewrite bundle | `/nav_env/project-z/kron-pre-evidence-rewrite.bundle` (not in Git) |
+| Tracked size after rewrite | about 156 MiB / 14,628 files |
 | Tracked size before rewrite | about 216 MiB / 14,851 files |
+| Pack size before rewrite | 76.34 MiB |
+| Pack size after reflog expiry + gc | 25.26 MiB |
+| Fresh remote clone `.git` | 29 MiB (pack 25.82 MiB) |
 
-All commit SHAs before the rewrite are invalid. Use the backup branch or the
-bundle when an old SHA must be inspected; the branch can be deleted after the
-rewritten `main` has been verified and mirrored.
+All commit SHAs before the rewrite are invalid. Use the bundle when an old SHA
+must be inspected. The temporary backup branch was deleted after the rewritten
+`main` passed the full test suite and a fresh clone was measured.
 
 ## Boundary
 
