@@ -54,4 +54,4 @@
 
 ## 历史与证据
 
-[history/](history/README.md) 保存旧设计草案、README 的历次性能叙述和详细验收 chronology。原始日志与冻结源码仍在 `bench/evidence/`、`bench/cpp_reference/evidence/`、`tests/power_loss/evidence/`，通过专题链接找到；历史快照不作为当前使用接口。
+[history/](history/README.md) 保存旧设计草案、README 的历次性能叙述和详细验收 chronology。原始日志与冻结源码仍在 `bench/evidence/`、`bench/cpp_reference/evidence/`、`tests/power_loss/evidence/`；完整目录见 [证据索引](../bench/evidence/INDEX.md)，历史快照不作为当前使用接口。

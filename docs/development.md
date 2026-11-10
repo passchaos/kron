@@ -66,7 +66,7 @@ Debug/ReleaseFast按变化影响补相关test；已有完整ReleaseSafe成功后
 
 不将不同baseline百分比叠加成当前Foundation/spdlog排名。噪声超限保持inconclusive，原失败/慢值/负向、未完成trial和hardware/filesystem范围保留。性能验证主要入口见 [bench/](../bench/README.md)。
 
-`docs/implementation-status.md` 只维护当前能力、最近有身份的gate与剩余优先级；详细chronology放 `docs/history/` 或对应evidence。冻结源码与原始evidence不随目录整理重写。新输出/格式行为在指南同步说明，package分发根/支持模块同步检查。
+`docs/implementation-status.md` 只维护当前能力、最近有身份的gate与剩余优先级；详细chronology放 `docs/history/` 或对应evidence。冻结源码与原始evidence不随目录整理重写。新输出/格式行为在指南同步说明，package分发根/支持模块同步检查。证据目录索引由 `python3 tools/bench_index.py` 生成，`--check` 可用于CI/提交前核验。
 
 ## 修改边界
 

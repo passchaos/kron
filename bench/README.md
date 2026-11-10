@@ -16,6 +16,8 @@
 
 ## 主要证据
 
+完整目录与缺失 README 状态见 [证据索引](evidence/INDEX.md)；新实验从 [模板](evidence/TEMPLATE.md) 开始。
+
 | 证据 | 范围与边界 |
 | --- | --- |
 | [默认Clock dispatch实验](evidence/2026-11-03-default-clock/README.md) | 两候选撤回；960项/9696万JSON的default/schema/custom负向完整保留，9项Clock/Io snapshot/API回归；未更新Foundation排名 |
