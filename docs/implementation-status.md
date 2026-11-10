@@ -12,8 +12,9 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
-截至 2026-11-09，完整 `test` 为 770/771（1 项 local skip），`verify-local` 为
-804/805（1 项 local skip）。fixed-buffer schema encode 后完整 E-core 260-trial
+截至 2026-11-10，完整 `test` 为 768/770（2 项 skip）；上一次完整
+`verify-local` 为 804/805（1 项 local skip），本次 fixture/文档修复未重跑全部
+故障 campaign。fixed-buffer schema encode 后完整 E-core 260-trial
 矩阵（2,626 万条 JSON）durable 为 **24 kron lead / 4 peer lead / 36
 inconclusive**，spool 为 **3/0/5**；剩余 4 个 peer lead 全部是 mmap 对
 tracing。durable memory 已基本完成超越，P1 mmap batch 对 tracing 仍是主要
