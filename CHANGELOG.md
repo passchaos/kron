@@ -19,7 +19,7 @@ verification note.
 
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
   template.
-- `zig build fmt`, `bench-index`, `hygiene` and `verify-fast` steps.
+- `zig build fmt`, `bench-index`, `hygiene`, `docs` and `verify-fast` steps.
 - Repository hygiene guard and GitHub Actions CI.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.

@@ -36,6 +36,13 @@ pub fn build(b: *std.Build) void {
     b.step("bench-index", "Verify the generated benchmark evidence index").dependOn(&bench_index.step);
     const hygiene = b.addSystemCommand(&.{ "python3", "tools/check_repo_hygiene.py" });
     b.step("hygiene", "Check tracked-file hygiene and repository size guards").dependOn(&hygiene.step);
+    const docs_lib = b.addLibrary(.{ .name = "kron-docs", .root_module = module, .linkage = .static });
+    const docs_install = b.addInstallDirectory(.{
+        .source_dir = docs_lib.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    b.step("docs", "Generate Zig API documentation").dependOn(&docs_install.step);
 
     validation.addPlatforms(b);
 
