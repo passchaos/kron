@@ -12,7 +12,9 @@ Logging.Options只保留outputs列表和合计队列预算，默认值直接位�
 
 ## 最近验证
 
-截至 2026-11-10，完整 `test` 为 768/770（2 项 skip）；上一次完整
+截至 2026-11-10，完整 `test` 为 768/770（2 项 skip）；`check-platforms`
+10/10 目标对象通过，`test-compile-fail`/`test-fuzz`/`test-single-threaded`
+与 `test-crash`/`test-async-crash`/`test-recovery-campaign` 均通过。上一次完整
 `verify-local` 为 804/805（1 项 local skip），本次 fixture/文档修复未重跑全部
 故障 campaign。fixed-buffer schema encode 后完整 E-core 260-trial
 矩阵（2,626 万条 JSON）durable 为 **24 kron lead / 4 peer lead / 36
