@@ -20,7 +20,7 @@
 | [archive/](../src/archive/reader.zig) | 自包含frame、只读Reader/follow、标准zlib压缩 |
 | [sink/](../src/sink/interface.zig) | 输出接口、writer/file/rolling/compressed resources、记录边界与错误锁存 |
 | [backend/](../src/backend/interface.zig) | portable/io_uring批量写、buffer pool、文件/目录同步与在途所有权 |
-| [platform/](../src/platform/capabilities.zig) | Linux/Windows/Darwin mapping与能力、时钟/TSC、CRC专门化 |
+| [platform/](../src/platform/capabilities.zig) | Linux/Windows/Darwin mapping与能力、时钟/TSC（纯校准数学在 [tsc_math.zig](../src/platform/tsc_math.zig)）、CRC专门化 |
 | [time/](../src/time/root.zig) | Gregorian日期、exact timestamp/duration、RFC3339、route-owned秒缓存与显式系统local转换 |
 | [telemetry/](../src/telemetry/trace_context.zig)、adapters | 显式trace/span关联、std.log桥的绑定与有界producer格式化 |
 

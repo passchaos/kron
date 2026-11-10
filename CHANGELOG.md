@@ -14,6 +14,8 @@ verification note.
   performance chronology moved to `docs/history/`.
 - Runtime route/channel limits use shared constants instead of 64/65 literals.
 - The optional global logging owner uses an atomic acquire/release slot.
+- Extracted pure TSC calibration math into `src/platform/tsc_math.zig`; clock
+  state, cross-core probe and fallback remain in `tsc_clock.zig`.
 - Rewrote `main` history to remove reference binaries, tar snapshots and raw
   profiling data; pre-rewrite history is preserved in
   `/nav_env/project-z/kron-pre-evidence-rewrite.bundle` (outside Git).

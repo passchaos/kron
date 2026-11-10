@@ -1,7 +1,10 @@
 # Qualified TSC clock
 
-`src/platform/tsc_clock.zig` is an optional x86_64 Linux clock provider. It is
-not selected automatically and is not part of the default runtime clock path.
+`src/platform/tsc_clock.zig` is an optional x86_64 Linux clock provider. Pure
+calibration math and counter-sample qualification live in
+`src/platform/tsc_math.zig`; the clock state, cross-core probe and fallback
+machine stay in `tsc_clock.zig`. The clock is not selected automatically and is
+not part of the default runtime clock path.
 An application creates and qualifies an instance before attaching the logger,
 keeps it alive while callbacks can run, and arranges explicit background
 refreshes.
