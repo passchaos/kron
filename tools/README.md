@@ -14,4 +14,6 @@ schema 定义与事件载荷各自校验，不依赖已经退出进程的二进�
 
 `python3 tools/bench_index.py` 重新生成 [bench/evidence/INDEX.md](../bench/evidence/INDEX.md)；`--check` 只校验不写入，适合提交前或 CI。索引从每个实验目录的 `README.md` 首标题和 `manifest.json` 是否存在生成，不解析测量结果；新实验从 [TEMPLATE.md](../bench/evidence/TEMPLATE.md) 开始。
 
+`python3 tools/check_repo_hygiene.py` 检查 tracked 文件是否命中 `.gitignore`、是否混入缓存/生成物、是否还有 `reference-*` 可执行副本，以及是否有超过 8 MiB 的单文件；`zig build hygiene` 是同一检查的构建入口。
+
 `zig build test-query -Doptimize=ReleaseSafe -j1` 验证 Reader/查询/follow。真实子进程强杀与只读导出由 `test-crash`、`test-async-crash` 和 `test-runtime-crash` 验证，测试入口见 [tests/](../tests/README.md)。

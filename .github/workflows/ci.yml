@@ -1,0 +1,21 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: Repository and evidence checks
+        run: zig build fmt bench-index hygiene -j1 --summary all
+      - name: Unit and integration tests
+        run: zig build test -Doptimize=ReleaseSafe -j1 --summary all

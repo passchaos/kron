@@ -34,6 +34,8 @@ pub fn build(b: *std.Build) void {
     b.step("fmt", "Check Zig formatting").dependOn(&fmt.step);
     const bench_index = b.addSystemCommand(&.{ "python3", "tools/bench_index.py", "--check" });
     b.step("bench-index", "Verify the generated benchmark evidence index").dependOn(&bench_index.step);
+    const hygiene = b.addSystemCommand(&.{ "python3", "tools/check_repo_hygiene.py" });
+    b.step("hygiene", "Check tracked-file hygiene and repository size guards").dependOn(&hygiene.step);
 
     validation.addPlatforms(b);
 

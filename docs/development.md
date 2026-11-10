@@ -52,7 +52,7 @@ zig build check-platforms -j1 --summary all
 zig build fmt bench-index -j1
 ```
 
-日常改动先跑 `verify-fast`（根/公共测试、compile-fail、fuzz、单线程）；提交前按影响运行 `verify-local` 或平台/分发门禁。`fmt` 检查Zig格式，`bench-index` 校验证据索引是否与目录一致。verify-local包含根/公共集成、deadline/配置/文件、工具、compile-fail、版本/损坏矩阵、真实SIGKILL、随机ACK恢复、独立包/单线程与示例编译。源码分发单独在此命令选择。平台step生成九目标真实对象：Linux两架构、Windows、macOS两架构、Android两架构、iOS device/simulator；这些对象不代表设备运行。
+日常改动先跑 `verify-fast`（根/公共测试、compile-fail、fuzz、单线程）；提交前按影响运行 `verify-local` 或平台/分发门禁。`fmt` 检查Zig格式，`bench-index` 校验证据索引是否与目录一致，`hygiene` 检查 tracked 文件卫生与单文件大小。verify-local包含根/公共集成、deadline/配置/文件、工具、compile-fail、版本/损坏矩阵、真实SIGKILL、随机ACK恢复、独立包/单线程与示例编译。源码分发单独在此命令选择。平台step生成九目标真实对象：Linux两架构、Windows、macOS两架构、Android两架构、iOS device/simulator；这些对象不代表设备运行。
 
 Debug/ReleaseFast按变化影响补相关test；已有完整ReleaseSafe成功后，不为文档或日志记录变化重复全部故障campaign。单线程构建提供sync与普通flush/shutdown，timed/async返回明确能力错误。系统local专项显式链接平台libc，默认Linux根测试可按能力跳过local缓存测试；必须另确认专项oracle实际执行。
 
