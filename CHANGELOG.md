@@ -30,7 +30,8 @@ verification note.
 - Benchmark evidence retention policy and history-rewrite boundary.
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
   template.
-- `zig build fmt`, `bench-index`, `hygiene`, `docs` and `verify-fast` steps.
+- `zig build fmt`, `bench-index`, `hygiene`, `docs`, `test-unit` and
+  `verify-fast` steps.
 - Repository hygiene guard and GitHub Actions CI, including docs and
   cross-platform compile checks.
 - `docs/history/readme-performance-2026-11-09.md` and

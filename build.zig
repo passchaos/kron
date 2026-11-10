@@ -22,6 +22,8 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| run_tests.addArgs(args);
     const test_step = b.step("test", "Run kron unit and integration tests");
     test_step.dependOn(&run_tests.step);
+    const test_unit = b.step("test-unit", "Run root unit tests without fuzz/crash gates");
+    test_unit.dependOn(&run_tests.step);
 
     addTestStep(b, "test-logging", "kron-logging", module, &.{"managed logging"}, "Verify application logging ownership, outputs and lifetime", null);
     addTestStep(b, "test-admission-lifecycle", "kron-admission-lifecycle", module, &.{"admission lifecycle:"}, "Verify TLS owner reuse, release callback nesting and thread isolation", test_step);
