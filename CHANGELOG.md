@@ -34,8 +34,8 @@ verification note.
 - `zig build fmt`, `bench-index`, `hygiene`, `links`, `docs`, `test-unit` and
   `verify-fast` steps.
 - Repository hygiene guard and GitHub Actions CI, including docs, Markdown
-  links, compile-fail/fuzz/single-threaded gates, cross-platform compile checks,
-  package distribution and crash/recovery gates.
+  links, compile-fail/fuzz/decoder/single-threaded gates, cross-platform compile
+  checks, package distribution and crash/recovery gates.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
 
