@@ -1,10 +1,22 @@
-# 路由与策略热替换
+# Route and policy hot replacement
 
-常规应用通过Logging.outputs配置独立管线，mode/queue/overflow/redaction/sampling等直接逐route设置，未填写的字段采用Route类型默认值。每个route的脱敏在写入其队列前执行，各自拥有采样配额。统一用法见 [使用指南](usage.md)。
+Ordinary applications configure independent pipelines through
+`Logging.outputs`; mode/queue/overflow/redaction/sampling and similar settings
+are set per route, and omitted fields use the `Route` type defaults. Each route
+applies redaction before writing to its queue and owns its sampling quota. See
+the [usage guide](usage.md) for the unified API.
 
-下文描述高级Runtime内部同一管线的多route与不可变配置事务。它们共享队列/捕获保护，语义与Logging的多个独立管线不同。通过 `try logging.runtime(name)` 借用相应引擎，不得单独destroy。
+The rest of this document describes multiple routes within one advanced Runtime
+pipeline and immutable configuration transactions. They share queue/capture
+protection, which differs from `Logging`'s multiple independent pipelines. Borrow
+the corresponding engine with `try logging.runtime(name)`; do not destroy it
+separately.
 
-`replaceConfiguration(routes, policy)` 发布一个不可变配置版本。Policy 包含默认 scope filter、采样和递归 redaction；每个route可指定filter、format/timestamp、predicate、sampling/sample_bypass、输出redaction、编码上限、required/best_effort和written/durable回收边界。
+`replaceConfiguration(routes, policy)` publishes an immutable configuration
+generation. Policy contains the default scope filter, sampling, and recursive
+redaction; each route may specify filter, format/timestamp, predicate,
+sampling/sample_bypass, output redaction, encoding limits,
+required/best_effort, and written/durable reclamation boundaries.
 
 ```zig
 const version = try runtime.replaceConfiguration(&.{
@@ -17,25 +29,74 @@ try runtime.flush(.written);
 _ = try runtime.collectConfigurations();
 ```
 
-准备与校验在发布前完成，非法规则、预算不足和 OOM 保留当前版本。`configuration_slots` 默认8，限制同时保留的版本；尚有旧事件/操作时不能覆盖旧槽位，返回 `ConfigSlotsExhausted`。调用者可以等旧事件排空并 collect 后重试。
+Preparation and validation finish before publication. Invalid rules,
+insufficient budget, and OOM preserve the current generation.
+`configuration_slots` defaults to 8 and limits concurrently retained
+generations; old slots cannot be overwritten while old events/operations still
+reference them, and the call returns `ConfigSlotsExhausted`. The caller may wait
+for old events to drain, collect, and retry.
 
-## Route策略与捕获保护
+## Route policy and capture protection
 
-`RouteOptions.sampling=null` 继承Runtime全局采样；显式 `.none` 或其他策略使用本route独立的全producer预算。采样在字段捕获前冻结route_mask，全部route拒绝则返回sampled；消费者与恢复不重新采样。filter-only更新保留所有采样相位，full replacement建立新的状态；旧accepted记录保留原mask。
+`RouteOptions.sampling = null` inherits the Runtime global sampling; explicit
+`.none` or another policy uses this route's independent all-producer budget.
+Sampling freezes the route_mask before field capture, and returns sampled when
+all routes reject; consumers and recovery do not re-sample. Filter-only updates
+preserve all sampling phases, while full replacement creates new state; old
+accepted records keep their original mask.
 
-`RouteOptions.redaction` 是附加输出脱敏：只在当前route渲染，递归处理attributes和deferred参数的group，不修改另一个route或queue原始值。全局Policy.redaction仍在队列接受前改写事件，输出策略不能恢复已mask/drop或Secret原值。需要原值不落Mmap时配置捕获前Policy.redaction；Logging则在每个相关route设置有效redaction或用Secret禁止捕获原值。
+`RouteOptions.redaction` is additional output redaction: it applies only while
+rendering the current route, recursively handles attributes and deferred
+argument groups, and does not modify another route or the raw queue value. The
+global `Policy.redaction` still rewrites events before queue acceptance; output
+policy cannot restore masked/dropped values or `Secret` originals. Configure
+pre-capture `Policy.redaction` when originals must not enter Mmap; in `Logging`,
+set effective redaction on each relevant route or use `Secret` to prevent
+capturing the original.
 
-`RouteOptions.max_encoded_record_bytes` 是本输出完整编码上限，不大于Runtime输出scratch。required超限失败并保留未确认record；best_effort超限跳过且记录diagnostic。输出redaction/编码上限进入恢复fingerprint；修改后不能静默恢复到不同表示。采样状态不进入恢复fingerprint，因为route_mask已保存接受时的决策。默认未配置route策略不分配额外Policy/Redactor对象。
+`RouteOptions.max_encoded_record_bytes` is the complete encoding limit for this
+output and must not exceed Runtime output scratch. A required overflow fails and
+retains the unacknowledged record; a best_effort overflow is skipped and recorded
+as a diagnostic. Output redaction/encoding limits enter the recovery fingerprint;
+changes cannot silently recover into a different representation. Sampling state
+does not enter the recovery fingerprint because route_mask already stores the
+acceptance decision. Routes without configured policy do not allocate extra
+Policy/Redactor objects.
 
-配置发布复制规则并拥有route策略；它们随reader/pending/lease保护到旧记录交付与collection结束。测试入口 `zig build test-route-policies` 验证这些边界，统一outputs/route示例见 [使用指南](usage.md#route配置与默认值)。
+Configuration publication copies rules and owns route policy; they are protected
+by reader/pending/lease until old record delivery and collection finish. The
+`zig build test-route-policies` entry verifies these boundaries; see the
+[usage guide](usage.md#route-configuration-and-defaults) for unified
+outputs/route examples.
 
-## 完整来源事务
+## Complete source transaction
 
-`configuration_sources` 对 filter、redaction、sampling、sample_bypass 和 predicate 逐字段合并，优先级为 defaults < file < environment < explicit。环境适配仅映射 `KRON_LOG`，由应用显式传入；merge 借用输入，不解析、不分配。空 filter、空 redaction、`.none` sampling 和 predicate `.clear` 都是明确覆盖，缺失字段才继承。
+`configuration_sources` merges filter, redaction, sampling, sample_bypass, and
+predicate field by field with priority defaults < file < environment < explicit.
+The environment adapter maps only `KRON_LOG`, passed explicitly by the
+application; merge borrows inputs and does not parse or allocate. An empty
+filter, empty redaction, `.none` sampling, and predicate `.clear` are explicit
+overrides; only missing fields inherit.
 
-每个不可变配置快照预计算继承全局filter的route级别掩码，包含各route的min_level限制。普通继承route在日志调用时只读取对应级别的掩码；拥有独立scope filter的route仍逐个检查scope阈值，独立filter可以在全局off时接受日志。filter-only reload改变全局阈值，不修改这些派生掩码；完整配置替换从新routes重新计算，旧事件继续使用旧snapshot。掩码每个版本占64字节，不改变route编号、恢复指纹或持久化格式。详见 [过滤性能验证](route-filter-performance.md)。
+Each immutable configuration snapshot precomputes route-level masks inherited
+from the global filter, including each route's min_level restriction. Ordinary
+inheriting routes read only the corresponding level mask at log-call time;
+routes with independent scope filters still check scope thresholds individually,
+and an independent filter can accept logs while the global filter is off.
+Filter-only reload changes global thresholds without modifying these derived
+masks; full configuration replacement recomputes from new routes, while old
+events keep using the old snapshot. The mask costs 64 bytes per generation and
+does not change route numbering, recovery fingerprints, or persistent format.
+See [route filtering](route-filter-performance.md).
 
-后台消费一批日志时，对相同非零generation/fingerprint复用一个受保护的View，直到该批交付、barrier和记录确认完成后释放。缓存仅在批次内存在；跨版本分别处理，未知指纹仍报错。失败时临时View释放、记录pin和资源lease继续保留；历史generation=0不省略完整歧义检查。行为和实际查找计数验证见 [批次配置复用](batch-configuration.md)。
+When the background consumes a batch, it reuses one protected View for the same
+nonzero generation/fingerprint until that batch is delivered, the barrier
+completes, and records are acknowledged. The cache exists only within the batch;
+cross-generation records are handled separately, and unknown fingerprints still
+return errors. On failure, the temporary View is released while record pins and
+resource leases remain. Historical generation=0 does not skip the complete
+ambiguity check. See [batch configuration reuse](batch-configuration.md) for
+behavior and actual lookup counts.
 
 ```zig
 const version = try runtime.replaceConfigurationSources(routes, .{
@@ -46,9 +107,16 @@ const version = try runtime.replaceConfigurationSources(routes, .{
 });
 ```
 
-合并结果的 default_filter 与 routes/predicate/redaction/sampling 一次发布到同一不可变快照。发布成功后输入可释放或覆盖；失败保持当前路由版本、filter generation 和 caller sink lease 责任不变。sink 路径由应用创建sink后作为routes传入；JSON不会执行任意sink工厂。
+The merged `default_filter` and routes/predicate/redaction/sampling are
+published once into the same immutable snapshot. After successful publication,
+inputs may be released or overwritten; failure preserves the current route
+generation, filter generation, and caller sink-lease responsibility. Sink paths
+are created by the application and passed as routes; JSON never executes an
+arbitrary sink factory.
 
-`replaceConfigurationFile(routes, path, sources)` 在调用线程读取最多16KiB的JSON，替换 `sources.file`，再使用相同完整事务。例如：
+`replaceConfigurationFile(routes, path, sources)` reads at most 16 KiB of JSON on
+the calling thread, replaces `sources.file`, and uses the same complete
+transaction. For example:
 
 ```json
 {
@@ -60,39 +128,109 @@ const version = try runtime.replaceConfigurationSources(routes, .{
 }
 ```
 
-sampling支持none、count（字段count）、every（字段every）、token_bucket（capacity、refill_interval_ns、可选start_ns）。整数完整保留u64范围；负数、小数和溢出被拒绝。predicate=null显式清除。最多16层JSON、64条redaction和既有配置预算；未知字段、重复JSON字段、重复redaction key、非法值或OOM均不发布。`configuration_document.Document.parse` 提供同样解析，可供应用自行读取文件；Document拥有字符串，`override()`借用至deinit。示例：`zig build run-configuration-sources`。
+Sampling supports none, count (field `count`), every (field `every`), and
+token_bucket (`capacity`, `refill_interval_ns`, optional `start_ns`). Integers
+preserve the full u64 range; negatives, fractions, and overflow are rejected.
+`predicate=null` explicitly clears. Limits are 16 JSON levels, 64 redaction
+rules, and the existing configuration budget; unknown fields, duplicate JSON
+fields, duplicate redaction keys, invalid values, or OOM prevent publication.
+`configuration_document.Document.parse` provides the same parsing for
+applications that read files themselves; Document owns strings and `override()`
+borrows until deinit. Example: `zig build run-configuration-sources`.
 
-## Filter-only更新
+## Filter-only updates
 
-`reloadFilter`、`reloadFilterFile`、`setLevel`/`setLevelChecked`保留轻量更新能力。filter决策绑定其route generation；绑定不匹配时使用快照自带baseline。因此full default_filter之后的reload仍会生效，不产生旧filter配新策略的组合。
+`reloadFilter`, `reloadFilterFile`, `setLevel`/`setLevelChecked` retain the
+lightweight update path. Filter decisions are bound to their route generation;
+when the binding does not match, the snapshot's own baseline is used. Therefore
+a reload after a full `default_filter` still takes effect and does not create a
+combination of an old filter with new policy.
 
-filter-only更新在初始化后不分配、不占用route槽，也不重置sampler。`setLevelChecked`只改默认level、保留scope覆盖并返回生命周期错误；`setLevel`通过diagnostic记录错误。后续 `replaceConfiguration(..., default_filter=null)` 继承当前有效filter。writer通过configuration_mutex串行化；SPSC缓存命中只读取publication与owner本地数据，不增加共享reader/pending RMW。
+Filter-only updates do not allocate after initialization, do not consume route
+slots, and do not reset samplers. `setLevelChecked` changes only the default
+level, preserves scope overrides, and returns lifetime errors; `setLevel`
+records errors through diagnostics. A later
+`replaceConfiguration(..., default_filter=null)` inherits the current effective
+filter. Writers serialize through `configuration_mutex`; SPSC cache hits read
+only publication and owner-local data, without adding shared reader/pending RMW.
 
-admission固定实际filter generation与route snapshot。嵌套另一Runtime期间的同scope enabled guard保留外层入场决策，直到提交结束。accepted事件的决策保存在route_mask/config_generation，后台不重新过滤。
+Admission fixes the actual filter generation and route snapshot. A same-scope
+enabled guard nested inside another Runtime preserves the outer admission
+decision until submission completes. Accepted-event decisions are stored in
+route_mask/config_generation, and the background does not re-filter.
 
-普通调用先读取带绑定的filter决策，再取得route快照；完整事务先发布route快照，再发布同代filter。这个顺序避免已取得旧route的调用退回该route最初的baseline，丢掉此前已完成的reload。SPSC在验证线程owner后使用相同观察顺序；已入场调用直接使用线程本地保存的决策。Runtime内部filter使用opaque handle，公开只读 `currentFilterGeneration()`；独立的 `DynamicFilter`仍可单独使用。
+Ordinary calls first read the bound filter decision, then acquire the route
+snapshot; a complete transaction publishes the route snapshot first and the
+same-generation filter second. This order prevents a call that already holds the
+old route from falling back to that route's original baseline and losing a
+previously completed reload. SPSC uses the same observation order after
+validating thread ownership; admitted calls use the decision stored in thread-
+local state. Runtime-internal filters use an opaque handle, exposing only the
+read-only `currentFilterGeneration()`; an independent `DynamicFilter` remains
+available for standalone use.
 
-## 旧事件与资源所有权
+## Old events and resource ownership
 
-每个成功 admission 固定同一快照，直到字段捕获、脱敏和提交完成。accepted journal record 另持有该快照，后台按记录的 `route_generation + route_fingerprint` 找回原目标；最新 filter、格式或 sink 不会重新解释旧事件。
+Every successful admission fixes the same snapshot until field capture,
+redaction, and submission finish. An accepted journal record additionally holds
+that snapshot, and the background looks up the original target by the record's
+`route_generation + route_fingerprint`; the latest filter, format, or sink never
+reinterprets old events.
 
-普通共享admission直接持有begin阶段已经验证的配置View，在end或错误展开时释放reader；不再先将该View转换成pending pin后立刻释放reader。accepted journal record仍在commit前另持有pending pin，因此后台可能先写出/回收record，尚未结束的admission reader仍保护旧配置与sink lease。registry原有reader/pending双重保护继续阻止collect/reuse。filtered/sampled在begin内释放本地View，capture或sync失败也释放admission reader；SPSC继续使用channel缓存，控制/deadline资源仍使用原pending-pin协议。真实Memory/Mmap计数与并发旧lease回归、完整对照和性能范围见[admission View证据](../bench/evidence/2026-11-01-admission-view/README.md)。
+Ordinary shared admission directly holds the configuration View already
+validated during `begin` and releases the reader at `end` or error unwinding; it
+no longer converts that View into a pending pin and immediately releases the
+reader. Accepted journal records still hold a separate pending pin before
+commit, so the background may write/reclaim a record while an unfinished
+admission reader still protects the old configuration and sink lease. The
+registry's existing reader/pending dual protection continues to block collect/
+reuse. Filtered/sampled paths release the local View inside `begin`, and capture
+or sync failures also release the admission reader; SPSC continues to use the
+channel cache, while control/deadline resources keep the original pending-pin
+protocol.
 
-省略 `RouteOptions.release` 时，sink 由调用者拥有。调用者不能只因为新配置已发布就销毁旧 sink；先 flush，再使用 `configurationReadyToCollect(version)` 和 `collectConfigurations()` 确认旧版本可以回收。
+When `RouteOptions.release` is omitted, the caller owns the sink. The caller must
+not destroy an old sink merely because a new configuration was published; flush
+first, then use `configurationReadyToCollect(version)` and
+`collectConfigurations()` to confirm that the old generation can be reclaimed.
 
-显式提供 `release = .{ .context = owner, .release = callback }` 时，成功发布转移该资源 lease 的责任。相同 context+callback 的 lease 在全部版本间计数，最后依赖消失才调用一次。发布失败或 Runtime 初始化失败不接管 caller ownership。release 回调在路由写锁和 Runtime delivery/configuration 锁外运行；可发布其他配置，但不能重入关闭/销毁正在清理的 Runtime。
+When `release = .{ .context = owner, .release = callback }` is provided, a
+successful publication transfers responsibility for that resource lease. Leases
+with the same context+callback are counted across generations, and the callback
+runs once after the last dependency disappears. Publication failure or Runtime
+initialization failure does not take over caller ownership. The release callback
+runs outside route write locks and Runtime delivery/configuration locks; it may
+publish other configurations but must not re-enter shutdown/destruction of the
+Runtime currently being cleaned up.
 
-collect 对候选 retired 版本确认无生产者/记录/控制操作引用，完成最终 required 写出和可用的 durable barrier，再按精确版本 token 回收。回调期间产生的新 retired 版本不被这次收集误释放。
+Collect confirms that a candidate retired generation has no producer/record/
+control-operation references, completes final required writes and applicable
+durable barriers, then reclaims by exact generation token. New retired
+generations created during the callback are not mistakenly released by this
+collection.
 
-额外durable收尾遇到UnsupportedDurability时，仍允许已经完成required written且没有pending record的版本回收，并撤销全局历史durable资格。实际InputOutput等错误仍保留版本/lease供重试；pending引用保证尚未满足其required reclaim边界的记录不会进入这一回收流程。
+If the extra durable finish returns `UnsupportedDurability`, a generation that
+has completed required written and has no pending records may still be reclaimed,
+and the global historical durable qualification is withdrawn. Actual
+`InputOutput` and similar errors retain the generation/lease for retry; pending
+references ensure that records whose required reclaim boundary is not yet met do
+not enter this reclamation path.
 
-## Deadline 与恢复
+## Deadline and recovery
 
-`flushRoutesUntil` 在调用时解析命名 route，并在控制任务中持有那个版本的 lease。超时后发布新配置不会把仍在执行的操作转到新目标。
+`flushRoutesUntil` resolves named routes at call time and holds that generation's
+lease in the control task. Publishing a new configuration after a timeout does
+not redirect the in-flight operation to a new target.
 
-`flush(.written)` 覆盖保留的历史 required 版本。全局 durable 还需考虑已经退休的历史目标：如果曾存在不支持 durable 的 required 目标，运行时保守返回 `UnsupportedDurability`。针对显式 route 的 durable flush 不会宣告其他历史目标已经持久化。
+`flush(.written)` covers retained historical required generations. Global
+durable also considers retired historical targets: if a required target that did
+not support durability ever existed, Runtime conservatively returns
+`UnsupportedDurability`. A durable flush for an explicit route does not declare
+other historical targets durable.
 
-重启时必须配置正确的当前 `initial_route_generation`，并在 `recovery_versions` 中提供尚有未交付记录的旧代与目标身份：
+On restart, configure the correct current `initial_route_generation` and provide
+old generations with undelivered records and their target identities in
+`recovery_versions`:
 
 ```zig
 const runtime = try kron.Runtime.create(allocator, io, .{
@@ -104,17 +242,46 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 });
 ```
 
-初始化验证全部待恢复记录的绑定，而不是只检查第一条。缺失旧目标、身份不符或歧义返回错误并保留 journal；不会静默投递到新文件。历史资源可用新实例恢复，但其稳定 recovery identity 必须匹配。
+Initialization validates the bindings of every record to recover, not only the
+first. Missing old targets, identity mismatches, or ambiguity return errors and
+preserve the journal; records are never silently delivered to a new file.
+Historical resources may be recovered by a new instance, but their stable
+recovery identity must match.
 
-`test-configurations` 验证旧/新目标分流、admitted producer 保留旧策略、容量/OOM/初始化失败责任、共享lease、回调重入、deadline lease 和跨代恢复。`test-crash` 的 hot-routes 阶段强杀真实 Runtime 后，由新进程导出两代记录。
-`test-transactions` 验证完整来源发布、filter-only更新与采样配额、失败责任、channel重用、延迟publication交错、嵌套guard和真实JSON文件。根模块的warmed SPSC计数测试直接检查global reader/pending与DynamicFilter reader RMW不增长。
+`test-configurations` verifies old/new target routing, admitted producers
+retaining old policy, capacity/OOM/initialization-failure responsibility, shared
+leases, callback reentrancy, deadline leases, and cross-generation recovery. The
+hot-routes phase of `test-crash` force-kills a real Runtime and exports records
+from both generations in a new process. `test-transactions` verifies complete
+source publication, filter-only updates and sampling quotas, failure
+responsibility, channel reuse, delayed publication interleaving, nested guards,
+and real JSON files. Warmed SPSC counting tests in the root module directly
+check that global reader/pending and DynamicFilter reader RMW do not grow.
 
-## SPSC配置缓存
+## SPSC configuration cache
 
-每个attached channel持有自己的已验证版本缓存。稳态cache hit只读取publication和owner本地数据，producer/control共享计数与channel计数分开。accepted记录仍保留对应channel/version引用，只有ack后释放；刷新先pin新版本，再释放旧缓存。
+Each attached channel holds its own validated-generation cache. A steady-state
+cache hit reads only publication and owner-local data; producer/control shared
+counters are separate from channel counters. Accepted records retain the
+corresponding channel/generation reference and release it only after
+acknowledgement; refresh pins the new generation first, then releases the old
+cache.
 
-缓存由所属同步线程更新，detach在确认没有admission后释放；collection不会行政修改缓存，因为enabled/filtered可在admission之外读取。空闲attachment可能保留旧配置槽，直到该线程下一次调用刷新缓存或detach。这是有界资源行为，不能用强行覆盖旧cache消除。
+The cache is updated by the owning synchronized thread and released by detach
+after confirming no outstanding admission; collection never modifies the cache
+administratively because enabled/filtered may be read outside admission. An idle
+attachment may retain an old configuration slot until the thread's next call
+refreshes the cache or detaches. This is bounded resource behavior and cannot be
+eliminated by forcibly overwriting the old cache.
 
-嵌套不同Runtime回调中的outer enabled guard返回outer正在使用的TLS缓存版本，不提前刷新或释放。公共release入口也检查真实retire、cookie与active admission，不能在事件执行中丢掉唯一pin。
+An outer enabled guard nested inside a callback for a different Runtime returns
+the TLS cache generation currently used by the outer Runtime, without refreshing
+or releasing early. The public release entry also checks real retirement,
+cookie, and active admission, and cannot drop the only pin while an event is
+executing.
 
-`max_configuration_bytes`控制每版本metadata预算，Runtime默认2MiB，可覆盖64个固定预算route；`configuration_slots`限制同时保留版本数。字段predicate增加固定配置存储，不能把预算等同字符串长度。
+`max_configuration_bytes` controls per-generation metadata budget; Runtime
+defaults to 2 MiB, enough to override 64 fixed-budget routes.
+`configuration_slots` limits concurrently retained generations. Field predicates
+add fixed configuration storage, so the budget cannot be equated with string
+length.

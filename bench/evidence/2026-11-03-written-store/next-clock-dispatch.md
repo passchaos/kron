@@ -1,9 +1,0 @@
-# 下一轮default clock dispatch研究（未实现）
-
-当前default Managed不是每记录必走clock_gettime syscall。真实Worker先call Runtime.clock.real_now并复制16B std.Io参数；realDefault再call Io.vtable.now，i96纳秒clamp到i64；Threaded.now第三层调用cachedvDSO，只有缺失/失败分支进入syscall228。vDSO内部是否fallback不能从application静态code判断。生命周期最初awake读已初始化同globalresolver，不能计为每事件重复初始化。
-
-Foundation+spdlog由os::now→std::chrono::system_clock::now→libcclock_gettime，Rust CoreSink只收已格式化bytes不重取timestamp；Foundation tracing JSON在字段检查后调用SystemTime::now→libc。libc也是cachedvDSO优先，不能以clock_gettime名字宣称syscall差距。当前time路径无heap。
-
-可独立测量的最小候选：Clock.realNow每次根据当前real_now==realDefault选择直接同std.Io+clamp逻辑，其他callbacks和Zero保持原路径。不能cachedcreate时defaultflag，不能用NativeClock/TSC替换提供方，也不移动capture后/submit前now的位置。staticStandardClock已有显式loggerWithClock路径但default Managed未采用；历史clock-only pilot区间重叠不能继承资格。
-
-必须先验证customClock/customIo、callback内突变/切换、i96 clamp边界、调用一次、capture失败零clock、fallback/drop仍维持既有now时点；再看实际省一callback/传参复制与完整workflows。当前只读source/binary证据，没有改source或测量此候选，不作为整体目标完成证明。

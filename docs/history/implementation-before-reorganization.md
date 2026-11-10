@@ -1,201 +1,643 @@
-> 整理前快照，源码基线7e98358；当前接口与状态见 [文档导航](../README.md)。
+> Historical snapshot before reorganization; source baseline `7e98358`. See
+> [documentation navigation](../README.md) for the current interface and status.
+> Detailed measurement rows and links to removed evidence directories are omitted
+> from this English translation.
 
-# 实现验收清单
+# Implementation acceptance checklist
 
-本文件跟踪 [整体设计](../design.md) 的实际完成证据。未通过运行、故障注入或源码审查的条目保持未完成；不能以类型声明或文档存在替代行为验证。
+This file tracked actual completion evidence for the
+[overall design](../design.md). Items without execution, fault-injection, or
+source-review evidence remained incomplete; type declarations or documentation
+were never accepted in place of behavioral verification.
 
-当前按用户要求完成 Windows/Linux/macOS/Android/iOS 单机日志。网络 sink、HTTP/TLS collector、OTLP exporter及其测试和构建入口已删除。历史门禁计数只代表当时源码，当前能力以本轮门禁为准。
+The then-current scope was single-machine logging on
+Windows/Linux/macOS/Android/iOS. Network sinks, HTTP/TLS collectors, OTLP
+exporters, and their tests/build entries had been removed. Historical gate counts
+describe only their source revision; current capability is determined by the
+current gates.
 
-## 当前单机门禁
+## Current single-machine gates at this snapshot
 
-系统本地时间已按用户选择采用消费者侧格式化与按秒缓存：显式 `.timestamp=.{ .zone=.local }`，producer仍只捕获Unix纳秒；跨秒/回拨刷新，DST由系统规则处理。八组Memory/Mmap×shared/SPSC×inline/schema确定性计数验证producer转换0次、消费者每96条同秒转换1次与Runtime初始化后无分配；独立zoneinfo核对6时区×5模式及恢复共372条时间戳，改变时区恢复被拒绝且原journal不变。最终完整ReleaseSafe门禁109/109步骤成功，576项通过、1项local缓存测试在无libc构建中按能力跳过；local专项与oracle实际运行通过，最终九目标对象编译10/10成功。独立包local/单线程选项通过，局部格式化70样本/700万条hash一致，不推导完整吞吐或跨库排名。源码、全部测量与平台边界见 [本地时间证据](../../bench/evidence/2026-11-01-system-local-time/README.md)。
+System local time used consumer-side formatting and per-second caching: explicit
+`.timestamp = .{ .zone = .local }`, with producers still capturing only Unix
+nanoseconds; cross-second/backward jumps refreshed, and DST followed system
+rules. Eight groups (Memory/Mmap × shared/SPSC × inline/schema) verified zero
+producer conversions, one consumer conversion per 96 same-second records, and no
+allocation after Runtime initialization. An independent zoneinfo oracle checked
+372 timestamps across six timezones × five modes plus recovery; changing the
+timezone on recovery was rejected and the original journal was unchanged. The
+complete ReleaseSafe gate passed 109/109 steps with 576 tests passing and one
+local-cache test skipped by capability in a no-libc build. Local-time
+specialization and oracle actually ran, and nine-target object compilation passed
+10/10. Independent package local/single-threaded options passed; local formatting
+verified 70 samples/7 million records by hash. No complete throughput or
+cross-library ranking was derived from these local results.
 
+The application-impact benchmark used identical deterministic compute/cache work
+with no logger, shared Memory, SPSC Memory, shared Mmap, and SPSC Mmap, covering
+P1/P4/P16, per-request or sparse logging, five repetitions, 300 trials, 3.6
+million application requests, and 1.65756 million complete JSON records. An
+independent Python model checked per-worker state computation and logged results;
+all output/identity/FIFO checks and zero post-initialization Runtime allocation
+passed. Complete application throughput groups remained inconclusive because of
+variance; PMU coverage was at least 91%, and some CPU-work differences had local
+qualification. The synthetic workload did not replace real-service/cold-cache/
+durable or cross-library verification; P16 oversubscribed the six-core mask, and
+`every=16` concentrated the log source on producer 0. Interface tests, oracle
+negative tests, 15 smoke cases, and the complete ReleaseSafe gate passed 97/97
+steps and 559/559 Zig tests at source `6e774b0`.
 
-应用影响基准已补充：相同确定性compute/cache工作量分别使用无logger、共享Memory、SPSC Memory、共享Mmap和SPSC Mmap，P1/P4/P16、每request或稀疏日志五次重复，共300项核对360万应用请求和165.756万完整JSON。独立Python模型核对每worker状态计算与日志result；所有输出/身份/FIFO与runtime零初始化后分配通过。完整应用吞吐组均因波动保持inconclusive；PMU计数覆盖率至少91%，部分CPU工作量差异有局部资格。该合成负载不代替真实服务/cold-cache/durable和跨库验证，P16在六核mask超额订阅、every16日志源集中于producer0，均明确标记。接口测试、oracle负向测试、15项smoke和包含新入口的ReleaseSafe完整门禁97/97步骤、559/559 Zig测试通过。源实现保持`6e774b0`；证据见`bench/evidence/2026-11-01-application-impact/`。项目默认使用建议见[默认日志接入](../default-logging.md)，四个非Linux平台仍需设备运行资格。
+Prepared measurement reuse passed 93/93 ReleaseSafe steps, 556/556 Zig tests, and
+10/10 nine-target ReleaseSafe object compilation, including independent five-mode/
+single-threaded/source-distribution packages, configuration/filter/lifecycle/file
+faults, random SIGKILL, and wire/schema corruption matrices. Formal 380 trials/
+64.38 million records, node counts, 4,096 old/new codec differentials, extra
+submission stack frames, and P1 extreme-quantile negatives were bound to that
+round's source. Stable complete performance, business/durable baselines,
+long-running fuzz, and other-platform device execution remained open.
 
-Prepared测量复用的最终源码通过完整ReleaseSafe **93/93步骤、556/556 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，独立五模式/单线程/源码分发包、配置/过滤/生命周期/文件故障、随机SIGKILL和wire/schema损坏矩阵均通过。正式380项/6438万条数据、节点计数、4096项旧/新codec差分、额外提交函数栈帧与P1极端分位负向绑定于`bench/evidence/2026-11-01-prepared-measure/qualification.json`。当前目标仍有稳定完整性能、业务/durable基线、长期fuzz与其他平台设备运行等缺口，见下方剩余验收项。
+Prepared non-redacted submission reused dynamic value/nested-key bytes obtained
+from the full-tree validation in the same unchanged call, while canonical shape/
+level/reference, queue full/fallback, and capacity boundaries were preserved. The
+public reference codec still fully validated, internal implementation moved to
+`reference_encoding.zig`, and no external measured entry existed. Real Memory/Mmap
+shared/SPSC, predicate/tree, full/drop/fallback, oversized/level, redaction, and
+forged binding/hint tests passed 64 each at Debug/Safe/Fast; 4,096 old/new codec
+differentials matched; public Runtime node counts moved from 8 to 4. Formal 380
+complete-file/PMU/one-million-record comparisons verified 64.38 million JSON
+records; schema SPSC Memory/Mmap and shared Memory P1 user instructions fell
+3.99%/3.97%/4.33% with CV/spread and non-overlapping intervals; shared Memory P1
+one-million-record batch throughput median improved 4.89%. P1 long sampled p99.9
+median moved from 1,017 to 15,974 ns, a clear negative with variance above the
+threshold; most other throughput/tail groups did not qualify, and all limits/slow
+values were retained.
 
-Prepared无脱敏提交已复用本次全树校验得到的动态value/nested key字节，canonical shape/level/reference、queue full/fallback和capacity边界保持；公开reference codec仍完整校验，内部实现移到`reference_encoding.zig`，无外部measured入口。真实Memory/Mmap共享/SPSC、predicate/tree、full/drop/fallback、超长/level、脱敏和伪造binding/hint相关Debug/Safe/Fast各64项通过，旧/新codec4096项独立差分一致，public Runtime节点计数由8→4。380项完整文件/PMU/百万条对照核对6438万条JSON，schema SPSC Memory/Mmap与shared Memory P1用户态指令减少3.99%/3.97%/4.33%，CV/spread通过且区间不重叠；shared Memory P1百万条batch吞吐中位+4.89%同样通过。P1长sampled p99.9中位1017→15974ns为明显负向、波动超门限，其他吞吐/尾部多数未资格；这些限制和所有慢值保留。来源与有限收益见`bench/evidence/2026-11-01-prepared-measure/`；不推导新的Foundation排名。
+A candidate that merged schema shape checks into the size visitor was tested and
+rejected: 4,096 independent module differentials against frozen old source (342
+successful byte matches, 3,754 rejection/error/no-write matches), Safe 63 tests,
+and Debug/Fast 29 tests passed. Four hundred complete-file/PMU trials verified
+56.4 million JSON records; the first 40 PMU trials had potential test-end
+overlap, and the formal clean 360 trials verified 44.36 million records.
+Independent PMU schema SPSC Memory/Mmap instructions rose 0.463% by median with
+non-overlapping intervals, complete 320-trial throughput was entirely
+inconclusive, and most schema P4 medians were negative. No general gain was
+obtained; production restored `cd00f1f` and retained the original 552-test/
+nine-target qualification.
 
-schema形状检查并入size visitor的候选已验证并否决：与冻结旧源码4096项独立模块差分（342项成功字节一致、3754项拒绝错误与未写缓冲一致），相关Safe63项、Debug/Fast各29项通过。400项完整文件/PMU共核对5640万条JSON；首40项PMU存在测试结束阶段潜在重叠，单独标记，正式clean360项核对4436万条。独立PMU的schema SPSC Memory/Mmap指令中位增加0.463%、两侧波动通过且区间不重叠，完整320项吞吐各组均inconclusive，多数schema P4负向中位。没有取得可推广收益，生产src精确恢复`cd00f1f`，保留原552项/九目标资格；候选的完整源码、priority测试、差分与全部慢值见`bench/evidence/2026-11-01-schema-shape-visitor/qualification.json`。未更改字段验证、schema检查或跨库排名。
+SPSC local-queue space notification passed 93/93 ReleaseSafe steps, 552/552 Zig
+tests, and 10/10 nine-target object compilation; related Debug/Safe/Fast tests
+passed 25 each, and external Memory/Mmap SPSC shutdown/worker-error tests passed
+2 each. Real shutdown before wait, epoch wrap, own-abort reclamation, and
+cross-queue worker-error broadcast lost no wakeups, while shared producer/control
+kept the original global protocol. Formal 400 complete-file/PMU/one-million-record
+comparisons verified 84.40 million JSON records, plus 24 diagnostics/2.424 million
+records; Memory inline SPSC P4 long sampled p99.9 median moved from 366.312 to
+340.708 µs (−6.99%) with CV/spread and non-overlapping intervals. Ordinary
+throughput, p50/p99, and most Mmap groups did not qualify; a short Memory P1
+negative median around −10% was retained and did not reproduce in long P1 batch;
+each Journal in-process object grew 64 bytes without increasing allocation counts
+or queue/file backing.
 
-此前SPSC本队列space通知源码通过完整ReleaseSafe **93/93步骤、552/552 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**；相关Debug/Safe/Fast各25项及外部Memory/Mmap SPSC shutdown/worker错误各2项通过。真实wait前关闭、epoch回绕、own abort回收与不同队列worker错误广播不丢唤醒，共享producer/control保持原global协议。正式400项完整文件/PMU/百万条对照核对8440万条JSON，另24项诊断核对242.4万条；Memory inline SPSC P4长sampled p99.9中位366.312→340.708µs（−6.99%），CV/spread通过且置信区间不重叠。普通吞吐、p50/p99和Mmap多数未资格，短Memory P1约−10%负向中位保留且长P1 batch未重现；每Journal进程内对象增64字节，不增加分配次数或队列/file backing。源码/binary/格式/故障与全部慢值见`bench/evidence/2026-11-01-queue-progress/qualification.json`，Foundation跨库排名仍以此前同轮e8bd353为准，其他平台设备运行资格仍未取得。
+A cross-queue 64-record round-delivery candidate was tested and rejected: real
+four-queue Memory/Mmap × inline/schema, sparse tracking capacity, peek/flush/
+durable/late-reclaim corruption, and original peer service positions passed
+Debug/Safe/Fast 26/26 each; 440 complete-file/PMU/single-quantum control trials
+verified 52.44 million JSON records. p99.9 median fell, but p50/p99 clearly
+regressed, most throughput groups were negative, and all complete performance
+qualification remained inconclusive; four instruction groups rose 0.58%–0.71%,
+and the added scheduling/cross-source acknowledgement and stack space produced no
+overall gain. Production restored `714c470/e8bd353` and retained the existing
+scheduling/API and 549-test qualification.
 
-跨队列64条轮次交付候选已实验并否决：真实四队列Memory/Mmap×inline/schema、稀疏tracking容量、peek/flush/durable/late reclaim损坏与原peer服务位置在Debug/Safe/Fast定向各26/26通过；440项完整文件/PMU/现有单量子控制核对5244万条JSON。p99.9中位降低但p50/p99明显负向，多数组吞吐负向且所有完整性能资格仍inconclusive；四组指令中位增加0.58%–0.71%，新增调度/跨来源确认与栈空间未取得整体收益。生产src精确恢复`714c470/e8bd353`，现有调度/API与549项综合资格保持。完整候选/失败/原始慢值/控制和否决理由见`bench/evidence/2026-11-01-cross-queue-delivery/qualification.json`；不改变已归档Foundation同轮排名。
+The historical Foundation + spdlog comparison used frozen Foundation's real C++
+spdlog frontend and Rust release backend in 200 same-round trials, verifying 20.2
+million JSON records across Memory/Mmap shared/SPSC, P1/P4, inline/schema, and
+sampled/batch; kron actually selected portable, accepted=written, and pending/
+drop=0. Ordinary inline SPSC complete-throughput medians were 8.67%/3.21%/
+23.09%/12.58% above Foundation in four groups, while shared Memory P4 was still
+4.41% behind; through-shutdown cross-library groups remained inconclusive because
+spread exceeded the threshold. Most schema configurations were slower, SPSC p99.9
+and Mmap init/lifecycle were still behind, and Foundation's 806 ms/234 ms Memory
+shutdown slow values were retained. The comparison harnesses and evidence are no
+longer tracked; this remains a historical snapshot and did not establish an
+industry-fastest or stable overall lead.
 
-用户要求的最新Foundation＋spdlog详细对照已完成：源码`e8bd353`与冻结Foundation真实C++spdlog前端/Rust release后台共200项同轮试验、2020万条JSON逐条核对，Memory/Mmap共享/SPSC、P1/P4、inline/schema、sampled/batch全部完整，kron实际portable、accepted=written且pending/drop=0。普通inline SPSC完整吞吐中位高于Foundation四组8.67%/3.21%/23.09%/12.58%，shared Memory P4仍低4.41%；各关闭吞吐跨库组因spread超门限保持inconclusive。schema多数配置较慢，SPSC p99.9和Mmap init/lifecycle仍差；Foundation Memory806ms/234ms关闭慢值完整保留。源码/Git/归档/binary/输出/完成边界审计和所有CV/spread/bootstrap见`bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/qualification.json`及[详细报告](../../bench/cpp_reference/evidence/2026-11-01-e8bd353-foundation/detailed-comparison.md)。没有更新为业界最快或稳定全面超越资格。
+Admission View transfer passed 93/93 ReleaseSafe steps, 549/549 Zig tests, and
+10/10 nine-target object compilation, including independent five-mode/
+single-threaded/source-distribution packages, Linux host qualification,
+configuration/deadline/error/old-new wire matrices, and 12 real random SIGKILL
+recovery scenarios. Ordinary shared admission reused the validated configuration
+View obtained at `begin` and released the reader at `end`; accepted journal
+records retained an independent pending pin before commit, while SPSC/control/
+deadline kept the original protocol. Three new real Runtime tests locked in
+Memory/Mmap reader/pin differences, concurrent replacement old leases being
+protected before reserve and after worker ACK, and accurate release on filtered/
+sampled/capture/sync errors; old filter-overlay and SPSC cache regressions
+remained, with related Debug/Safe/Fast tests passing 15/15 each. Formal 320
+complete-file, 40 PMU, and 10 independent one-million-record trials verified 54.37
+million JSON records; shared schema Mmap P1 long workflow median moved from
+1.746M to 1.829M records/s (+4.79%) with CV/spread and non-overlapping medians;
+most P4/other groups did not qualify, PMU shared Memory P4 had a −3.36% negative
+median with non-overlapping intervals, and all slow values/tail quantiles were
+retained.
 
-此前admission View转移源码通过完整ReleaseSafe门禁 **93/93步骤、549/549 Zig测试** 及九目标ReleaseSafe对象编译 **10/10步骤**，含独立五模式/单线程/源码分发包、Linux宿主资格、配置/deadline/错误/旧新wire矩阵和12个实际随机SIGKILL恢复场景。最终源码、binary、归档、正式5437万条测量与负向限制绑定于`bench/evidence/2026-11-01-admission-view/qualification.json`；跨库同轮排名和其他平台设备运行仍需单独验证。
+A candidate that rendered directly into the file buffer was tested and rejected:
+33 related Safe and 17 Debug/Fast targeted tests passed, covering complete prefix
+transactions, short writes/zero progress/disk errors, three formats/binary/
+templates, invalid input, and zero allocation; 280 complete-file/PMU trials
+verified 36.28 million JSON records. Four instruction groups rose 0.48%–0.64%,
+complete throughput medians overlapped, and several Memory paths were negative;
+the extra callback interface was not adopted, and production restored `c2f8792`.
 
-普通共享admission已复用begin取得的已验证配置View，end释放reader；accepted journal record继续commit前独立retain pending pin，SPSC/control/deadline沿用原协议。三个新的实际runtime测试锁定Memory/Mmap的reader/pin差额、并发replacement旧lease在reserve前和worker ack后仍受admission保护，以及filtered/sampled/capture/sync错误准确释放；旧filter-overlay和SPSC缓存回归保持，相关Debug/Safe/Fast各15/15通过。正式320项完整文件、40项PMU和独立10项百万条复查核对5437万条JSON，shared schema Mmap P1长流程中位1.746M→1.829M条/s（+4.79%）、CV/spread通过且中位区间不重叠；多数P4/其他组未资格，PMU shared Memory P4负向中位3.36%且区间不重叠，所有慢值与尾分位保留。首对测试退出重叠的另10项长流程独立保存，不计入正式资格。源码/归档/binary和完整限制见`bench/evidence/2026-11-01-admission-view/`；没有新增heap、queue/file预算或跨库排名。
+The final schema-fusion source passed 93/93 ReleaseSafe steps, 545/545 Zig tests,
+and 10/10 nine-target object compilation, including independent five-mode/
+single-threaded/source distribution, Linux host qualification, old/new wire
+matrices, real random SIGKILL, and file/lifecycle negative gates. When TSC
+hardware calibration was unstable, the run actually fell back to native and
+passed its safety gate; fallback was not described as a new TSC acceleration
+qualification.
 
-直接渲染到文件缓冲候选已实验并否决：33项相关Safe与17项Debug/Fast定向测试通过，包括完整prefix事务、短写/零进展/磁盘错误、三格式/binary/模板、非法输入与零分配；280项完整文件/PMU共核对3628万条JSON。四组指令中位增加0.48%–0.64%，各组完整吞吐中位区间均重叠且多个Memory路径负向，额外callback接口不推广，生产src精确恢复`c2f8792`。保存candidate源码/二进制身份、完整慢值与否决依据于`bench/evidence/2026-11-01-direct-record-buffer/`；当前545项综合与九目标编译资格不因该否决改变。
+The schema-fusion consumer covered at least 64 ready records, a single JSON/text/
+logfmt target, and schema records without template arguments; short windows kept
+the original materialized path, canonical definitions were reused per record, and
+type masks, nested nodes/depth/descriptors, lengths, schema identity, and the
+original decode-before-route error order were preserved. When output scratch was
+insufficient, the cold path completed the original reference decode so later
+corruption was not hidden by a record-too-large error. Forty-eight real Memory/
+Mmap × shared/SPSC × 1/64-record windows × 16/512-byte scratch × three schema
+corruption scenarios confirmed zero sink output, original errors, and all pending/
+pin state; three-format all-tags/static/dynamic/source/trace/nested/readable-time/
+historical-v2 byte comparisons and 4,096 mutations passed; related Debug/Safe/Fast
+tests passed 26/26. Final 240 complete-file, 40 complete-PMU, and 20
+one-million-record P1 trials against `366adc3` verified 56.3 million physical JSON
+records; Memory prepared P4 shared/SPSC throughput medians improved 6.35%/8.03%
+with CV/spread and non-overlapping medians; schema instructions fell 1.8%–1.9% by
+median while inline control instructions rose 0.171%. Most Mmap groups and tail
+quantiles remained inconclusive; final P1 long-workflow Memory/Mmap negative
+medians of 0.65%/1.39% overlapped. Native `drainJournal` explicit stack
+reservation grew 2,912 bytes; heap/journal/file budgets did not increase.
 
-此前最终schema融合源码已通过ReleaseSafe完整门禁 **93/93步骤、545/545 Zig测试**，含独立五模式/单线程/源码分发包、Linux宿主资格、旧/新wire矩阵、实际随机SIGKILL与文件/生命周期负向门禁。九目标ReleaseSafe对象编译 **10/10步骤** 通过；其他平台设备运行资格仍未取得。门禁、源码/归档/二进制SHA256与最终完整测量绑定在`bench/evidence/2026-11-01-consumer-post-coalescing/qualification.json`。该轮TSC硬件校准不稳定时实际回退native并通过其安全门禁，不把fallback描述为新的TSC加速资格。
+Ready-record coalesced delivery kept the original 64-record service quantum
+budget 1..4, merged up to 256 contiguous ready records within the current
+remaining budget without waiting to fill, kept at most 64 configuration groups,
+and preserved per-record CRC/schema/old-route pins and post-output checked
+reclaim. Real Runtime tests covered Memory/Mmap × shared/SPSC × inline/schema; 255
+records all output at the first barrier with zero post-initialization allocation;
+initial late corruption produced zero output; mixed old/new configuration final
+flush/durable failure retained all 255 records and 150/105 pins; reclamation-time
+corruption acknowledged only 190 and retained 65 old pins. Budget/coalescing
+Debug/Safe/Fast tests passed; complete ReleaseSafe passed 93/93 steps and 540/540
+tests, including real SIGKILL, independent five-mode/single-threaded/source
+distribution, and Linux host self-check; nine-target ReleaseSafe objects passed
+10/10. Two new child-QEMU shutdown schema ACK31/inline ACK3 recoveries passed on
+Linux 6.8/ext4 only. Four record-tracking arrays grew from 5,440 to 21,760 bytes
+locally, adding 16,320 bytes of consumer stack; configuration-group and heap/
+journal/file budgets did not increase.
 
-schema融合消费者已扩展到至少64条就绪窗口、单JSON/text/logfmt目标、无模板参数的schema记录；短窗口保留原物化路径，canonical定义每记录复用，类型mask、nested节点/深度/descriptor、长度、schema身份与原decode-before-route错误顺序保持。输出scratch不足时冷路径完成原reference解码，避免后段损坏被record-too-large错误掩盖。48个真实Memory/Mmap×shared/SPSC×1/64条窗口×16/512字节scratch×三种schema损坏场景确认零sink输出、原错误、全部pending与pin，三格式all-tags/static/dynamic/source/trace/nested/readable-time/历史v2逐字节对照和4096变异通过；最终Debug/Safe/Fast相关各26/26测试通过。最终以`366adc3`为基线240项完整文件、40项完整PMU与20项百万条P1复查核对5630万条物理JSON，Memory prepared P4共享/SPSC吞吐中位提升6.35%/8.03%，CV/spread通过且中位区间不重叠；schema指令中位减少1.8%–1.9%，inline指令control增加0.171%。Mmap多数组和多数尾分位仍inconclusive；最终P1长流程Memory/Mmap负向中位0.65%/1.39%、区间重叠保留。原生drainJournal显式栈预留增加2912字节，heap/journal/file预算不增。早期P1负向、否决pointer版本、187项中断捕获均独立保存，不算最终资格。完整脚本、source/binary来源和限制见[schema消费者对照](../../bench/evidence/2026-11-01-consumer-post-coalescing/README.md)。
+Portable 160 trials and independent io_uring 80 complete-file trials against
+baseline `45f5ec1` verified 24.24 million physical JSON records with
+accepted=written and pending/drop=0, preserving the system wall clock, complete
+fields, and written flush/shutdown/cleanup endpoints. Portable Memory P1/P4
+shared medians improved 4.44%/6.90%, SPSC improved 5.78%/9.97%, four groups passed
+CV/spread, and the last three had non-overlapping bootstrap medians; most Mmap
+groups remained inconclusive. io_uring P4 Memory shared/SPSC medians improved
+14.18%/23.62%, two groups passed CV/spread with non-overlapping intervals; Mmap
+did not qualify. Shared Memory io_uring p99 median moved from 22,459 to 34,674 ns,
+a repeatable negative, while portable shared P4 tail negative medians remained
+inconclusive.
 
-就绪记录合并交付已完成：原64条服务量子预算1..4保持，每次checked peek合并当前剩余预算内最多256条连续就绪记录，不等待补满；配置组仍最多64，每条CRC/schema/旧路由pin和输出后checked reclaim保持。真实runtime覆盖Memory/Mmap×shared/SPSC×inline/schema，255条第一次屏障全部输出且初始化后零分配；初始晚期损坏零输出，混合旧/新配置最后flush/durable失败保留全部255条与150/105个pin，回收晚期损坏只确认190条并保留65条旧pin。预算与合并定向Debug/Safe/Fast通过；完整ReleaseSafe门禁 **93/93步骤、540/540测试**，包含实际SIGKILL、独立五模式/单线程/源码分发包与Linux宿主自校验；九目标ReleaseSafe对象编译10/10步骤通过，其他平台设备运行仍未取得。两个新子QEMU停机schema ACK31/inline ACK3恢复通过，限Linux6.8/ext4虚拟机。四个记录跟踪数组本机5440→21760字节，消费者栈增加16320字节，配置组与heap/journal/file预算不增。这不是完整编译器栈帧测量。
+Earlier `c4b7f34` portable/io_uring same-binary comparison completed 160/160
+trials and 16.16 million physically verified JSON records: Memory/Mmap, shared/
+SPSC, and P1/P4 each ran five sampled/batch repetitions, all explicit io_uring
+requests actually selected `linux_uring`, and accepted=written with pending/drop=0.
+io_uring median throughput was about 17%–19% lower on that workload; six of eight
+batch groups passed two-side CV/spread and two were inconclusive, and all slow
+trials were retained. The checked-batch confirmation boundary limited I/O overlap
+and could not be generalized to every workload.
 
-与基线`45f5ec1`完成portable160项与独立io_uring80项完整文件试验，共2424万条物理JSON逐条核对，accepted=written、pending/drop=0，保持系统墙钟、完整字段和written flush/关闭/清理终点。Portable Memory P1/P4 shared中位提升4.44%/6.90%、SPSC提升5.78%/9.97%，四组CV/spread通过、后三组bootstrap中位区间不重叠；Mmap多数组仍inconclusive。io_uring P4 Memory shared/SPSC中位提升14.18%/23.62%，两组CV/spread通过且区间不重叠；Mmap未资格。共享Memory io_uring p99中位22459→34674ns为可重复负向，portable共享P4尾部负向中位仍inconclusive。保留此前io_uring54项完整行的中断测量及所有慢值，不并入正式80项资格。单对trace pwritev1581→833、futex9184→4533用于诊断，不能等同时间收益。当前源码/归档/二进制/门禁身份及完整限制见[批次合并报告](../../bench/evidence/2026-11-01-coalesced-delivery/README.md)与同目录qualification.json；本轮没有新的Foundation或同轮后端排名。
+A conditional progress-wake candidate was not adopted: the concurrent-window test
+after registering a waiter passed, and all 160 logs were correct, but several
+shared-queue throughput medians were negative and bootstrap intervals overlapped,
+so no gain was established. Saturated tracing showed no reduction in total futex
+counts, indicating real waiters remained; production restored the original
+notification. A real regression was retained for Memory/Mmap full-SPSC waiters
+being woken on worker write failure, returning the original error, and leaving two
+accepted records pending.
 
-此前源码`c4b7f34`的完整文件portable/io_uring同二进制对照已完成160/160试验、1616万条物理JSON逐条核对：Memory/Mmap、shared/SPSC、P1/P4分别运行五次sampled/batch，所有显式io_uring实际选择linux_uring，accepted=written且pending/drop=0。io_uring中位吞吐在此负载低约17%–19%，8个batch组中6个两侧CV/spread通过、2个inconclusive，全部slow trials保存。checked batch确认边界限制I/O重叠，不能推广为所有负载的后端结论；文件后端报告会拒绝fallback/预算变化/不完整输出。Safe定向8/8步骤、14/14 Zig测试及Python负向校验通过，Memory/Mmap真实worker错误唤醒回归Debug/Fast也通过。新增可复现入口及结果见[该轮io_uring完整对照](../../bench/evidence/2026-11-01-uring-current/README.md)。
+Linux/Android cold Mmap publication omitted the duplicate `msync` before
+whole-file `fsync` while retaining file/parent-directory `fsync`; other platforms
+kept the original mapping flush and explicit strict-durable protocol. Linux 6.8
+kernel and ext4 synchronization sources confirmed coverage; file/directory
+publication failure regressions verified initialization failure and lock release,
+and schema directory failure remained unready without consuming a reservation.
+Real child-QEMU/ext4 schema ACK17/31 and inline ACK3 force-kill recovery passed.
+One hundred sixty Memory/Mmap complete-file trials verified 16.16 million records,
+all accepted=written with pending/drop=0; call tracing showed `msync` 5→0,
+`fsync` still 10, and `fallocate` still 5. Initialization/throughput were all
+inconclusive; shared Mmap negative startup medians and SPSC positive medians, plus
+all slow values, were retained. Final Safe passed 89/89 steps, 532/532 tests, and
+nine-target ReleaseSafe objects.
 
-条件progress wake候选未推广：登记waiter后条件futex唤醒的并发窗口测试通过，160项日志全部正确，但多个共享队列吞吐负向中位和bootstrap重叠未证实收益。饱和追踪总futex数量未下降，说明该负载仍有真实waiters；生产恢复原来通知。保留Memory/Mmap满SPSC队列等待者在worker写失败时被唤醒、返回原错误、两条accepted记录仍pending的实际回归。候选源码、1616万条原始结果与拒绝依据见`bench/evidence/2026-11-01-progress-wakeup/`。
+An earlier Memory/Mmap-only same-round comparison at `182fc9e` with default
+budget 4 compared Foundation's real spdlog frontend + Rust backend against kron:
+120/120 trials and 12.12 million physical JSON records verified, accepted=written
+with pending/drop=0. Including shutdown, Memory P1/P4 medians in M records/s were
+Foundation 1.932/1.990, kron shared 2.136/2.063, and SPSC 2.151/2.106; Mmap was
+Foundation 1.789/2.097, shared 2.107/1.741, and SPSC 2.157/1.911. Memory medians
+led, Mmap P4 was still behind, and all Foundation throughput groups exceeded the
+variance threshold, so no stable lead in both modes was claimed. Mmap SPSC P4
+initialization median was 368 ms and full lifecycle 446 ms, versus Foundation
+13 ms/62 ms; slow values and tail quantiles were retained.
 
-Linux/Android冷Mmap发布省去全文件fsync之前的重复msync，保留文件/父目录fsync；其他平台映射flush和显式strict durable原协议保持。Linux6.8内核与ext4同步源码确认覆盖范围，文件/目录发布失败回归验证初始化失败与锁释放、schema目录失败仍unready且不占reservation。真实子QEMU/ext4 schema ACK17/31与inline ACK3强杀恢复通过。160次Memory/Mmap完整文件对照核对1616万条，全部accepted=written、pending/drop=0；调用追踪msync为5→0、fsync仍10、fallocate仍5。初始化/吞吐全部inconclusive，共享Mmap负向启动中位与SPSC正向中位、全部慢值保留，不宣称稳定性能或跨库优势。最终Safe综合89/89步骤、532/532测试和九目标ReleaseSafe实际对象通过。证据见[Mmap发布](../mmap-publication.md)及`bench/evidence/2026-11-01-mmap-publication/`。
+The Memory/Mmap consumer batch budget exposed
+`consumer_batches_per_queue=1..4`, defaulting to 4 and failing invalid budgets
+before allocation. Deterministic real background tests across both storages and
+shared/SPSC peers verified peer service positions 1/65/129/161 for budgets
+1/2/3/4, preserving FIFO, written, zero residual backlog, and zero
+post-initialization allocation; public tests observed a real futex wait on a full
+SPSC queue, and shutdown correctly woke and aborted the unfinished reservation. A
+fixed-batch default candidate verified 160 complete-file trials/16.16 million
+records; p99.9 improved but p99 clearly regressed and throughput did not qualify,
+so it was not promoted to default. A same-binary default-4/explicit-1 comparison
+verified another 40 trials/4.04 million records: Memory p99 median 10.9→82.8 µs
+and p99.9 about 377.7→114.7 µs; Mmap 9.1→84.5 µs and 391.0→110.7 µs, all
+inconclusive with all slow values retained. Current Safe passed 89/89 steps,
+530/530 tests, and nine-target objects.
 
-按用户最新要求，当前源码`182fc9e`默认budget4仅Memory/Mmap同轮比较Foundation真实spdlog前端＋Rust后台与kron：120/120试验、1212万条物理JSON完整核对，accepted=written且pending/drop=0。Memory P1/P4包含关闭中位M条/s：Foundation1.932/1.990、kron shared2.136/2.063、SPSC2.151/2.106；Mmap为Foundation1.789/2.097、shared2.107/1.741、SPSC2.157/1.911。Memory中位领先、Mmap P4仍落后，Foundation全部吞吐组波动超门限，不宣称两种模式稳定超越。Mmap SPSC P4初始化中位368ms、完整生命周期446ms，对Foundation13ms/62ms，原始慢值与尾分位均保留。完整源码、机器、库、格式/完成边界和逐项报告见[当前Memory/Mmap对照](../../bench/cpp_reference/evidence/2026-11-01-memory-mmap-current/README.md)。
+Static scalar capture counted comptime scalar types as nodes, while dynamic
+Value/containers/prefixes remained fully validated; Runtime still validated the
+final tree after clock callbacks, and a new shared/SPSC clock-created cycle test
+confirmed no reservation was consumed. Length accumulation changed to a u64 with
+each item clamped to `u32_max+1`, returning `TooLarge` only after complete
+validation; 8,192 arithmetic differentials and maxInt(usize)/cycle/duplicate
+precedence passed. The combined scheme reduced complete PMU SPSC P4/shared P1 user
+instructions by 3.00%/3.32% by median, static-only by 2.68%/2.97%, with spread
+passing; the two versions ran 40 PMU trials/12.04 million JSON records. Formal 100
+file trials verified 10.1 million records; all throughput was inconclusive and
+several medians fell. Another 20 long sampled trials verified 6.02 million
+records; SPSC p99 median moved from 1,051 to 10,143 ns and p99.9 from 360,195 to
+420,294 ns, variance failed the threshold, and all negative data was retained. No
+throughput or tail-latency gain was claimed. Final Safe passed 89/89 steps, 527/
+527 tests, and nine-target objects.
 
-Memory/Mmap消费者批次预算显式提供`consumer_batches_per_queue=1..4`，默认4保持原行为；非法预算分配前失败。确定性真实后台在两种存储、共享peer/SPSC peer组合验证1/2/3/4批的peer服务位置1/65/129/161，FIFO、written、零剩余积压与零初始化后分配保持；公开测试观察满SPSC队列真实futex等待，shutdown正确唤醒并abort未完成reservation。固定一批默认候选160项完整文件核对1616万条，p99.9改善而p99明显负向、吞吐未资格，因此未提升为默认。同二进制默认4/显式1的40项再核对404万条，Memory p99中位10.9→82.8µs、p99.9约377.7→114.7µs；Mmap为9.1→84.5µs与391.0→110.7µs，均inconclusive且完整慢值保留。当前Safe综合89/89步骤、530/530测试和九目标实际对象通过；调度取舍见[消费者服务预算](../consumer-scheduling.md)及`bench/evidence/2026-11-01-channel-fairness/`。后续性能按用户要求仅分Memory/Mmap比较。
+Batch configuration record-pin optimization was tested and rejected: two
+candidates ran 100 complete-file and 20 PMU trials, for 240 trials and 32.24
+million physically verified JSON records, all correct, but neither qualified for
+a complete-throughput improvement; several negative medians and high spread were
+retained. Production configuration/delivery modules stayed at `8a351c0`. A
+shared/SPSC late-reclamation corruption regression was retained: written=1,
+pending=2, and after releasing the check View and SPSC cache the remaining record
+pins still blocked old-lease reclamation, with destroy releasing exactly once.
+Final batch-targeted tests passed 18/18 at all three optimization levels.
 
-静态scalar捕获按comptime类型计入节点，动态Value/容器/prefix仍完整校验；时钟回调后runtime继续验证最终树，新增共享/SPSC clock制造cycle测试确认不占reservation。长度累计改为每项截u32_max+1的u64，在完整验证后判断TooLarge，8192算术差分及maxInt(usize)/cycle/duplicate优先级通过。组合方案完整PMU SPSC P4/shared P1用户态指令中位下降3.00%/3.32%，static-only为2.68%/2.97%，spread通过；两版共40项PMU核对1204万条JSON。正式100项文件核对1010万条，吞吐全部inconclusive、多个中位下降。额外20项长sampled核对602万条，SPSC p99中位1051→10143ns、p99.9为360195→420294ns，波动未通过门限，负向数据全部保留，不宣称吞吐或尾延迟收益。最终Safe完整89/89步骤、527/527测试及九目标ReleaseSafe实际对象通过。证据见`bench/evidence/2026-11-01-static-scalar/`与`2026-11-01-wire-size/`；后续需检查饱和队列和等待路径的tail，而非只降低producer中位工作量。
+Native number output wrote directly into the existing Writer buffer: when at
+least 21 bytes remained, it computed the exact digit count and wrote it, updating
+only the actual end; a separate helper avoided expanding recursive value
+rendering, and short buffers/streaming/wide values kept the bounded stack
+fallback. Public encoder behavior was preserved for 12 complete records, 16,486
+fixed prefixes, 49,494 generic prefixes, and new internal-buffer physical
+short-write prefixes; Safe public time/configuration/predicate/file tests passed
+30/30, and final complete ReleaseFast passed 89/89 steps and 522/522 tests. One
+hundred complete-file trials verified 10.1 million logs; five throughput medians
+improved 3.0%–4.0% and met this round's CV/spread, with SPSC Memory P4 having
+non-overlapping medians and the rest overlapping. Another 20 long workflows
+verified 6.02 million records: SPSC P4 user cycles fell 4.99% and instructions
+rose 1.00%; a very slow producer sample kept long-workflow throughput
+inconclusive, and all results were retained.
 
-批量配置record pin优化资格已完成并拒绝：两个候选分别100项完整文件与20项PMU，共240试验、3224万条物理JSON全部正确，但未取得完整吞吐改善资格，多个负向中位和高spread保留；生产配置/交付模块保持`8a351c0`。保留共享/SPSC旧版本晚期回收损坏回归：written=1、pending=2、检查View与SPSC cache释放后剩余record pins仍阻止旧lease回收，destroy只释放一次。最终三优化级别batch定向均18/18（含import fixtures），证据及候选源码见`bench/evidence/2026-11-01-batch-pins/`。后续优化仍需完整流程证据，不能以原子数量下降宣称收益。
+The `4447fe6` complete-file workflow compared Foundation's real spdlog frontend/
+Rust backend, standalone spdlog 1.17, and kron: 140/140 formal trials and 14.14
+million physical JSON records verified, accepted=written with pending/drop=0.
+Including shutdown, P1/P4 medians in M records/s were Foundation Memory 2.116/
+2.309 and Mmap 1.800/2.079, spdlog 1.640/0.673, kron SPSC Memory 2.174/2.108 and
+Mmap 2.251/2.117; shared groups and stages were stored separately. kron's medians
+were above standalone spdlog, P4 Memory was still about 9% behind Foundation, P4
+Mmap differed by less than spread, and SPSC Mmap full lifecycle was about 107 ms
+versus Foundation 58 ms. Standalone spdlog and some Foundation groups exceeded the
+10% threshold, so a quiet-window cross-library lead was still unqualified.
 
-native数字输出进一步直接写入已有Writer buffer：剩余至少21字节时精确计算位数并写入，仅更新实际end；独立helper避免扩张递归value渲染，短buffer/streaming/宽值继续bounded stack fallback。公开encoder的12完整记录、16486 fixed与49494 generic前缀和新增内部buffer物理短写前缀保持；Safe公开时间/配置/predicate/文件30/30、最终完整ReleaseFast89/89步骤和522/522测试通过。100个完整文件试验逐条核对1010万条日志，五组吞吐中位提升3.0%–4.0%，均满足本轮CV/spread，SPSC Memory P4中位区间不重叠，其余仍重叠。另20个长流程核对602万条：SPSC P4 user cycles减少4.99%、instructions增加1.00%，候选极慢producer样本使长流程吞吐仍inconclusive，全部保留。早期inline/table方案nested负向与最终helper结果分别保存；不叠加为Foundation排名。百万条完整流程profile与mmap慢启动调用已确认：一个5.1s启动中msync约3.1s、file/dir fsync约2.0s，协议保持。证据见`bench/evidence/2026-11-01-decimal-direct/`、`2026-11-01-delivery-profile/`和`2026-11-01-init-profile/`。
+Regex matching moved BOL/EOL epsilon/assertion expansion into configuration
+compile time and used two 64-bit active bitmaps at runtime, traversing only states
+that consume bytes; 128-state/32-depth/8 KiB-input limits, arbitrary bytes,
+nullable loops, strict anchors, and independent state ranges across multiple
+regexes were preserved. The final scheme passed 1,004,626 ReleaseSafe
+coverage-guided runs (4,510 unique) in a temporary complete source copy; the main
+source passed 89/89 ReleaseSafe steps, 520/520 tests, and Debug/Fast public
+targeted tests 13/13, plus 1,006,557 coverage-guided runs. Eight business input
+classes and two complete synchronous JSON paths ran five child-process pairs with
+five repetitions and fixed CPU affinity; 900 sample inputs/matches/written/JSON
+hashes all matched, but every final group was inconclusive because spread
+exceeded the threshold. Native x86_64 `Pattern` grew from 4,624 to 9,264 bytes and
+`Predicate` from 17,952 to 25,632 bytes, increasing fixed configuration memory and
+compile cost.
 
-当前源码`4447fe6`完整文件流程已同轮比较Foundation真实spdlog前端/Rust后台、独立spdlog1.17和kron：140/140项正式试验、1414万条物理JSON全部逐条核对，accepted=written且pending/drop=0。包含关闭的P1/P4中位M条/s：Foundation Memory2.116/2.309、Mmap1.800/2.079，spdlog1.640/0.673，kron SPSC Memory2.174/2.108、Mmap2.251/2.117；shared组及各阶段也分别保存。kron本轮中位高于独立spdlog，P4 Memory仍落后Foundation约9%，P4 Mmap差异小于spread，SPSC Mmap完整生命周期约107ms对Foundation58ms。独立spdlog和部分Foundation组超10%门限，安静窗口跨库优势仍未资格；未启用predicate，正则局部收益不混入该比较。精确源码、完整慢值与分析见[当前完整工作流](../../bench/cpp_reference/evidence/2026-11-01-current-workflow/README.md)。
+Regex boundaries were completed: compilation/matching moved to
+`src/pipeline/regex.zig`, field rules/configuration strings stayed in
+`pipeline/predicate.zig`, and the public Pattern/Regex aliases plus original
+128-state/32-depth/8 KiB input budgets were preserved. The first `]` in a
+character class and control/two-hex-digit escapes were fixed; unsupported classes/
+assertions/backreferences/unknown letter escapes explicitly returned
+`UnsupportedRegex`, and direct anchor quantifiers or malformed hex returned
+`InvalidRegex`; UTF-8 byte orientation, `.` excluding LF, and strict `$` end were
+locked by the oracle. Eight seeds produced 161,872 results (161,504 independent
+Python bytes comparisons) with exact agreement.
 
-正则匹配热路径已把BOL/EOL条件下的epsilon/assertion展开移到配置编译期，运行期使用两个64位活跃位图，仅遍历消费字节状态；128-state/32-depth/8KiB-input、任意byte、nullable循环、严格anchor和多regex独立状态范围保持。最终方案已在临时完整源码副本通过1004626次ReleaseSafe coverage guided运行（4510 unique），主源码完整ReleaseSafe门禁通过89/89步骤、520/520测试，Debug/Fast公共定向各13/13；主源码另完成1006557次coverage guided运行。八类业务输入与两类完整同步JSON做五对子进程、各五次重复的CPU affinity对照，900项样本输入/匹配/written/JSON hash全一致；最终全部组因spread超门限标inconclusive，中位数的改善不作为稳定吞吐承诺。native x86_64 Pattern为4624→9264 bytes，Predicate为17952→25632 bytes，增加固定配置内存与编译成本。两个早期方案的重叠分支回退与原始报告全部保留，最终方案消除本轮该项负向中位。源码、探针与报告见[正则匹配工作量](../regex-performance.md)及`bench/evidence/2026-11-01-regex-active/`；分发包暂存已排除ignored测量产物，修复3.8GB bench产物导致本地fetch超时，重新fetch的独立包五模式通过；原失败保留。长期sanitizer、其他平台运行和安静窗口性能资格仍缺。
+Route filtering derived inherited level masks at configuration publication and
+kept independent scope filters checked per route; each generation added 64 bytes
+without hot-path atomics/allocation and without changing wire format or recovery
+fingerprints. 2,940 internal comparisons, public sync/shared/SPSC delivery across
+64 routes, filter-only and full replacement, old snapshot retention, and channel
+cache refresh passed. Related Debug 1/1, ReleaseSafe 15/15, ReleaseFast 13/13, and
+native host gates passed; final nine-target ReleaseSafe objects and public
+route-filter tests passed. 225 enabled-only pairs matched checksum/budget; eight
+routes were about 12%–18% cheaper locally; 40 public admission/full trials
+confirmed 200,000 written/pending 0/allocation 0, while complete throughput and
+p99 remained inconclusive.
 
-正则边界本轮补齐：编译/匹配拆到`src/pipeline/regex.zig`，字段规则/配置字符串留在`pipeline/predicate.zig`，保留Pattern/Regex公共别名与原128-state/32-depth/8KiB输入预算。修复首项`]`字符类与控制/两位hex转义，未支持类别/断言/回溯引用/未知字母转义明确返回`UnsupportedRegex`，直接量词化anchor及畸形hex返回`InvalidRegex`；UTF-8按字节、`.`排除LF、`$`严格末尾的原行为由oracle锁定。8个种子共161872项结果（161504项独立Python bytes匹配、360项精确编译拒绝、8项输入超限）及每种子8项driver负向自检全部通过；原短ASCII语料保留。5项模块测试覆盖全部65536对literal与65536对class字节、full range与精确预算边界，Debug/Safe/Fast均通过。新增8192项regex mutation/arbitrary-input与4096项predicate parser mutation进入`test-regex-fuzz`和`verify-local`；最终三优化级别定向门禁通过9/9测试，公共runtime验证失败replacement维持配置与reservation水位、首项`]`的实际交付与末尾LF过滤。语料gzip、原始失败和通过记录见`bench/evidence/2026-11-01-regex-boundaries/`；持续sanitizer fuzz与业务regex性能资格仍未完成。
+The decoder compatibility matrix covered eight inline/reference, current/
+historical, scalar/nested, and deferred-template input classes. Each optimization
+level ran 16,384 mutations, 2,382 byte truncations, and 128 short-scratch
+capacities; 9,319 valid mutations passed borrow-range, complete-tree budget,
+exact re-encoding, and JSON checks. After schema definition CRC/hash refresh, 54
+structural corruptions were rejected and 93 valid definitions rechecked canonical
+hashes; eight real files were exported twice read-only through Reader. Debug/
+ReleaseFast independent matrices passed 3/3 each, and ReleaseSafe fuzz/query
+passed 30/30.
 
-消费者新增 fused wire-to-JSON 路径：仅对当前自包含 v4 payload、单个 JSON/text/logfmt route、非 deferred message、无 format args；attributes 可为 scalar 或 nested，nested descriptor 使用 caller scratch arena，在 checked wire parser 验证每个 tag/top-level key 后直接写入 caller scratch；其他形状返回 `error.Fallback` 并继续走 decode+encode。journal 格式、公开 encoder、校验边界和 route 语义不变。单元测试用 flat event（含 trace/span/source）与 nested group/array 逐字节比较融合输出与 decode+encode，template 确认 Fallback；完整 `verify-local` 通过 81/81 步骤、510/510 测试（包含 nested 与 text/logfmt fused 验证）；10,000 条 SPSC-memory workflow 的 11,000 条物理记录通过独立 oracle。五对固定 CPU PMU 中 SPSC-memory P4 指令减少 5.94%、async-memory P1 减少 6.20%，spread 0.8%–1.2%；cycles/吞吐仍 inconclusive。100 个完整文件试验结果见 `bench/evidence/2026-11-01-wire-json/`。2026-11-01 负载窗口同轮 Foundation/kron 复测完成 120 个试验、1212 万条记录验证，全部组因 spread 超门限标 inconclusive；同轮中位数显示 P1 kron 领先、P4 Foundation 略领先，稳定排名仍需安静窗口复测，见 [完整工作流](../cpp-full-workflow.md) 和 `bench/cpp_reference/evidence/2026-11-01-pclmul-same-round/`。见 [提交热点](../performance-hotspots.md)。
+The independent Zig package added target-host self-check `qualify DIRECTORY`,
+whose test logic can run directly in a Zig mobile host without Python or a
+subprocess. Linux normal/single-threaded ReleaseSafe and normal ReleaseFast ran
+five modes or sync, zero post-initialization Runtime allocation, Unicode file
+names, ordinary/schema journal close-reopen and exclusive locking, read-only
+inspection, rotation retention, and actual durable capabilities; locally fetched
+source distribution passed the same checks. Two independent package tests passed;
+an existing acceptance directory was rejected for reuse with output unchanged;
+the root `test-platform-host` gate passed 2/2 steps, a Windows PE including this
+entry linked, and the other four platform device runs were still missing.
 
-消费者 decoded delivery 已复用 decoder 的完整树校验：`codec.decode` 和 `schema_codec.resolve` 在完成 wire 树、节点预算、深度、重复 key 和长度检查后设置内部 `Event.tree_validated`；内部 `encoder.common.encodeDecoded` 仅对该证明跳过第二次树校验，公开 `encoder.encode/encodeWithTime` 仍始终校验并忽略该提示。Runtime 不信任调用方提供的提示，先用 admission 的 `codec.measure` 或 redaction/binding 校验，再由 `submitSafeDestination` 用可信上下文覆盖；binary route 继续走公开校验路径。新增测试锁定：伪造提示的 invalid tree 仍被公开 encoder 拒绝且零输出、`runtime.submit` 的重复 key 仍返回 `DuplicateKey`、decoded text/JSON/logfmt 与公开 encoder 字节一致。`zig build test -Doptimize=ReleaseFast` 通过 35/35 步骤、481/481 测试；完整 `verify-local` 通过 81/81 步骤、505/505 测试；定向 ReleaseSafe proof 10/10 与 predicate 1/1 也通过。五对固定 CPU 完整流程 PMU 中，SPSC-memory P4 用户态指令中位减少 3.73%，async-memory P1 减少 4.49%，两侧 spread 0.5%–1.6%；cycles/task-clock 与吞吐仍 inconclusive。100 个完整文件试验在 52 个、525 万条记录后遇到 mmap 子进程 120 秒超时，已完成的试验全部 accepted=written、pending/drop=0，但不作为吞吐资格。证据见 `bench/evidence/2026-11-01-decoded-delivery/`。
+Pre-registered schema encoding merged complete-tree validation and length
+accounting and wrote through a shared internal wire writer, validating each node
+once per reference size/encode; the public value writer continued independent
+validation. Four boundary/count tests passed; ReleaseSafe 41 encoding tests, 31
+external encoding/dual-storage/query tests, and real crash gates passed; final
+nine-target ReleaseSafe objects and encoding benchmark input tests passed. All
+450 fixed-affinity before/after pairs matched checksum, byte counts, and budgets;
+local reference-length computation fell about 23%–44%, nested reference encoding
+about 29%, and other reference encodings remained inconclusive because of noise.
 
-原生 x86_64 的 IEEE CRC block loop 已增加编译期 PCLMUL+SSE2 路径：64-byte 四路 folding、128→64→32 和 Barrett reduction；通用 x86_64、非 x86、短输入和 <16 字节尾部继续使用 portable 16-byte slicing。持久化多项式、reflection、final XOR、commit/peek/release 校验点、schema 引用范围、journal 与恢复格式均不变，不运行时探测、不分配、不增加依赖。CRC 模块差分覆盖 32 对齐×22 长度×14 增量切分并与 `std.hash.Crc32` 逐项比较；`-mcpu=baseline` 重新验证 portable fallback，aarch64 编译通过，journal v1/v2 golden 与 Vort 416 组互操作（`backend=hardware`）通过。完整 ReleaseFast 门禁通过 81/81 构建步骤、503/503 测试；首次运行遇到宿主 I/O 下 crash writer 10 秒未 READY，单独重跑 `test-crash` 与完整门禁复跑均通过。journal 形状 CRC primitive 中位在 256 B/512 B/2 KiB/16 KiB 分别为 95.2→19.0、200→26.3、785→79.6、6312→535 ns；五对完整流程 PMU 的 SPSC-memory P4 用户态指令减少 15.33%、async-memory P1 减少 14.78%，SPSC-memory P4 完整吞吐中位 1.393M→1.816M 条/s 且达到本轮噪声门限。100 个完整文件试验核对 1010 万条 JSON，全部 accepted=written、pending/drop=0；宿主 load 约 110，五组吞吐中位提升 15%–84% 但均标 inconclusive。这是原生 x86_64 路径，通用/非 x86 不获得该加速；跨库排名仍需同轮复测。见 [提交热点](../performance-hotspots.md) 和 `bench/evidence/2026-11-01-pclmul-crc/`。
+Random runtime process termination was added: two producers, shared/SPSC, and
+ordinary/schema (four combinations) submitted and wrote normally after READY, then
+were SIGKILLed at seeded times. Formal ReleaseSafe/ReleaseFast `test-runtime-crash`
+passed 12 scenarios each and six negative oracle tests; another 32 ordinary seeds
+and eight u64-boundary seeds confirmed 109,419 complete ACKs were covered by
+output/recovery, with duplicates and incomplete reservations observed. The
+2026-11-01 complete gate also actually hit a 1,950-byte incomplete JSON tail,
+confirming it was a prefix of a complete journal-recovered record.
 
-默认 inline admission 的完整树校验与长度统计已合并：route predicate 前调用 `codec.measure`，接受后 `codec.encodeSized` 只重新检查 level/容量并写同一未变事件，不再执行第二次长度遍历。Redaction 重写借用存储、prepared schema 使用不同 wire 形状，二者保留独立校验/测量；公开 `codec.encode` 仍独立校验，不导出 unchecked writer 或 validation token。新增 codec 字节一致性/容量/level 测试和公共 predicate 集成测试，锁定 invalid tree 仍在 predicate 前失败、filtered invalid level 仍返回 filtered、嵌套值完整交付。当前完整 ReleaseFast 门禁通过 81/81 构建步骤、502/502 Zig 测试；定向 ReleaseSafe codec/predicate 测试也通过。一次完整 ReleaseSafe `zig build test` 尝试在宿主负载约 110、根盘 98% 占用下阻塞于 `jbd2_log_wait_commit` 超过 18 分钟，已中止且不记为通过；完整 ReleaseSafe 需在更安静的窗口重跑。五对固定 CPU 的完整文件流程 PMU 中，SPSC-memory P4 用户态指令中位减少 2.99%，async-memory P1 减少 3.39%，两侧 relative spread 为 0.5%–1.2%；cycles/task-clock 仍 inconclusive。100 个交替完整文件试验逐条核对 1010 万条 JSON，所有 accepted=written、pending/drop=0，但全部吞吐组至少一侧 CV/spread 超过 10%、bootstrap 区间重叠，故吞吐仍 inconclusive，保留 async P1 负向中位。证据见 `bench/evidence/2026-11-01-admission-measure/`。
+The public interface remained Zig-only. Independent consumer projects imported
+through `b.dependency("kron")` and `dependency.module("kron")`, and ReleaseSafe
+actually ran sync/memory/mmap/SPSC-memory/SPSC-mmap, checking JSON, deep copy,
+redaction, reload, written/pending, and file counts; single-threaded consumption
+confirmed only one OS thread on Linux and rejected async mode before creating
+files. A source archive formed through local `zig fetch` according to ZON
+`.paths` also passed independent five-mode execution. A Windows x86_64-gnu
+independent application linked as a PE, with no device execution qualification.
 
-固定偏移时间处理已接入：Timestamp/Date/DateTime/Duration分别表示，UTC与显式offset支持RFC3339纳秒格式化/解析；用户明确不需要夏令时，未加入IANA或隐式Local。路由版本拥有同秒缓存，offset/precision进入可选恢复指纹，默认数字输出与原指纹保持。时间Debug/Safe模块各10项（9项实质测试）、五项公共集成与完整400年周期、4096随机timestamp/mutation、独立Python4166时间戳和5845日期oracle通过。实际五模式覆盖积压旧配置、零runtime分配、OOM清理和journal关闭/重开，改变offset/precision被拒绝。当前完整ReleaseFast498项、九目标Safe实际时间路径与23项时间/文件/配置测试通过；Linux异步真实JSON例子也独立核对。独立同秒cache的日期转换由10万次降为1次，窄范围成本约52→22ns（含hash、初次未固定affinity），不作为完整日志吞吐资格。见 [时间处理](../time.md) 和 `bench/evidence/2026-11-01-time/`。
+`zig build verify-local -Doptimize=ReleaseFast -j2 --summary all` passed **81/81
+build steps and 498/498 Zig tests**, plus 15 Python regression-tool tests, six
+recovery-oracle negative tests, four C++ workflow report negative tests, 17
+negative compilations, 4,096 regex differentials, six real SIGKILL recovery
+scenarios, six Memory/mmap exit-and-drain scenarios, ten seeded recovery
+campaigns, 12 random runtime SIGKILL scenarios, independent Zig five-mode/single-
+threaded consumption and native platform self-check, seven fuzz tests including
+the version matrix, and nine example compilations. The independent single-
+threaded executable verified real JSON files, field selection/redaction, reload,
+durable file flush, shutdown, and no post-initialization Runtime allocation.
 
-十进制记录输出与完整字符串直接转义已实现：无宽度数字不经通用alignment，宽整数按10^19分块；UTF-8共用原状态机，流式消息与float保持原实现。65536个u16及2048对宽整数、12个完整记录/16486种fixed前缀/49494种generic Writer前缀差分通过。Debug/Safe定向各26项、完整ReleaseFast483项与九目标Safe实际对象/18项文件和配置测试通过。100次文件流程核对1010万条日志，全部吞吐仍inconclusive；串行编码probe指令减少18.50%、cycles减少27.14%，完整SPSC文件PMU另核对301万条、指令减少6.22%，但不宣称稳定端到端提速，见 [数字与转义输出](../decimal-output.md)。
+Default context-free loggers captured directly into the final descriptor array,
+with static structs/tuples reserving stack space by actual field count up to 64;
+child contexts kept the original merge. Named structs had compile-time unique
+internal keys, while old prefixes/dynamic keys/nested values were still validated
+with the shared node budget and original error precedence. Six new public capture
+regressions and comparison-count tests passed; 45 fixed-session log pairs matched
+checksum/bytes/counters exactly. Five/ten-field synchronous JSON narrow medians
+fell about 11%/21%, but the real SPSC async comparison remained inconclusive.
 
-完整text/JSON/logfmt记录已复用同一次attributes/format_args树校验，递归输出保持私有，独立value API继续完整验证；全tag事件节点访问由27次减少为14次。转义拆到独立内聚模块，公开格式入口与golden保持。两项新增实质测试、Debug/ReleaseSafe编码定向各23/23、12个完整输出/16486种短缓冲前缀与冻结旧源码差分通过。该轮完整ReleaseFast480/480与最终九目标ReleaseSafe实际对象/18项真实文件和配置集成通过。100个完整文件试验核对1010万条日志，部分候选有明显慢值，全部吞吐仍inconclusive；额外五对编码probe用户态指令减少14.27%、cycles减少17.90%，五对P4 SPSC完整文件流程另核对301万条、指令减少2.55%，但稳定吞吐仍未建立。所有负向数据保留，不能把局部CPU计数当整体提速或当前跨库排名，见 [记录编码校验复用](../encoder-validation.md) 与 `bench/evidence/2026-11-01-encoder-validation/`。
+File reliability fixes: ordinary rotation had no implicit fsync/strict durable;
+explicit sync confirmed current and tracked retained archives and reported a
+missing archive; external reopen to an unknown target directory revoked historical
+durable qualification while written continued; `UnsupportedDurability` was not
+latched as an ordinary write fault, while real I/O errors still latched. A retired
+configuration with zero pending and completed required written could be reclaimed
+when extra durability was unsupported, withdrawing global historical capability;
+`InputOutput` retained the lease for retry. Nine rotation reliability/resource
+tests, six real partial-write FileSink tests, and two collection tests passed.
 
-此前后台批内durable决策与written统计聚合已实现：每个受保护配置组预计算required durable route位图，事件只判断一次确认边界，保留原完整route barrier；连续channel的已确认记录由31次written原子RMW减少为1次，仍使用fetchAdd合成并发同步/fallback计数。四项新实质测试与真实shared/SPSC批次计数回归通过；晚期reclaim损坏仅确认成功前缀，written=1、pending=2，剩余record pin保留。该轮Debug/ReleaseSafe定向各13/13、完整ReleaseFast478/478与九目标ReleaseSafe实际对象/37项配置、事务、deadline、真实文件故障测试通过。100个完整JSON文件流程逐条验证1010万条日志；prepared SPSC-Mmap中位变化约+3.5%，普通SPSC-Mmap约−1.2%，置信区间仍重叠，其余组合波动较大，该轮不宣称稳定端到端收益。见 [批内确认与统计](../batch-accounting.md) 和 `bench/evidence/2026-11-01-batch-accounting/`。
+Seeded SIGKILL campaigns passed ten default cases and eight high-u64 seeds,
+covering 16-slot 4–7 wraps, two configuration switches, cross-generation pending
+records, ordinary/schema payloads, nested/source/secret, and CRC; repeated
+inspection kept journal/output hashes unchanged. The randomization covered
+workload and epoch boundaries at an exact READY point, not arbitrary-time faults
+or physical power loss.
 
-上一轮后台批次已实现受保护配置View复用：同一非零generation/fingerprint仅查找一次，旧版本持有到整批barrier与记录确认结束；历史generation=0继续完整查找。5项新测试覆盖64版本、shared/SPSC真实31-record批次、错误指纹与混合sink失败，失败保留record pin/lease并释放临时reader；旧实现会被新lookup回归以31次查找拒绝。该轮Debug与ReleaseSafe定向12项、配置/事务/deadline31项以及完整ReleaseFast474项通过；最终九目标ReleaseSafe实际对象与12项配置集成测试通过。100个相同完整JSON文件流程验证1010万条记录，shared-Memory P1本机中位吞吐约1.16M→1.26M条/s，约8.9%提升；其他组合仍inconclusive，见 [批次配置复用](../batch-configuration.md) 与 `bench/evidence/2026-11-01-batch-configuration/`。这些性能数字属于此前快照，不与本轮不同基线混合排名。
+Public codec validation and length accounting merged into one `ValueValidator`
+traversal; archive preparation happened once within a complete safe codec call,
+followed by two necessary hash/output writes, without exporting unchecked writers
+or saveable credentials. Count tests confirmed size/encode/stream and archive
+preparation validate each node once; all tags, shared budgets, zero output for
+invalid trees, and post-overflow validation precedence passed. Related 37
+ReleaseSafe and current/old wire tests passed; the frozen before module and 600
+alternating comparison rows matched checksum/bytes/shape exactly.
 
-完整文件日志profile约24%采样在journal CRC，采用portable 16-byte slicing后保留全部commit/peek/reclaim检查及IEEE协议，表由8KiB增至16KiB。3项CRC模块测试和416组实际Vort互操作、6项真实文件故障、12个随机SIGKILL场景通过；完整ReleaseFast469项与最终九目标ReleaseSafe对象/6项文件故障门禁通过。5对固定CPU的独立CRC过程PMU中位cycles降低24.4%，instructions增加4.3%；120个完整流程与10个百万条长批次共2213万条输出全部正确，但稳定吞吐/尾延迟仍inconclusive。具体Quill/Foundation/fmtlog源码机制与后续批处理改进见 [业界实现与优化方向](../industry-performance-lessons.md)，原始报告见 `bench/evidence/2026-11-01-crc-slicing16/`。
+Global sampling omitted RMW for every1, used a bounded 0/1 atomic flip for every2,
+and kept other policies and the public layout unchanged; current x86_64 generated
+one `lock btc` per every2. Exact-budget tests checked global counts and final
+phase, and new configuration-transaction tests locked filter-only preservation
+and full-replacement reset. Sampling microbenchmarks passed all budgets before/
+final 105 times each, but variance kept stable performance qualification
+inconclusive.
 
-完整C++/Foundation性能对照已按用户要求重跑：spdlog1.17、Quill13.1、指定onboard-monorepo Foundation Logging和测试时kron，同一完整JSON字段、系统墙钟、1/4producer、Memory/Mmap与prepared/inline，260个正式试验逐条验证2626万条日志；Foundation原始默认formatter另40个控制试验、404万条日志。结果分别报告初始化、预热、producer、written flush、shutdown和cleanup；没有采用producer-only吞吐或不同JSON输出大小排名。该次对照快照的kron完整流程尚未领先，host噪声使多数稳定倍数仍不成立。4项报告负向测试与最终52个小规模流程smoke均通过；跨库实测源码固定在归档中，CRC更新另有before/after测量，不能混合不同源码数字。见 [完整工作流对照](../cpp-full-workflow.md) 和 `bench/cpp_reference/evidence/2026-11-01-full-workflow/`。
+The main benchmark supported Memory/mmap shared and SPSC, schema, and durable
+file, reporting queue/mapped bytes and recovery capability separately. Five new
+bounded executable checks and CSV/failure reports passed; ten captures per
+storage confirmed 200,000 written with pending/drop 0 and strictly verified
+resource budgets. Standalone sampling cost was not equated with complete log
+throughput, and dual storage was not ranked as an equivalent-semantics
+optimization.
 
-路由过滤新增不可变level继承掩码，独立scope filter保留逐route检查；每版本额外64字节，不增加热路径原子/分配，不改变wire或恢复指纹。2940种内部对照、64个route的公开sync/shared/SPSC交付、filter-only与full replacement、旧snapshot与channel cache测试通过。相关Debug1/1、ReleaseSafe15/15、ReleaseFast13/13与原生宿主门禁通过；最终九目标ReleaseSafe实际对象和公共route-filter测试通过。225对enabled-only校验和/预算一致，8个route本机成本下降约12%–18%；40个公共admission/full试验确认200000written/pending0/分配0，但完整吞吐与p99仍inconclusive，见 [路由过滤性能](../route-filter-performance.md)。
+Ordinary async `memory_queue` and mmap `journal` both supported shared/SPSC,
+schema pre-registration, hot configuration, sampling, redaction, and the same
+acknowledgement API. Seven external tests covered the no-file-I/O trap, full
+queue/shutdown, source deep copy, failed durable reclamation preserving state, and
+non-durable policy replacement not taking over the lease. Real SIGKILL confirmed
+Memory lost pending records while mmap recovered three; prior written output
+survived in both. Dual-mode performance captures confirmed 100,000 written/pending
+0/allocation 0 each; different reliability meant they were not ranked as
+equivalent optimizations.
 
-解码兼容矩阵已补齐8类inline/reference、当前/历史版本、scalar/nested和deferred template输入。每种优化级别完成16,384次变异、2,382项逐字节截断与128种短scratch容量检查；9,319个合法变异通过借用范围、完整树预算、精确再编码和JSON检查。schema定义刷新CRC/hash后54个结构损坏被拒绝、93个合法定义重新核对canonical hash；8个真实文件由Reader各只读导出两次。Debug/ReleaseFast独立矩阵各3/3通过，ReleaseSafe fuzz/query共30/30通过，证据见 `bench/evidence/2026-11-01-decoder-matrix/`。该矩阵已包含于当前完整门禁；长期coverage-guided fuzz仍未完成。
+The default empty-redaction path removed about 40 KiB of scratch, with non-empty
+rules handled in a separate stack function; slot CRC used kron's own IEEE
+implementation, optional PCLMUL folding on native x86_64, and portable
+slice-by-16 elsewhere, preserving checksums and all format arguments. Module
+oracles, independent slot goldens, 416 Vort interoperability groups, and three
+redaction-path tests passed.
 
-独立 Zig 包新增目标宿主自校验 `qualify DIRECTORY`，测试逻辑可直接在 Zig 移动宿主调用，不依赖 Python 或子进程。Linux普通/单线程ReleaseSafe及普通ReleaseFast运行通过五模式或sync、初始化后runtime零分配、Unicode文件名、普通/schema journal关闭重开与独占锁、只读inspection、轮转保留和实际durable能力；本地fetch源码分发包同样通过。独立包2项测试通过，已有验收目录拒绝复用且输出不变；根test-platform-host门禁2/2步骤通过，包含该入口的Windows PE实际链接通过，其他四平台设备运行仍未取得。见 [平台支持](../platforms.md) 与 `bench/evidence/2026-11-01-platform-host/`。新 `test-platform-host` 已接入当前完整verify门禁。
+Complete configuration source transactions and bounded JSON files were
+integrated. Seven external transaction tests covered priority, joint policy
+publication, filter-only not consuming a route slot or resetting sampling,
+failure lease responsibility, SPSC channel reuse, nested guards, and real files.
+Two deterministic publication-interleaving tests and a warmed SPSC shared-RMW
+counting test were added. Runtime filters became opaque handles, and negative
+compilation confirmed public typed APIs could not bypass the unified writer.
 
-预注册 schema 编码已合并完整树校验与长度统计，并通过内部共享 wire writer 写出，每次参考 size/encode 只校验每节点一次；公开 value writer 继续独立校验。新增4项边界/计数测试通过，ReleaseSafe相关41项编码测试、31项外部编码/双存储/query及实际崩溃门禁通过；最终九目标ReleaseSafe实际对象与编码基准输入测试通过。450对固定affinity before/after checksum、字节数和预算精确一致；本机参考长度计算下降约23%–44%、nested参考编码下降约29%，其他参考编码因noise仍inconclusive，见 [编码与归档](../encoding.md)。
+After network removal, the remaining formats were text/json/logfmt/binary with
+unchanged format numbers. Trace/span was for local event correlation only. TSC
+qualification tests distinguished wall and monotonic clocks and verified that
+noise-induced calibration failure kept the clock unqualified and fell back to
+native.
 
-随机运行期进程终止已补充：两个 producer，共享/SPSC 与普通/schema 四组合，在 READY 后持续正常提交和写出，再按种子时间实际 SIGKILL。ReleaseSafe/ReleaseFast 正式 `test-runtime-crash` 各 12 个场景与 6 项负向 oracle 测试通过；额外 32 个普通种子和 8 个 u64 边界种子确认 109,419 条完整 ACK 均由输出/恢复覆盖，观察到重复与未完成 reservation。详见 [文件可靠性](../file-reliability.md) 和 `bench/evidence/2026-10-31-random-process-crash/`。2026-11-01完整门禁又实际命中1950字节未完成JSON尾部，确认它是journal恢复完整记录的前缀；当前门禁日志见 `bench/evidence/2026-11-01-schema-encoding/`。
-
-公共接口仅保留 Zig API。独立消费项目通过 `b.dependency("kron")` 和 `dependency.module("kron")` 导入，ReleaseSafe 实际运行 sync/memory/mmap/SPSC-memory/SPSC-mmap，核对 JSON、深拷贝、脱敏、reload、written/pending 和文件数量；单线程消费项目确认 Linux 只有一个 OS 线程，异步模式在创建文件前拒绝。按 ZON `.paths` 经本地 `zig fetch` 形成的源码归档也通过独立五模式运行。Windows x86_64-gnu 独立应用完成实际 PE 链接，尚无设备运行资格。见 [Zig 包接入](../package.md) 和 `bench/evidence/2026-10-31-package-consumer/`。较早458项计数保留于对应历史证据。
-
-`zig build verify-local -Doptimize=ReleaseFast -j2 --summary all` 已通过 **81/81构建步骤、498/498 Zig测试**，另通过15项Python回归工具测试、6项恢复oracle负向测试、4项C++工作流报告负向测试、17项负向编译、4096项正则差分、原有6种真实SIGKILL恢复及6个内存/mmap退出和drain场景、10个种子恢复campaign与12个随机运行期SIGKILL场景，独立Zig五模式/单线程消费与原生平台自校验，7项包含版本矩阵的fuzz测试，9个示例编译。独立single-threaded可执行文件验证真实JSON文件、字段选择/脱敏、reload、durable文件flush、关闭和初始化后无runtime分配。最新证据与源码SHA256在 `bench/evidence/2026-11-01-time/qualification.json`；此前483项数字/转义输出、480项记录校验、478项批内统计、474项配置View复用、469项CRC、468项路由过滤、462项schema编码、458项直接捕获、450项文件可靠性、433项编码等门禁保留于对应evidence目录。
-
-默认无context logger直接捕获到最终描述数组，static struct/tuple按实际字段数预留栈空间、最大64；childcontext保留原merge。命名struct由编译期保证内部key唯一，旧prefix/动态key/nested仍校验，共同node预算和原错误优先级保留。新增6项公共capture回归与比较计数测试通过，45对固定session日志checksum/字节/counters精确匹配，相关Safe测试通过。5/10字段同步JSON窄范围中位成本下降约11%/21%，但真实SPSC异步对照仍inconclusive，详见capture.md。最终9目标ReleaseSafe对象编译及6项公共capture测试也通过。
-
-文件可靠性本轮修复：普通轮转无隐式fsync/strictdurable；显式sync确认current和tracked retained archives，归档缺失报错；外部reopen未知目标目录撤销历史durable资格，但written继续。UnsupportedDurability不锁存为普通写故障，真实I/O错误继续锁存。旧配置零pending且requiredwritten完成后，额外durable不支持允许回收并撤销全局历史能力；InputOutput保留lease供重试。9项轮转可靠性/资源测试、6项实际部分写FileSink测试及2项collection测试已通过。
-
-带种子SIGKILL campaign默认10例及高u64种子8例全部通过，覆盖16槽的4–7次环回、两次配置切换、跨代pending、普通/schema载荷、nested/source/secret与CRC；重复inspection保持journal/output哈希。随机化的是负载与epoch边界，在确切READY点杀进程，不宣称任意时刻故障或物理断电资格。详见file-reliability.md。最终9目标ReleaseSafe对象编译和6项实际文件故障测试也通过。
-
-公开codec校验与长度统计合并为同一ValueValidator遍历；归档在完整安全codec调用内一次准备、两次必要hash/output写入，不导出unchecked写入或可保存凭证。测试计数确认size/encode/stream及archive准备每节点仅验证一次；所有tags、共享预算、无效树零输出和长度溢出后的校验优先级通过。相关37项ReleaseSafe与当前/旧版wire测试通过；冻结before模块及600行交替对照的checksum/字节数/shape完全一致。性能波动仍标inconclusive，详见encoding.md。最终9目标ReleaseSafe对象编译及编码基准输入测试也通过。
-
-全局采样every1省略RMW，every2使用有界0/1原子翻转，其他采样策略和公开布局不变；当前x86_64每次every2生成单条lock btc。精确预算测试核对全局数目与最终相位，新增配置事务测试锁定filter-only保留与full replacement重置。采样微基准before/final各105次全部预算通过，但波动使稳定性能资格仍inconclusive，见sampling.md。
-
-主benchmark已支持memory/mmap共享与SPSC、schema、durable file，报告区分queue/mapped字节与恢复能力。新增五项有界可执行检查、CSV/失败报告均通过；两storage各10次主程序捕获分别确认200,000 written、pending/drop0，资源预算严格验证。独立采样成本不等同完整日志吞吐，双存储不作为等价语义优化排名。 最新9目标公共对象编译和相关9项ReleaseSafe测试也通过。
-
-普通异步 `memory_queue` 和mmap `journal`均支持共享/SPSC、schema预注册、热配置、采样、脱敏和同样确认API。7项外部测试包括无文件I/O trap、满队列/关闭、source深拷贝、失败durable回收保持状态、不可durable策略替换不接管lease。真实SIGKILL确认memory丢失pending而mmap恢复3条，prior written输出两者都完整。双模式性能capture各10次确认100,000 written/pending0/分配0，因可靠性不同不作为等价优化排名。 最新9目标公共对象编译和相关10项ReleaseSafe测试也通过。
-
-默认空redaction路径移除约40KiB scratch，非空规则在独立栈函数处理；slot CRC使用自有IEEE实现，native x86_64可选PCLMUL folding，其他目标保持portable slice-by-16，保留校验和所有格式参数。模块oracle、独立slot golden、Vort416项互操作和3项redaction路径测试均通过。[热点报告](../performance-hotspots.md)记录此前66次等价配置试验和本轮CRC比较；中位数据改善但尾延迟/噪声使总体inconclusive，未宣称稳定胜出。
-
-完整配置来源事务和有界JSON文件已接入。7项外部事务测试覆盖优先级、策略共同发布、filter-only不占route槽/不重置sampling、失败lease责任、SPSC channel重用、嵌套guard和实际文件。根模块另有两项确定性publication交错测试和warmed SPSC共享RMW计数测试。来源模块5项、Document6项实质测试及OOM扫描也通过Debug/ReleaseSafe定向验证。Runtime filter已隐藏为opaque handle，外部只能通过统一writer API更新，新增负向编译验证无法绕过。
-
-网络删除后，保留的四种格式为text/json/logfmt/binary，原有格式编号不变。trace/span仅用于本地事件关联。TSC真实资格测试区分墙钟与单调时钟，并验证噪声导致校准失败时维持未资格状态并回退到原生时钟；不会要求墙钟永不回拨或忽略校准错误。
-
-| 范围 | 必须完成的证据 | 当前状态 |
+| Scope | Required evidence | Status at this snapshot |
 | --- | --- | --- |
-| 构建与公开模块 | Zig 0.16 Debug/ReleaseSafe/ReleaseFast，示例导入 | Debug/ReleaseSafe 综合验证通过；ReleaseFast 综合门禁通过，最后关闭发布修正的定向 ReleaseFast 验证通过 |
-| Zig 包消费 | 独立 b.dependency 导入、源码分发完整性、线程配置传播 | ReleaseSafe 五模式、单线程消费及本地 fetch 源码包运行通过；Windows 独立应用 PE 链接通过，见 package.md |
-| Typed fields/encoder | 字段边界、UTF-8、JSON解析、secret、格式校验 | 已实现并通过模块/负向编译测试 |
-| 同步管线/context | 多 route、借用/深拷贝、错误反馈、无分配 | 已实现并通过 runtime 与 allocator 测试 |
-| 动态配置 | scope边界、并发reload、环境优先级、旧事件决策 | 完整typed sources与有界JSON文件事务、generation-bound filter-only reload、旧admission guard、SPSC缓存无共享RMW已实现并有定向测试 |
-| mmap journal | file-backed、提交/环回/校验、reserve缺口恢复 | 已实现；v1/v2固定slot、CRC、generation、恢复水位、schema同步发布已测 |
-| 进程崩溃恢复 | 真实SIGKILL、跨进程独立读取、重复标识 | reserved/committed/gap 三种实际杀进程门禁通过 |
-| 异步生命周期 | block/drop、flush/barrier、shutdown竞争、失败sink | 共享/per-channel gate、flush cut、关闭发布与最终唤醒已测；deadline正式ReleaseSafe门禁11/11通过，控制槽超时/重试/错误锁存均覆盖 |
-| Durable协议 | 输出/checkpoint顺序、能力错误、系统故障测试 | fsync/双checkpoint已测；真实子QEMU强杀后ACK1/3均恢复且原镜像不变；物理断电/随机大规模资格仍未完成 |
-| Low latency/SPSC | attach/detach、generation、独立队列、预热 | owner-only配置缓存与每channel版本pins已接入；回调TLS查找/释放资格、detach和旧版本保留均有测试 |
-| io_uring | 能力probe、批量写、CQE/短写/在途所有权、对照基准 | 本机真实写/fsync/错误回收通过；保留对照证据 |
-| 轮转与多sink | size/retention/reopen、故障与确认边界 | size/time/retention/reopen已测；路由快照、旧记录pins、lease热替换与恢复10项外部测试通过；配置表示已隐藏为opaque handle |
-| 采样与脱敏 | fakeclock、并发计数、secret不入journal | count/every/tokenbucket、redaction、secret擦除已测 |
-| std.log/trace | 根模块bridge、生命周期、TraceContext/Span | bridge/trace/span用于本地关联，网络输出已删除 |
-| 工具与归档 | kroncat follow/level/where/json/recover、坏尾部 | schema/nested/legacy读取、标准zlib压缩归档与23项只读query/follow测试通过；无旧binary依赖 |
-| 性能 | producer分位数、drain吞吐、饱和/冷缓存、资源预算 | 调度、真实C++ 60/60对照和资源基准已完成；prepared schema 64/64实测完成并保存；旧初始化超时保留证据，进一步性能优化继续 |
-| 平台 | Windows/Linux/macOS/Android/iOS文件、映射、线程、时钟路径与能力边界 | Linux/Windows/Darwin映射后端已实现；9目标实际公共路径ReleaseSafe对象编译通过；Linux运行验证，其他平台设备运行待完成，详见platforms.md |
-| 单线程同步 | 无后台线程、真实文件输出、过滤/脱敏、flush/shutdown、能力错误 | 独立single-threaded可执行文件Debug/ReleaseSafe通过；Linux任务数为1，禁止初始化后分配；普通durable文件flush有效，timed/async有明确能力错误 |
-| 本地复用 | 可用API、格式兼容性、依赖与实际证据 | Vort实际源码416组CRC互操作与ZKV模型3120+8 checkpoint场景ReleaseSafe通过；slot CRC自有IEEE实现，native x86_64可选PCLMUL、其他目标portable slice-by-16，未引入Vort依赖；详见local-reuse.md |
+| Build and public module | Zig 0.16 Debug/ReleaseSafe/ReleaseFast, example imports | Debug/ReleaseSafe comprehensive verification passed; ReleaseFast comprehensive gate passed; final close-release correction targeted ReleaseFast verification passed |
+| Zig package consumption | Independent `b.dependency` import, source-distribution completeness, thread configuration propagation | ReleaseSafe five modes, single-threaded consumption, and local-fetch source package passed; Windows independent app PE linked; device execution missing |
+| Typed fields/encoder | Field boundaries, UTF-8, JSON parsing, secret, format validation | Implemented and passing module/negative-compilation tests |
+| Synchronous pipeline/context | Multiple routes, borrow/deep copy, error feedback, no allocation | Implemented and passing Runtime/allocator tests |
+| Dynamic configuration | Scope boundaries, concurrent reload, environment priority, old-event decisions | Complete typed sources, bounded JSON file transaction, generation-bound filter-only reload, old admission guard, and SPSC cache without shared RMW implemented and targeted-tested |
+| mmap journal | File-backed storage, commit/wrap/checksum, reservation-gap recovery | Implemented; v1/v2 fixed slots, CRC, generation, recovery watermark, and schema synchronized publication tested |
+| Process crash recovery | Real SIGKILL, independent cross-process read, duplicate identity | Reserved/committed/gap real kill gates passed |
+| Async lifecycle | block/drop, flush/barrier, shutdown races, failing sink | Shared/per-channel gate, flush cut, close publication, and final wakeup tested; deadline formal ReleaseSafe gate passed 11/11 |
+| Durable protocol | Output/checkpoint ordering, capability errors, system-fault tests | fsync/dual checkpoint tested; real child-QEMU force-kill ACK1/3 recovered with original image unchanged; physical power loss/random large-scale qualification missing |
+| Low latency/SPSC | attach/detach, generation, independent queues, warmup | Owner-only configuration cache and per-channel generation pins integrated; callback TLS lookup/release, detach, and old-generation retention tested |
+| io_uring | Capability probe, batched writes, CQE/short-write/in-flight ownership, comparison benchmark | Real local write/fsync/error reclamation passed; comparison evidence retained at that time |
+| Rotation and multiple sinks | size/retention/reopen, faults and acknowledgement boundaries | size/time/retention/reopen tested; route snapshots, old record pins, lease hot replacement, and recovery external tests passed; configuration representation opaque |
+| Sampling and redaction | fake clock, concurrent counts, secret never enters journal | count/every/token_bucket, redaction, and secret erasure tested |
+| std.log/trace | Root-module bridge, lifecycle, TraceContext/Span | Bridge/trace/span used for local correlation; network output removed |
+| Tools and archives | kroncat follow/level/where/json/recover, bad tails | Schema/nested/legacy reads, standard zlib compressed archives, and 23 read-only query/follow tests passed; no old-binary dependency |
+| Performance | Producer quantiles, drain throughput, saturation/cold cache, resource budgets | Scheduling, real C++ 60/60 comparison, and resource benchmarks completed; prepared schema 64/64 measured; old init timeout evidence retained; further optimization continued |
+| Platforms | Windows/Linux/macOS/Android/iOS file, mapping, thread, clock paths and capability boundaries | Linux/Windows/Darwin mapping backends implemented; nine-target ReleaseSafe public-path objects compiled; Linux executed; other device runs pending |
+| Single-threaded sync | No background thread, real file output, filter/redaction, flush/shutdown, capability errors | Independent single-threaded executable passed Debug/ReleaseSafe; Linux task count 1; no post-initialization allocation; ordinary durable file flush works; timed/async return explicit capability errors |
+| Local reuse | Available APIs, format compatibility, dependencies, actual evidence | Vort 416-group CRC interoperability and ZKV 3,120+8 checkpoint scenarios passed ReleaseSafe; slot CRC uses kron's IEEE implementation, optional PCLMUL on native x86_64, portable slice-by-16 elsewhere; no Vort dependency |
 
-## 完整目标的剩余验收项
+## Remaining acceptance items for the complete goal
 
-当前门禁证明已实现能力，不能替代下面尚缺的范围。按整体设计继续推进：
+The gates above prove implemented capability but do not replace the missing
+scopes below.
 
-| 要求 | 已有证据 | 仍缺的权威证据/实现 |
+| Requirement | Existing evidence at this snapshot | Still missing |
 | --- | --- | --- |
-| 可靠性边界 | 固定边界与随机运行期真实应用SIGKILL、子QEMU停机、双checkpoint与fault sink | 更大随机系统停机campaign、不同filesystem/设备、物理掉电资格 |
-| 低延迟性能 | 分离时钟microbenchmark、prepared 64rows、C++ 60trials | TSC硬件/校准/跨核资格已验证；仍需独占/固定affinity稳定回归门限及业务负载覆盖 |
-| 动态策略 | scope/level缓存、route/redaction/sampler资源快照热替换、旧事件保留；8种子byte regex差分与固定mutation campaign | 字段谓词与有界NFA正则、完整来源事务与有界JSON文件已实现；仍需持续sanitizer fuzz、业务正则性能资格与非默认采样热点优化 |
-| 结构化扩展 | 显式group/array、8层/256节点预算、递归脱敏、nullable/source/trace；受限对象适配器5项外部测试及9项负向编译 | 更广nested故障与性能资格 |
-| 文件与归档 | size/time轮转、retention/reopen、自包含与标准DEFLATE归档 | 更全面持久化格式升级矩阵、随机/更多文件系统故障门禁 |
-| 生态与平台 | std.log、JSON、Windows/aarch64编译、真实单线程同步文件日志 | Windows/macOS/Android/iOS实际运行与journal资格 |
+| Reliability boundaries | Fixed-boundary and random runtime SIGKILL, child-QEMU shutdown, dual checkpoint, fault sink | Larger random system-shutdown campaigns, different filesystems/devices, physical power-loss qualification |
+| Low-latency performance | Isolated clock microbenchmarks, prepared 64 rows, C++ 60 trials | TSC hardware/calibration/cross-core qualification verified; still needed: isolated/fixed-affinity stable regression thresholds and business-workload coverage |
+| Dynamic policy | Scope/level cache, route/redaction/sampler resource snapshot hot replacement, old-event retention; eight-seed byte-regex differential and fixed mutation campaign | Field predicates and bounded NFA regex, complete source transactions, and bounded JSON files implemented; still needed: sustained sanitizer fuzz, business-regex performance qualification, non-default sampling hotspot optimization |
+| Structured extensions | Explicit group/array, 8-level/256-node budget, recursive redaction, nullable/source/trace; restricted object adapter five external tests and nine negative compilations | Broader nested fault and performance qualification |
+| Files and archives | size/time rotation, retention/reopen, self-contained and standard DEFLATE archives | More complete persistent-format upgrade matrix, random/more-filesystem fault gates |
+| Ecosystem and platforms | std.log, JSON, Windows/aarch64 compilation, real single-threaded synchronous file logging | Windows/macOS/Android/iOS actual execution and journal qualification |
 
-### 当前差距的优先级
+### Priority of current gaps
 
-功能主体已经覆盖当前五平台单机日志的主要API，目标仍不能标完成。按`design.md`第15节的实际性能/正确性范围，后续优先级如下；有限测试计数与局部before/after收益不能替代完整范围资格。
-
-| 优先级 | 差距 | 当前证据与下一步 |
+| Priority | Gap | Evidence and next step at this snapshot |
 | --- | --- | --- |
-| 1 | 稳定的完整流程性能优势 | 最近Foundation真实spdlog/Rust后台同轮200项对照仍全部inconclusive；仅Memory/Mmap的部分中位领先。需对最终源码在可控噪声下建立包含flush/关闭的基线，核对CPU/资源与同语义跨库结果 |
-| 1 | 尾延迟和过载下的应用影响 | Memory SPSC P4长流程p99.9仍约340µs，prepared P1最新long-sampled p99.9有负向。需覆盖burst/持续满队列、慢sink、更多producer，测阻塞/积压年龄并与无日志应用基线比较CPU/cache/调度竞争 |
-| 1 | Mmap启动/预热与资源成本 | 较早同轮SPSC Mmap P4初始化曾有约1.25秒中位；每producer独立固定slot队列带来额外保留。需降低冷发布/channel准备成本，按真实payload分布报告预算和生命周期，保持发布/恢复协议 |
-| 2 | 性能负载覆盖和发布回归门限 | 设计要求0/5/10 fields、长短字符串、1/4/16 producers、warm/cold、线程频繁attach/detach、reload/rolling，以及独立durable吞吐/延迟。当前完整对照主要为五数字字段P1/P4，需要补齐业务与durable基线并形成低噪声回归门禁 |
-| 2 | 更广故障与持续fuzz | 已有真实SIGKILL、子QEMU与有界mutation/coverage-guided试验；还需多文件系统/设备的系统停机/掉电边界、更长期seed和sanitizer资格、nested/轮转/格式升级组合故障 |
-| 2 | 非Linux平台运行 | Windows/macOS/Android/iOS实现和对象/部分链接证据存在，尚缺对应设备上的实际日志、生命周期、恢复与可用durable能力报告；Linux运行不能替代它们 |
+| 1 | Stable complete-workflow performance advantage | The latest 200-trial Foundation spdlog/Rust same-round comparison was entirely inconclusive; only some Memory/Mmap medians led. Establish a quiet-host baseline including flush/shutdown and check CPU/resources and same-semantics cross-library results |
+| 1 | Tail latency and application impact under overload | Memory SPSC P4 long-workflow p99.9 remained about 340 µs, and prepared P1 latest long-sampled p99.9 was negative. Cover burst/sustained full queues, slow sinks, more producers; measure blocking/backlog age and compare CPU/cache/scheduling contention with a no-logging baseline |
+| 1 | Mmap startup/warmup and resource cost | An earlier same-round SPSC Mmap P4 initialization had a median around 1.25 s; per-producer fixed-slot queues add retention. Reduce cold publication/channel preparation cost and report budgets/lifecycle for real payload distributions while preserving publication/recovery protocols |
+| 2 | Performance workload coverage and release regression threshold | Design requires 0/5/10 fields, short/long strings, 1/4/16 producers, warm/cold, frequent attach/detach, reload/rolling, and independent durable throughput/latency. Current complete comparisons mainly use five numeric fields at P1/P4; add business and durable baselines and form a low-noise regression gate |
+| 2 | Broader faults and sustained fuzz | Real SIGKILL, child-QEMU, bounded mutation, and coverage-guided tests exist; still needed: multi-filesystem/device system shutdown/power-loss boundaries, longer seeds and sanitizer qualification, nested/rolling/format-upgrade combined faults |
+| 2 | Non-Linux platform execution | Windows/macOS/Android/iOS implementations and object/partial-link evidence exist, but actual device logging, lifecycle, recovery, and usable-durability reports are missing; Linux execution is not a substitute |
 
-API已明确哪些能力属于可选增强；后续验收应逐项给出源码、运行结果或明确的平台能力边界。本轮以用户更新后的单机范围推进；更大硬件故障和跨平台资格仍按实测报告。
+The API already identifies optional enhancements; future acceptance should state
+the source, run result, or explicit platform capability boundary for each item.
+This round followed the user's updated single-machine scope; larger hardware
+faults and cross-platform qualification remained on the measured-report path.
 
-## 已有运行证据
+## Existing execution evidence at this snapshot
 
-- `zig build verify -Doptimize=ReleaseSafe -j2 --summary all` 在当前开发阶段通过 189 项测试（包含 160 个库测试、11 个 runtime integration、10 个 query、8 个 benchmark helpers），并执行六个 compile-fail fixture 和三个真实 SIGKILL phase。此后 ReleaseFast 综合门禁通过 194 项测试；最后关闭发布顺序及静态时钟入口修正的相关 ReleaseFast 测试 10/10 通过。后续源码修改必须重新运行相关 gate；此记录不是对未来 HEAD 的保证。
-- `tests/crash_recovery.py` 通过新进程 `kroncat` 验证：未提交记录不输出、提交后的源缓冲覆盖不影响事件、reservation 缺口后的完整提交仍可恢复、两次 inspection 不修改 journal。
-- `bench/evidence/2026-10-31-file-backends/` 保存相同输入 portable/io_uring 的原始 JSON、汇总和机器信息；不是跨语言排名。
-- `bench-dispatch` 将时钟间接调用成本与 journal/encoder/I/O 分开，std_io/native/none 是显式不同 provider，不将 native 或取消时间戳的结果冒充等价语义收益。
-- `zig build test-deadline -Doptimize=ReleaseSafe -j1 --summary all` 当前通过11/11外部测试；`src/core/control.zig`的3个独立ReleaseSafe测试通过。`test-fuzz`的三个有界mutation/arbitrary-input/format corpus在Debug通过，不能等同长期fuzz资格。
-- `tests/power_loss/evidence/2026-10-31/` 保存两次真实QEMU停机后的文件/journal确认报告。主机没有被重启、断电或挂载测试盘；验证boot写入临时overlay。`test-fuzz`随后ReleaseSafe 3/3也通过。
-- 本轮后续 `verify -Doptimize=ReleaseSafe -j2` 已通过280项测试、全部五种SIGKILL阶段与六个compile-fail fixture；覆盖deadline、v2schema、Reader、legacy codec及prepared binding防错标。重新构建的当前v3/v2测试writer再次通过QEMU ACK3后停机恢复，紧凑证据已保存。后续benchmark源码变化仍需要自身门禁。
-- 当前 `verify -Doptimize=ReleaseFast -j2` 重跑通过280/280；期间修正了脱敏测试对整条JSON秘密数字搜索的误判，现在解析attributes.token并检查optional实际值。Windows公开模块ReleaseSafe编译通过。该门禁不代表尚未实现的增强能力已完成。
-- 本轮 `verify -Doptimize=ReleaseSafe -j2` 已通过358/358测试（包括280库、9配置、10压缩、23query），六个真实SIGKILL阶段与原负向编译也通过。随后opaque配置表示和并发SPSC替换增强的定向Debug/ReleaseFast配置测试10/10通过，新增负向编译确认公共typedAPI不能直接修改Snapshot；当前v4/v5 writer再次通过QEMU ACK3恢复。
-- 当前 `verify -Doptimize=ReleaseFast -j2` 全量通过359/359、七个compile-fail fixture、六种SIGKILL阶段与四个示例编译；`run-hot-configuration` ReleaseSafe实际运行并由kroncat解码压缩归档。最后增加的SPSC并发热替换测试覆盖2000accepted==written。ReleaseSafe完整计数358是新增该测试之前的证据，其10项配置定向ReleaseFast门禁与全量当前ReleaseFast已覆盖。
+- `zig build verify -Doptimize=ReleaseSafe -j2 --summary all` passed 189 tests at
+  one development stage (160 library, 11 Runtime integration, 10 query, 8
+  benchmark helpers) and executed six compile-fail fixtures and three real
+  SIGKILL phases. ReleaseFast later passed 194 tests; final close-release ordering
+  and static clock entry corrections passed 10/10 targeted ReleaseFast tests.
+  Later source changes must rerun the relevant gates; this is not a guarantee for
+  a future HEAD.
+- `tests/crash_recovery.py` used a new `kroncat` process to verify that
+  uncommitted records are not output, committed source-buffer overwrite does not
+  affect the event, complete commits after a reservation gap recover, and two
+  inspections do not modify the journal.
+- `bench-dispatch` separated clock indirect-call cost from journal/encoder/I/O;
+  `std_io`/`native`/`none` were explicit different providers, and native or
+  timestamp-removal results were not presented as equivalent-semantics gains.
+- `zig build test-deadline -Doptimize=ReleaseSafe -j1 --summary all` passed 11/11
+  external tests; three independent `src/core/control.zig` ReleaseSafe tests
+  passed. The three bounded mutation/arbitrary-input/format corpora in `test-fuzz`
+  passed Debug but were not equivalent to long-running fuzz qualification.
+- `tests/power_loss/evidence/2026-10-31/` preserved two real QEMU shutdown
+  file/journal confirmation reports. The host was not rebooted, power-cycled, or
+  given a mounted test disk; verification booted a temporary overlay.
+- Later `verify -Doptimize=ReleaseSafe -j2` passed 280 tests, all five SIGKILL
+  phases, and six compile-fail fixtures, covering deadline, v2 schema, Reader,
+  legacy codec, and prepared binding mislabeling protection. Rebuilt v3/v2 test
+  writers again recovered after QEMU ACK3 shutdown.
+- Current `verify -Doptimize=ReleaseFast -j2` passed 280/280; a redaction test
+  was corrected to parse `attributes.token` and check the optional actual value
+  instead of searching the whole JSON for a secret number. Windows public module
+  ReleaseSafe compilation passed.
+- Later `verify -Doptimize=ReleaseSafe -j2` passed 358/358 tests (280 library, 9
+  configuration, 10 compression, 23 query), six real SIGKILL phases, and the
+  original negative compilation. Opaque configuration representation and
+  concurrent SPSC replacement targeted Debug/ReleaseFast tests passed 10/10, and
+  new negative compilation confirmed public typed APIs could not directly modify
+  a Snapshot.
+- Current `verify -Doptimize=ReleaseFast -j2` passed 359/359, seven compile-fail
+  fixtures, six SIGKILL phases, and four example compilations;
+  `run-hot-configuration` ReleaseSafe actually ran and `kroncat` decoded the
+  compressed archive. The final SPSC concurrent hot-replacement test covered
+  2,000 accepted==written. The complete ReleaseSafe count of 358 predates that
+  test; its 10 configuration-targeted ReleaseFast gates and the full current
+  ReleaseFast run covered it.
 
-## 继续完成的要求
+## Continuing requirements
 
-deadline、子VM故障注入、schema预注册、嵌套字段、资源热替换、标准压缩归档和实际C++对照已实现并有门禁；TSC资格、字段谓词/NFA、配置缓存热点优化及多种子任意字节正则差分/有界mutation已实现；更大随机故障资格、稳定回归基线、持续sanitizer fuzz与更多平台实际运行仍需继续推进。
+Deadline, child-VM fault injection, schema pre-registration, nested fields,
+resource hot replacement, standard compressed archives, and real C++ comparison
+were implemented with gates at this snapshot; TSC qualification, field
+predicates/NFA, configuration-cache hotspot optimization, and multi-seed
+arbitrary-byte regex differential/bounded mutation were implemented. Larger random
+fault qualification, a stable regression baseline, sustained sanitizer fuzz, and
+more platform execution still needed work.
 
-代码实现继续推进完整目标。本清单用于明确缺口，不用于缩小设计范围或提前宣告完成。
+## Limits of the performance verification at this snapshot
 
-## 当前性能验证的限制
+The latest complete bounded benchmark verification timed out during initialization
+of the eleventh SPSC sleep configuration; only the main thread was present,
+waiting on a kernel file page, with no producer/worker started. That incomplete
+verification was not recorded as a pass, and the cause was not asserted to be a
+logging deadlock or `std.Io` scheduling cost. Final code-level admission wakeup
+and close publication each had targeted tests; initialization I/O tail latency
+still needed verification.
 
-最新完整 benchmark 有界验证在第十一项 SPSC sleep 配置初始化阶段超时；现场只有主线程，等待内核文件页，没有启动 producer/worker。不能把该次未完成验证记为通过，也不能将原因断言为日志死锁或 std.Io 调度成本。失败报告与二进制身份见 [超时证据](../../bench/evidence/2026-10-31-clock-dispatch/spsc-sleep-timeout.md)。代码级最终 admission 唤醒与关闭发布分别有定向测试，初始化 I/O 尾延迟仍需进一步验证。
+## Configuration cache and fast-clock evidence
 
-## 配置缓存与快速时钟证据
+The ReleaseSafe comprehensive gate passed 388/388; predicate/cache external tests
+then passed 5/5; channel pins/cache module Debug/Safe/Fast 27 tests, three real TSC
+qualification tests, and wrong-platform compilation passed. A by-reference change
+removed the 0x5840-byte `routeMaskIn` memcpy; a single P4 admission measured shared
+484 ns/attached 157 ns, with complete JSON throughput 587K/617K. TSC qualified all
+100,000 reads with zero fallback, but the current safe implementation at 34.52
+ns/call was slower than NativeClock at 18.35 ns, so no TSC performance gain was
+claimed.
 
-ReleaseSafe综合门禁388/388通过，谓词/缓存外部测试随后5/5通过；channel pins/cache模块Debug/Safe/Fast27项、TSC真实资格3项及错平台编译通过。by-reference修改移除了routeMaskIn的0x5840字节memcpy；单次P4 admission shared484ns/attached157ns，完整JSON吞吐587K/617K，命令/binary/profile证据见bench/evidence/2026-10-31-snapshot-by-reference。TSC全部100000read资格成立且fallback0，但当前安全实现34.52ns/call慢于NativeClock18.35ns，未声称TSC提升性能。
+## Additional qualification in this round
 
-## 本轮补充资格验证
+Four independent shutdown boundaries ACK17/31/8/3 in the bounded QEMU campaign all
+recovered; 17 and 31 covered 16-slot wrap. The regex differential gate completed
+4,096 exact comparisons with Python `re.search`, passing Debug/ReleaseSafe, and a
+deliberately wrong-expect negative driver confirmed non-zero failure. TSC's TLS
+calibration cache measured 22.88 ns/call versus Native 15.33 ns while preserving
+qualification and generation/instance-cookie checks; no TSC speed advantage was
+claimed.
 
-有界QEMU campaign的4个独立停机边界ACK17/31/8/3全部恢复，17与31覆盖16-slot环回，证据位于tests/power_loss/evidence/2026-10-31-campaign。正则差分门禁与Pythonre.search完成4096项exact比较，Debug/ReleaseSafe通过，故意错误expect的负向driver也确认非零失败。TSC的TLScalibration cache在保持资格和generation/实例cookie检查后实测22.88ns/call，Native15.33ns；当前不宣称TSC更快。
-
-此前 `verify -Doptimize=ReleaseFast -j2` 通过398/398（309库、6谓词/缓存外部、3真实TSC资格及其余集成/工具/基准），六种SIGKILL、七个compile-fail及4096项正则差分全部通过，六个示例编译。配置职责拆到runtime_configuration.zig，owner实例时钟接口及跨Runtime线程本地resource查找/公开释放资格均有验证。当前计数以本文件开头的单机门禁为准。
+An earlier `verify -Doptimize=ReleaseFast -j2` passed 398/398 (309 library, 6
+predicate/cache external, 3 real TSC qualification, and the remaining integration/
+tool/benchmark tests), six SIGKILL phases, seven compile-fail fixtures, 4,096
+regex differentials, and six example compilations. Configuration responsibility
+was split into `runtime_configuration.zig`, and owner-instance clock interfaces
+plus cross-Runtime thread-local resource lookup/public release qualification were
+verified.

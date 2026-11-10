@@ -34,8 +34,6 @@ pub fn build(b: *std.Build) void {
 
     const fmt = b.addSystemCommand(&.{ b.graph.zig_exe, "fmt", "--check", "build.zig", "build.zig.zon", "src", "tests", "examples.zig", "tools" });
     b.step("fmt", "Check Zig formatting").dependOn(&fmt.step);
-    const bench_index = b.addSystemCommand(&.{ "python3", "tools/bench_index.py", "--check" });
-    b.step("bench-index", "Verify the generated benchmark evidence index").dependOn(&bench_index.step);
     const hygiene = b.addSystemCommand(&.{ "python3", "tools/check_repo_hygiene.py" });
     b.step("hygiene", "Check tracked-file hygiene and repository size guards").dependOn(&hygiene.step);
     const links = b.addSystemCommand(&.{ "python3", "tools/check_links.py" });
@@ -380,21 +378,6 @@ pub fn build(b: *std.Build) void {
     const managed_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_managed_outputs_compare.py" });
     b.step("test-managed-output-report", "Reject missing, duplicate and malformed managed benchmark output").dependOn(&managed_report_tests.step);
     verify.dependOn(&managed_report_tests.step);
-    const cpp_reference_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_reference.py" });
-    const cpp_reference_report = b.step("test-cpp-reference-report", "Reject incomplete workflow output, backend fallback and changed workload budgets");
-    cpp_reference_report.dependOn(&cpp_reference_report_tests.step);
-    const foundation_qualification_tests = b.addSystemCommand(&.{ "python3", "tests/test_foundation_qualification.py" });
-    cpp_reference_report.dependOn(&foundation_qualification_tests.step);
-    const cpp_backend_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_cpp_backend_comparison.py" });
-    cpp_reference_report.dependOn(&cpp_backend_report_tests.step);
-    const initialization_report_tests = b.addSystemCommand(&.{ "python3", "tests/test_initialization_compare.py" });
-    cpp_reference_report.dependOn(&initialization_report_tests.step);
-    const cpp_reference_module = b.createModule(.{ .root_source_file = b.path("bench/cpp_reference/kron_reference.zig"), .target = target, .optimize = optimize });
-    cpp_reference_module.addImport("kron", module);
-    const cpp_reference_tests = b.addTest(.{ .name = "kron-reference-options", .root_module = cpp_reference_module });
-    cpp_reference_report.dependOn(&b.addRunArtifact(cpp_reference_tests).step);
-    verify.dependOn(cpp_reference_report);
-
     const local_reuse = b.step("check-local-reuse", "Check Vort checksum interoperability with persistent kron formats");
     if (b.option([]const u8, "vort-path", "Path to a local Vort checkout for optional interoperability checks")) |vort_path| {
         const checksum_module = b.createModule(.{ .root_source_file = .{ .cwd_relative = b.pathJoin(&.{ vort_path, "src/checksum.zig" }) }, .target = target, .optimize = optimize });

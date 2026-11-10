@@ -1,26 +1,58 @@
-# 日志对应用工作量的影响
+# Impact of logging on application work
 
-`bench/application.zig` 使用公共kron API，把相同的应用计算分别放在无logger、共享Memory、SPSC Memory、共享Mmap和SPSC Mmap的运行中。完整计时包含生产者任务、最终written flush、shutdown和Runtime/FileSink清理；日志初始化与应用数据准备单列。应用工作集与sample存储用于基准，最终报告/排序及基准存储释放不计入完整日志完成区间。
+`bench/application.zig` uses the public kron API to run identical application
+computation with no logger, shared Memory, SPSC Memory, shared Mmap, and SPSC
+Mmap. Complete timing includes producer tasks, final written flush, shutdown, and
+Runtime/FileSink cleanup; logging initialization and application data preparation
+are reported separately. The application working set and sample storage are part
+of the benchmark; final report/sorting and benchmark storage release are outside
+the complete-log completion interval.
 
-这是两个明确的合成请求模型：compute每线程2KiB数据，执行64次相依整数mix/状态更新；cache每线程1MiB数据，执行32次数据相关位置更新。请求结果会更新工作集，所有结果合成每线程sum/xor校验和，防止无日志路径的计算被优化掉。独立Python模型按相同请求编号与状态转移计算预期结果，并核对每个实际日志result。它们模拟计算与缓存访问，不代表某个真实业务服务或冷缓存资格。
+This is two explicit synthetic request models: `compute` processes 2 KiB per
+thread and performs 64 dependent integer mix/state updates; `cache` processes
+1 MiB per thread and performs 32 data-dependent position updates. Request results
+update the working set, and all results are combined into per-thread sum/xor
+checksums so the no-logger path cannot be optimized away. An independent Python
+model computes expected results from the same request IDs and state transitions
+and verifies every actual logged result. These models simulate computation and
+cache access; they do not represent a real business service or cold-cache
+qualification.
 
-| 选项 | 范围 |
+| Option | Scope |
 | --- | --- |
-| `--mode=none/shared/spsc` | 无日志应用、普通共享异步、每线程SPSC |
-| `--storage=memory/mmap` | 已启用logger的队列存储；无logger报告none |
-| `--work=compute/cache` | 小工作集计算或1MiB每线程数据相关更新 |
-| `--operations=N` | 所有线程合计请求数，1..1000000，至少等于producer数量 |
-| `--producers=1/4/16` | 应用线程数量；与CPU mask大小分开报告 |
-| `--every=N` | 全局request_id每N条请求产生日志，1..1024 |
-| `--sampled=true/false` | 单次应用操作（计算＋可选日志）分位数或batch计时 |
-| `--warmup=N` | 合计0..10000个预热请求，计时前重置应用状态 |
-| `--output=PATH` | 真实完整JSON文件；无logger不创建该文件 |
+| `--mode=none/shared/spsc` | No logging, ordinary shared async, per-thread SPSC |
+| `--storage=memory/mmap` | Queue storage for enabled logging; no-logger reports none |
+| `--work=compute/cache` | Small working-set computation or 1 MiB per-thread data-dependent updates |
+| `--operations=N` | Total requests across all threads, 1..1000000, at least the producer count |
+| `--producers=1/4/16` | Application thread count; reported separately from CPU mask size |
+| `--every=N` | Emit one log every N global request IDs, 1..1024 |
+| `--sampled=true/false` | Per-operation (computation + optional logging) quantiles or batch timing |
+| `--warmup=N` | Total 0..10000 warmup requests; application state resets before timing |
+| `--output=PATH` | Real complete JSON file; no-logger mode does not create it |
 
-每条日志包含完整系统时间和关联元数据，以及request_id/result/producer/rounds/warmup五字段。Memory不恢复pending，Mmap具有原进程恢复协议，二者始终单列。无logger不会调用logger或获取事件时间，保留全部应用状态计算。该基线测的是关闭日志功能的应用成本，不将无日志计时包装成日志producer latency。
+Each log contains the complete system time and correlation metadata plus
+request_id/result/producer/rounds/warmup fields. Memory does not recover pending
+records, while Mmap has the original process recovery protocol; the two are always
+reported separately. No-logger mode does not call the logger or acquire event
+time but keeps all application-state computation. This baseline measures the cost
+of disabling logging; no-logger timing is not presented as logger producer
+latency.
 
-正式运行固定256槽、512-byte record、64KiB文件缓冲、睡眠worker、block过载和默认四个服务量子；所有logger/sink对象初始化后使用失败allocator，证明运行期没有新增runtime分配。应用工作集/sample存储和std.Io/线程宿主属于独立基准资源，不宣称整个进程零分配。每次测量使用新路径，逐条核验warmup与正常事件、结果、重复/缺失记录、每channel sequence和实际SPSC附件身份后才删除产物。
+Formal runs fix 256 slots, 512-byte records, a 64 KiB file buffer, a sleeping
+worker, block overload policy, and the default four service quanta; all
+logger/sink objects use a failing allocator after initialization to prove no new
+Runtime allocation during the run. Application working-set/sample storage and
+`std.Io`/thread hosts are independent benchmark resources, so whole-process zero
+allocation is not claimed. Each measurement uses a new path and verifies warmup
+and normal events, results, duplicate/missing records, per-channel sequence, and
+actual SPSC attachment identity before deleting artifacts.
 
-日志频率按全局request_id取模，request_id按producer交错分配。稀疏`every=16`在P4/P16下会集中于producer0的请求；此项代表稀疏而集中的日志源，不能当作每线程均匀日志。`every=1`则覆盖每个producer的日志。默认驱动选六个物理核的CPU mask0/2/4/6/8/10，P16会超额订阅；affinity不会保留CPU或屏蔽宿主负载。
+Log frequency uses global request_id modulo N, with request IDs interleaved across
+producers. Sparse `every=16` with P4/P16 concentrates requests on producer 0;
+this represents a sparse, concentrated log source, not uniform per-thread
+logging. `every=1` covers every producer's logs. The default driver selects CPU
+mask 0/2/4/6/8/10 across six physical cores, and P16 oversubscribes; affinity does
+not reserve CPUs or mask host load.
 
 ```sh
 zig build bench-application -Doptimize=ReleaseFast -- --output=.zig-cache/application.log --mode=shared --storage=memory --work=cache --producers=4 --every=16
@@ -28,8 +60,24 @@ zig build test-application-bench -Doptimize=ReleaseSafe -j1
 python3 bench/application_compare.py --binary /path/to/kron-application-bench --output /path/to/fresh-capture --pmu
 ```
 
-驱动默认两个模型、P1/P4/P16、every1/16、五种模式各五次，共300项batch试验。`--smoke`执行15个小规模实际场景，包括sampled和P16，只有正确性结论。PMU计量整个子进程的用户态instructions/cycles/cache-misses及context-switches/task-clock，包含初始化、准备、输出报告，排除内核硬件事件；它与完整计时范围不同。每个计数保留覆盖率，不支持/未计数的cache事件明确为unavailable；计数覆盖不足90%时不作稳定差异资格。
+The driver defaults to two models, P1/P4/P16, every1/16, and five repetitions of
+five modes, for 300 batch trials. `--smoke` runs 15 small real scenarios,
+including sampled and P16, with correctness conclusions only. PMU measures
+whole-child-process user instructions/cycles/cache-misses and context-switches/
+task-clock, including initialization, preparation, and report output while
+excluding kernel hardware events; its scope differs from complete timing. Each
+count retains coverage, unsupported/uncounted cache events are explicitly
+unavailable, and counts below 90% coverage do not qualify as stable differences.
 
-应用吞吐、阶段时间和CPU等指标按五项子进程结果报告median/CV/spread/bootstrap区间，所有慢值保留。无logger与日志组的共同计算校验和必须一致。噪声超10%或区间重叠使比较inconclusive。单项局部差异不替代所有负载的“业界最佳”结论；实测证据见`bench/evidence/2026-11-01-application-impact/`。
+Application throughput, stage time, CPU, and similar metrics are reported as
+median/CV/spread/bootstrap intervals across five child-process results, with all
+slow values retained. Common computation checksums for no-logger and logging
+groups must match. Noise above 10% or overlapping intervals makes a comparison
+inconclusive. A single local difference does not replace an "industry best"
+conclusion across all workloads.
 
-首轮正式300项完成，360万请求和165.756万日志核对通过，所有应用吞吐比较仍inconclusive。硬件计数覆盖率最低91%，部分instructions/task-clock差异有局部资格。完整正负中位与资源、cache-misses、context-switches分布见[应用影响报告](../bench/evidence/2026-11-01-application-impact/comparison.md)。当前实际服务仍需以其负载和日志策略建立自身基线。
+The first formal 300 trials completed, verifying 3.6 million requests and 1.65756
+million logs; all application throughput comparisons remained inconclusive.
+Hardware-count coverage was at least 91%, and some instructions/task-clock
+differences had local qualification. Current real services still need to
+establish their own baselines from their workloads and logging policies.

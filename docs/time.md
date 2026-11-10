@@ -1,35 +1,68 @@
-# 日志时间处理
+# Log time handling
 
-时间能力以日志的实际使用为范围：UTC与显式固定分钟偏移、可选系统本地时间、Gregorian日期转换、RFC3339/ISO8601解析输出、精确时长与同秒缓存。默认固定偏移路径仍是纯Zig；显式local模式使用操作系统的时区规则，包括其夏令时规则，不内置IANA数据库或自己的DST算法。
+Time support is scoped to actual logging use: UTC and explicit fixed-minute
+offsets, optional system local time, Gregorian date conversion, RFC3339/ISO8601
+parsing and output, exact durations, and same-second caching. The default fixed
+offset path remains pure Zig; explicit local mode uses the operating system's
+timezone rules, including DST, and does not bundle an IANA database or implement
+its own DST algorithm.
 
-已有Clock、StandardClock、NativeClock和资格化TSC负责取得时间；这层负责表示、转换与输出。事件仍使用原有i64 Unix纳秒timestamp_ns，约覆盖1677-09-21到2262-04-11。绝对墙钟可回拨，日志输出保留取得的真实值；deadline、采样和轮转仍通过独立单调时钟推进。
+Existing Clock, StandardClock, NativeClock, and qualified TSC handle time
+acquisition; this layer handles representation, conversion, and output. Events
+keep the existing `i64` Unix-nanosecond `timestamp_ns`, covering roughly
+1677-09-21 through 2262-04-11. Absolute wall time can move backward, and log
+output preserves the acquired real value; deadlines, sampling, and rotation
+continue to advance on an independent monotonic clock.
 
-## 参考与取舍
+## References and trade-offs
 
-| 来源 | 确认的设计 | 本库采用 |
+| Source | Confirmed design | Adopted here |
 | --- | --- | --- |
-| Abseil Time/CCTZ | 绝对time、civil日历与duration不同；时区转换明确 | Timestamp、Date/DateTime、Duration与UtcOffset分别表示 |
-| Howard Hinnant date | 按Gregorian周期转换日期，处理负epoch与年份边界 | 400年周期的整数日历转换，以整个周期round-trip与Python oracle验证 |
-| Go time | 墙钟与单调时间用途不同；序列化不携带进程内monotonic值 | 事件墙钟与deadline时钟继续分开，不把单调读数转成日期 |
-| Jiff/Temporal | 日期算术与elapsed时长区别，拒绝或显式处理歧义/边界 | 月份加减显式选择reject/clamp，越界不wrap；local转换由平台规则处理 |
-| spdlog / Foundation DefaultFormatter | 按秒缓存日期与直接数字输出 | route拥有日期缓存，同秒local只转换一次，跨秒与回拨重新计算 |
-| Quill | 消费者渲染事件时间，缓存可读日期 | Memory/Mmap异步的local转换在消费者执行，producer只捕获Unix纳秒 |
-| RFC3339 | 显式offset、有限精度、未知offset与leap秒有不同语义 | 必须携带Z/±HH:MM；-00:00未知offset拒绝；超出9位精度不静默截断 |
+| Abseil Time/CCTZ | Absolute time, civil calendar, and duration are distinct; timezone conversion is explicit | Timestamp, Date/DateTime, Duration, and UtcOffset are separate representations |
+| Howard Hinnant date | Converts dates by Gregorian cycles and handles negative epochs/year boundaries | Integer calendar conversion over a 400-year cycle, verified by full-cycle round trips and a Python oracle |
+| Go time | Wall time and monotonic time serve different purposes; serialization does not carry in-process monotonic values | Event wall time and deadline clocks remain separate; monotonic readings are never turned into dates |
+| Jiff/Temporal | Date arithmetic differs from elapsed duration; ambiguity/boundaries are rejected or handled explicitly | Month arithmetic explicitly chooses reject/clamp, out-of-range values do not wrap; local conversion follows platform rules |
+| spdlog / Foundation DefaultFormatter | Cache dates per second and write numbers directly | Each route owns its date cache; same-second local time converts once, and cross-second/backward jumps recompute |
+| Quill | Consumer renders event time and caches readable dates | Memory/Mmap async local conversion runs in the consumer; the producer captures only Unix nanoseconds |
+| RFC3339 | Explicit offset, limited precision, unknown offset, and leap seconds have different semantics | Requires `Z`/`±HH:MM`; rejects `-00:00` unknown offset; does not silently truncate beyond 9 digits |
 
-固定偏移的原始测量见时间evidence。local的POSIX转换依赖libc（显式启用），Windows使用原生API；没有复制上游实现，不把调研来源的范围当作本库已实现全部通用时间能力。
+Fixed-offset measurements are historical local observations. POSIX local
+conversion depends on libc (explicitly enabled); Windows uses native APIs. No
+upstream implementation was copied, and the surveyed sources do not imply that
+every general time capability is implemented here.
 
-## 表示与安全边界
+## Representation and safety boundaries
 
-- Date覆盖1..9999年，拒绝year0、非法month/day和无效闰日。日历加月遇到月末必须选reject或clamp；加天与加月超出范围返回错误。
-- Timestamp保持事件原有i64 Unix纳秒，构造与时长加法返回OutOfRange/Overflow。Duration为i128纳秒，可表示两个极值事件时间戳之差；月数不被隐式转换为固定秒数。
-- UtcOffset由固定分钟构成，RFC3339允许范围为±23:59。偏移不包含DST；例如+08:00由应用显式传入480分钟，四季不变。
-- 纳秒precision默认完整9位；seconds/milliseconds/microseconds是显式向下截去小数位，auto仅去除末尾零，不损失已有精度。负epoch使用floor秒与非负小数部分，例如-1ns是1969-12-31T23:59:59.999999999Z。
-- 解析支持RFC3339的T/t与Z/z，拒绝缺失偏移、非法日期、末尾垃圾、超过纳秒精度及闰秒。POSIX时间戳不能区分leap second，因此second=60返回LeapSecondUnsupported；不转换成下一分钟。
-- Formatter由调用者或route拥有并串行访问，kron不使用共享日期缓存。固定模式不读取系统时区；local模式同秒不调用平台转换，跨秒/回拨才转换。输出缓冲不足前不写入任何字节。
+- `Date` covers years 1..9999 and rejects year 0, invalid months/days, and
+  invalid leap days. Calendar month addition at month-end must choose reject or
+  clamp; day/month addition outside range returns an error.
+- `Timestamp` keeps the event's original `i64` Unix nanoseconds; construction and
+  duration addition return `OutOfRange`/`Overflow`. `Duration` is `i128`
+  nanoseconds and can represent the difference between extreme event timestamps;
+  months are not implicitly converted to a fixed number of seconds.
+- `UtcOffset` consists of fixed minutes; RFC3339 allows ±23:59. Offsets do not
+  include DST; for example, `+08:00` is passed explicitly by the application as
+  480 minutes and does not change with seasons.
+- Nanosecond precision defaults to the full 9 digits; seconds/milliseconds/
+  microseconds explicitly truncate fractional digits downward, and auto removes
+  only trailing zeros without losing existing precision. Negative epochs use
+  floor seconds and a non-negative fractional part, so -1 ns is
+  `1969-12-31T23:59:59.999999999Z`.
+- Parsing accepts RFC3339 `T`/`t` and `Z`/`z`, and rejects missing offsets,
+  invalid dates, trailing garbage, precision beyond nanoseconds, and leap
+  seconds. POSIX timestamps cannot distinguish leap seconds, so `second=60`
+  returns `LeapSecondUnsupported` rather than converting to the next minute.
+- A Formatter is owned by the caller or route and accessed serially; kron does
+  not use a shared date cache. Fixed mode never reads the system timezone; local
+  mode skips the platform conversion within the same second and converts on
+  cross-second/backward jumps. No bytes are written before the output buffer is
+  known to be sufficient.
 
-固定模式使用明确offset，初始化后不读取文件、系统时区或网络。local模式显式读取平台时区，规则可用性和环境生命周期按下面的契约处理。
+Fixed mode uses an explicit offset and does not read files, the system timezone,
+or the network after initialization. Local mode explicitly reads the platform
+timezone; rule availability and environment lifetime follow the contract below.
 
-## 日志接入
+## Logging integration
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
@@ -54,18 +87,47 @@ const logging = try kron.Logging.create(allocator, io, .{
 defer logging.destroy();
 ```
 
+JSON/logfmt keep the original `timestamp_ns` and add a readable timestamp; text
+replaces the numeric prefix with an RFC3339 date. Binary keeps the original Unix
+nanosecond event, and a readable timestamp configuration returns
+`InvalidTimestampFormat` during creation/replacement. The default
+`timestamp=null` preserves the original output and recovery fingerprint and adds
+no date-conversion cost.
 
-JSON/logfmt保留原timestamp_ns并增加可读timestamp；text将数字前缀换成RFC3339日期。binary保留原Unix纳秒事件，配置可读timestamp会在创建/替换时返回InvalidTimestampFormat。默认timestamp=null维持原输出和原恢复指纹；默认不会新增日期转换成本。
+Each time-enabled route generation owns one Formatter, counted against the
+configuration memory budget, allocated during initialization or configuration
+replacement, and updated under the original delivery lock during delivery. New
+events and old pending events use the offset/precision of their own generation;
+filter-only reload does not reset this route state. Offset and precision are part
+of output identity and enter the optional recovery fingerprint extension;
+changing them on recovery returns `RecoveryRouteMismatch`. Cache contents do not
+enter the fingerprint.
 
-每个启用时间的路由版本拥有一个Formatter，纳入配置内存预算，初始化或配置替换时分配，交付时在原delivery锁下更新。新事件和旧pending事件各自使用所属版本的offset/precision；filter-only reload不重置该路由状态。偏移和精度属于输出身份，进入可选恢复指纹扩展，恢复时改变它们会返回RecoveryRouteMismatch；缓存内容不进入指纹。
+Within an advanced Runtime shared pipeline, targets with the same format and
+consecutive identical time configuration reuse this record's encoding result;
+independent `Logging` outputs encode separately. Different offsets or precisions
+re-encode so one route's time string is never used for another. Cache hits,
+backward jumps, cross-day transitions, and configuration changes continue to use
+the same safe entry point. Ownership and destruction follow the original
+configuration View/record-pin lifetime, and old configuration is not released
+early on failure.
 
-高级Runtime共享管线内，相同format及连续相同时间配置的目标复用本条编码结果；Logging独立输出分别编码。不同偏移或精度重新编码，避免把一个route的时间字符串用于另一个route。相同配置值的缓存命中、回拨、跨日和配置变更继续使用同一安全入口。所有权与销毁由原配置View/record pin生命周期保持，失败时不提前释放旧配置。
+Standalone formatting can use `kron.time.rfc3339.format/parse`; repeated
+formatting can use a caller-owned `kron.time.Formatter`; the complete encoder also
+provides `encodeWithTime`. See
+[readable_time.zig](../examples/readable_time.zig).
+`zig build test-time -Doptimize=ReleaseSafe -j1` runs five modes, hot
+configuration, recovery, and an independent Python calendar oracle;
+`zig build bench-time -Doptimize=ReleaseFast -j1` measures same-second caching
+and cache misses, with complete output included in the checksum. It is not a log
+throughput ranking.
 
-独立格式化可使用kron.time.rfc3339.format/parse，重复格式化可使用调用者拥有的kron.time.Formatter；完整encoder也提供encodeWithTime。示例见 [readable_time.zig](../examples/readable_time.zig)。`zig build test-time -Doptimize=ReleaseSafe -j1`运行五模式、热配置、恢复和独立Python日历oracle；`zig build bench-time -Doptimize=ReleaseFast -j1`测量同秒缓存和cache miss，完整输出参与checksum，不作为日志吞吐排名。
+## System local time
 
-## 系统本地时间
-
-显式配置 `.timestamp = .{ .zone = .local }` 自动使用系统本地时间；`offset` 保持默认UTC，不与local同时指定。`timestamp=null` 仍只输出原始数字，`.timestamp=.{}` 仍采用UTC可读时间，显式固定偏移的已有配置继续有效。
+Explicitly configuring `.timestamp = .{ .zone = .local }` uses system local time;
+`offset` remains UTC by default and cannot be specified together with local.
+`timestamp=null` still outputs only the raw number, `.timestamp=.{}` still uses
+readable UTC, and existing explicit fixed-offset configurations continue to work.
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
@@ -84,56 +146,142 @@ logging.scoped("app").info("local timestamp", .{});
 try logging.shutdown();
 ```
 
-`zig build run-local-time -Doptimize=ReleaseSafe` 运行完整程序。Linux消费应用通过 `b.dependency("kron", .{ .target=target, .optimize=optimize, .@"system-local-time"=true })` 开启libc链接，也可在应用模块显式 `.link_libc=true`。直接编译时加 `-lc`。默认Linux包不为固定模式增加libc依赖；未链接时local初始化返回 `LocalTimeUnavailable`。Apple/Android沿用系统libc，Windows通过原生API转换。
+`zig build run-local-time -Doptimize=ReleaseSafe` runs the complete program.
+Linux consumer applications enable libc linking through
+`b.dependency("kron", .{ .target = target, .optimize = optimize, .@"system-local-time" = true })`,
+or explicitly set `.link_libc = true` in the application module. Direct
+compilation adds `-lc`. The default Linux package does not add a libc dependency
+for fixed mode; local initialization returns `LocalTimeUnavailable` when libc is
+not linked. Apple/Android use the system libc, and Windows converts through
+native APIs.
 
-同时输出到文件和标准输出的完整例子见 [file_stdout_local_time.zig](../examples/file_stdout_local_time.zig)：
+See [file_stdout_local_time.zig](../examples/file_stdout_local_time.zig) for a
+complete file-and-stdout example:
 
 ```sh
 zig build run-file-stdout-local-time -Doptimize=ReleaseSafe
 ```
 
-一个Logging owner异步写出三条记录：`kron-file-stdout-local-time.jsonl`追加JSON Lines，stdout输出可读text，两者分别设置相同 `.timestamp=.{ .zone=.local }`。两个目标都采用required交付，shutdown确认written；该确认不等同durable。示例构建自动链接本地时间所需的系统库。
+One Logging owner asynchronously writes three records:
+`kron-file-stdout-local-time.jsonl` appends JSON Lines, stdout emits readable
+text, and both configure the same `.timestamp = .{ .zone = .local }`. Both
+targets use required delivery, and shutdown confirms written; that confirmation
+is not durability. The example build links the system library needed for local
+time automatically.
 
-每个route有自己的Formatter。缓存key包含事件Unix整秒和模式；同秒保留年月日时分秒与偏移，每条只更新小数部分，跨秒、回拨或模式/固定偏移变化刷新。local的系统转换直接提供日期，不再额外做一次Gregorian转换。使用事件timestamp而不是消费时的当前时间，积压和恢复记录保持原始instant。
+Each route has its own Formatter. The cache key includes the event's whole Unix
+second and mode; within the same second it retains year/month/day/hour/minute/
+second and offset, updating only the fractional part per event, and refreshes on
+cross-second, backward jump, or mode/fixed-offset change. Local system
+conversion provides the date directly, without a second Gregorian conversion.
+The event timestamp is used rather than the consumption-time current time, so
+backlog and recovered records preserve their original instant.
 
-异步Memory/Mmap的shared/SPSC与inline/schema交付都在消费者侧转换。同步模式及显式 `fallback_sync` 在调用线程交付，因此同样会在该线程格式化；local缓存不改变这一契约。高级Runtime同一管线内两个相同格式和时间身份的route可复用本条编码结果；Logging的独立管线分别维护缓存和编码。
+Asynchronous Memory/Mmap shared/SPSC and inline/schema delivery all convert on
+the consumer side. Synchronous mode and explicit `fallback_sync` deliver on the
+calling thread and therefore format there as well; the local cache does not
+change this contract. Within one advanced Runtime pipeline, two routes with the
+same format and time identity may reuse this record's encoding result; `Logging`
+independent pipelines maintain separate caches and encodings.
 
-POSIX使用 `localtime_r`，按照进程启动时的 `TZ` 或系统默认时区处理；Windows使用动态时区转换API。kron不调用tzset、不修改进程环境，也不监控系统时区的实时更改。运行期间应保持TZ和系统时区配置稳定；需要改时区时重新启动进程；平台libc对系统更新的缓存行为由平台决定，不能仅重建一个Formatter来承诺重载libc规则。DST按事件时间戳使用平台规则，不把启动时的单个offset冻结为全年规则。
+POSIX uses `localtime_r` with the process-start `TZ` or the system default
+timezone; Windows uses the dynamic timezone conversion API. kron does not call
+`tzset`, modify the process environment, or monitor live system timezone
+changes. Keep `TZ` and the system timezone configuration stable at runtime;
+restart the process when the timezone changes. Platform libc caching of system
+updates is platform-defined, and recreating a Formatter alone cannot promise a
+libc rule reload. DST uses platform rules for the event timestamp rather than
+freezing one startup offset for the whole year.
 
-初始化/配置发布时捕获时区来源指纹：POSIX的TZ规则或选中时区文件内容、Android时区属性与tzdata、Windows返回的动态时区信息。该身份进入route恢复指纹；Mmap重开时改变时区来源会返回 `RecoveryRouteMismatch`，不静默重放到新表示。kron不复制操作系统完整的时区数据库，因此此来源检查不提供对运行期外部修改或Windows历史注册表规则变化的完整快照保证。
+Timezone-source identity is captured at initialization/configuration
+publication: POSIX `TZ` rules or the selected timezone file contents, Android
+timezone properties and tzdata, and Windows dynamic timezone information. This
+identity enters the route recovery fingerprint; changing the timezone source on
+Mmap reopen returns `RecoveryRouteMismatch` instead of silently replaying into a
+new representation. kron does not copy the complete OS timezone database, so
+this source check does not provide a complete snapshot guarantee against
+runtime external modifications or Windows historical registry rule changes.
 
-时区来源读取有界（每个文件最多4MiB，环境名称/路径有界），仅在初始化与配置发布执行。系统转换失败返回明确错误；历史存在秒级偏移的时区无法表示为RFC3339分钟offset，返回 `NonMinuteLocalOffset`，不四舍五入或伪装UTC。日志encoder保留其现有编码错误传播边界。
+Timezone-source reads are bounded (at most 4 MiB per file, with bounded
+environment names/paths) and run only during initialization and configuration
+publication. System conversion failures return explicit errors. Historical
+timezones with second-level offsets cannot be represented as RFC3339 minute
+offsets and return `NonMinuteLocalOffset` rather than rounding or pretending to
+be UTC. The logging encoder preserves its existing encoding-error propagation
+boundary.
 
-独立Formatter可用 `Formatter.initWithIo(io, .{ .zone=.local })`，调用者串行访问；`Formatter.init(.{ .zone=.local })` 可用于独立格式化，但Runtime统一采用带来源身份的初始化。
+A standalone Formatter can use `Formatter.initWithIo(io, .{ .zone = .local })`
+with serial caller access; `Formatter.init(.{ .zone = .local })` is available
+for standalone formatting, while Runtime uniformly uses initialization with
+source identity.
 
-验证命令：
+Verification commands:
 
 ```sh
 zig test src/time/root.zig -lc -O ReleaseSafe
 zig build test-local-time -Doptimize=ReleaseSafe -j1
 ```
 
-单元测试验证4096个同秒时间戳只触发一次平台转换，以及跨秒、回拨、模式变化和短输出缓冲。公共管线测试覆盖Memory/Mmap × shared/SPSC × inline/schema八组，每组96条；reservation gap阻止交付期间producer没有转换，排空后只转换一次且线程ID属于消费者，Runtime初始化后的allocator没有调用。Python zoneinfo在隔离TZ的进程中独立核对6个时区×5模式的372条输出，包含DST、半小时/四十五分钟偏移、回拨、未来日期、改变时区后的恢复拒绝和历史非分钟偏移。
+Unit tests verify that 4096 same-second timestamps trigger exactly one platform
+conversion, along with cross-second, backward-jump, mode-change, and short-output
+buffer cases. Public pipeline tests cover Memory/Mmap × shared/SPSC ×
+inline/schema (eight groups, 96 records each); reservation gaps prevent producer
+conversion during delivery, draining converts once on the consumer thread, and
+the allocator is not called after Runtime initialization. A Python zoneinfo
+oracle independently verifies 372 outputs across six timezones × five modes in
+isolated `TZ` processes, including DST, half-hour/forty-five-minute offsets,
+backward jumps, future dates, recovery rejection after timezone changes, and
+historical non-minute offsets.
 
-本轮独立ReleaseFast格式化测量共70个样本，每个10万条，700万条完整字符串的cached/stateless checksum与字节数一致。local同秒的五次中位为132.167→24.372ns/条，跨秒131.438→129.840ns/条，回拨循环132.316→24.548ns/条；同秒平台转换从10万次降为1次。测量包含字符串hash、未固定CPU或独占宿主，不代表完整logger吞吐或跨库排名。全部原值与固定cache-miss负向保留在 [本地时间证据](../bench/evidence/2026-11-01-system-local-time/README.md)。
+A standalone ReleaseFast formatting measurement used 70 samples of 100,000
+records each; cached and stateless checksums/byte counts matched for 7 million
+complete strings. Same-second local median was 132.167 → 24.372 ns/record,
+cross-second 131.438 → 129.840 ns/record, and backward-jump loop 132.316 →
+24.548 ns/record; same-second platform conversions fell from 100,000 to one.
+The measurement includes string hashing, did not pin CPU or isolate the host,
+and does not represent complete logger throughput or a cross-library ranking.
 
-下面保留固定偏移的历史缓存测量；不将其数值当成本轮local性能或新的跨库排名。
+The fixed-offset historical cache measurement is retained below; its numbers are
+not current local-time performance or a new cross-library ranking.
 
-## 验证与缓存测量
+## Verification and cache measurement
 
-日历测试覆盖完整Gregorian 400年周期146097天；9项时间实质测试包含负epoch/极值、400年边界、月份显式clamp、RFC解析失败和4096个随机时间戳/固定偏移round-trip及解析变异。独立Python datetime oracle另外核对4166个纳秒时间戳/offset和5845个日期，星期与年内天数精确一致，不使用浮点秒转换。
+Calendar tests cover the complete Gregorian 400-year cycle of 146,097 days; nine
+substantive time tests include negative epochs/extremes, 400-year boundaries,
+explicit month clamping, RFC parse failures, and 4,096 random timestamp/fixed-
+offset round trips plus parse mutations. An independent Python `datetime` oracle
+verifies another 4,166 nanosecond timestamps/offsets and 5,845 dates, with exact
+weekday and day-of-year agreement and no floating-point second conversion.
 
-五项外部集成测试覆盖text/JSON/logfmt、sync/shared/SPSC的Memory/Mmap共五模式、初始化后无runtime分配、积压旧事件时配置替换、初始化OOM全扫描、同格式不同offset多目标，以及实际journal关闭后恢复。改变offset或precision被拒绝；正确原配置恢复timestamp_ns=0并产生+08:00输出。非法offset或binary可读time在写出前报错。
+Five external integration tests cover text/JSON/logfmt, sync/shared/SPSC
+Memory/Mmap across five modes, no Runtime allocation after initialization,
+configuration replacement with backlogged old events, full initialization-OOM
+scanning, multiple targets with the same format but different offsets, and
+recovery after a real journal shutdown. Changing offset or precision is rejected;
+correct original-configuration recovery restores `timestamp_ns=0` and produces
+`+08:00` output. Invalid offsets or binary readable time fail before writing.
 
-40个独立formatter样本共消费400万条完整格式字符串，cached/stateless的checksum和字节数完全一致。每组5次的本机中位如下，含时间戳更新和完整输出hash；初次build运行未固定CPU affinity，只作为本机窄范围观察。
+Forty standalone formatter samples consumed 4 million complete format strings;
+cached and stateless checksums and byte counts matched. Local medians from five
+runs per group, including timestamp update and complete output hash, were:
 
-| 输入 | 无缓存ns/次 | 缓存ns/次 | 每10万次缓存date转换 |
+| Input | No cache ns/call | Cache ns/call | Date conversions per 100,000 calls |
 | --- | ---: | ---: | ---: |
-| 同一Unix秒 | 52.33 | 21.53 | 1 |
-| 每次下一秒 | 50.81 | 51.63 | 100000 |
-| 每次切换固定offset | 52.27 | 53.23 | 100000 |
-| 跨秒回拨循环 | 52.15 | 22.86 | 150 |
+| Same Unix second | 52.33 | 21.53 | 1 |
+| Next second every call | 50.81 | 51.63 | 100000 |
+| Fixed offset switch every call | 52.27 | 53.23 | 100000 |
+| Cross-second backward loop | 52.15 | 22.86 | 150 |
 
-缓存miss与无缓存成本接近，hit避免重复日历转换；秒和offset共同决定缓存，不能用wallclock单向前进作为命中前提。这些独立数字不等同生产端延迟、完整文件吞吐或跨平台收益；最终回归、原始数据和精确源码见 `bench/evidence/2026-11-01-time/`。
+A cache miss costs close to no cache, while a hit avoids repeated calendar
+conversion; seconds and offsets jointly determine the cache, so monotonic
+wall-clock progress cannot be assumed for hits. These standalone numbers are not
+production latency, complete-file throughput, or cross-platform gains.
 
-此前固定偏移时间模块Debug/ReleaseSafe各10/10（含1项导入fixture和9项实质测试）；整库ReleaseFast通过81/81构建步骤、498/498 Zig测试。九目标ReleaseSafe实际编译公开时间/日志路径，时间集成、文件故障、配置23/23与独立Python oracle通过。可读时间示例在Linux实际异步写出JSON文件并独立核对原始纳秒值。Windows/macOS/Android/iOS设备运行仍待验收，编译通过不替代实际运行。精确源码与命令见 [qualification.json](../bench/evidence/2026-11-01-time/qualification.json)。
+Earlier fixed-offset time module Debug/ReleaseSafe runs passed 10/10 each (one
+import fixture and nine substantive tests); the full ReleaseFast library passed
+81/81 build steps and 498/498 Zig tests. Nine-target ReleaseSafe builds compiled
+the public time/logging paths, and time integration, file faults, configuration
+23/23, and the independent Python oracle passed. The readable-time example
+actually wrote a JSON file asynchronously on Linux and independently verified the
+raw nanosecond values. Windows/macOS/Android/iOS device execution still needs
+qualification; compilation is not a substitute for execution.

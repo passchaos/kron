@@ -1,34 +1,45 @@
-# 可运行示例
+# Runnable examples
 
-应用从 `kron.Logging` 开始。示例使用 Zig 0.16 的 `std.process.Init`，由仓库构建添加 `kron` import；运行命令为 `zig build run-NAME -Doptimize=ReleaseSafe`。完整参数与生命周期见 [使用指南](../docs/usage.md)。
+Applications start with `kron.Logging`. Examples use Zig 0.16's
+`std.process.Init`, and the repository build adds the `kron` import. Run them
+with `zig build run-NAME -Doptimize=ReleaseSafe`. See the
+[usage guide](../docs/usage.md) for complete parameters and lifetime.
 
-| 名称 | 源码 | 演示 |
+| Name | Source | Demonstrates |
 | --- | --- | --- |
-| quick-start | [quick_start.zig](quick_start.zig) | 默认 stderr、typed 字段与关闭 |
-| file-logging | [file_logging.zig](file_logging.zig) | 共享 Memory、JSON 文件、脱敏与 reload |
-| async-memory | [async_memory.zig](async_memory.zig) | stdout 的共享 Memory |
-| structured | [structured.zig](structured.zig) | borrowed/owned、array/group、secret/bytes、lazy、trace/source、日期 |
-| threaded | [threaded.zig](threaded.zig) | 两个 OS 线程的 SPSC，attach/detach、join 与错误传播 |
-| rolling | [rolling.zig](rolling.zig) | 独立按大小/时间轮转 JSON 文件＋stderr、文件 durable |
-| prepared | [prepared.zig](prepared.zig) | Mmap/SPSC schema、隐藏 channel 索引的 helper |
-| local-time | [local_time.zig](local_time.zig) | 消费者侧系统local日期与同秒缓存 |
-| file-stdout-local-time | [file_stdout_local_time.zig](file_stdout_local_time.zig) | JSON文件＋stdout text，本地时间和源码位置 |
-| mmap | [mmap.zig](mmap.zig) | 独立Mmap文件＋Memory stdout、local和durable |
-| source-location | [source_location.zig](source_location.zig) | JSON完整module/file/function/line/column |
-| route-policies | [route_policies.zig](route_policies.zig) | outputs列表、独立mode/queue/overflow与采样/脱敏 |
-| std-log | [std_log.zig](std_log.zig) | 根 std_options、bind/unbind 与动态 filter |
+| quick-start | [quick_start.zig](quick_start.zig) | Default stderr, typed fields, and shutdown |
+| file-logging | [file_logging.zig](file_logging.zig) | Shared Memory, JSON file, redaction, and reload |
+| async-memory | [async_memory.zig](async_memory.zig) | Shared Memory to stdout |
+| structured | [structured.zig](structured.zig) | Borrowed/owned, array/group, secret/bytes, lazy, trace/source, dates |
+| threaded | [threaded.zig](threaded.zig) | SPSC across two OS threads, attach/detach, join, and error propagation |
+| rolling | [rolling.zig](rolling.zig) | Independent size/time rotating JSON files plus stderr, file durability |
+| prepared | [prepared.zig](prepared.zig) | Mmap/SPSC schema, helper that hides channel indices |
+| local-time | [local_time.zig](local_time.zig) | Consumer-side system-local dates and same-second caching |
+| file-stdout-local-time | [file_stdout_local_time.zig](file_stdout_local_time.zig) | JSON file + stdout text, local time and source location |
+| mmap | [mmap.zig](mmap.zig) | Independent Mmap file + Memory stdout, local time, and durability |
+| source-location | [source_location.zig](source_location.zig) | Complete JSON module/file/function/line/column |
+| route-policies | [route_policies.zig](route_policies.zig) | `outputs` list, independent mode/queue/overflow, sampling/redaction |
+| std-log | [std_log.zig](std_log.zig) | Root `std_options`, bind/unbind, and dynamic filtering |
 
-高级接口示例用于自定义配置、时钟或底层资源：
+Advanced-interface examples cover custom configuration, clocks, or lower-level
+resources:
 
-| 名称 | 源码 | 演示 |
+| Name | Source | Demonstrates |
 | --- | --- | --- |
-| basic | [basic.zig](basic.zig) | Runtime 多输出、Mmap、环境 filter |
-| configuration-sources | [configuration_sources.zig](configuration_sources.zig) | 完整来源事务与 JSON 策略 |
-| hot-configuration | [hot_configuration.zig](hot_configuration.zig) | 更换输出与旧资源生命周期 |
-| readable-time | [readable_time.zig](readable_time.zig) | 路由日期与固定偏移 |
-| predicates | [predicates.zig](predicates.zig) | 接受前条件与正则 |
-| tsc-clock | [tsc_clock.zig](tsc_clock.zig) | 显式资格化与原生时钟回退 |
+| basic | [basic.zig](basic.zig) | Runtime multiple outputs, Mmap, environment filter |
+| configuration-sources | [configuration_sources.zig](configuration_sources.zig) | Complete source transaction and JSON policy |
+| hot-configuration | [hot_configuration.zig](hot_configuration.zig) | Replacing outputs and old-resource lifetime |
+| readable-time | [readable_time.zig](readable_time.zig) | Route dates and fixed offsets |
+| predicates | [predicates.zig](predicates.zig) | Pre-acceptance conditions and regex |
+| tsc-clock | [tsc_clock.zig](tsc_clock.zig) | Explicit qualification and native-clock fallback |
 
-文件例子写入 cwd，通常追加；轮转按 retention 清理最旧归档。重复运行时根据最新 session 核对计数。`verify-local` 编译全部例子，实际运行和输出检查另行执行。
+File examples write into the current working directory, usually appending;
+rotation removes the oldest archive according to retention. When running
+repeatedly, match counts against the latest session. `verify-local` compiles all
+examples; actual execution and output checks are separate.
 
-示例由仓库根 `examples.zig` 选择并导入，`@src().file` 保留 `examples/` 前缀。text的 `source= examples/mmap.zig:行:列` 无外围引号；普通包模块用 `kron.source.fromModule` 在编译期映射仓库路径，见 [源码位置](../docs/usage.md#时间trace-与源位置)。
+Examples are selected and imported by the repository-root `examples.zig`, and
+`@src().file` preserves the `examples/` prefix. Text prints
+`source= examples/mmap.zig:line:column` without outer quotes; ordinary package
+modules use `kron.source.fromModule` to map repository paths at compile time. See
+[source location](../docs/usage.md#time-trace-and-source-location).

@@ -162,10 +162,9 @@ unqualified by default because invariant and synchronized virtual TSC behavior
 is a hypervisor contract, not something CPUID presence alone proves.
 
 `zig build bench-tsc -Doptimize=ReleaseFast` performs a separate clock-only
-comparison and reports how many reads were qualified versus fallback. The
-[recorded host observation](../bench/evidence/2026-10-31-tsc/README.md) qualified
-all 100000 TSC reads but measured about 34.52 ns/call versus 18.35 ns
-NativeClock before the TLS metadata cache. Three bounded qualified runs after
+comparison and reports how many reads were qualified versus fallback. A recorded
+host observation qualified all 100000 TSC reads but measured about 34.52 ns/call
+versus 18.35 ns NativeClock before the TLS metadata cache. Three bounded qualified runs after
 the cache measured 22.02–23.45 ns/call for TSC and 15.30–16.24 ns/call for
 NativeClock, with zero fallback reads. The repeated metadata load was reduced,
 but TSC still did not win this host comparison; its purpose is an explicit,

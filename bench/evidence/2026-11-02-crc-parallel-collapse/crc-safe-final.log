@@ -1,8 +1,0 @@
-zig test src/platform/crc32.zig -O ReleaseSafe
-1/6 crc32.test.sliced IEEE CRC32 standard vectors match the persisted polynomial...OK
-2/6 crc32.test.sliced CRC matches standard oracle across lengths alignments and incremental partitions...OK
-3/6 crc32.test.sixteen-byte slicing preserves every block boundary and journal header partition...OK
-4/6 crc32.test.compile-time PCLMUL path matches the portable oracle across block and partition boundaries...OK
-5/6 crc32_pclmul.test.parallel CRC collapse coefficients derive from the independent IEEE generator...OK
-6/6 crc32_pclmul.test.parallel CRC collapse agrees with independent raw IEEE CRC on every input basis bit...OK
-All 6 tests passed.

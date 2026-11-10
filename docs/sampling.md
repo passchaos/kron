@@ -1,17 +1,29 @@
-# 全局采样语义与性能
+# Global sampling semantics and performance
 
-Logging.outputs中的每个route都有独立采样器，同一采样配置也不共享配额；所有producer共享所属route的预算。全部输出过滤/采样拒绝时不构造lazy字段。下面的全局/覆盖描述针对高级Runtime内部共享管线。
+Each route in `Logging.outputs` has an independent sampler, and even identical
+sampling configurations do not share quotas; all producers share the quota of
+their route. Lazy fields are not constructed when every output rejects by
+filtering/sampling. The global/override description below applies to multiple
+routes inside one advanced Runtime pipeline.
 
-采样属于不可变配置版本。默认Runtime采样状态由所有继承默认的route及全部producer共享；route显式设置sampling后拥有独立状态，其配额仍由全部producer共享，不给每个线程单独一份。共享异步与SPSC采用同样语义。
+Sampling belongs to an immutable configuration generation. Default Runtime
+sampling state is shared by all routes inheriting the default and all producers;
+a route with explicit sampling gets independent state, but its quota is still
+shared by all producers rather than one copy per thread. Shared async and SPSC
+use the same semantics.
 
-| 配置 | 决策 |
+| Configuration | Decision |
 | --- | --- |
-| `.none` | 全部通过 |
-| `.count=N` | 全局只通过前N次采样调用，预算到零后饱和 |
-| `.every=N` | 全局原子顺序中通过第1、N+1、2N+1…次，N必须非零 |
-| `.token_bucket` | 固定容量、每interval连续补充一个token，使用显式单调时间 |
+| `.none` | Accept everything |
+| `.count=N` | Accept the first N sampling calls globally; saturates at zero budget |
+| `.every=N` | Accept calls 1, N+1, 2N+1, ... in global atomic order; N must be nonzero |
+| `.token_bucket` | Fixed capacity, continuously refill one token per interval, using an explicit monotonic time |
 
-Runtime先做scope/level过滤，再执行采样。默认 `sample_bypass=.warn`，warn及以上绕过采样；predicate、字段捕获和I/O发生在之后，因此通过采样的调用仍可能因predicate或捕获错误没有写出。采样预算衡量进入这一步的调用，不保证等量written记录。
+Runtime performs scope/level filtering first, then sampling. The default
+`sample_bypass = .warn` bypasses sampling at warn and above; predicates, field
+capture, and I/O happen afterward, so a call that passes sampling may still fail
+to write because of a predicate or capture error. The sampling budget counts calls
+entering this stage and does not guarantee an equal number of written records.
 
 ```zig
 const runtime = try kron.Runtime.create(allocator, io, .{
@@ -23,22 +35,54 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 });
 ```
 
-route_mask在捕获前根据各route采样确定，至少一个route通过才构造字段；输出与恢复不重做采样。显式route `.sampling=.none` 可以在默认采样预算耗尽时继续接受，sample_bypass按本route设置。
+route_mask is determined from each route's sampling before capture, and fields
+are constructed only if at least one route passes; output and recovery do not
+re-sample. An explicit route `.sampling = .none` can keep accepting after the
+default sampling budget is exhausted, and sample_bypass follows that route's
+setting.
 
-filter-only `reloadFilter`和`setLevelChecked`保留采样状态；完整配置替换创建新sampler并从初始预算/相位开始。旧admission与accepted记录继续遵循旧配置。count/token bucket使用CAS防重复消费，不用会下溢的fetchSub近似预算。
+Filter-only `reloadFilter` and `setLevelChecked` preserve sampling state; a
+complete configuration replacement creates a new sampler starting from its
+initial budget/phase. Old admissions and accepted records continue under the old
+configuration. count/token bucket use CAS to prevent duplicate consumption
+instead of an approximate `fetchSub` that could underflow.
 
-## every=1/2的专门路径
+## Dedicated every=1/2 path
 
-every=1直接返回true，state保持0，不执行RMW。every=2使用原子XOR并读取旧值最低位，state始终为0或1；修改顺序就是全局交替顺序。其他N仍使用原来的有界模N CAS，相位不转换为回绕ticket。Sampler的大小/对齐和配置预算没有变化。
+`every=1` returns true directly with state 0 and no RMW. `every=2` uses atomic
+XOR and reads the old value's lowest bit, so state is always 0 or 1; modification
+order is the global alternation order. Other N values still use the original
+bounded modulo-N CAS, and phase is not converted into a wrapping ticket. Sampler
+size/alignment and configuration budget are unchanged.
 
-当前x86_64 ReleaseFast对象中every=2生成 `lock btcq`与旧bit的返回值，没有CAS重试循环。仅使用 `fetchXor(...) == 0`仍可能生成CAS循环，因此实际反汇编已归档；其他平台的编译器可能采用不同指令，不能以源码推断所有平台成本。
+In the current x86_64 ReleaseFast object, `every=2` generates `lock btcq` and
+returns the old bit without a CAS retry loop. Using only `fetchXor(...) == 0` can
+still generate a CAS loop, so the actual disassembly was archived; compilers on
+other platforms may choose different instructions, and source inspection cannot
+infer cost on every platform.
 
-顺序测试验证every1状态0、every2每步相位；并发测试核对count、every1/2/3/8、bucket的精确全局数量和最终状态。Runtime测试另外验证filter更新保留every2相位、完整替换重置。它们不依据线程完成顺序推断原子顺序。
+Ordering tests verify every1 state 0 and every2 phase at each step; concurrency
+tests check exact global counts and final state for count, every1/2/3/8, and
+bucket. Runtime tests also verify that filter updates preserve every2 phase and
+that complete replacement resets it. They do not infer atomic order from thread
+completion order.
 
-## 重复测量
+## Repeated measurement
 
-`zig build bench-sampling -Doptimize=ReleaseFast -- --producers=4 --attempts=10000 --repetitions=5` 使用固定fake time，覆盖none、every1/2/3/8、count和bucket。每次预热后在全部worker停于start gate时重置sampler，测量包括唤醒与join；没有每调用时钟读数。基准只报告sampler成本，不是完整日志吞吐或p99。
+`zig build bench-sampling -Doptimize=ReleaseFast -- --producers=4 --attempts=10000 --repetitions=5`
+uses a fixed fake time and covers none, every1/2/3/8, count, and bucket. After
+each warmup, the sampler is reset while all workers stop at the start gate;
+measurement includes wakeup and join and has no per-call clock read. The benchmark
+reports sampler cost only, not complete log throughput or p99.
 
-修改前/最终各105个试验（1/4/16 producer×7策略×5次），全部精确接受预算通过，另保留一次105试验的中间候选。原始数据、二进制SHA256、源码hash与反汇编位于 `bench/evidence/2026-10-31-sampling/`。
+Before/final each ran 105 trials (1/4/16 producers × 7 policies × 5 repetitions),
+and all exact acceptance budgets passed; an intermediate candidate with another
+105 trials was retained. Raw data, binary SHA-256, source hashes, and disassembly
+are no longer tracked.
 
-every1批次时间中位数P1为118,540→38,391ns，P4为377,381→73,461ns，P16为485,637→268,572ns。每策略10,000次调用，这些数值含线程调度开销。every2的P4/P16没有稳定胜出；部分控制策略也有环境波动，按10%噪声门限报告inconclusive。当前只确认每次原子工作的减少和语义保持，不承诺全部采样负载更快。
+Median every1 batch time was P1 118,540 → 38,391 ns, P4 377,381 → 73,461 ns, and
+P16 485,637 → 268,572 ns. Each policy runs 10,000 calls, and these values include
+thread-scheduling overhead. every2 did not show a stable win at P4/P16; some
+control policies also varied with the environment and were reported inconclusive
+under the 10% noise threshold. The current result confirms reduced per-call atomic
+work and preserved semantics, not faster performance for every sampling workload.

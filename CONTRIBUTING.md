@@ -1,7 +1,7 @@
 # Contributing
 
 Thanks for improving kron. The project is a Zig 0.16 logging library with
-explicit ownership, bounded queues and a large benchmark evidence set.
+explicit ownership, bounded queues, and an in-repository Zig benchmark suite.
 
 ## Before changing code
 
@@ -10,12 +10,12 @@ explicit ownership, bounded queues and a large benchmark evidence set.
 - Read [docs/development.md](docs/development.md) for the minimal verification
   command for your change.
 - Read [docs/benchmark-evidence-policy.md](docs/benchmark-evidence-policy.md)
-  before adding or moving benchmark evidence.
+  before adding or moving benchmark material.
 
 ## Verification
 
 Start small, then broaden only when the change touches public APIs, build
-packaging, concurrency/lifetime, persistent formats or cross-platform paths:
+packaging, concurrency/lifetime, persistent formats, or cross-platform paths:
 
 ```sh
 zig build test-unit -Doptimize=ReleaseSafe -j1
@@ -23,19 +23,18 @@ zig build test-logging -Doptimize=ReleaseSafe -j1
 zig build verify-fast -Doptimize=ReleaseSafe -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1
-zig build fmt bench-index hygiene docs -j1
+zig build fmt hygiene docs -j1
 ```
 
 Keep unit tests close to the logic they exercise. Put integration, fault,
-compile-fail and package-consumer tests under `tests/` or the owning module.
+compile-fail, and package-consumer tests under `tests/` or the owning module.
 
-## Evidence and repository hygiene
+## Benchmark and repository hygiene
 
-- New benchmark evidence uses
-  [bench/evidence/TEMPLATE.md](bench/evidence/TEMPLATE.md).
-- Refresh the index with `python3 tools/bench_index.py`.
-- Do not track compiled references, tar snapshots or raw `perf.data`/`data`
-  files; record SHA-256 and commands in `manifest.json`.
+- Benchmark sources and analysis scripts live under `bench/`; measured output
+  and reference-implementation snapshots are not tracked.
+- Do not track compiled binaries, archive snapshots, or raw
+  `perf.data`/`data` files.
 - Run `zig build hygiene` before committing.
 
 ## Commits

@@ -1,15 +1,22 @@
-# 历史记录
+# History
 
-历史快照保留测试时的源码、证据指针、失败/慢值和原设计决策。它们用于追溯，当前能力以 [验收状态](../implementation-status.md) 为准，当前接口以 [使用指南](../usage.md) 和源模块为准。
+Historical snapshots preserve the source revisions, failure/slow values, and
+design decisions of their time. They are for tracing history only; current
+capabilities are defined by [acceptance status](../implementation-status.md), and
+the current interface is defined by the [usage guide](../usage.md) and source
+modules.
 
-| 快照 | 内容 |
+| Snapshot | Content |
 | --- | --- |
-| [整理前最新README](readme-before-reorganization.md) | 截至7e98358的使用、性能chronology与证据链接 |
-| [整理前最新验收](implementation-before-reorganization.md) | 含系统local与最新完成边界的状态 |
-| [README 性能试验 2026-11-03](readme-performance-experiments-2026-11-03.md) | 顶部累积的全部试验数字、正负与证据链接 |
-| [README 性能叙述 2026-11-09](readme-performance-2026-11-09.md) | 2026-11-09 README 的完整性能 chronology；当前状态见验收状态 |
-| [验证 chronology 2026-11-09](verification-chronology-2026-11-09.md) | 2026-11-09 验收状态页的完整最近验证记录；当前能力见验收状态 |
-| [设计 2026-10-31](design-2026-10-31.md) | 原始整体设计，包含已经被统一 Logging 接口替代的 API/目录草案 |
-| [仓库历史重写 2026-11-10](repository-history-rewrite-2026-11-10.md) | 移除历史中的 reference 二进制、tar 快照与 raw profiling 数据；记录备份和 SHA 边界 |
+| [README before reorganization](readme-before-reorganization.md) | Usage, performance chronology, and evidence pointers as of `7e98358` |
+| [Acceptance before reorganization](implementation-before-reorganization.md) | Status including system local time and the then-current completion boundaries |
+| [README performance experiments 2026-11-03](readme-performance-experiments-2026-11-03.md) | All accumulated experiment numbers, positive/negative results, and evidence pointers at that time |
+| [README performance narrative 2026-11-09](readme-performance-2026-11-09.md) | Complete performance chronology from the 2026-11-09 README; current status is in acceptance status |
+| [Verification chronology 2026-11-09](verification-chronology-2026-11-09.md) | Complete recent-verification record from the 2026-11-09 acceptance page; current capabilities are in acceptance status |
+| [Design 2026-10-31](design-2026-10-31.md) | Original overall design, including API/directory drafts later replaced by the unified Logging interface |
+| [Repository history rewrite 2026-11-10](repository-history-rewrite-2026-11-10.md) | Removal of reference binaries, tar snapshots, and raw profiling data from history; backup and SHA boundaries |
 
-原始测量和冻结源码没有移动。链接已调整到快照所在目录，原样的源码 hash、数据、成功/失败与资格边界保持自己的身份。
+The benchmark evidence directories and frozen reference sources described by
+these snapshots are no longer tracked in the current tree. Their conclusions are
+preserved here in English; measurement rows and links to removed evidence are
+omitted.

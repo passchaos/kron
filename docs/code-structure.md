@@ -1,77 +1,143 @@
-# 代码结构与公共边界
+# Code structure and public boundaries
 
-应用接入从 `kron.Logging` 开始，源码从 [src/root.zig](../src/root.zig) 的分组导出开始。根模块保留原有公共名称，内部文件位置可以按职责调整；消费项目通过 `b.dependency` 使用模块，不引用内部路径。
+Application integration starts at `kron.Logging`; source exploration starts at
+the grouped exports in [src/root.zig](../src/root.zig). The root module preserves
+existing public names while internal file locations may be reorganized by
+responsibility. Consumer projects use the module through `b.dependency` and do
+not reference internal paths.
 
-## 模块职责
+## Module responsibilities
 
-| 目录/模块 | 职责与拥有的资源 |
+| Directory/module | Responsibility and owned resources |
 | --- | --- |
-| [logging/](../src/logging/root.zig) | 应用owner；configuration定义outputs列表、route独立策略与总预算并前置校验，output持有稳定writer/file/rolling资源，root管理每route的Runtime生命周期，handle完成一次捕获后的有界分发，tests验证错误和所有权 |
-| [core/logger.zig](../src/core/logger.zig)、field/context/adapter | typed producer、入场前过滤与lazy、显式字段、borrowed/owned context、对象成员选择 |
-| [core/runtime.zig](../src/core/runtime.zig) | 稳定Runtime owner，协调admission、queue、配置、worker、flush/control与销毁；集中保护生命周期和重入约束 |
-| core/runtime_init、runtime_configuration、runtime_redaction | 初始化/回滚、冷配置/collection、非空脱敏scratch；与producer稳态工作隔离 |
-| core/admission、control、thread_registry、prepared、static_owner | 共享/线程gate、deadline任务、线程token/cookie/generation、schema与静态时钟handle |
-| core/codec、schema_codec、reference_encoding、wire_size/write | 自包含/引用载荷与历史版本、checked解析、完整树验证/长度统计、共有wire写入 |
-| [core/delivery.zig](../src/core/delivery.zig)、delivery_batch | 已固定配置的编码fanout、required written/durable屏障、准确前缀统计与回收 |
-| [config/](../src/config/routes.zig) | filter/cache/reload、来源合并与有界JSON、不可变route快照、按需output_policy采样/脱敏/限制、reader/record pins和sink leases；冷payload构造/比较在 [routes_payload.zig](../src/config/routes_payload.zig) |
-| [journal/](../src/journal/journal.zig) | Memory/Mmap backing、布局、CRC/generation、reserve/commit/abort/peek/reclaim、schema-ready/checkpoint和独占恢复；协议见 [Journal 协议](journal-protocol.md) |
-| [pipeline/](../src/pipeline/predicate.zig) | 采样、递归脱敏、predicate/有界NFA正则、flight recorder |
-| [encoder/](../src/encoder/root.zig) | text/JSON/logfmt，共有数字/转义和source路径输出，checked wire/reference融合与fallback |
-| [archive/](../src/archive/reader.zig) | 自包含frame、只读Reader/follow、标准zlib压缩 |
-| [sink/](../src/sink/interface.zig) | 输出接口、writer/file/rolling/compressed resources、记录边界与错误锁存 |
-| [backend/](../src/backend/interface.zig) | portable/io_uring批量写、buffer pool、文件/目录同步与在途所有权 |
-| [platform/](../src/platform/capabilities.zig) | Linux/Windows/Darwin mapping与能力、时钟/TSC（纯校准数学在 [tsc_math.zig](../src/platform/tsc_math.zig)）、CRC专门化 |
-| [time/](../src/time/root.zig) | Gregorian日期、exact timestamp/duration、RFC3339、route-owned秒缓存与显式系统local转换 |
-| [telemetry/](../src/telemetry/trace_context.zig)、adapters | 显式trace/span关联、std.log桥的绑定与有界producer格式化 |
+| [logging/](../src/logging/root.zig) | Application owner; configuration defines the `outputs` list, per-route policies, and the total budget with up-front validation; output owns stable writer/file/rolling resources; root manages each route's Runtime lifetime; handles perform bounded dispatch after one capture; tests verify errors and ownership |
+| [core/logger.zig](../src/core/logger.zig), field/context/adapter | Typed producer, pre-admission filtering and lazy providers, explicit fields, borrowed/owned context, object member selection |
+| [core/runtime.zig](../src/core/runtime.zig) | Stable Runtime owner coordinating admission, queues, configuration, workers, flush/control, and destruction; centralizes lifetime and reentrancy constraints |
+| core/runtime_init, runtime_configuration, runtime_redaction | Initialization/rollback, cold configuration/collection, non-empty redaction scratch; isolated from steady-state producer work |
+| core/admission, control, thread_registry, prepared, static_owner | Shared/thread gates, deadline tasks, thread token/cookie/generation, schema and static clock handles |
+| core/codec, schema_codec, reference_encoding, wire_size/write | Self-contained/reference payloads and historical versions, checked parsing, complete tree validation/length accounting, shared wire writes |
+| [core/delivery.zig](../src/core/delivery.zig), delivery_batch | Encoding fanout for a fixed configuration, required written/durable barriers, exact prefix accounting, and reclamation |
+| [config/](../src/config/routes.zig) | filter/cache/reload, source merging and bounded JSON, immutable route snapshots, on-demand output-policy sampling/redaction/limits, reader/record pins, and sink leases; cold payload construction/comparison lives in [routes_payload.zig](../src/config/routes_payload.zig) |
+| [journal/](../src/journal/journal.zig) | Memory/Mmap backing, layout, CRC/generation, reserve/commit/abort/peek/reclaim, schema-ready/checkpoint, and exclusive recovery; see [Journal protocol](journal-protocol.md) |
+| [pipeline/](../src/pipeline/predicate.zig) | Sampling, recursive redaction, predicates/bounded NFA regex, flight recorder |
+| [encoder/](../src/encoder/root.zig) | text/JSON/logfmt, shared number/escaping and source-path output, checked wire/reference fusion and fallback |
+| [archive/](../src/archive/reader.zig) | Self-contained frames, read-only Reader/follow, standard zlib compression |
+| [sink/](../src/sink/interface.zig) | Output interfaces, writer/file/rolling/compressed resources, record boundaries, and error latching |
+| [backend/](../src/backend/interface.zig) | portable/io_uring batched writes, buffer pools, file/directory synchronization, and in-flight ownership |
+| [platform/](../src/platform/capabilities.zig) | Linux/Windows/Darwin mapping and capabilities, clocks/TSC (pure calibration math in [tsc_math.zig](../src/platform/tsc_math.zig)), CRC specialization |
+| [time/](../src/time/root.zig) | Gregorian dates, exact timestamp/duration, RFC3339, route-owned second caches, and explicit system-local conversion |
+| [telemetry/](../src/telemetry/trace_context.zig), adapters | Explicit trace/span correlation, `std.log` bridge binding, and bounded producer formatting |
 
-## 依赖与热路径
+## Dependencies and hot paths
 
 ```mermaid
 flowchart LR
-    Root[公共root] --> Logging[Logging配置与owner]
-    Logging --> Runtime[Runtime生命周期]
-    Logger[typed logger] --> Runtime
-    Runtime --> Config[不可变配置]
+    Root[Public root] --> Logging[Logging configuration and owner]
+    Logging --> Runtime[Runtime lifetime]
+    Logger[Typed logger] --> Runtime
+    Runtime --> Config[Immutable configuration]
     Runtime --> Journal[Memory / Mmap]
-    Runtime --> Delivery[消费者交付]
-    Delivery --> Encoder[encoder与日期缓存]
-    Delivery --> Sink[sink]
-    Sink --> Backend[backend]
-    Backend --> Platform[platform]
+    Runtime --> Delivery[Consumer delivery]
+    Delivery --> Encoder[Encoder and date cache]
+    Delivery --> Sink[Sink]
+    Sink --> Backend[Backend]
+    Backend --> Platform[Platform]
     Journal --> Platform
 ```
 
-图是职责方向；实际源码的类型共享不是严格无环图。例如Runtime与配置/日志类型会共享声明，Zig懒分析支持这些依赖。移动代码不得为打破名义循环而公开私有方法、修改格式或改变owner保护协议。
+The diagram shows responsibility direction; actual source type sharing is not a
+strictly acyclic graph. For example, Runtime shares declarations with
+configuration/logging types, and Zig lazy analysis supports these dependencies.
+Moving code must not expose private methods, change formats, or alter owner
+protection protocols merely to break a nominal cycle.
 
-Logging管理独立pipeline资源；scoped返回组合logger，handle按各输出入场决策分发一次捕获的事件，单输出使用小Frame，多输出访问独立的预分配Fanout存储；内部方法借用调用快照，反序释放Runtime入场。scopedOutput返回直接Runtime logger。producer接受前复制动态字节，消费者借用checked记录完成渲染。系统local在异步消费者按事件秒转换；源码目录映射在编译期完成。同步/fallback_sync保留调用线程交付。
+`Logging` manages independent pipeline resources. `scoped` returns a composite
+logger; the handle dispatches one captured event according to each output's
+admission decision, using a small Frame for one output and independent
+preallocated fanout storage for multiple outputs. Internal methods borrow the
+call snapshot and release Runtime admissions in reverse order. `scopedOutput`
+returns a direct Runtime logger. The producer copies dynamic bytes before
+acceptance, and consumers borrow checked records for rendering. System local
+time is converted per event second in the asynchronous consumer; source
+directory mapping is resolved at compile time. Sync/fallback_sync keep
+calling-thread delivery.
 
-Runtime协调文件仍较大，因为admission、cut、worker/error、flush/关闭共享同一owner与私有gate。代码拆分优先稳定职责，例如初始化、配置、脱敏、交付和codec；不通过把每个私有方法公开来缩短文件。TSC也保留资格化与回退的一致状态机，后续拆分应保持单独验证能力。
+The Runtime coordination file remains relatively large because admission, cuts,
+worker/error handling, flush/shutdown share one owner and private gate. Splits
+prioritize stable responsibilities such as initialization, configuration,
+redaction, delivery, and codecs; shortening a file by exposing every private
+method is not acceptable. TSC also keeps qualification and fallback in one
+consistent state machine, and future splits must preserve independent
+verification.
 
-Runtime提交保留公共按值Event和binding校验，内部只携带schema Ref并借用本次SubmissionContext。一份私有Event在本次同步调用内设置metadata、编码或fallback；redaction模块持有自己的scratch/Event直到callback完成。调用者Event和其descriptor不由内部写入，动态字节仍在accepted前复制到队列；不导出可复用的测量证明。
+Runtime submission keeps the public by-value Event and binding validation,
+while internal paths carry only a schema Ref and borrow the current
+SubmissionContext. A private Event sets metadata and performs encoding or
+fallback within the synchronous call; the redaction module owns its scratch/
+Event until the callback completes. The caller's Event and descriptors are never
+written internally, dynamic bytes are still copied into the queue before
+acceptance, and no reusable measurement credential is exported.
 
-route_selection保存不可变level/filter与predicate presence掩码，Runtime只遍历已选中的predicate routes。JSON member前缀的可写ASCII路径与cold转义/short writer fallback由escaping模块拥有，普通与融合encoder共用它；公共整数格式和wire协议继续由原模块负责。
+`route_selection` stores immutable level/filter and predicate-presence masks, so
+Runtime only visits selected predicate routes. The writable-ASCII JSON member
+prefix path and cold escaping/short-writer fallback are owned by the escaping
+module and shared by ordinary and fused encoders; public integer formatting and
+the wire protocol remain owned by their original modules.
 
-## 测试与构建位置
+## Test and build locations
 
-短模块测试与实现放在一起。较长codec、线程注册和Runtime回归集中到 [core/tests/](../src/core/tests/runtime.zig)，由所属生产模块的 `test` import纳入公共测试，不进入非测试可执行程序。这里只访问已有模块边界，没有为测试新增公开内部状态。
+Short module tests live with their implementation. Longer codec, thread
+registration, and Runtime regressions are collected in
+[core/tests/](../src/core/tests/runtime.zig) and included through the owning
+production module's `test` import; they do not enter non-test executables. They
+use existing module boundaries and do not add public internal state for tests.
 
-公共集成、并发/故障、compile-fail、独立消费包和进程/子VM测试位于 [tests/](../tests/README.md)。各场景的fixture保持自己的边界；生产路径通过根模块导入验证，避免只分析测试stub。
+Public integration, concurrency/fault, compile-fail, independent consumer
+package, and process/child-VM tests live under [tests/](../tests/README.md). Each
+scenario keeps its own fixture boundary; production paths are verified through
+the root module rather than only against test stubs.
 
-`build.zig` 定义包模块、公共运行/测试/基准step与复合gate；[build/validation.zig](../build/validation.zig) 归拢九目标生产对象检查及19个示例入口。根 [examples.zig](../examples.zig) 选择字面import并保留仓库相对source路径。`build.zig.zon.paths` 包含build支持、源码/测试/示例、benchmark源码/脚本与文档，但不包含`bench/evidence/`或`bench/cpp_reference/evidence/`的测量数据；源码分发门禁核验独立包。
+`build.zig` defines the package module, public run/test/benchmark steps, and
+composite gates; [build/validation.zig](../build/validation.zig) collects the
+nine-target production object checks and 19 example entries. The root
+[examples.zig](../examples.zig) selects literal imports and preserves
+repository-relative source paths. `build.zig.zon.paths` includes build support,
+sources/tests/examples, benchmark sources/scripts, and documentation, but no
+measured benchmark results or reference-implementation snapshots; the source
+distribution gate verifies the independent package.
 
-## 已评估的拆分边界
+## Evaluated split boundaries
 
-- TSC纯校准数学已拆到 [tsc_math.zig](../src/platform/tsc_math.zig)；clock状态、跨核probe和fallback留在`tsc_clock.zig`，避免把资格状态机拆散。
-- route冷payload构造与比较已拆到 [routes_payload.zig](../src/config/routes_payload.zig)；`Snapshot`/`Manager`热路径留在`routes.zig`，避免改变pin/lease代码布局。
-- journal recovery scan/validate仍留在`journal.zig`：它直接依赖slot bytes/state/generation/checksum和reservation ownership；独立文件需要公开slot内部或引入recovery view，当前只有一个消费者，收益不足。若未来出现第二个reader/恢复实现，再按view边界拆分。
-- Runtime保持单一owner；只在不改变热路径布局且benchmark证明无回退时拆冷控制/flush。
+- Pure TSC calibration math is split into
+  [tsc_math.zig](../src/platform/tsc_math.zig); clock state, cross-core probing,
+  and fallback stay in `tsc_clock.zig` so the qualification state machine is not
+  fragmented.
+- Cold route payload construction and comparison are split into
+  [routes_payload.zig](../src/config/routes_payload.zig); the `Snapshot`/
+  `Manager` hot path stays in `routes.zig` to avoid changing pin/lease code
+  layout.
+- Journal recovery scan/validate stays in `journal.zig`: it directly depends on
+  slot bytes/state/generation/checksum and reservation ownership; a separate
+  file would need public slot internals or a recovery view. There is currently
+  one consumer, so the benefit is insufficient. If a second reader/recovery
+  implementation appears, split along a view boundary.
+- Runtime keeps a single owner; split cold control/flush only when the hot-path
+  layout is unchanged and benchmarks show no regression.
 
-## 扩展与修改原则
+## Extension and modification principles
 
-- 常规应用增加选项先放Logging配置层，为组合handle和scopedOutput分别检查无分配与开销。
-- 新输出资源在sink/backend边界实现，明确borrowed/owned、required/best_effort、written/durable和失败前缀。
-- 新schema/wire版本保持独立校验与旧fixture，Reader恢复不能依赖裸指针。
-- 配置/route修改保留旧record身份和pins/leases；filter-only与full replacement分别测试。
-- 优化同时测实际成本与相同事件的完整输出，保留fallback、错误优先级与恢复边界。
+- Add ordinary application options in the Logging configuration layer first,
+  and check allocation-free behavior and overhead for both composite handles and
+  `scopedOutput`.
+- Implement new output resources at the sink/backend boundary with explicit
+  borrowed/owned, required/best_effort, written/durable, and failure-prefix
+  semantics.
+- New schema/wire versions keep independent validation and old fixtures; Reader
+  recovery must not depend on raw pointers.
+- Configuration/route changes preserve old record identity and pins/leases;
+  test filter-only and full replacement separately.
+- Optimizations measure actual cost and complete output for the same event, and
+  preserve fallback, error precedence, and recovery boundaries.
 
-具体最小测试、最终gate和证据维护见 [development.md](development.md)。
+See [development.md](development.md) for specific minimal tests, final gates,
+and evidence maintenance.

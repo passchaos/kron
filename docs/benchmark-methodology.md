@@ -179,20 +179,20 @@ reported as unsupported; this is not a passing io_uring execution result.
 
 ## Reproduce a backend comparison
 
-当前完整JSON文件流程已用同一ReleaseFast可执行文件比较portable和Linux io_uring，Memory/Mmap、shared/SPSC、P1/P4分别以五次batch和sampled重复运行，共160试验、1616万条物理记录逐条验证。该负载中io_uring的包含关闭吞吐中位低约17%–19%；8个batch组中6个满足两侧10%CV/spread门限，另2个仍inconclusive。当前每checked batch完成required flush后才回收slot，I/O重叠窗口有限；不能推导所有存储设备或更大批次仍有相同结果。完整源码、实际后端身份与原值见[当前io_uring对照](../bench/evidence/2026-11-01-uring-current/README.md)。
+A complete JSON file workflow has compared portable and Linux io_uring with the
+same ReleaseFast executable, repeating Memory/Mmap, shared/SPSC, and P1/P4 five
+times each for batch and sampled, for 160 trials and 16.16 million physically
+verified records. On that workload, io_uring's through-shutdown throughput median
+was about 17%–19% lower; six of eight batch groups met the two-side 10% CV/spread
+threshold and two remained inconclusive. Each checked batch currently reclaims
+slots only after the required flush, so the I/O-overlap window is limited; the
+result cannot be generalized to every storage device or larger batch.
 
-完整workflow独立入口：
-
-```sh
-zig build-exe -O ReleaseFast --dep kron \
-  -Mroot=bench/cpp_reference/kron_reference.zig \
-  -O ReleaseFast -Mkron=src/root.zig -femit-bin=/tmp/kron-file-reference
-python3 bench/cpp_reference/compare_backends.py \
-  --binary /tmp/kron-file-reference --output-dir /path/to/new-report \
-  --events 100000 --warmup 1000 --repeats 5
-```
-
-该入口固定consumer budget4、queue slots256、payload512与file buffer64KiB，逐条核对真实文件，报告backend_requested和backend_selected，显式io_uring不可用或失败不会当作portable成功。下方`bench/compare_backends.py`是独立的通用benchmark入口，较早pilot保持其原源码身份。
+The generic backend comparison entry is `bench/compare_backends.py` below. It
+fixes consumer budget 4, 256 queue slots, 512-byte payloads, and a 64 KiB file
+buffer, verifies real files record by record, reports `backend_requested` and
+`backend_selected`, and never treats an unavailable or failed explicit io_uring
+request as portable success.
 
 Use a file sink, one format, identical records and policy, the same final
 completion boundary, and equal batch/depth/journal budgets. Keep the executable,
@@ -213,8 +213,7 @@ used as written throughput. Preserve incomplete journals when diagnosing it.
 The median/min/max summary describes observed trial variation; it does not
 establish a universal default-backend decision.
 
-A [three-repetition pilot](../bench/evidence/2026-10-31-file-backends/README.md)
-preserves raw reports from this development host: an Intel Core i9-13900K,
+A three-repetition pilot on this development host used an Intel Core i9-13900K,
 32 logical CPUs, Linux 6.8.0-147-generic, and the `powersave` governor. Portable
 observed a median 598,961 written records/s in its batch trial; io_uring observed
 568,293. Each completed 10,000 records with zero final pending. The unreserved
@@ -324,8 +323,7 @@ time difference amid overlapping repeated-run ranges does not establish a stable
 nanosecond saving, and a clock-only result cannot be attributed wholesale to
 end-to-end log latency.
 
-A [bounded clock-only pilot](../bench/evidence/2026-10-31-clock-dispatch/README.md)
-preserves seven rotating-order batches. Dynamic and StandardClock ranges overlap;
+A bounded clock-only pilot preserved seven rotating-order batches. Dynamic and StandardClock ranges overlap;
 the results do not establish a stable subnanosecond dispatch saving. The evidence
 also records an incomplete SPSC sleep trial seen with a pre-fix runtime binary,
 separately from completed clock-only measurements.
@@ -532,17 +530,17 @@ an implementation strongest based on unrelated published figures.
 A raw record rate is not a feature-normalized ranking. The kron Memory journal
 performs slot reserve/commit/abort, generation and sequence validation, CRC
 generation and consumer revalidation, and deferred structured capture before
-consumer formatting. Foundation + spdlog/tracing Memory frontends do not carry
-the same journal/CRC/recovery contract; their mmap queues also differ from kron's
-schema, pin, reclaim and durable boundaries. The same JSON bytes and written
-flush can therefore still represent different reliability work.
+consumer formatting. Other logging libraries may not carry the same journal/CRC/
+recovery contract, and their mmap queues can differ in schema, pin, reclaim, and
+durable boundaries. The same JSON bytes and written flush can therefore still
+represent different reliability work.
 
 CPU topology is part of the measurement identity. On the current host the
 `auto` window uses SMT P-cores, while CPUs 16..31 are single-thread physical
 cores that usually map to E-cores. The E-core profile shows CRC, journal
-reserve/validate and consumer formatting as larger shares, and Foundation
-frontends can lead on raw throughput there. P-core windows previously showed
-kron ahead in some groups. Neither window is a universal ranking.
+reserve/validate and consumer formatting as larger shares, and competitors can
+lead on raw throughput there. P-core windows previously showed kron ahead in some
+groups. Neither window is a universal ranking.
 
 The same-source `fd4e941 -> current` A/B on E-cores shows current faster by
 7.2%–14.6%, so recent optimizations did not cause the E-core gap. Any claim that
@@ -556,4 +554,4 @@ including producer distributions, written completion, saturation, CPU/resource
 cost, and business-workload impact. The current measurements are observations
 of this build and environment, not promised absolute latency or throughput.
 
-The prepared pilot is preserved in [the checked-in evidence](../bench/evidence/2026-10-31-prepared-schema/README.md). Every one of its 64 rows confirmed accepted/written equality and zero pending. Two repetitions are a starting point, not a stable regression threshold.
+The prepared pilot's 64 rows each confirmed accepted/written equality and zero pending. Two repetitions are a starting point, not a stable regression threshold.

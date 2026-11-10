@@ -1,12 +1,30 @@
-# 正则匹配工作量与资格边界
+# Regex matching work and qualification boundaries
 
-日志过滤使用固定预算的 Thompson NFA，保持 128 状态、32 层编译嵌套和 8192 字节输入上限。配置编译期计算四种开头/末尾断言条件下的可达状态，匹配时只遍历消费字符的活跃状态；两个 64 位位图合并路径，不分配内存。空分支、nullable 循环、跨 64 位边界的状态、任意字节和严格末尾 anchor 保留原语义。
+Log filtering uses a fixed-budget Thompson NFA with 128 states, 32 compile
+nesting levels, and an 8192-byte input limit. Configuration compile time computes
+reachable states under four beginning/end assertion conditions, and matching
+traverses only active states that consume characters; two 64-bit bitmaps merge
+paths without allocating memory. Empty branches, nullable loops, states crossing
+64-bit boundaries, arbitrary bytes, and strict end anchors preserve their
+original semantics.
 
-`State.closure` 保存 BOL 为 false 时的两个 EOL 条件，`Regex.initial` 保存输入首位置的两个 EOL 条件。每次消费字符后的状态已经使用下一位置的末尾条件展开；只有第一位置可通过 BOL。编译期固定点在已 patch 的本正则图中计算，不读取同一 Predicate 内其他正则的状态。运行期不再逐字节展开 jump/split/assertion，也不扫描全部状态数组。
+`State.closure` stores the two EOL conditions when BOL is false, and
+`Regex.initial` stores the two EOL conditions for the input's first position.
+State after each consumed character is already expanded with the next position's
+end condition; only the first position can use BOL. Compile-time fixed points are
+computed within the patched graph of this regex and do not read other regex states
+in the same Predicate. Runtime no longer expands jump/split/assertion per byte or
+scans the complete state array.
 
-该选择把工作移到配置初始化并增加固定内存。当前 native x86_64 `Pattern` 从 4624 增为 9264 字节，`Predicate` 从 17952 增为 25632 字节，包括 64 条规则的固定 metadata 容量；8KiB 配置字符串预算保持。1000 次编译的批次探针中，API 路径约从 0.88µs/次增为 2.04µs/次，127 字面状态约从 1.15µs/次增为 3.22µs/次。此探针没有首次初始化分位数资格；资源数据与原输出见 `bench/evidence/2026-11-01-regex-active/resources.log`。
+This choice moves work into configuration initialization and increases fixed
+memory. On native x86_64, `Pattern` grows from 4,624 to 9,264 bytes and
+`Predicate` from 17,952 to 25,632 bytes, including fixed metadata capacity for 64
+rules; the 8 KiB configuration-string budget is unchanged. In a 1,000-compile
+batch probe, the API path rose from about 0.88 to 2.04 µs/call, and the 127-literal
+state path from about 1.15 to 3.22 µs/call. The probe has no first-initialization
+quantile qualification.
 
-## 业务基准
+## Business benchmark
 
 ```sh
 zig build bench-regex -Doptimize=ReleaseFast -- --iterations=10000 --repetitions=5
@@ -14,15 +32,40 @@ python3 bench/regex_compare.py --before /path/to/frozen-before \
   --after /path/to/frozen-after --output /path/to/new-report
 ```
 
-八类输入包含 API 路径、severity 消息、长字面量 search、nullable 循环、重叠 alternation、128 状态上限、密集字符类和 NUL/high bytes。每组四种输入中两种应匹配、两种应拒绝；长输入减少循环次数且保留四种输入。分别报告 Pattern、单字段 Predicate 和两类完整同步 JSON 路径。同步路径包含捕获、字段验证、predicate、JSON 编码、完整字节 hash/copy、written flush；检查 accepted/written/filtered、零初始化后分配、最终 JSON 字段与 before/after 全部输出 hash。它不覆盖异步队列、文件 I/O、durable 或单次 producer 分位数。
+Eight input classes cover API paths, severity messages, long literal searches,
+nullable loops, overlapping alternation, the 128-state limit, dense character
+classes, and NUL/high bytes. Each group has four inputs, two expected to match
+and two to reject; long inputs use fewer iterations while retaining four inputs.
+Pattern, single-field Predicate, and two complete synchronous JSON paths are
+reported separately. The synchronous path includes capture, field validation,
+predicate, JSON encoding, complete byte hash/copy, and written flush; it checks
+accepted/written/filtered, zero allocation after initialization, final JSON
+fields, and all before/after output hashes. It does not cover asynchronous queues,
+file I/O, durability, or single-call producer quantiles.
 
-对照驱动固定 CPU，五对子进程交替运行，每进程五次重复，反转用例次序；检查行数、输入量、匹配量、written、输出量、hash 和测量环境相同。缺失/重复行、错误计数、输出变化和测量期分配都必须失败。全部慢样本保留，任一侧 CV 或 relative spread 超过 10% 时报告 inconclusive。
+The comparison driver fixes CPU, alternates five child-process pairs with five
+repetitions per process, and reverses case order; it checks matching line counts,
+input volume, match counts, written, output volume, hashes, and measurement
+environment. Missing/duplicate lines, wrong counts, output changes, and
+measurement-time allocation must fail. All slow samples are retained, and any side
+with CV or relative spread above 10% is reported inconclusive.
 
-当前对照所有最终组均为 inconclusive。中位数显示 API Pattern 约 350→76ns、severity Pattern 486→79ns、长字面 search 48.5→9.5µs、重叠 alternation 142→54µs、128 状态输入 370→14µs；两类完整同步 JSON 批均约 557→282ns 与 681→283ns。这些只描述本轮数据，不能作为稳定端到端性能承诺或跨库排名。正式原始报告位于 `bench/evidence/2026-11-01-regex-active/context-comparison/`。
+All final groups in the current comparison are inconclusive. Medians show API
+Pattern about 350→76 ns, severity Pattern 486→79 ns, long literal search
+48.5→9.5 µs, overlapping alternation 142→54 µs, and 128-state input 370→14 µs;
+two complete synchronous JSON batches were about 557→282 ns and 681→283 ns. These
+describe only this round's data and are not a stable end-to-end performance
+promise or cross-library ranking.
 
-另五对整个基准子进程的user PMU包含八类Pattern/Predicate、两类完整同步JSON、配置编译/初始化和报告输出。全部输入计数、written和JSON hash一致，指令中位减少81.34%，两侧relative spread均低于0.00005%；cycles仍超噪声门限。长输入匹配占此探针的大部分工作，不能把该指令比例推广到异步或文件日志工作流。原始计数见`bench/evidence/2026-11-01-regex-active/pmu/`。
+Another five full benchmark child-process user-PMU pairs covered eight
+Pattern/Predicate classes, two complete synchronous JSON paths, configuration
+compile/initialization, and report output. All input counts, written, and JSON
+hashes matched; instructions fell 81.34% by median with both-side relative spread
+below 0.00005%; cycles still exceeded the noise threshold. Long-input matching
+dominates this probe, so the instruction ratio cannot be generalized to async or
+file-log workflows.
 
-## 语义与 fuzz
+## Semantics and fuzz
 
 ```sh
 zig build test-regex-equivalence test-regex-differential test-regex-fuzz \
@@ -30,6 +73,18 @@ zig build test-regex-equivalence test-regex-differential test-regex-fuzz \
 zig build test-regex-equivalence -Doptimize=ReleaseSafe --fuzz=1M -j1
 ```
 
-独立 dense 固定点解释器通过 8192 次 mutation 检查生产匹配器，另检查 Predicate 多正则共享数组的非零起始 offset。它只提供图执行对照；解析和最终匹配语义仍由独立 Python bytes `re.search` oracle 核对。模块测试覆盖每种字节、128 状态、32 层嵌套与 anchor 循环。
+An independent dense fixed-point interpreter checks the production matcher across
+8,192 mutations, and also checks nonzero starting offsets for multiple regexes
+sharing a Predicate array. It provides only a graph-execution comparison; parsing
+and final matching semantics are still checked by an independent Python bytes
+`re.search` oracle. Module tests cover every byte, 128 states, 32 nesting levels,
+and anchor loops.
 
-`test-regex-equivalence` 含原生 Zig coverage guided fuzz 入口：任意正则编译输入、合法复杂图与任意匹配输入、任意 predicate 配置和诊断 offset。`--fuzz=1M` 是有界运行；`--fuzz` 可由专用测试环境持续执行。ReleaseSafe 保留 Zig 边界/整数检查，覆盖率插桩由 Zig fuzzer 负责。这不代表 AddressSanitizer、ThreadSanitizer 或跨平台设备 sanitizer 资格，有限 campaign 也不能替代长期持续 fuzz。
+`test-regex-equivalence` includes a native Zig coverage-guided fuzz entry:
+arbitrary regex compile input, valid complex graphs with arbitrary match input,
+arbitrary predicate configuration, and diagnostic offsets. `--fuzz=1M` is a
+bounded run; `--fuzz` can run continuously in a dedicated test environment.
+ReleaseSafe keeps Zig boundary/integer checks, and the Zig fuzzer owns coverage
+instrumentation. This does not represent AddressSanitizer, ThreadSanitizer, or
+cross-platform device sanitizer qualification, and a bounded campaign cannot
+replace sustained fuzz.

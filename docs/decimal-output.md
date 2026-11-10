@@ -1,30 +1,87 @@
-# 十进制记录输出与完整字符串转义
+# Decimal record output and complete-string escaping
 
-完整text/JSON/logfmt输出不需要数字的base、width、precision或alignment选项。现在这部分使用专用十进制writer：小整数保留原native digit-pair循环，大u64拆成最多两个10^8尾段，每段用u32生成固定八位；i128/u128的较小值复用native路径，宽值以10^19分块后分别生成十进制数字。非leading块补齐19位，包括全零块；最多两次宽值分块，避免逐两位进行宽除法。负号由安全的无符号绝对值处理，包括i128最小值。
+Complete text/JSON/logfmt output does not need base, width, precision, or
+alignment options for numbers. This path uses a dedicated decimal writer: small
+integers keep the native digit-pair loop, large u64 values split into at most two
+10^8 tails, and each tail generates eight fixed digits from a u32; smaller
+i128/u128 values reuse the native path, while wide values split by 10^19 and
+generate decimal digits separately. Non-leading blocks are zero-padded to 19
+digits, including all-zero blocks; at most two wide splits avoid per-two-digit
+wide division. The sign is handled through a safe unsigned absolute value,
+including the i128 minimum.
 
-64位以内数字在当前Writer还剩至少21字节时，计算精确位数并直接写入现有buffer；只发布实际位数，不调用drain/rebase。小buffer、无buffer的流式Writer和大于u64的宽值继续在最多40字节栈缓冲区生成并执行一次writeAll，不经过通用对齐。独立native大数helper和冷buffered函数将更多寄存器/temporary frame留在实际需要它们的路径，普通小数字不承担该frame；固定powers表为160字节。JSON超出±(2^53−1)的整数仍写成十进制字符串；float、NaN/Inf政策、deferred格式中的base/width/precision保持原通用formatter。该优化不改变捕获表示、journal CRC、schema、accepted/written/durable边界或文件buffer预算。
+For values within 64 bits, when the current Writer has at least 21 bytes left,
+the exact digit count is computed and written directly into the existing buffer;
+only the actual length is published, without calling drain/rebase. Small
+buffers, unbuffered streaming Writers, and wide values above u64 continue to
+generate into a stack buffer of at most 40 bytes and perform one `writeAll`,
+without generic alignment. A separate native large-number helper and cold
+buffered function keep extra registers/temporary frames on the paths that need
+them, so ordinary small numbers do not carry that frame; the fixed powers table
+is 160 bytes. JSON integers outside ±(2^53−1) are still written as decimal
+strings; float, NaN/Inf policy, and base/width/precision in deferred formats keep
+the original generic formatter. This optimization does not change capture
+representation, journal CRC, schema, accepted/written/durable boundaries, or
+file-buffer budgets.
 
-已完整提供的字符串直接调用同模块的QuotedWriter.consume，避免先绕过无buffer Writer的drain vtable。deferred消息仍通过流式QuotedWriter处理跨参数的UTF-8片段；完整字符串和流式字符串使用同一个consume/byte状态机，保留畸形UTF-8、控制符、换行与JSON key的可逆表示。
+A fully available string calls the same module's `QuotedWriter.consume`
+directly, avoiding the unbuffered Writer drain vtable first. Deferred messages
+still use the streaming QuotedWriter for UTF-8 fragments spanning arguments;
+complete and streaming strings share the same consume/byte state machine,
+preserving reversible representation of malformed UTF-8, control characters,
+newlines, and JSON keys.
 
-Foundation DefaultFormatter的顺序数字生成和直接复制是参考方向。本轮保留原流式Writer接口和每次输出的字节前缀行为，没有引入全事件两遍长度统计、完整消息scratch或依赖上游代码。数字生成集中在decimal.zig，转义保留在escaping.zig，记录布局和安全树验证仍由common.zig负责。
+Foundation DefaultFormatter's sequential number generation and direct copying
+were the reference direction. This round kept the original streaming Writer
+interface and per-output byte-prefix behavior, without whole-event two-pass length
+accounting, complete-message scratch, or copied upstream code. Number generation
+is centralized in `decimal.zig`, escaping remains in `escaping.zig`, and record
+layout plus safe tree validation remain in `common.zig`.
 
-最新基线7480598后的八位分块/冷buffered优化完成140项实际文件、4214万JSON核对。shared Memory/Mmap P1/P4的完整用户态指令分别稳定减少约3.43%–3.47%，四组中位区间不重叠；native primitive五类指令减少约9%–10%，日志字段组合/full-u64/signed/wide周期也有局部资格。正式batch吞吐中位正向，但所有速度比区间重叠，sampled Mmap P1初轮−6%未在独立20项复测重现；不声明一般吞吐/尾部胜出。当前Safe151步骤、639项通过/1能力skip，整数/短写和native/generic/aarch64编译边界均保留。最新源码、全部正负数据与资格见 [八位分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)；下文历史数字仍绑定各自源码。
+The latest eight-digit chunking/cold-buffered optimization verified 140 real-file
+trials and 42.14 million JSON records. Complete user instructions for shared
+Memory/Mmap P1/P4 fell by about 3.43%–3.47%, with four groups having
+non-overlapping median intervals; five native primitive instruction classes fell
+by about 9%–10%, and field-combination/full-u64/signed/wide cycles also had local
+qualification. Formal batch throughput medians were positive, but all speed-ratio
+intervals overlapped, and a first-round sampled Mmap P1 −6% did not reproduce in
+an independent 20-trial recheck; no general throughput/tail win is claimed.
+Current Safe passed 151 steps and 639 tests with one capability skip, and
+integer/short-write plus native/generic/aarch64 compile boundaries were retained.
+Historical numbers below are bound to their own source revisions.
 
-## 正确性验证
+## Correctness verification
 
-- 三项新测试把全部65536个u16值与标准formatter逐字节比较；native整数极值、39组十进制边界、128组二进制边界、全零分块和2048对随机u128/i128都一致。
-- 最小signed整数与最大unsigned整数的所有短fixed Writer前缀继续和标准formatter比较。bounded Writer失败不被当作完整记录成功。
-- 冻结完整旧模块与当前模块分别调用公开encode，12个完整text/JSON/logfmt输出、16486种fixed缓冲容量前缀逐字节一致。
-- 增加独立generic Writer，每次只接受1/3/7字节，在每个字节预算触发失败，49494种完整/失败输出前缀与旧实现一致；发生错误后双方都不再次调用Writer。
-- UTF-8片段拼接、nested、所有value tag、整数JSON边界、source、trace、secret、float和无效树零输出继续使用原测试验证。
+- Three new tests compare all 65,536 u16 values byte-for-byte with the standard
+  formatter; native integer extremes, 39 decimal boundaries, 128 binary
+  boundaries, all-zero blocks, and 2,048 random u128/i128 pairs match.
+- All short fixed-Writer prefixes for the minimum signed integer and maximum
+  unsigned integer are compared with the standard formatter. A bounded Writer
+  failure is never treated as a complete-record success.
+- A frozen complete old module and the current module each call the public
+  encoder; 12 complete text/JSON/logfmt outputs and 16,486 fixed-buffer capacity
+  prefixes match byte-for-byte.
+- An independent generic Writer accepts only 1/3/7 bytes at a time and triggers
+  failure at every byte budget; 49,494 complete/failure output prefixes match the
+  old implementation, and neither side calls the Writer again after an error.
+- UTF-8 fragment joining, nested values, all value tags, integer JSON boundaries,
+  source, trace, secret, float, and zero output for invalid trees remain covered
+  by the original tests.
 
-原始来源、probe和完整文件测量保存在 `bench/evidence/2026-11-01-decimal-output/`。本轮measure使用written文件flush、shutdown和清理边界；数字生成的局部收益不代表durable/fsync吞吐或Foundation/Quill排名。
+The measurement boundary for this round is written file flush, shutdown, and
+cleanup. Local number-generation gains do not represent durable/fsync throughput
+or a cross-library ranking.
 
-## 完整流程测量
+## Complete-workflow measurement
 
-5种配置、sampled/batch独立进程各5对before/after，共100次实际文件试验，每次100000条测量记录及1000条预热，逐条核对1010万条完整JSON。保持系统时钟、256槽/512字节payload、64KiB文件buffer、CPU0/2/4/6/8/10以及最终written flush、shutdown与清理；初始化和预热另行报告于lifecycle指标。
+Five configurations in separate sampled/batch processes ran five before/after
+pairs each, for 100 real-file trials of 100,000 measured records plus 1,000
+warmup records, verifying 10.1 million complete JSON records. The system clock,
+256 slots/512-byte payloads, 64 KiB file buffer, CPU 0/2/4/6/8/10, final written
+flush, shutdown, and cleanup were held constant; initialization and warmup are
+reported separately in lifecycle metrics.
 
-| batch模式 | before中位条/秒 | after中位条/秒 | 中位变化 | 本轮判断 |
+| Batch mode | Before median records/s | After median records/s | Median change | This round |
 | --- | ---: | ---: | ---: | --- |
 | shared Memory P1 | 1,092,183 | 1,359,992 | +24.52% | inconclusive |
 | shared Memory P4 | 1,217,630 | 1,300,304 | +6.79% | inconclusive |
@@ -32,18 +89,60 @@ Foundation DefaultFormatter的顺序数字生成和直接复制是参考方向�
 | SPSC Mmap P4 | 1,231,334 | 1,233,869 | +0.21% | inconclusive |
 | SPSC Mmap P4 prepared | 1,149,036 | 1,241,312 | +8.03% | inconclusive |
 
-全部吞吐组至少一侧CV或spread超过10%，trial-bootstrap中位置信区间仍重叠。不能将正向中位数宣称为稳定提速；例如SPSC Memory after的spread约63.8%，全部慢值保留于 [comparison.json](../bench/evidence/2026-11-01-decimal-output/comparison.json)。格式、资源预算和可靠性相同的before/after只在各自配置内比较，不能把Memory与Mmap混成统一收益。
+Every throughput group had at least one side's CV or spread above 10%, and
+trial-bootstrap median intervals still overlapped. Positive medians cannot be
+declared stable speedups; for example, SPSC Memory after spread was about 63.8%,
+and all slow values were retained. Before/after runs with identical format,
+resource budget, and reliability are compared only within their own
+configuration; Memory and Mmap cannot be combined into one gain.
 
-编码probe覆盖5个native值、20个nested值及5个接近u128上限的宽值，每类每进程30万条，完整输出参与Wyhash。第一组probe与本轮full-workflow二进制编译部分重叠，其指令/周期和墙钟结果保留但不作为隔离计时资格。随后的5对串行probe没有本轮构建/门禁重叠，输出checksum与字节数均相同，整进程用户态指令中位减少18.50%、cycles减少27.14%，两组PMU计数各自CV/spread低于10%；各类墙钟时间仍inconclusive。这些数值包含输入更新、编码、hash和启动/报告，不能换算为文件日志的收益。
+Encoding probes covered five native values, 20 nested values, and five wide
+values near the u128 limit, with 300,000 records per class per process and
+complete output included in Wyhash. The first probe group overlapped this round's
+full-workflow binary compilation, so its instruction/cycle and wall-clock results
+are retained but not used as isolated timing qualification. The following five
+serial probe pairs had no build/gate overlap, matched output checksums and byte
+counts, reduced whole-process user instructions by 18.50% and cycles by 27.14%,
+with both PMU counts below 10% CV/spread; wall-clock times remained inconclusive.
+These numbers include input updates, encoding, hashing, and startup/reporting and
+cannot be converted into file-log gains.
 
-另以完整P4 SPSC Memory文件流程运行5对30万条试验，额外核对301万条日志，全部线程的用户态指令中位减少6.22%，两侧spread约0.02%；cycles中位减少3.37%、task-clock减少3.79%，但两者跨轮波动未通过门槛。完整吞吐中位1.115M→1.285M（+15.31%）仍inconclusive，相关软件计数与slow trials均保留在full-pmu-results.json。这支持完整管线的实际CPU工作量减少，尚不能建立稳定延迟/吞吐收益或跨库排名。
+Five additional complete P4 SPSC Memory file-workflow pairs of 300,000 records
+verified another 3.01 million logs; all-thread user instructions fell 6.22% with
+about 0.02% spread, cycles fell 3.37%, and task-clock fell 3.79%, but the latter
+two failed the cross-round threshold. Complete throughput median rose from 1.115M
+to 1.285M (+15.31%) and remained inconclusive; related software counts and slow
+trials were retained. This supports a real reduction in complete-pipeline CPU
+work but does not establish stable latency/throughput gains or a cross-library
+ranking.
 
-最终Debug/ReleaseSafe定向各26/26、完整ReleaseFast76/76构建步骤与483/483 Zig测试通过；九目标ReleaseSafe实际对象和文件/配置18/18通过。时间处理后续另有实现与证据，不混入本轮源码身份。
+Final Debug/ReleaseSafe targeted tests passed 26/26 each, complete ReleaseFast
+passed 76/76 build steps and 483/483 Zig tests, and nine-target ReleaseSafe
+objects plus file/configuration checks passed 18/18. Later time-handling work has
+its own implementation and evidence and is not mixed into this round's source
+identity.
 
-## 当前直接buffer路径
+## Current direct-buffer path
 
-当前基线`20d49be`的完整文件profile确认小memcpy热点后，native数字直接输出已进一步实现。新增测试覆盖全部decimal/binary native边界、4096随机native对、已有prefix/未用buffer sentinel，以及1/20/21/64字节内部buffer、下游1/3/7字节短写与所有物理失败前缀。最终公开encoder和冻结源码的12个完整记录、16486 fixed前缀与49494 generic前缀仍一致。
+After the current baseline `20d49be` complete-file profile confirmed a small
+memcpy hotspot, native direct number output was implemented. New tests cover all
+decimal/binary native boundaries, 4,096 random native pairs, existing-prefix and
+unused-buffer sentinels, 1/20/21/64-byte internal buffers, downstream 1/3/7-byte
+short writes, and every physical failure prefix. The final public encoder and
+frozen source still match on 12 complete records, 16,486 fixed prefixes, and
+49,494 generic prefixes.
 
-初始inline和digit-count-table方案的nested20探针有约3%负向中位，原始结果保留；最终独立helper消除该项负向中位。100个正式文件试验核对1010万条日志，shared Memory P1/P4、SPSC Memory P4、SPSC Mmap P4和prepared分别提升约3.86%/3.40%/4.04%/3.00%/3.31%，两侧CV/spread均低于10%；只有SPSC Memory P4的trial-bootstrap中位区间不重叠，其他组仍重叠。
+Initial inline and digit-count-table variants had about a 3% negative median in
+the nested20 probe, and the raw results were retained; the final separate helper
+removed that negative median. One hundred formal file trials verified 10.1
+million logs; shared Memory P1/P4, SPSC Memory P4, SPSC Mmap P4, and prepared
+improved by about 3.86%/3.40%/4.04%/3.00%/3.31%, with both-side CV/spread below
+10%; only SPSC Memory P4 had non-overlapping trial-bootstrap median intervals,
+while the others still overlapped.
 
-另20个完整文件user PMU试验核对602万条日志：SPSC Memory P4 cycles中位减少4.99%，instructions增加1.00%；shared P1 instructions增加1.04%，cycles仍inconclusive。SPSC长流程出现保留的候选慢值，使其吞吐保持inconclusive。这是指令组合与复制成本的变化，不是所有路径指令减少；不能把局部改善叠加为Foundation跨库领先。精确源码、失败前缀、原始慢值与全部探索报告见`bench/evidence/2026-11-01-decimal-direct/`。
+Another 20 complete-file user-PMU trials verified 6.02 million logs: SPSC Memory
+P4 cycles fell 4.99% and instructions rose 1.00%; shared P1 instructions rose
+1.04% and cycles remained inconclusive. The SPSC long workflow retained a
+candidate slow value, keeping throughput inconclusive. This is a change in the
+instruction mix and copy cost, not an instruction reduction on every path; local
+gains cannot be accumulated into a cross-library lead.

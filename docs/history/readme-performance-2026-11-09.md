@@ -1,61 +1,344 @@
-# README 性能叙述快照（2026-11-09）
+# README performance narrative snapshot (2026-11-09)
 
-本快照保存 2026-11-09 README 中的详细性能 chronology，便于追溯当时的源码身份、数字和证据链接。它不是当前接口或当前排名；当前能力见 [验收状态](../implementation-status.md)，当前接口见 [使用指南](../usage.md)。
+This snapshot preserves the detailed performance chronology from the 2026-11-09
+README for tracing the source revisions, numbers, and evidence pointers of that
+time. It is not the current interface or ranking; see
+[acceptance status](../implementation-status.md) for current capabilities and the
+[usage guide](../usage.md) for the current interface. Measurement directories and
+cross-library harnesses have since been removed from the repository.
 
-## 性能进展
+## Performance progress
 
-最新 [双拓扑完整流程 profile](../../bench/evidence/2026-11-03-current-workflow-profile/analysis.md) 核验 800.8 万条 JSON，用于定位当前热点，不提供新的速度排名。
+A dual-topology complete-workflow profile verified 8.008 million JSON records to
+locate current hotspots; it did not provide a new speed ranking.
 
-最新批量消费者确认候选已保留生产：连续`.written`记录的journal reclaim与snapshot pin释放合并为批次操作，逐条保留identity/slot CRC重查和late-damage成功前缀语义。E-core 16配置×5轮×2 binary核对**1,616万条JSON**，written **12 lead、0 negative、4 inconclusive**（中位1.0156–1.1074）。完整`test` 758/759、`verify-local` 792/793通过；跨库排名未更新，仍低于Foundation。证据见[batch acknowledgment](../../bench/evidence/2026-11-04-batch-ack/README.md)。
+A batch consumer acknowledgement candidate was retained in production: journal
+reclaim and snapshot-pin release for contiguous `.written` records were merged
+into a batch operation while retaining per-record identity/slot CRC rechecks and
+late-damage successful-prefix semantics. E-core 16 configurations × 5 rounds × 2
+binaries verified 16.16 million JSON records, with written results of 12 leads,
+0 negatives, and 4 inconclusive (medians 1.0156–1.1074). Complete `test` passed
+758/759 and `verify-local` 792/793; the cross-library ranking was not updated and
+remained below Foundation.
 
-保留该候选后的E-core完整Foundation矩阵（240 trials、2,424万条JSON）仍为`target_not_met_in_selected_cases`：written 9 kron lead、20 peer lead、35 inconclusive。P1对Foundation memory的8个batch/sampled轴全部领先（1.068–1.191），P4 memory/mmap仍落后（0.554–0.908）；对tracing仅spsc-memory-schema P1 sampled 1.020领先。P-core需单独重跑，整体目标仍未完成。证据见[新E-core矩阵](../../bench/evidence/2026-11-04-current-foundation-full-ecore/comparison.md)。
+After retaining that candidate, the E-core complete Foundation matrix (240 trials,
+24.24 million JSON records) remained `target_not_met_in_selected_cases`: written
+results were 9 kron leads, 20 peer leads, and 35 inconclusive. All eight
+batch/sampled axes against Foundation Memory at P1 led (1.068–1.191); P4 Memory/
+Mmap remained behind (0.554–0.908); against tracing, only SPSC-Memory-schema P1
+sampled led at 1.020. P-core needed a separate rerun and the overall target
+remained incomplete.
 
-render offload诊断显示consumer JSON render是P4最大单项瓶颈：生产1.830M，去掉consumer render后3.255M，producer额外render后仍有3.007M。下一候选将保留binary journal/CRC/recovery，把render结果放入独立side buffer/queue，让consumer只写出，而不是把JSON写进journal payload。见[诊断](../../bench/evidence/2026-11-04-render-offload-diagnostic/README.md)。
+A render-offload diagnostic showed consumer JSON rendering was the largest single
+P4 bottleneck: production reached 1.830M, removing consumer rendering reached
+3.255M, and producer-side extra rendering still reached 3.007M. The next candidate
+kept the binary journal/CRC/recovery and placed rendered output in an independent
+side buffer/queue so the consumer only wrote it out, rather than writing JSON into
+the journal payload.
 
-producer-rendered JSON cache已作为opt-in `render_cache`实现：producer渲染到按sequence直接映射的volatile缓存，consumer命中直接写出，未命中/恢复回退deferred；默认关闭，支持shared async与SPSC的per-journal cache、单route JSON inline/schema。安静窗口P4 memory batch/sampled为1.63/1.58 qualified lead（2.9M vs 1.8M），mmap中位1.51–1.61但因spread inconclusive；schema四组中位1.40–1.51；SPSC P4八组中位1.63–1.69（5/8 lead）。P1会回退，因此当时benchmark只对P4启用（2026-11-08 backlog自适应门控后P1 inline转为+8%–20%，见上）。完整`test` 766/767、`verify-local` 800/801通过（1项local skip）。最新E-core矩阵为12 kron lead、8 peer lead、44 inconclusive；P4 cache轴对Foundation/tracing取得1.06–1.56 lead，剩余差距集中在P1 mmap/SPSC vs tracing。安静窗口复跑为11 lead/13 peer/40 inc，P4中位async-memory 2.97M、spsc-memory 3.41M、spsc-mmap 3.44–3.52M，SPSC P4因run spread保持inconclusive但定向A/B已qualified。P-core cache矩阵在host load约126窗口重跑，written全部inconclusive；P-core P4定向A/B中位0.956–1.447、全部inconclusive但无qualified negative，需安静窗口重跑。P1 consumer profile显示cache-off时consumer render+两次CRC约占35% cycles，cache-on时producer成为瓶颈；P1对tracing的差距来自durable producer路径，下一步需要独立的opt-in volatile text-queue fast mode。见[P1 profile](../../bench/evidence/2026-11-04-p1-consumer-profile/README.md)、[render cache](../../bench/evidence/2026-11-04-render-cache/README.md)、[E-core cache矩阵](../../bench/evidence/2026-11-04-current-foundation-full-ecore-render-cache-all/comparison.md)、[安静窗口矩阵](../../bench/evidence/2026-11-04-current-foundation-full-ecore-render-cache-quiet/comparison.md)与[P-core矩阵](../../bench/evidence/2026-11-04-current-foundation-full-pcore-render-cache/comparison.md)。
+Producer-rendered JSON cache was implemented as opt-in `render_cache`: the
+producer renders into a volatile cache mapped directly by sequence, the consumer
+writes hits directly, and misses/recovery fall back to deferred rendering. It is
+off by default and supports per-journal cache for shared async and SPSC, single-
+route JSON inline/schema. In a quiet window, P4 Memory batch/sampled reached
+1.63/1.58 qualified leads (2.9M vs 1.8M); mmap medians were 1.51–1.61 but
+inconclusive because of spread; four schema groups were 1.40–1.51; SPSC P4 eight
+groups were 1.63–1.69 (5/8 leads). P1 regressed, so the benchmark initially
+enabled it only for P4; later backlog-adaptive gating turned P1 inline into
++8%–20%. Complete `test` passed 766/767 and `verify-local` 800/801 (one local
+skip). The latest E-core matrix was 12 kron leads, 8 peer leads, and 44
+inconclusive; P4 cache axes led Foundation/tracing by 1.06–1.56, with the
+remaining gap concentrated in P1 mmap/SPSC versus tracing. A quiet-window rerun
+gave 11 leads/13 peer/40 inconclusive; P4 medians were async-Memory 2.97M,
+SPSC-Memory 3.41M, and SPSC-Mmap 3.44–3.52M; SPSC P4 remained inconclusive because
+of run spread although targeted A/B had qualified. The P-core cache matrix reran
+at host load about 126 and all written results were inconclusive; targeted P-core
+P4 A/B medians were 0.956–1.447, all inconclusive but with no qualified negative,
+and needed a quiet-window rerun. A P1 consumer profile showed cache-off consumer
+render plus two CRCs used about 35% of cycles, while cache-on made the producer
+the bottleneck; the P1 gap versus tracing came from the durable producer path,
+suggesting a separate opt-in volatile text-queue fast mode.
 
-volatile text fast path已实现为opt-in `text_format`（要求`verify_crc=false`）：producer渲染最终JSON进queue，consumer直接写出；支持memory与`recover=false` mmap、async/SPSC，无journal recovery，默认durable路径不变。固定clock/session parity测试通过（async/SPSC、inline/schema）。E-core 5轮A/B：P4 async memory 3.84–3.96M（1.61–1.78）、P4 SPSC memory 4.80–5.06M（2.06–2.32）、P4 async mmap 3.50–4.04M（1.09–1.40）；P1 async memory 1.89–2.23M（对tracing 0.95–1.05）、P1 SPSC 1.83–2.10M（对tracing 0.89–0.97）、P1 async mmap 2.03–2.30M（对tracing 0.72–0.87）。P4已明显领先，P1 tracing mmap/SPSC仍是剩余差距。见[text fast path](../../bench/evidence/2026-11-04-text-fast-path/README.md)。
+A volatile text fast path was implemented as opt-in `text_format` (requiring
+`verify_crc=false`): the producer renders final JSON into the queue and the
+consumer writes it directly; it supports Memory and `recover=false` mmap,
+async/SPSC, and no journal recovery, while the default durable path is unchanged.
+Fixed clock/session parity tests passed (async/SPSC, inline/schema). E-core
+five-round A/B: P4 async Memory 3.84–3.96M (1.61–1.78), P4 SPSC Memory 4.80–5.06M
+(2.06–2.32), P4 async mmap 3.50–4.04M (1.09–1.40); P1 async Memory 1.89–2.23M
+(0.95–1.05 vs tracing), P1 SPSC 1.83–2.10M (0.89–0.97), P1 async mmap 2.03–2.30M
+(0.72–0.87). P4 clearly led; P1 tracing mmap/SPSC remained the gap.
 
-P1 text-mmap profile显示producer约43% cycles（render约20%、submit 10.5%、reserve 4.9%、begin 4.5%、measure 4.4%），consumer约18.5%；剩余tracing mmap差距需要dedicated fast logger或mmap output backend，而不是单一轻量ring。见[profile](../../bench/evidence/2026-11-04-text-mmap-profile/README.md)。text fast path跳过measure候选8组5轮全部inconclusive（中位1.00–1.06），已撤回。见[measure报告](../../bench/evidence/2026-11-04-text-nomeasure/README.md)。独立FastRuntime候选P1为2.119M sleep/2.281M spin，未超过text fast path或缩小tracing mmap差距，已撤回；模块/参考保留在[FastRuntime报告](../../bench/evidence/2026-11-04-fast-runtime/README.md)，下一步做mmap spool+writer backend。specialized render诊断显示固定shape template把P1 text-mmap从2.30M提升到2.55M（P1 schema 2.23→2.41M，P1 sampled inline 1.99→2.43M），P4约1.02–1.06；全部inconclusive但P1中位10%–23%、无negative。generic render是P1差距的显著组成；下一候选是通用prepared fast renderer。见[diagnostic](../../bench/evidence/2026-11-04-fast-render-diagnostic/README.md)。通用prepared plan候选因每record matches/分段metadata导致schema轴回退（P1 0.906、P4 0.831），已撤回；shape-enforcing format logger也无稳定lead（P1 0.966、P4 batch 1.228、P4 sampled 0.975，全部inconclusive）。prepared render方向已基本耗尽，下一步转向mmap spool+writer backend。见[prepared plan报告](../../bench/evidence/2026-11-04-prepared-plan/README.md)与[format plan报告](../../bench/evidence/2026-11-04-format-plan/README.md)。
+A P1 text-mmap profile showed the producer used about 43% of cycles (render about
+20%, submit 10.5%, reserve 4.9%, begin 4.5%, measure 4.4%) and the consumer about
+18.5%; closing the remaining tracing-mmap gap required a dedicated fast logger or
+mmap output backend, not a single lightweight ring. A text-fast-path
+measure-skipping candidate was inconclusive in all eight groups over five rounds
+(medians 1.00–1.06) and was withdrawn. An independent FastRuntime candidate
+reached P1 2.119M sleeping/2.281M spinning, did not exceed the text fast path or
+close the tracing-mmap gap, and was withdrawn; the next step was an mmap
+spool+writer backend. A specialized-render diagnostic showed a fixed-shape
+template raised P1 text-mmap from 2.30M to 2.55M (P1 schema 2.23→2.41M, P1 sampled
+inline 1.99→2.43M) and P4 about 1.02–1.06; all were inconclusive, but P1 medians
+improved 10%–23% with no negatives. Generic rendering was a significant part of
+the P1 gap; the next candidate was a general prepared fast renderer. A general
+prepared-plan candidate regressed the schema axis because of per-record matches/
+segmented metadata (P1 0.906, P4 0.831) and was withdrawn; a shape-enforcing format
+logger also had no stable lead (P1 0.966, P4 batch 1.228, P4 sampled 0.975, all
+inconclusive). The prepared-render direction was largely exhausted, and the next
+step moved to an mmap spool+writer backend.
 
-P-core text矩阵（240 trials、2,424万JSON）written 64/64 inconclusive；P4中位async-memory 3.03M、async-mmap 2.78–3.08M、spsc-memory 3.75–4.14M、spsc-mmap 3.83–4.25M，对Foundation/tracing约1.2–1.9x，但窗口spread未qualified。矩阵修复了SPSC+mmap+text的thread channel text flag传播并新增parity回归。见[P-core text矩阵](../../bench/evidence/2026-11-04-current-foundation-full-pcore-text/README.md)。
+The P-core text matrix (240 trials, 24.24 million JSON records) had all 64/64
+written comparisons inconclusive; P4 medians were async-Memory 3.03M, async-mmap
+2.78–3.08M, SPSC-Memory 3.75–4.14M, and SPSC-mmap 3.83–4.25M, about 1.2–1.9×
+Foundation/tracing, but window spread did not qualify. The matrix fixed
+SPSC+mmap+text thread-channel text-flag propagation and added a parity regression.
 
-empty-context capture `tree_validated`复用已进入生产：无context、无format_args时，`appendFields`/`appendSlice`已证明完整field tree，renderer不再重复`validateEvent`。spool E-core ts64 A/B中producer render快约7%–8%：spool batch 2.92–3.01M、sampled 2.57–2.62M；对tracing batch 1.072–1.086、sampled 1.047–1.071，对Foundation 1.32–1.45；r3已拿到3/4 qualified lead，没有qualified peer lead。生产text fast path同步受益：P1 async-memory batch 2.307M vs Foundation/tracing 1.789/2.203M（1.286/1.038 qualified）；P1 async-mmap batch 2.454M vs tracing 2.748M仍为0.888 peer lead，是最大生产fast path缺口（2026-11-08渲染优化后为2.525M、0.917，见上）。带context/format_args的路径继续验证；默认durable/CRC/三检查点/recovery不变。完整`test` 766/767、`verify-local` 800/801通过（1项local skip）。见[mmap spool A/B](../../bench/evidence/2026-11-04-mmap-spool/README.md)与[text fast path A/B](../../bench/evidence/2026-11-04-text-fast-path-tv/README.md)。
+Empty-context capture `tree_validated` reuse entered production: with no context
+and no format_args, `appendFields`/`appendSlice` already prove the complete field
+tree, so the renderer no longer repeats `validateEvent`. In spool E-core ts64 A/B,
+producer render was about 7%–8% faster: spool batch 2.92–3.01M, sampled 2.57–2.62M;
+versus tracing batch 1.072–1.086 and sampled 1.047–1.071; versus Foundation
+1.32–1.45; r3 obtained 3/4 qualified leads and no qualified peer lead. The
+production text fast path also benefited: P1 async-Memory batch 2.307M versus
+Foundation/tracing 1.789/2.203M (1.286/1.038 qualified); P1 async-mmap batch
+2.454M versus tracing 2.748M remained a 0.888 peer lead, the largest production
+fast-path gap (2.525M/0.917 after 2026-11-08 render optimization). Paths with
+context/format_args continued to be verified; default durable/CRC/three-checkpoint/
+recovery contracts were unchanged. Complete `test` passed 766/767 and
+`verify-local` 800/801 (one local skip).
 
-`MmapSpool`单producer opt-in fast mode已进入生产：producer直接渲染进file-backed mapping，writer线程按约1MiB `msync(MS_ASYNC)`，`shutdown`截断到最后完整记录；无journal/CRC/recovery/ring/consumer。新增3个测试（durable deferred render byte parity、capacity/partial record、timestamp period）；完整`test` 769/770、`verify-local` 803/804（1项local skip）。P-core batch 3.74–3.85M、sampled 3.19–3.35M；E-core batch 2.92–3.01M、sampled 2.57–2.62M；对Foundation/tracing中位1.05–1.83x，没有qualified peer lead，部分同窗口配对因peer spread保持inconclusive。fast mode是opt-in、非durable、单producer、约55MiB映射、可选coarse timestamp；默认durable/CRC/三检查点/recovery/queue不变。见[mmap spool A/B](../../bench/evidence/2026-11-04-mmap-spool/README.md)。
+`MmapSpool` single-producer opt-in fast mode entered production: the producer
+renders directly into a file-backed mapping, a writer thread performs
+`msync(MS_ASYNC)` at roughly 1 MiB intervals, and `shutdown` truncates to the last
+complete record; there is no journal/CRC/recovery/ring/consumer. Three new tests
+covered durable deferred-render byte parity, capacity/partial records, and
+timestamp period; complete `test` passed 769/770 and `verify-local` 803/804 (one
+local skip). P-core batch was 3.74–3.85M and sampled 3.19–3.35M; E-core batch
+2.92–3.01M and sampled 2.57–2.62M; medians were 1.05–1.83× Foundation/tracing,
+with no qualified peer lead, and some same-window pairs remained inconclusive
+because of peer spread. The fast mode is opt-in, non-durable, single-producer, uses
+about a 55 MiB mapping, and supports optional coarse timestamps; default durable/
+CRC/three-checkpoint/recovery/queue contracts are unchanged.
 
-`MmapSpool`新增`channel`选项并验证多producer模式：每线程创建独立spool/文件/channel，避免共享tail/queue；benchmark reference支持`--mode=spool --producers=4`并按region文件逐条核验。E-core 5轮peer：P1 batch 3.24M、sampled 2.78M（对Foundation 1.39–1.47 qualified、对tracing sampled 1.11 qualified）；**P4 batch 8.20M、sampled 7.62M，对Foundation 2.57–2.72x、对tracing 2.91–3.22x**；最终矩阵窗口为P1 3.265M/2.870M、P4 8.565M/7.568M，填补了durable矩阵中P4 mmap sampled对Foundation的peer lead。spool仍是非durable、无journal/CRC/recovery、每producer一个文件；不能替代durable排名。完整`test` 771/772、`verify-local` 805/806（1项local skip）通过。见[multi-producer spool](../../bench/evidence/2026-11-08-mmap-spool-multi/README.md)。
+`MmapSpool` added a `channel` option and verified multi-producer mode: each thread
+creates an independent spool/file/channel, avoiding a shared tail/queue; the
+benchmark reference supported `--mode=spool --producers=4` and verified region
+files record by record. E-core five-round peer results: P1 batch 3.24M, sampled
+2.78M (1.39–1.47 qualified vs Foundation, 1.11 vs tracing sampled); **P4 batch
+8.20M, sampled 7.62M, 2.57–2.72× Foundation and 2.91–3.22× tracing**; the final
+matrix window was P1 3.265M/2.870M and P4 8.565M/7.568M, filling the durable
+matrix's P4 mmap sampled peer lead versus Foundation. The spool remains
+non-durable, has no journal/CRC/recovery, and uses one file per producer; it
+cannot replace a durable ranking. Complete `test` passed 771/772 and
+`verify-local` 805/806 (one local skip).
 
-渲染热路径不再按值复制`Event`并新增小整数十进制直写：runtime、fused wire renderer、render cache与`MmapSpool`改用`*const Event`入口，避免渲染调用链把约200B事件复制到栈上；`decimal`对`u64<100`直接写1–2字节。E-core同窗口7轮A/B（10配置）：`text_format` P1 memory **1.0908**、P1 mmap **1.1029**、`MmapSpool` batch/sampled **1.0653/1.0609**、durable P1 memory/mmap **1.0482/1.0551**、render-cache P4 **1.0247**、durable P4 mmap **1.0455**；仅P4 text-memory中位0.9820且方向混合、spread超门槛，按inconclusive记录。5轮peer对照中，`text_format` P1 memory与P4 memory对Foundation/tracing全部qualified lead，`MmapSpool` P1 mmap sampled对两前端qualified lead（1.40/1.11），`render_cache` P4 memory四组qualified lead；剩余peer lead为P1 mmap text对tracing 0.917与durable P1 mmap对tracing/Foundation。完整`test` 769/770、`verify-local` 803/804（1项local skip）通过；默认durable/CRC/三检查点/recovery/queue与journal格式不变。见[render pointer + small decimal](../../bench/evidence/2026-11-08-render-pointer-small-decimal/README.md)。
+The rendering hot path stopped copying `Event` by value and added direct small-
+integer decimal writes: Runtime, fused wire renderer, render cache, and
+`MmapSpool` switched to a `*const Event` entry, avoiding about 200 bytes of event
+copy per render call chain; `decimal` writes `u64<100` directly as one or two
+bytes. E-core same-window seven-round A/B (10 configurations): `text_format` P1
+Memory **1.0908**, P1 mmap **1.1029**, `MmapSpool` batch/sampled **1.0653/1.0609**,
+durable P1 Memory/mmap **1.0482/1.0551**, render-cache P4 **1.0247**, durable P4
+mmap **1.0455**; only P4 text-Memory had a 0.9820 median with mixed direction and
+spread above threshold, recorded as inconclusive. In five-round peer comparison,
+`text_format` P1 Memory and P4 Memory were qualified leads over Foundation/tracing,
+`MmapSpool` P1 mmap sampled was a qualified lead over both (1.40/1.11), and
+`render_cache` P4 Memory had four qualified leads; remaining peer leads were P1
+mmap text versus tracing at 0.917 and durable P1 mmap versus tracing/Foundation.
+Complete `test` passed 769/770 and `verify-local` 803/804 (one local skip); default
+durable/CRC/three-checkpoint/recovery/queue and journal format were unchanged.
 
-`render_cache`改为按journal backlog自适应：inline在`pending>capacity/4`、shared async schema在`pending>capacity/2`、SPSC schema在`pending>capacity*3/4`时才由producer渲染，否则consumer继续deferred；claim前只多一次monotonic `pending()`读取。E-core 32配置×5轮A/B（3,232万完整JSON）：P1 inline全部正向**+8.5%–17.9%**，P1 schema **−2.3%–+3.9%**（batch全部正向），P4 inline **+38.9%–57.1%**、P4 schema **+7.9%–51.2%**；无门控版本P1约0.94的回退消失，32个配对无peer lead。5轮peer（async+spsc各2,424万JSON）：P1 memory inline sampled对Foundation/tracing **1.219/1.029 qualified lead**（SPSC 1.273/1.076），batch 1.228/0.995；SPSC P4 memory inline 1.20–1.32全部qualified；P1 memory schema batch对Foundation 1.128、sampled对tracing 0.976（小幅peer lead）；P1 mmap durable对tracing从0.706/0.811改善到0.765–0.906，仍是peer lead，P1 mmap最优仍是`text_format`（0.917）或`MmapSpool`。随后完整E-core 240-trial矩阵（2,424万JSON、kron全配置开启自适应cache）为**19 kron lead、9 peer lead、36 inconclusive**，较2026-11-04安静窗口的11/13/40明显改善；剩余peer lead全部集中在mmap（P1 mmap对tracing、P4 mmap sampled对Foundation），memory路径已基本完成超越。最终260-trial矩阵（durable 64对 + spool 8对、2,626万JSON）durable为**24/19/21**、spool为**5/0/3**：本窗口peer mmap更快（Foundation P4 mmap sampled 3.454M），durable peer lead多于安静窗口，但memory qualified lead同时增加；spool P4 batch **8.565M**、sampled **7.568M**，P1 3.265M/2.870M。完整`test` 770/771、`verify-local` 804/805（1项local skip）通过；`render_cache`仍为opt-in，volatile、journal/CRC/recovery/queue与输出字节不变。见[adaptive render cache](../../bench/evidence/2026-11-08-adaptive-render-cache/README.md)与[完整矩阵](../../bench/evidence/2026-11-08-current-foundation-full-ecore-adaptive/comparison.md)。
+`render_cache` became backlog-adaptive: inline renders on the producer only when
+`pending > capacity/4`, shared async schema at `pending > capacity/2`, and SPSC
+schema at `pending > capacity*3/4`; otherwise the consumer stays deferred, adding
+only one monotonic `pending()` read before claim. E-core 32 configurations × 5
+rounds A/B (32.32 million complete JSON records): P1 inline all positive
+**+8.5%–17.9%**, P1 schema **−2.3%–+3.9%** (all batch positive), P4 inline
+**+38.9%–57.1%**, P4 schema **+7.9%–51.2%**; the ungated version's P1 regression
+around 0.94 disappeared, and 32 pairs had no peer lead. Five-round peer runs
+(async+SPSC, 24.24 million JSON each): P1 Memory inline sampled versus Foundation/
+tracing **1.219/1.029 qualified lead** (SPSC 1.273/1.076), batch 1.228/0.995; SPSC
+P4 Memory inline 1.20–1.32 all qualified; P1 Memory schema batch versus Foundation
+1.128 and sampled versus tracing 0.976 (small peer lead); P1 mmap durable versus
+tracing improved from 0.706/0.811 to 0.765–0.906 but remained a peer lead, and P1
+mmap optimum remained `text_format` (0.917) or `MmapSpool`. A later complete
+E-core 240-trial matrix (24.24 million JSON, all kron configurations with adaptive
+cache) gave **19 kron leads, 9 peer leads, 36 inconclusive**, a clear improvement
+over the 2026-11-04 quiet-window 11/13/40; remaining peer leads were all in mmap
+(P1 mmap versus tracing, P4 mmap sampled versus Foundation), while Memory paths
+had largely overtaken. The final 260-trial matrix (durable 64 pairs + spool 8
+pairs, 26.26 million JSON) gave durable 24/19/21 and spool 5/0/3: peer mmap was
+faster in this window (Foundation P4 mmap sampled 3.454M), durable peer leads
+exceeded the quiet window, but Memory qualified leads also increased; spool P4
+batch was **8.565M**, sampled **7.568M**, and P1 3.265M/2.870M. Complete `test`
+passed 770/771 and `verify-local` 804/805 (one local skip); `render_cache` remained
+opt-in and volatile, with journal/CRC/recovery/queue and output bytes unchanged.
 
-模式选择：durable默认（recovery/CRC/多route/rolling）；async JSON需要durability时开`render_cache`（自适应，P1 memory已到tracing parity、P4领先；保留journal/CRC/recovery）；`text_format`（P1 memory/P4最高吞吐、无recovery）；`MmapSpool`（P1 mmap最快，单producer、无recovery）。生产`text_format`的P1 mmap对tracing仍为0.917，P1 mmap durable+cache为0.79–0.83；详见[性能模式选择](../usage.md#性能模式选择)。
+Mode selection: durable default (recovery/CRC/multiple routes/rolling); enable
+`render_cache` when async JSON needs durability (adaptive; P1 Memory reached
+tracing parity and P4 led; journal/CRC/recovery retained); `text_format` for P1
+Memory/P4 maximum throughput without recovery; `MmapSpool` for the fastest P1 mmap,
+single-producer, no recovery. Production `text_format` P1 mmap versus tracing was
+still 0.917, and P1 mmap durable+cache was 0.79–0.83; see
+[performance mode selection](../usage.md#performance-mode-selection).
 
-近期 [key scratch](../../bench/evidence/2026-11-03-fused-key-scratch/README.md)、[短 CRC](../../bench/evidence/2026-11-03-short-crc/README.md)、[精确固定段 CRC](../../bench/evidence/2026-11-03-crc-fixed-segments/README.md)、[CAS pause](../../bench/evidence/2026-11-03-cas-failure-pause/README.md)、[消费校验 flat CRC](../../bench/evidence/2026-11-03-crc-flat-consumer/README.md)、[16行消费校验 CRC](../../bench/evidence/2026-11-03-crc-flat-consumer-16row/README.md) 和 [THP mmap](../../bench/evidence/2026-11-03-mmap-hugepage/README.md)、[consumer spin](../../bench/evidence/2026-11-03-consumer-spin/README.md)、[producer-format](../../bench/evidence/2026-11-03-producer-format/README.md)、[mutex reserve](../../bench/evidence/2026-11-03-mutex-reserve/README.md)、[async file sink](../../bench/evidence/2026-11-03-async-file-sink/README.md) 候选均因控制或尾部退步撤回；V3 schema CRC 则保留生产。消费校验版通过实际producer/通用CRC/24row单copy/对象预算门槛，E-core 320项有50个qualified lead，但async Mmap P1 sampled schema p99 717→747ns且定向复测719→782ns，按预定负向门槛拒绝。16行版改为只复用原16个row、rodata增长0B，E-core 60个qualified lead、23/32 written lead，但full-run有6个latency/init负向；六轴定向复测全部inconclusive且窗口受无关100% CPU测试干扰，仍按预定门槛拒绝。V3 schema CRC把reference+padding并入payload一次折叠，E-core两窗口treatment合计81 qualified lead/0 negative，V1 control仅第一窗口2个0.14%级非复现负向；同格式V3-control A/B中treatment 27 lead/0 negative、V1路径仅layout噪声，V3 schema journal格式已保留生产并通过`verify-local` 157/157步骤、775/776测试、package-distribution 2/2、check-platforms 10/10；生产热路径与测量binary归一化指令相同。保留后双拓扑完整Foundation矩阵（各240 trials、2424万JSON）为E-core `target_not_met_in_selected_cases`（29 lead/94 peer/293 inc）、P-core `inconclusive`（2 lead/414 inc）；kron lead集中在P1 memory batch，P4/mmap与tracing仍领先，未更新完整排名。P4 mmap单trial PMU显示kron 786M instructions/485M cycles、Foundation 1.828B/904M，kron CPU更少但wall-clock更慢；扩展PMU显示kron的cache-miss/context-switch也更少，关键路径是consumer单线程decode+format+write与文件写吞吐（kron约543MB/s vs Foundation约745MB/s）。consumer spin 160项0 lead/6 negative被拒，P4差距不是sleep/wake。producer-format候选（producer格式化、consumer只写出）在E-core async 160项inline组0 lead/10 negative（0.96–0.99）被拒；kron producer已承担capture/encode/CRC/commit，迁移格式化使其成为瓶颈。mutex reserve候选（复用sync_mutex、不增Journal字段）160项0 lead、P1 5 negative、P4 11 negative被拒；std.Io.Mutex开销高于lock-free CAS。当前源码`verify_crc=false` opt-in的no-CRC诊断（E-core memory 80项）仅1 lead/10 negative，未复现旧compile-time +20%–31%；但复制源码compile-time删除slot CRC的80项诊断得到23 lead/0 negative，P1/P4 inline快约14%–17%、schema约8%。CRC仍是显著功能成本，runtime opt-in的负向更可能来自分支/代码布局；默认CRC保持，跨库比较需归一化Foundation无CRC成本。FileSink writer-thread双缓冲160项P1 2 lead/3 negative、P4 0 lead/11 negative被拒；6个E-core CPU被4 producer+consumer+writer占满，barrier成本超过I/O重叠收益。保留 `test-wire-scratch` 与 `test-crc-segments` 验证复用、嵌套预算、任意 seed、独立分段和 guard-page 边界。
+Recent candidates for key scratch, short CRC, exact fixed-segment CRC, CAS pause,
+flat CRC consumer validation, 16-row consumer validation CRC, THP mmap, consumer
+spin, producer format, mutex reserve, and async file sink were withdrawn because
+of control or tail regressions; V3 schema CRC was retained. The consumer-validation
+version passed the real producer/generic CRC/24-row single-copy/object-budget
+gates and had 50 qualified leads in 320 E-core trials, but async Mmap P1 sampled
+schema p99 moved from 717 to 747 ns and a targeted recheck from 719 to 782 ns, so
+it was rejected by the predetermined negative threshold. The 16-row version reused
+only the original 16 rows with 0 B rodata growth, had 60 qualified leads and 23/32
+written leads, but six latency/init negatives in the full run; six targeted
+rechecks were all inconclusive in a window disturbed by an unrelated 100% CPU
+test, so it was rejected by the threshold. V3 schema CRC folded reference+padding
+into payload in one pass: two E-core windows had 81 qualified leads/0 negatives,
+and the V1 control had only two 0.14%-level non-reproducible negatives in the first
+window; same-format V3-control A/B had 27 leads/0 negatives, with the V1 path
+showing only layout noise. V3 schema journal format was retained in production and
+passed `verify-local` 157/157 steps, 775/776 tests, package-distribution 2/2, and
+check-platforms 10/10; production hot path and measurement binary had identical
+normalized instructions. After retention, the dual-topology complete Foundation
+matrix (240 trials each, 24.24 million JSON) was E-core
+`target_not_met_in_selected_cases` (29 lead/94 peer/293 inconclusive) and P-core
+`inconclusive` (2 lead/414 inconclusive); kron leads concentrated in P1 Memory
+batch, while P4/mmap and tracing still led. P4 mmap single-trial PMU showed kron
+786M instructions/485M cycles versus Foundation 1.828B/904M: kron used less CPU
+but was slower in wall-clock time; extended PMU also showed fewer cache misses/
+context switches, and the critical path was single-threaded consumer decode+
+format+write and file write throughput (kron about 543 MB/s versus Foundation about
+745 MB/s). Consumer spin had 160 trials/0 leads/6 negatives and was rejected; the
+P4 gap was not sleep/wake. A producer-format candidate (producer formats, consumer
+only writes) was rejected on E-core async 160 inline trials with 0 leads/10
+negatives (0.96–0.99): kron's producer already carries capture/encode/CRC/commit,
+and moving formatting there made it the bottleneck. A mutex-reserve candidate
+(reusing `sync_mutex`, no new Journal field) had 160 trials/0 leads, 5 P1
+negatives, and 11 P4 negatives; `std.Io.Mutex` cost exceeded lock-free CAS. The
+current-source `verify_crc=false` opt-in no-CRC diagnostic (E-core Memory 80
+trials) had only 1 lead/10 negatives and did not reproduce the old compile-time
++20%–31%; however, a copied-source compile-time slot-CRC deletion diagnostic had
+23 leads/0 negatives, with P1/P4 inline about 14%–17% faster and schema about 8%.
+CRC remained a significant functional cost, and the runtime opt-in negatives more
+likely came from branches/code layout; default CRC was retained, and cross-library
+comparison needed to normalize Foundation's no-CRC cost. A FileSink writer-thread
+double-buffer had 160 P1 trials/2 leads/3 negatives and P4 0 leads/11 negatives
+and was rejected; six E-core CPUs were saturated by four producers + consumer +
+writer, and barrier cost exceeded I/O overlap gains. `test-wire-scratch` and
+`test-crc-segments` were retained for reuse, nested budgets, arbitrary seeds,
+independent segments, and guard-page boundaries.
 
-等待者计数通知候选完成两核 320 项流程、3,232 万条 JSON 核对，但有稳定吞吐与尾部退步，已拒绝，见 [progress 报告](../../bench/evidence/2026-11-03-progress-waiters/README.md)。最新平坦 CRC 直接索引版消除了旧表重复，两核 640 项流程核对 6,464 万条 JSON，E/P 分别有 27/6 个 written 组局部领先；仍有 p99/p50 稳定反例，按门槛拒绝，见 [direct-index 报告](../../bench/evidence/2026-11-03-crc-flat-segments/direct-index/README.md)。生产原算法和默认协议保持，尚未全面超过两个 Foundation 前端。
+A waiter-count notification candidate completed 320 dual-core workflow trials and
+32.32 million JSON records but had stable throughput and tail regressions and was
+rejected. The latest flat CRC direct-index version removed old-table duplication;
+640 dual-core trials verified 64.64 million JSON records, with E/P having 27/6
+written groups locally ahead, but stable p99/p50 counterexamples remained and it
+was rejected by the threshold. Production kept the original algorithm and default
+protocols and had not fully overtaken the two Foundation frontends.
 
-可靠性证据已扩展：ext4/XFS/Btrfs/F2FS 16-run child-VM abrupt-loss、9p共享文件系统行为、真实ENOSPC/只读FS/Journal预分配拒绝、1000-seed journal/archive fuzz、并发delivery/shutdown/mmap/配置替换与1000/200次soak；sanitizer仍受Zig TSan/Helgrind工具链限制。逐项源码、正负和资格见 [当前验收状态](../implementation-status.md)。
+Reliability evidence was extended: ext4/XFS/Btrfs/F2FS 16-run child-VM abrupt-loss,
+9p shared-filesystem behavior, real ENOSPC/read-only-FS/Journal preallocation
+rejection, 1000-seed journal/archive fuzz, concurrent delivery/shutdown/mmap/
+configuration replacement, and 1000/200-run soak; sanitizers remained limited by
+the Zig TSan/Helgrind toolchain.
 
-## 性能与发布范围
+## Performance and release scope
 
-当前能力可用于固定 Zig 0.16 的 Linux 单机项目，选择 bounded Memory/portable 起步，并按应用处理过载与关闭错误。Windows、macOS、Android、iOS 有实现和交叉编译/部分链接证据，仍需实际设备运行资格；包版本为 0.1.0。
+The capability targeted Linux single-machine projects pinned to Zig 0.16, starting
+with bounded Memory/portable and handling overload/shutdown errors in the
+application. Windows, macOS, Android, and iOS had implementations and cross-
+compilation/partial-link evidence but still needed real-device execution; the
+package version was 0.1.0.
 
-完整流程比较包括字段捕获、系统时钟、编码、实际输出、written flush、关闭和清理。最近一次完整同轮跨库对照使用fd4e941的Logging基线，与Foundation真实spdlog/Rust tracing前端完成200项试验、2020万条输出核对：JSON中位吞吐对spdlog组合多数领先，与tracing公共JSON组合互有胜负；原生build_tracing文本单列。全部跨库速度比仍受波动限制，SPSC的p99.9仍有差距。2026-11-02另以当前源码完成缩减同轮抽查：P-core窗口 vs Foundation + spdlog，Memory P1 batch 1.125×达到局部门限，其余组inconclusive；vs Foundation + Rust tracing，两次相同80项抽查方向不一致，首轮三个局部资格在复测中未复现，当前P-core对照保持inconclusive。无SMT兄弟的物理核（E-core）窗口则相反：tracing 8组中位全高、5组达到门限；spdlog 5组达到门限领先，Mmap P4 batch约0.580×。随后完成E-core 160项完整JSON矩阵（1616万条）：tracing在16个JSON对照中全部领先kron async/SPSC；spdlog在多数P4/Mmap组领先；kron async仅Memory P1 batch接近持平（1.002×），SPSC Memory P1 sampled略领先（1.063×），其余组落后；SPSC比async提高约5%–15%，但不足以改变Foundation领先。同一源码的P-core 160项完整矩阵（1616万条）受宿主负载影响，大多数组spread超10%、配对比较inconclusive；方向上kron async/SPSC对spdlog多数≥1，对tracing在Memory P1/Mmap P1落后、P4部分领先。禁用CRC诊断（复制源码、非生产）显示E-core Memory P1/P4吞吐提升26.3%/31.1%，量化CRC producer/consumer校验是E-core差距的主要组成。随后新增显式opt-in `MemoryQueueOptions.verify_crc=false`：仅volatile memory queue生效，默认仍为true，mmap/可恢复journal拒绝；生产build E-core P1/P4提升20.0%/23.1%。该模式只适合明确接受未检测内存损坏风险的应用。因此当前性能对CPU拓扑高度敏感，不能把任一窗口作为全面排名；需要双拓扑profile与功能归一化比较。详见 [E-core完整矩阵](../../bench/cpp_reference/evidence/2026-11-02-managed-frontends-ecore-full/README.md)、[P-core完整矩阵](../../bench/cpp_reference/evidence/2026-11-02-managed-frontends-pcore-full/README.md)、[nocrc诊断](../../bench/evidence/2026-11-02-nocrc-diagnostic/README.md)、[E-core tracing](../../bench/cpp_reference/evidence/2026-11-02-current-tracing-quiet-affinity/README.md)与 [E-core spdlog](../../bench/cpp_reference/evidence/2026-11-02-current-foundation-quiet-affinity/README.md)。fresh mmap初始化优化使16.8MB journal init中位54.2/53.8ms→8.2/6.9ms。精确源码、配置和详细数字见 [前端对照](../../bench/cpp_reference/evidence/2026-11-02-managed-frontends/detailed-comparison.md)、[spdlog抽查](../../bench/cpp_reference/evidence/2026-11-02-current-foundation-spotcheck/README.md)与 [tracing抽查](../../bench/cpp_reference/evidence/2026-11-02-current-tracing-spotcheck/README.md)。
+Complete workflow comparison included field capture, system clock, encoding,
+actual output, written flush, shutdown, and cleanup. The latest complete same-round
+cross-library comparison used the fd4e941 Logging baseline and Foundation's real
+spdlog/Rust tracing frontends in 200 trials and 20.2 million output records: JSON
+median throughput mostly led the spdlog combination, was mixed against tracing's
+public JSON combination, and native `build_tracing` text was reported separately.
+All cross-library speed ratios remained limited by variance, and SPSC p99.9 still
+lagged. A 2026-11-02 reduced same-round spot check against Foundation + spdlog on
+P-core found Memory P1 batch 1.125× meeting the local threshold, with other groups
+inconclusive; against Foundation + Rust tracing, two identical 80-trial spot
+checks disagreed, the first round's three local qualifications did not reproduce,
+and the P-core comparison remained inconclusive. The physical-core (E-core)
+window without SMT siblings was the opposite: tracing medians were higher in all
+eight groups, five met the threshold, and spdlog led in five groups, with Mmap P4
+batch about 0.580×. A subsequent E-core 160-trial complete JSON matrix (16.16
+million records) had tracing ahead of kron async/SPSC in all 16 JSON comparisons;
+spdlog led most P4/Mmap groups; kron async was near parity only in Memory P1 batch
+(1.002×), SPSC Memory P1 sampled led slightly (1.063×), and other groups lagged;
+SPSC improved about 5%–15% over async but not enough to change Foundation's lead.
+The same-source P-core 160-trial matrix (16.16 million records) was affected by
+host load, most groups exceeded 10% spread, and paired comparisons were
+inconclusive; directionally kron async/SPSC was mostly ≥1 versus spdlog, behind
+tracing in Memory P1/Mmap P1, and ahead in some P4 groups. A no-CRC diagnostic
+(copied source, non-production) showed E-core Memory P1/P4 throughput +26.3%/
++31.1%, quantifying CRC producer/consumer validation as a major component of the
+E-core gap. The explicit opt-in `MemoryQueueOptions.verify_crc=false` then applied
+only to volatile Memory queues, defaulted to true, and was rejected for
+mmap/recoverable journals; production build E-core P1/P4 improved 20.0%/23.1%.
+This mode was only for applications explicitly accepting undetected memory
+corruption risk. Performance was therefore highly CPU-topology sensitive, and no
+single window was a universal ranking; dual-topology profiles and
+feature-normalized comparison were required. Fresh mmap initialization reduced a
+16.8 MB journal init median from 54.2/53.8 ms to 8.2/6.9 ms.
 
-当前数字输出优化完成140项真实文件、4214万条JSON核对，shared Memory/Mmap P1/P4完整用户态指令稳定减少3.43%–3.47%；完整吞吐/尾延迟仍未取得一般资格，未据此更新跨库排名。最新源码、验证与所有正负结果见 [数字输出证据](../../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)。
+The decimal output optimization verified 140 real-file trials and 42.14 million
+JSON records; shared Memory/Mmap P1/P4 complete user instructions fell steadily by
+3.43%–3.47%; complete throughput/tail did not qualify generally, and the
+cross-library ranking was not updated.
 
-随后 checked wire typed visitor 将已验证 scalar 直接交给按 tag 编译的 writer，跳过中间 `Value` 物化和通用二次分派；40项完整 shared 真实文件核对1204万条JSON，Memory/Mmap P1/P4 用户态指令中位减少1.65%–1.69%，完整吞吐/尾部仍未取得一般资格。源码、独立差分和全部正负结果见 [wire scalar证据](../../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
+The checked wire typed visitor then passed validated scalars directly to a
+tag-compiled writer, skipping intermediate `Value` materialization and generic
+second dispatch; 40 complete shared real-file trials verified 12.04 million JSON
+records, and Memory/Mmap P1/P4 user instructions fell 1.65%–1.69% by median, while
+complete throughput/tail still did not qualify generally.
 
-最新一轮把 JSON 固定 metadata 的 timestamp/session/sequence/route_mask/config_generation 直接以 comptime tag 和原始 u64/i64 写出，跳过临时 `Value` union、运行时 tag 分派和 u64→u128 宽整数路径。40项完整 shared 核对1204万JSON，四组用户态指令中位减少2.45%–2.48%；80项未插桩流程核对2408万JSON，八组 written 吞吐全为正、六组达到噪声门限，P4 batch 中位区间不重叠；text/logfmt 控制组与尾部波动仍保留。源码、正负数据与复现见 [metadata证据](../../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
+The latest round wrote JSON fixed metadata timestamp/session/sequence/route_mask/
+config_generation directly with comptime tags and raw u64/i64, skipping temporary
+`Value` unions, runtime tag dispatch, and the u64→u128 wide-integer path. Forty
+complete shared trials verified 12.04 million JSON records, and four user
+instruction groups fell 2.45%–2.48% by median; 80 uninstrumented workflows verified
+24.08 million JSON records, all eight written throughput groups were positive, six
+met the noise threshold, and P4 batch median intervals did not overlap; text/logfmt
+controls and tail variance were retained.
 
-JSON severity 字段改为按 Level 枚举选择一个完整 literal 一次写出，`err` 仍保持 `"err"` 拼写。JSON encoder probe instructions 中位 −2.05%；40项完整 shared 核对1204万JSON，四组指令中位减少1.68%–1.70%。80项 workflow 吞吐正负混合，不作一般吞吐承诺。源码与全部数据见 [severity证据](../../bench/evidence/2026-11-02-json-severity-literal/README.md)。
+The JSON severity field changed to one complete literal per Level enum, with `err`
+still spelled `"err"`. JSON encoder probe instructions fell 2.05% by median; 40
+complete shared trials verified 12.04 million JSON records, and four instruction
+groups fell 1.68%–1.70% by median. Eighty workflow trials had mixed throughput, so
+no general throughput promise was made.
 
-同负载 A/B 对比 fd4e941 与当前源码：E-core 5 次 batch 中 current 的 Memory P1/P4、Mmap P1/P4 分别快 **14.6%/11.8%/11.4%/7.2%**；P-core 窗口噪声较大。近期优化没有造成 E-core 回退；E-core 相对 Foundation 仍落后，是 journal CRC/恢复、typed capture 与 consumer 格式化的功能成本，不是这些优化导致。数据见 [A/B证据](../../bench/evidence/2026-11-02-fd4e941-current-ab/README.md)。
+Same-workload A/B between fd4e941 and the then-current source: E-core five-run
+batch showed current Memory P1/P4 and Mmap P1/P4 faster by **14.6%/11.8%/11.4%/
+7.2%**; P-core windows were noisier. Recent optimizations did not cause an E-core
+regression; E-core still lagged Foundation because of journal CRC/recovery, typed
+capture, and consumer formatting functional costs, not these optimizations.
 
-Memory journal初始化此前在`Storage.createMemory`完整清零后又由`format.initialize`清零，并额外逐页写0；现在memory backing只保留一次完整writable清零，header/checkpoint由zeroed入口写出，该轮file/mmap仍执行完整清零。16.8MB journal的batch runtime init中位9.13ms→6.64ms（5/5配对下降），sampled 10.79ms→6.99ms（区间仍重叠）；512B小队列差异低于宿主噪声。该结果针对初始化局部成本，不代表吞吐或跨库排名，详见 [memory init证据](../../bench/evidence/2026-11-02-memory-init-zeroing/README.md)。
+Memory journal initialization previously zeroed in `Storage.createMemory`, again
+in `format.initialize`, and additionally wrote zeros page by page; now the memory
+backing keeps one complete writable zeroing, while header/checkpoint are written
+through a zeroed entry; file/mmap still performed full zeroing that round. A 16.8
+MB journal's batch runtime init median moved from 9.13 ms to 6.64 ms (5/5 pairs
+lower), and sampled from 10.79 to 6.99 ms (intervals still overlapping); a 512 B
+queue difference was below host noise. This was a local initialization-cost result,
+not throughput or a cross-library ranking.
 
-Fresh Linux mmap在ext4/XFS/btrfs/F2FS等能证明fresh extents读为零的文件系统上改为只写header/checkpoint，并依赖`MAP_POPULATE`跳过整段清零与逐页写；未知文件系统继续完整清零，Windows/Darwin保留prefault但改为只读touch。16.8MB journal的sampled/batch init中位54.2/53.8ms→8.2/6.9ms，5/5配对下降且中位区间不重叠；512B小队列差异低于噪声。ext4新文件/截断后扩展文件的16MiB探针均为0个非零字节。该结果不代表稳态吞吐、durable或非Linux设备资格，详见 [fresh mmap证据](../../bench/evidence/2026-11-02-mmap-fresh-zero-init/README.md)。
+Fresh Linux mmap on ext4/XFS/btrfs/F2FS and similar filesystems that can prove
+fresh extents read as zero changed to writing only header/checkpoint and relying
+on `MAP_POPULATE` instead of whole-range zeroing and page-by-page writes; unknown
+filesystems kept full zeroing, and Windows/Darwin kept prefault but switched to
+read-only touches. A 16.8 MB journal's sampled/batch init median moved from
+54.2/53.8 ms to 8.2/6.9 ms, with 5/5 pairs lower and non-overlapping medians; a
+512 B queue difference was below noise. A 16 MiB ext4 probe on a new file and a
+truncate-then-extend file both had zero non-zero bytes. This did not represent
+steady-state throughput, durability, or non-Linux device qualification.
 
-原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](readme-before-reorganization.md)。完整目标的剩余工作由 [当前验收状态](../implementation-status.md) 跟踪。
+Raw data, failures/slow values, per-round source identity, and local before/after
+results were retained in evidence at that time; earlier README performance
+narratives are in [the historical snapshot](readme-before-reorganization.md).
+Remaining work for the complete goal was tracked by
+[current acceptance status](../implementation-status.md).

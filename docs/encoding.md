@@ -1,83 +1,256 @@
-# 事件编码、验证与二进制归档
+# Event encoding, validation, and binary archives
 
-当前inline仍为v4、schema reference为v5。v6 native整数候选虽使五u64 payload减少40B，但完整file/PMU筛选出现指令与部分周期/吞吐负向，所有生产候选已撤回；不能从更小payload推导更快日志。真实旧writer冻结的scalar/wide/nested/deferred及schema字节与hash回归继续保留，源/负向数据见[实验报告](../bench/evidence/2026-11-02-native-wire/README.md)。
+The current inline format is v4, and the schema-reference format is v5. A v6
+native-integer candidate reduced five-u64 payloads by 40 bytes, but complete
+file/PMU screening showed negative instruction, cycle, and throughput results in
+some groups; all production candidates were withdrawn. A smaller payload does
+not imply faster logging. Frozen scalar/wide/nested/deferred and schema bytes
+from the real old writer remain as regression fixtures.
 
-源码位置保留事件中的完整相对路径。text使用无外围引号的 `source= src/http/handler.zig:42:7`，方便终端跳转；控制字符、无效UTF-8和Unicode行分隔符仍被转义，不允许路径注入新日志行。JSON的 `source.file` 保持合法字符串，logfmt按其key/value语法引用字段。模块根与仓库根不同的应用使用编译期 `kron.source.fromModule`，或把编译入口放到仓库根；见 [源码路径接入](usage.md#时间trace-与源位置)。
+Source locations preserve the complete relative path in the event. Text prints
+an unquoted `source= src/http/handler.zig:42:7` for terminal navigation; control
+characters, invalid UTF-8, and Unicode line separators are still escaped so a
+path cannot inject a new log line. JSON `source.file` remains a valid string, and
+logfmt quotes the field according to its key/value syntax. Applications whose
+module root differs from the repository root use compile-time
+`kron.source.fromModule`, or place the entry point at the repository root; see
+[source path integration](usage.md#time-trace-and-source-location).
 
-schema的key/type形状检查合并到size visitor曾做完整before/after实验，保持所有错误顺序并通过4096项独立旧/新差分，但独立PMU显示schema SPSC指令增加0.463%，完整流程没有取得吞吐收益资格，候选已否决。当前schema仍使用完整树/长度遍历后单独形状检查；无效树先于schema/level和长度错误，失败不写destination。全部候选、错误优先级测试和正负数据见`bench/evidence/2026-11-01-schema-shape-visitor/`，不能将少一个循环直接等同提速。
+Merging schema key/type shape checks into the size visitor was tested end to end
+and preserved all error ordering, passing 4,096 independent old/new
+differentials. Independent PMU showed schema SPSC instructions increased by
+0.463%, and complete workflows did not qualify for a throughput gain, so the
+candidate was rejected. The current schema still performs a complete tree/length
+traversal followed by a separate shape check; invalid trees take precedence over
+schema/level and length errors, and failures write nothing to the destination.
+Removing one loop is not automatically a speedup.
 
-`codec.encodedSize`、`codec.encode`、`codec.writeTo`都校验完整借用事件。数组和group的cycle、8层深度、重复group key和attributes/arguments共享256节点预算只有一份遍历实现，位于 `fields.ValueValidator`。格式参数顶层key允许重复；参数内部group仍校验唯一key。
+`codec.encodedSize`, `codec.encode`, and `codec.writeTo` all validate the
+complete borrowed event. Cycle detection for arrays/groups, the 8-level depth
+limit, duplicate group keys, and the 256-node budget shared by
+attributes/arguments have one traversal implementation in `fields.ValueValidator`.
+Format-argument top-level keys may repeat; groups inside arguments still require
+unique keys.
 
-长度计算使用同一遍历的observer统计每个节点自己的wire字节：key为4字节长度与key内容，scalar为tag与固定值，string/bytes为tag、长度和内容，array/group为tag和child count。child由validator遍历，不再单独递归统计一次。公开standalone value size同样先校验。
+Length computation uses an observer in the same traversal to count each node's
+own wire bytes: keys use a 4-byte length plus key bytes, scalars use a tag and
+fixed value, strings/bytes use a tag, length, and contents, and arrays/groups use
+a tag and child count. Children are visited by the validator and are not counted
+again by a separate recursion. Standalone public value size also validates
+first.
 
-长度累计使用u64，每个usize项先截到`u32_max+1`。最终wire只能容纳u32长度，任何超过上限的项仍在完成全树验证后返回`TooLarge`；合法项之和保持精确。最多256个value/key和5个event/source字符串的有界累计低于2^42，comptime限制usize最多64位。长度超限不会提前覆盖后续cycle、重复key或schema shape/level错误；不读取超长逻辑slice，无效事件和容量不足仍在写入destination之前失败。独立8192项随机/边界算术与宽u128结果一致，见`bench/evidence/2026-11-01-wire-size/`。
+Length accumulation uses u64, with each usize item first clamped to
+`u32_max + 1`. The final wire format can only carry u32 lengths, so any item over
+the limit still returns `TooLarge` after complete tree validation; the sum of
+valid items remains exact. At most 256 value/key nodes and five event/source
+strings keep the bounded accumulation below 2^42, and comptime limits usize to
+at most 64 bits. Length overflow does not hide later cycle, duplicate-key, or
+schema shape/level errors; oversized logical slices are not read, and invalid
+events or insufficient capacity still fail before writing to the destination.
+An independent 8,192-case random/boundary arithmetic test matches wide u128
+results.
 
-`ValueValidator.valueWith/fieldsWith/argumentsWith`可接收typed visitor，回调分别观察当前value或Field，不能递归或修改正在借用的树。自定义visitor的错误会立即结束遍历，可能先于尚未访问节点的校验错误；codec自己的visitor不会返回错误，因此保留完整validation-first契约。
+`ValueValidator.valueWith/fieldsWith/argumentsWith` accept a typed visitor whose
+callback observes the current value or Field and cannot recurse or modify the
+borrowed tree. A custom visitor error ends traversal immediately and may precede
+validation errors for unvisited nodes; codec-internal visitors never return
+errors, preserving the complete validation-first contract.
 
-## 二进制归档
+## Binary archive
 
-`encoder.binary.encode`通过 `codec.writeFramed` 在同一调用内完成：
+`encoder.binary.encode` uses `codec.writeFramed` in one call:
 
-1. 全树校验并计算payload长度一次。
-2. 流式写入256字节hash缓冲，计算payload CRC32。
-3. 生成并写入固定archive header。
-4. 使用相同私有wire实现流式写出payload。
+1. Validate the complete tree and compute payload length once.
+2. Stream into a 256-byte hash buffer and compute payload CRC32.
+3. Generate and write the fixed archive header.
+4. Stream the payload using the same private wire implementation.
 
-两次payload遍历是计算CRC后先写header的必要步骤；重复校验和长度计算已经合并。不会导出unchecked写入函数或可复用的validation token。Event以及descriptor、key、string/bytes在整个调用和Writer回调期间都必须保持稳定，这是所有借用编码接口的前置条件。
+The two payload traversals are required because CRC must be known before the
+header is written; duplicate validation and length computation are merged. No
+unchecked writer or reusable validation token is exported. Event, descriptors,
+keys, and strings/bytes must remain stable throughout the call and Writer
+callback, which is a precondition of every borrowed encoding interface.
 
-Runtime 默认 inline 提交路径现在在 route predicate 之前调用 `codec.measure`，用同一次完整树校验得到 wire 长度，并把该长度传给接受后的 `codec.encodeSized`。`encodeSized` 仍重新检查 level 和 destination 容量，只省去同一未变事件的第二次长度遍历；redaction 会重写借用存储，继续独立校验/测量；prepared schema最新路径复用本次全树检查中统计的value/nested key字节，形状和引用仍在原边界检查。`codec.measure` 有意不检查 level，保持既有顺序：树错误先于 predicate，level 错误只在接受的写入边界出现。公开 `codec.encode` 仍先校验完整树，不导出可复用的 unchecked writer 或 validation token；用不同字段/消息的长度误用由调用契约和 debug assert 拒绝。
+The default Runtime inline submission path now calls `codec.measure` before the
+route predicate, obtains wire length from the same complete tree validation, and
+passes that length to `codec.encodeSized` after acceptance. `encodeSized` still
+rechecks level and destination capacity and only skips the second length
+traversal for the same unchanged event; redaction rewrites borrowed storage and
+keeps independent validation/measurement; the latest prepared-schema path reuses
+value/nested-key bytes counted during this full-tree check, while shape and
+references are still checked at their original boundaries. `codec.measure`
+intentionally does not check level, preserving the existing order: tree errors
+precede the predicate, and level errors appear only at the accepted write
+boundary. Public `codec.encode` still validates the complete tree first, and no
+reusable unchecked writer or validation token is exported; misuse with a length
+from different fields/messages is rejected by the calling contract and debug
+asserts.
 
-消费者 decoded delivery 复用 checked decoder 的树校验：`codec.decode`/`schema_codec.resolve`在完成wire树、节点预算、深度、重复key和长度检查后设置内部`Event.tree_validated`；内部`encoder.common.encodeDecoded`只对该证明跳过第二次`ValueValidator`，否则仍走校验路径。公开`encoder.encode/encodeWithTime`忽略该提示并始终校验；runtime先用admission的`codec.measure`或redaction/binding校验，再由`submitSafeDestination`用可信上下文覆盖调用方提示。binary route继续使用公开校验入口。测试锁定伪造提示的invalid tree仍被公开encoder拒绝、runtime重复key仍返回`DuplicateKey`、decoded text/JSON/logfmt与公开encoder字节一致。
+Consumer decoded delivery reuses the checked decoder's tree validation:
+`codec.decode`/`schema_codec.resolve` set an internal `Event.tree_validated` flag
+after checking the wire tree, node budget, depth, duplicate keys, and lengths;
+internal `encoder.common.encodeDecoded` skips the second `ValueValidator` only for
+that proof and otherwise uses the validation path. Public
+`encoder.encode/encodeWithTime` ignore the hint and always validate; Runtime
+first uses admission's `codec.measure` or redaction/binding validation, then
+`submitSafeDestination` overwrites caller hints with trusted context. Binary
+routes continue to use the public validation entry. Tests lock in that a forged
+hint on an invalid tree is still rejected by the public encoder, Runtime still
+returns `DuplicateKey` for duplicate keys, and decoded text/JSON/logfmt bytes
+match the public encoder.
 
-进一步为常见形状增加 fused wire-to-JSON 路径：当前 v4 inline、单个 JSON/text/logfmt route、非 deferred message、无 format args 时，checked wire parser 只解析一次 header/scope/message/trace/source/attributes；nested attributes 使用 caller scratch arena，并在 scratch 中写出与公开 encoder 相同的 JSON/text/logfmt 记录；top-level key 去重和完整 value tag 校验在写入 sink 前完成。其他形状返回 `error.Fallback` 走 decode+encode。journal 协议、公开 encoder 和校验边界不变。
+A fused wire-to-JSON path covers common shapes: current v4 inline, a single
+JSON/text/logfmt route, non-deferred message, and no format arguments. The
+checked wire parser parses header/scope/message/trace/source/attributes once;
+nested attributes use a caller scratch arena, and the same JSON/text/logfmt
+record as the public encoder is written into scratch; top-level key
+deduplication and complete value-tag validation finish before writing to the
+sink. Other shapes return `error.Fallback` and use decode+encode. Journal
+protocol, public encoder, and validation boundaries are unchanged.
 
-融合路径的 scalar 通过 `WireInput.valueWith(receiver)` 直接交给按 comptime tag 编译的 writer，跳过中间 `Value` 物化和通用 tag 二次分派。`valueWith` 与公开 `value()` 使用同一套 tag、长度、节点、深度、nested、重复key 和 arena 预算检查；array/group 仍完整解析后才回调，公开 `value()` 仍构造原 `Value`，公开 value/event 继续完整校验借用树。`common.writeTaggedValue` 是内部渲染入口，不对外暴露 unchecked writer。
+Fused scalars pass through `WireInput.valueWith(receiver)` directly to a writer
+compiled per comptime tag, skipping intermediate `Value` materialization and
+generic second dispatch. `valueWith` uses the same tag, length, node, depth,
+nested, duplicate-key, and arena-budget checks as public `value()`; arrays/groups
+are fully parsed before callbacks, public `value()` still constructs the original
+`Value`, and public value/event APIs continue to fully validate borrowed trees.
+`common.writeTaggedValue` is an internal rendering entry and does not expose an
+unchecked writer.
 
-JSON固定metadata的timestamp、session、sequence、route_mask、config_generation也直接以comptime tag和原始`i64`/`u64`调用`writeTaggedValue`，不再构造临时`Value`、运行时tag switch或把`u64`扩成`u128`。输出精度、quote、decimal与text/logfmt路径不变；局部工作量与完整shared证据见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。
+JSON fixed metadata timestamp, session, sequence, route_mask, and
+config_generation also call `writeTaggedValue` directly with comptime tags and
+raw `i64`/`u64`, without constructing a temporary `Value`, a runtime tag switch,
+or widening `u64` to `u128`. Output precision, quoting, decimal handling, and the
+text/logfmt paths are unchanged.
 
-测试锁定 filtered invalid level 仍返回 filtered、invalid tree 仍在 predicate 前失败，并核对 sized 写入与公开 encode 的完整字节一致。Redaction路径维持原/新树独立校验；prepared最新路径只在同一安全提交内复用已经检查的最终树长度。公开codec和runtime提交入口仍完整校验，不接受可复用的外部凭证。
+Tests lock in that filtered invalid levels still return filtered, invalid trees
+still fail before the predicate, and sized writes match public `encode` bytes
+exactly. Redaction paths keep independent validation of the original/new tree;
+the latest prepared path reuses the final tree length only within the same safe
+submission. Public codec and Runtime submission entries still fully validate and
+do not accept reusable external credentials.
 
-测试确认size、encode和stream每个节点仅校验一次，archive也是一次prepare；覆盖全部value tags、独立/组合node预算、invalid tree零输出、size overflow后的错误优先级、Secret脱敏和wire字节一致。Runtime、redaction和context仍各自维护它们的入口校验；本轮没有用“之前校验过”跳过公开提交边界。
+Tests confirm that size, encode, and stream validate each node exactly once, and
+that archive also prepares once. Coverage includes all value tags, independent
+and combined node budgets, zero output for invalid trees, error precedence after
+size overflow, Secret redaction, and matching wire bytes. Runtime, redaction, and
+context each keep their own entry validation; this work does not use "validated
+earlier" to skip public submission boundaries.
 
-## 预注册 schema 编码
+## Pre-registered schema encoding
 
-`schema_codec.encodedReferenceSize` 和 `encodeReference` 现在也通过同一个 validating visitor 统计值长度。顶层字段与格式参数的 key 已保存在 schema 中，因此不计入参考载荷；嵌套 group 的 key 仍写入载荷，由 validator 当前 depth 决定是否计入。两个入口各只进行一次完整树校验，保持 attributes/arguments 共享 256 节点、8 层深度、cycle 与嵌套重复 key 检查。
+`schema_codec.encodedReferenceSize` and `encodeReference` now also count value
+lengths through the same validating visitor. Top-level field and format-argument
+keys are already stored in the schema and therefore not counted in the reference
+payload; nested group keys are still written into the payload, and the
+validator's current depth decides whether they count. Both entries perform
+exactly one complete tree validation and preserve the shared 256-node/8-level
+attributes/arguments budget, cycle checks, and nested duplicate-key checks.
 
-此前参考编码在检查完整事件后，为每个顶层 value 计算长度时再次递归校验，写出时调用公开 value writer 又校验一遍。现在 node-local 长度统计位于内部 `wire_size.zig`，底层字节写入位于内部 `wire_write.zig`，供两个已经完整校验的 payload codec 使用。公开 `codec.writeValue` 继续在写出前独立校验，不能通过公共模块取得跳过校验的 writer 或凭证。
+Previously, reference encoding validated the complete event, recursively
+validated each top-level value again while computing length, and validated a
+third time when the public value writer wrote it. Node-local length accounting
+now lives in internal `wire_size.zig`, and low-level byte writing lives in
+internal `wire_write.zig`, shared by the two payload codecs after complete
+validation. Public `codec.writeValue` still validates independently before
+writing; no public module exposes a validation-skipping writer or credential.
 
-参考编码保持原有错误顺序：完整树错误 → schema shape/type 与 level 错误 → wire 长度上限 → destination 容量。长度使用有界u64累计，单项截于u32_max+1，在校验和形状/level检查后判断wire上限；失败不修改destination。schema payload v5/84-byte header、旧 v2 读取、inline v4 与旧 v1/v3 读取均保留。新增测试直接计算全部 scalar/container 标签的长度，检查一次遍历计数、nested key、重复 positional key、256 节点与深度边界、长度溢出优先级，以及公开 value writer 无效输入零输出。
+Reference encoding keeps the original error order: complete tree errors →
+schema shape/type and level errors → wire length limit → destination capacity.
+Length uses bounded u64 accumulation, each item is clamped to `u32_max + 1`, and
+the wire limit is checked after validation and shape/level checks; failure does
+not modify the destination. Schema payload v5/84-byte header, old v2 reads,
+inline v4, and old v1/v3 reads are preserved. New tests directly compute lengths
+for all scalar/container tags and check one-pass counting, nested keys, duplicate
+positional keys, 256-node and depth boundaries, length-overflow precedence, and
+zero output from the public value writer for invalid input.
 
-## 性能证据
+## Performance evidence
 
-`zig build bench-encoding -Doptimize=ReleaseFast -- --iterations=10000 --repetitions=5`覆盖flat5、两层嵌套和最大256节点，分别测量size、value size、encode与binary archive。完整输出的Wyhash消费成本计入encode/archive，时钟每批只读取一对，测量期间没有堆分配。
+`zig build bench-encoding -Doptimize=ReleaseFast -- --iterations=10000 --repetitions=5`
+covers flat5, two-level nesting, and the maximum 256 nodes, measuring size, value
+size, encode, and binary archive separately. Complete-output Wyhash consumption
+is included in encode/archive, the clock is read once per batch pair, and no heap
+allocation occurs during measurement.
 
-修改前源码单独冻结，原始候选和最终u128候选全部保留。五轮交替before/after试验共产生600行；每行checksum、output bytes、payload/value/archive长度、字段/节点、迭代与预算都和基线相同。记录和SHA256位于 `bench/evidence/2026-10-31-encoding-visitor/`。
+Before-source was frozen separately, and original candidates plus the final u128
+candidate were retained. Five alternating before/after rounds produced 600 rows;
+each row's checksum, output bytes, payload/value/archive length, fields/nodes,
+iterations, and budget matched the baseline. Raw measurement directories are no
+longer tracked in the repository.
 
-首次候选每个节点判断overflow增加了小事件成本，因此最终累计器只在全树验证结束后检查上限。多个时钟试验出现明显host/CPU调度波动，全部比较标为inconclusive；包含setup与report的用户态perf计数支持执行指令减少，但不能当作稳定producer延迟或端到端吞吐提升。当前成果是重复工作的减少、准确边界测试和可复现基准，不是行业排名。
+The first candidate checked overflow per node, adding cost to small events, so
+the final accumulator checks limits only after complete tree validation. Several
+clock experiments showed clear host/CPU scheduling variance, and all comparisons
+were marked inconclusive. User-space perf counts including setup and reporting
+support an instruction reduction but are not stable producer latency or
+end-to-end throughput. The current result is reduced duplicate work, accurate
+boundary tests, and a reproducible benchmark, not an industry ranking.
 
-2026-11-01 基准增加 `reference_size_only` 和 `reference_encode`，schema 注册、完整 roundtrip 检查与分配都在计时外。修改前源码单独冻结，应用与库均以 ReleaseFast 构建；固定子进程 affinity，五轮交替 before/after，每轮五次重复。450 对结果的完整输出 checksum、wire/归档/参考载荷长度、字段/node/buffer 预算均精确一致。数据位于 `bench/evidence/2026-11-01-schema-encoding/`。
+The 2026-11-01 benchmark added `reference_size_only` and `reference_encode`, with
+schema registration, complete round-trip checks, and allocation outside the timed
+region. Before-source was frozen separately, application and library were built
+with ReleaseFast, subprocess affinity was fixed, and five alternating
+before/after rounds each had five repetitions. All 450 paired results matched
+exactly on complete-output checksum, wire/archive/reference payload length, and
+field/node/buffer budgets.
 
-该轮参考长度计算的 flat5、nested8、max256 本机中位成本分别下降约 23%、38%、44%；nested8 参考编码下降约 29%。flat5/max256 参考编码中位数下降，但跨轮 spread 超过 10% 噪声门限，结果仍为 inconclusive。参考编码计时还包含 fixture 更新与完整输出 Wyhash，不能换算为整体 producer 延迟或日志吞吐，也不能据此宣称行业领先。
+Reference-length medians for flat5, nested8, and max256 fell by about 23%, 38%,
+and 44% locally; nested8 reference encoding fell by about 29%. Flat5/max256
+reference-encoding medians fell, but cross-round spread exceeded the 10% noise
+threshold, so those results remain inconclusive. Reference-encoding timing also
+includes fixture updates and complete-output Wyhash and cannot be converted into
+overall producer latency or log throughput.
 
-## 解码和版本矩阵
+## Decoder and version matrix
 
-`test-decoder-matrix` 提供独立有界门禁，并包含于 `test-fuzz`。矩阵区分三个版本域，不把同名版本号视为同一协议：
+`test-decoder-matrix` provides an independent bounded gate and is included in
+`test-fuzz`. The matrix distinguishes three version domains and does not treat
+identically named versions as the same protocol:
 
-| 载荷 | 头长度 | schema 定义 | 磁盘读取容器 |
+| Payload | Header length | Schema definition | On-disk container |
 | --- | --- | --- | --- |
-| 历史自包含 v1 | 68 | 无 | archive frame v1 |
-| 历史自包含 v3 | 76 | 无 | archive frame v1 |
-| 当前自包含 v4，scalar/nested | 84 | 无 | archive frame v1 |
-| 历史引用 v2 | 76 | scalar v1 | journal 文件 v2 |
-| 当前引用 v5，scalar | 84 | scalar v1 | journal 文件 v2 |
-| 当前引用 v5，nested动态/格式串 | 84 | nested v2 | journal 文件 v2 |
+| Historical self-contained v1 | 68 | none | archive frame v1 |
+| Historical self-contained v3 | 76 | none | archive frame v1 |
+| Current self-contained v4, scalar/nested | 84 | none | archive frame v1 |
+| Historical reference v2 | 76 | scalar v1 | journal file v2 |
+| Current reference v5, scalar | 84 | scalar v1 | journal file v2 |
+| Current reference v5, nested dynamic/format strings | 84 | nested v2 | journal file v2 |
 
-共8组载荷，各执行2048次确定性变异、所有逐字节截断，以及0–15个Field容量的短scratch检查。变异包括单字节翻转、多字节随机翻转、随机u32结构长度和截断；成功解码必须能精确再编码，历史缺失header字段只能恢复为0。字符串、key、source sentinel的范围必须位于输入或schema，nested描述符必须位于调用者scratch；scratch之外的canary与未使用尾部不得被改写，失败解码也核对输入未改变。成功编码的JSON由独立标准JSON parser检查，变异后无效的deferred格式只允许通过Writer错误边界失败。
+Eight payload groups each run 2,048 deterministic mutations, every byte
+truncation, and short-scratch checks with 0–15 Field capacities. Mutations
+include single-byte flips, multi-byte random flips, random u32 structural
+lengths, and truncation; successful decoding must re-encode exactly, and missing
+historical header fields may only recover as zero. String/key/source sentinel
+ranges must lie within the input or schema, and nested descriptors must lie
+within caller scratch; canaries outside scratch and unused tails must not be
+modified, and failed decoding also verifies that the input is unchanged.
+Successfully encoded JSON is checked by an independent standard JSON parser;
+invalid deferred formats after mutation may only fail through the Writer error
+boundary.
 
-schema定义另做完整body的逐字节变异：修改后按协议重新计算带域前缀的SHA256和entry CRC，再调用严格decodeEntry，因此结构错误不能仅靠旧checksum拒绝。合法定义重新生成canonical metadata并核对hash，随后尝试解析引用载荷。磁盘矩阵使用8个真实文件，经公开Reader各独立只读导出两次，核对事件和原始文件字节。历史载荷fixture由明确header转换构造，独立历史golden与plain/compressed混合版本读取仍由原有codec/query测试覆盖。
+Schema definitions also receive complete-body byte mutations: after modification,
+the domain-prefixed SHA-256 and entry CRC are recomputed according to protocol,
+then strict `decodeEntry` is called, so structural errors cannot be rejected only
+by the old checksum. Valid definitions regenerate canonical metadata and verify
+the hash, then reference payloads are parsed. The disk matrix uses eight real
+files, each exported twice read-only through the public Reader, verifying events
+and raw file bytes. Historical payload fixtures are constructed from explicit
+header conversion; independent historical goldens and mixed plain/compressed
+reads remain covered by the existing codec/query tests.
 
-这套门禁可重复、资源有界，用于兼容和回归；它不是覆盖全部输入的证明，也不替代长期coverage-guided fuzz或硬件故障资格。原始输出与源码身份见 `bench/evidence/2026-11-01-decoder-matrix/`。
+This gate is repeatable and resource-bounded, used for compatibility and
+regression; it is not proof of covering every input and does not replace
+long-running coverage-guided fuzz or hardware-fault qualification.
 
-## Prepared runtime测量复用
+## Prepared Runtime measurement reuse
 
-无脱敏prepared Runtime路径在predicate前的完整树检查同时统计动态value与nested key字节，本次private context只对同一个未改写事件复用它。canonical定义决定是否加入dynamic message长度，shape/level、queue full/fallback和容量错误保持原顺序。内部`reference_encoding.zig`共用这些primitive，公开`encodedReferenceSize`和`encodeReference`每次先校验树；没有公开measured编码或外部token。redaction和消费者独立检查不删，所有ready引用/CRC/pin/barrier不变。相关64项、4096项独立codec差分和完整性能正负证据见`bench/evidence/2026-11-01-prepared-measure/`。
+The non-redacted prepared Runtime path counts dynamic value and nested-key bytes
+during the complete tree check before the predicate, and the private context
+reuses them only for the same unchanged event. The canonical definition decides
+whether to include dynamic message length; shape/level, queue full/fallback, and
+capacity errors keep their original order. Internal `reference_encoding.zig`
+shares these primitives, while public `encodedReferenceSize` and
+`encodeReference` validate the tree first every time; no public measured encoder
+or external token exists. Redaction and consumer independent checks are not
+removed, and all ready references/CRC/pins/barriers are unchanged.

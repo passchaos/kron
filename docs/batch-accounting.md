@@ -1,47 +1,127 @@
-# 批内持久化决策和written统计
+# Intra-batch durability decisions and written accounting
 
-后台处理一批记录时，配置组已经由受保护的View保持不可变。现在每组预先计算required且reclaim_after=durable的route位图，记录用route_mask与该位图判断确认边界。这个结果只在当前批次使用，不改变配置发布、文件格式或具体sync调用。
+When the background processes a batch, the configuration group is already held
+immutable by a protected View. Each group now precomputes a bitmap of routes that
+are required and have `reclaim_after = durable`; records use their route_mask
+with this bitmap to determine the acknowledgement boundary. The result is used
+only for the current batch and does not change configuration publication, file
+format, or individual sync calls.
 
-任意required route要求durable时，仍将该事件的完整route_mask纳入原有durable barrier，确认该事件选择的全部required目标。best_effort route不会单独改变journal的确认边界；它的写入/flush/sync行为继续由交付管线处理。记录的确认边界存入固定数组，不在回收时重新扫描route；当前合并窗口最多256条，配置组仍最多64项，见[合并交付](coalesced-delivery.md)。
+If any required route demands durability, the event's complete route_mask is
+still included in the original durable barrier, confirming all required targets
+selected by that event. A best_effort route does not independently change the
+journal acknowledgement boundary; its write/flush/sync behavior remains handled
+by the delivery pipeline. The record's acknowledgement boundary is stored in a
+fixed array instead of rescanning routes during reclamation; the current
+coalescing window is at most 256 records, and a configuration group still has at
+most 64 entries. See [coalesced delivery](coalesced-delivery.md).
 
-完成计数按连续channel聚合：journal.releaseAfter和配置record pin释放都成功后，才把这条记录加入临时计数。换channel时提交上一段；批次完成和发布progress之前提交剩余计数；错误退出通过defer提交已经确认的前缀。最终原子更新仍使用fetchAdd，因此同步/fallback路径并发增加同一计数器时不会丢计数。相同channel的31条完整批次由31次written RMW减少为1次。
+Completion counts are aggregated per contiguous channel: a record is added to a
+temporary count only after both `journal.releaseAfter` and configuration record
+pin release succeed. A channel switch commits the previous segment; the remaining
+count is committed before batch completion and progress publication; error exits
+commit the already-acknowledged prefix through `defer`. The final atomic update
+still uses `fetchAdd`, so concurrent sync/fallback increments to the same counter
+do not lose counts. Thirty-one complete records on the same channel reduce 31
+written RMWs to one.
 
-## 确认与观测边界
+## Acknowledgement and observation boundaries
 
-后续尝试聚合配置record pin释放：每条journal完整回收成功后按snapshot/channel合成一次fetchSub，分别验证独立pin/written计数和统一确认计数。两版各100项完整文件试验及20项长流程PMU共逐条核对3224万条JSON，语义正确，但两版的完整吞吐均未取得改善资格，多个Memory负向中位与高spread全部保留，因此生产实现已撤回，仍逐条释放record pin。候选源码、原始试验与拒绝依据见`bench/evidence/2026-11-01-batch-pins/`。不能以原子次数下降替代完整流程性能证据。
+A follow-up attempted to aggregate configuration record-pin release: after each
+journal record was completely reclaimed, one `fetchSub` per snapshot/channel
+combined the independent pin/written counts and the unified acknowledgement
+count. Two versions each ran 100 complete-file trials and 20 long-workflow PMU
+trials, verifying 32.24 million JSON records with correct semantics. Neither
+version qualified for a complete-throughput improvement, and several Memory
+negative medians plus high spread were retained; production withdrew the
+candidates and still releases record pins individually. Atomic-count reductions
+cannot replace complete-workflow performance evidence.
 
-此次保留的故障回归扩展到共享/SPSC：交付前先retire旧配置，三条输出flush后损坏第二条，确认written=1、pending=2、水位只跨成功前缀。SPSC detach后旧配置仍有两条record pins；释放检查View后collect仍失败，旧lease不释放，Runtime销毁才释放一次。该测试覆盖真实后台与资源生命周期，不改变生产协议。
+The retained fault regression was extended to shared/SPSC: retire the old
+configuration before delivery, flush three outputs, then corrupt the second
+record and confirm written=1, pending=2, and that the watermark advances only
+across the successful prefix. After SPSC detach, the old configuration still has
+two record pins; collecting after releasing the check View still fails, the old
+lease is not released, and only Runtime destruction releases it once. This test
+covers real background/resource lifetime without changing the production
+protocol.
 
-journal仍逐条执行完整CRC检查、顺序校验和written/durable reclaim。每个槽位的释放、水位、schema引用和恢复协议保持原来实现，未引入批量journal回收接口。批次只聚合计数，不能将后续失败的记录计入成功前缀。
+The journal still performs complete per-record CRC checks, ordering checks, and
+written/durable reclaim. Each slot's release, watermark, schema reference, and
+recovery protocol keep the original implementation; no batched journal
+reclamation interface was introduced. A batch only aggregates counts and cannot
+include later-failing records in the successful prefix.
 
-并发health是分别读取各原子值的观测，不是事务快照。written计数可以在批内短暂落后于journal水位，批次结束前会更新；错误返回也保留实际已确认计数。显式flush/shutdown仍是确认接口：它们获取原来的delivery锁，返回前能观察到已完成批次计数，不能通过“health队列为空”替代barrier。
+Concurrent health reads individual atomics for observation, not as a
+transactional snapshot. The written count may briefly lag the journal watermark
+within a batch and is updated before the batch ends; error returns also retain the
+actual acknowledged count. Explicit flush/shutdown remain the confirmation
+interfaces: they acquire the original delivery lock and observe completed batch
+counts before returning. "The health queue is empty" is not a substitute for the
+barrier.
 
-这项修改增加一个consumer栈上的计数对象，不分配堆内存，不增加producer计数步骤。批次配置组增加一个u64派生位图，原记录route_mask数组被较小的确认边界数组替代。所有资源仍由原Runtime拥有，临时统计对象不得跨批次逃逸。
+This change adds a count object on the consumer stack, allocates no heap memory,
+and adds no producer counting step. Each batch configuration group gains one
+derived u64 bitmap, and the original record route_mask array is replaced by a
+smaller acknowledgement-boundary array. All resources remain owned by the
+original Runtime; temporary statistics must not escape the batch.
 
-## 验证内容
+## Verification
 
-- 1024种route mask覆盖required/best_effort、written/durable、第64个route位与混合目标，逐项和原扫描方法比较，同时核对完整barrier mask。
-- 连续channel变化、空flush、重复flush、其他owner插入更新均精确计数；真实并发测试确认批次统计与同步计数器合成41000次更新。
-- 实际shared/SPSC的31条同批记录只发布一次written统计；旧实现会被计数回归以31次RMW拒绝。
-- 在三条输出均完成后，故意损坏第二条待回收记录，验证written=1、pending=2、journal水位仅越过成功前缀，剩余记录pin不释放。
-- 原混合配置sink失败、View释放、lease保留、deadline及跨进程恢复测试继续执行。
+- 1,024 route masks cover required/best_effort, written/durable, the 64th route
+  bit, and mixed targets, compared item by item with the original scan method
+  and checked against the complete barrier mask.
+- Contiguous channel changes, empty flush, repeated flush, and updates inserted
+  by another owner are counted exactly; a real concurrency test confirms batch
+  accounting composes with synchronous counters across 41,000 updates.
+- Thirty-one actual shared/SPSC records in one batch publish written accounting
+  once; the old implementation is rejected by a counting regression that expects
+  31 RMWs.
+- After all three outputs complete, the second record awaiting reclamation is
+  deliberately corrupted to verify written=1, pending=2, a journal watermark that
+  crosses only the successful prefix, and remaining record pins that are not
+  released.
+- Existing mixed-configuration sink failures, View release, lease retention,
+  deadline, and cross-process recovery tests continue to run.
 
-当前源码的Debug和ReleaseSafe定向测试均13/13通过，包括导入fixture及6项实质测试。完整ReleaseFast `verify-local`通过76/76构建步骤、478/478 Zig测试，包含真实SIGKILL、配置事务、独立包消费和Linux原生宿主自校验。最终ReleaseSafe门禁通过22/22构建步骤：九个目标实际生成公共路径对象，配置、事务、deadline和真实文件故障37/37通过。精确源码身份记录在 [qualification.json](../bench/evidence/2026-11-01-batch-accounting/qualification.json)；此前配置View复用的474项历史计数不作为本轮证据。其他四平台的设备运行资格仍未取得。
+Current-source Debug and ReleaseSafe targeted tests pass 13/13, including an
+import fixture and six substantive tests. Complete ReleaseFast `verify-local`
+passes 76/76 build steps and 478/478 Zig tests, including real SIGKILL,
+configuration transactions, independent package consumption, and native Linux
+host self-checks. The final ReleaseSafe gate passes 22/22 build steps: nine
+targets actually generate public-path objects, and configuration, transactions,
+deadline, and real file faults pass 37/37. Reducing atomic operations and route
+scans does not automatically make every workload faster.
 
-完整JSON文件before/after对照保持字段、系统时间戳、Memory/Mmap、shared/SPSC、prepared形状、队列和文件buffer预算，并包含最终written flush、shutdown和对象清理。原始记录与构建身份见 `bench/evidence/2026-11-01-batch-accounting/`。减少原子操作和route扫描次数不自动等于所有工作负载更快。
+## Complete-workflow measurement
 
-## 完整流程测量
+Five configurations each ran batch and sampled modes in separate processes, five
+before/after pairs, for 100 trials total. Each trial used 100,000 measured records
+and 1,000 warmup records, verifying 10.1 million complete JSON logs including
+fields, messages, timestamps, scope, event identity, and counts; output file
+SHA-256 and physical byte counts were also stored. Application and kron module
+were ReleaseFast with frame pointers, fixed to CPU 0/2/4/6/8/10, alternating
+before/after order. Before was the frozen source after configuration View reuse
+but before this round's accounting aggregation and durable mask.
 
-5种配置各以batch和sampled模式在独立进程运行5对before/after，共100次试验。每次100000条测量记录和1000条预热，逐条验证1010万条完整JSON日志，包括字段、消息、时间戳、scope、事件身份与计数；同时保存输出文件SHA256和物理字节数。应用和kron模块均为ReleaseFast、保留frame pointer，固定CPU0/2/4/6/8/10，交替before/after顺序。before是配置View复用已经完成、尚未加入本轮统计聚合与durable mask的冻结源码。
-
-| batch模式 | before中位条/秒 | after中位条/秒 | 中位变化 | 本轮判断 |
+| Batch mode | Before median records/s | After median records/s | Median change | This round |
 | --- | ---: | ---: | ---: | --- |
-| shared Memory P1 | 1,272,767 | 1,252,057 | −1.63% | inconclusive，after跨轮spread约31.2% |
-| shared Memory P4 | 1,221,402 | 1,226,962 | +0.46% | inconclusive，before跨轮spread约19.4% |
-| SPSC Memory P4 | 1,192,114 | 1,173,534 | −1.56% | inconclusive，after跨轮spread约14.6% |
-| SPSC Mmap P4 | 1,220,463 | 1,205,500 | −1.23% | 通过本机噪声阈值，置信区间仍重叠 |
-| SPSC Mmap P4 prepared | 1,230,803 | 1,273,351 | +3.46% | 通过本机噪声阈值，置信区间仍重叠 |
+| shared Memory P1 | 1,272,767 | 1,252,057 | −1.63% | inconclusive; after cross-round spread about 31.2% |
+| shared Memory P4 | 1,221,402 | 1,226,962 | +0.46% | inconclusive; before cross-round spread about 19.4% |
+| SPSC Memory P4 | 1,192,114 | 1,173,534 | −1.56% | inconclusive; after cross-round spread about 14.6% |
+| SPSC Mmap P4 | 1,220,463 | 1,205,500 | −1.23% | passes this host's noise threshold; intervals still overlap |
+| SPSC Mmap P4 prepared | 1,230,803 | 1,273,351 | +3.46% | passes this host's noise threshold; intervals still overlap |
 
-`stable_local_measurement`只表示before/after的CV和相对spread均低于10%，不是统计显著或跨平台收益。最后两组中位吞吐的trial bootstrap 95%区间分别仍重叠；本轮不宣称稳定端到端提速，保留普通Mmap的下降及所有慢值。sampled模式大多数producer分位数仍inconclusive；prepared的p50中位493→501ns、p99为16591→16538ns，不能据此宣称tail改善。完整指标见 [comparison.json](../bench/evidence/2026-11-01-batch-accounting/comparison.json)。
+`stable_local_measurement` only means that before/after CV and relative spread
+are both below 10%; it is not statistical significance or a cross-platform gain.
+The last two groups' trial-bootstrap 95% median intervals still overlap, so no
+stable end-to-end speedup is claimed; the ordinary Mmap decrease and all slow
+values are retained. Most sampled producer quantiles remain inconclusive;
+prepared p50 median was 493 → 501 ns and p99 16,591 → 16,538 ns, which does not
+establish a tail improvement.
 
-这批试验的完成边界是written文件flush、shutdown和对象清理。durable route预计算另由1024种mask与原扫描oracle验证，不能把本次written吞吐当作fsync性能。与Quill/Foundation的既有数字使用较早源码，累计优化后的跨库排名仍须同轮复测。
+The completion boundary for these trials is written file flush, shutdown, and
+object cleanup. Durable-route precomputation is separately verified by 1,024 masks
+against the original scan oracle; this written throughput is not fsync
+performance. Earlier Quill/Foundation numbers came from older sources; any
+cumulative cross-library ranking would require a same-round re-measurement.

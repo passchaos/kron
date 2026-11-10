@@ -3,15 +3,16 @@
 `main` history was rewritten with `git filter-repo` to remove raw benchmark
 artifacts that had accumulated in every commit:
 
-- `reference-*` executable copies under `bench/evidence/` and
-  `bench/cpp_reference/evidence/`
+- `reference-*` executable copies under benchmark evidence directories
 - `*.tar`, `*.tar.xz`, `*.tar.gz` source snapshots
-- `*.perf.data`, `*.perf.data.gz` and `*.data` profiling data
+- `*.perf.data`, `*.perf.data.gz`, and `*.data` profiling data
 - `kron-bench-*`, `kron-ref-*`, `kron-crc-*` generated benchmark outputs
 
-`*.perf.data.xz` (11 small compressed profiles), logs, JSONL/JSON measurement
-rows, CSV rows, patches and evidence READMEs remain tracked so existing evidence
-links and raw measurement identity stay available.
+At the time of that rewrite, `*.perf.data.xz` (11 small compressed profiles),
+logs, JSONL/JSON measurement rows, CSV rows, patches, and evidence READMEs
+remained tracked so existing evidence links and raw measurement identity stayed
+available. Later, the tracked benchmark evidence directories and C++/Rust
+reference harnesses were removed from the current tree as well.
 
 ## Identity
 
@@ -34,6 +35,7 @@ must be inspected. The temporary backup branch was deleted after the rewritten
 ## Boundary
 
 The rewrite removes only repository storage. It does not change source code,
-journal formats, benchmark results or the evidence READMEs. The same
-`manifest.json` files still record binary/source SHA-256 identities, so removed
-executables and archives remain reproducible from their recorded commands.
+journal formats, benchmark results, or the evidence READMEs that existed at that
+time. The same `manifest.json` files recorded binary/source SHA-256 identities so
+removed executables and archives remained reproducible from their recorded
+commands.

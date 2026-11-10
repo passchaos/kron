@@ -1,78 +1,133 @@
-# 开发与验证
+# Development and verification
 
-使用Zig 0.16，在仓库根运行命令。先选与修改相符的最小验证，复用 `.zig-cache` 与已有会话；涉及公共依赖、并发/lifetime、持久化格式、构建或发布时再运行相应组合门禁。
+Use Zig 0.16 and run commands from the repository root. Start with the smallest
+verification that matches the change, reusing `.zig-cache` and existing
+sessions; run the corresponding combined gates when public dependencies,
+concurrency/lifetime, persistent formats, build, or release paths are affected.
 
-## 常用入口
+## Common entry points
 
-| 修改范围 | 优先运行 |
+| Change scope | Preferred command |
 | --- | --- |
-| Logging配置/输出/所有权（含逐route队列） | `zig build test-logging test-outputs -Doptimize=ReleaseSafe -j1` |
-| codec/字段/线程注册等模块 | `zig test src/root.zig -O ReleaseSafe --test-filter 'codec'`；用实际test名称选择子集 |
-| source路径/文本位置 | `zig test src/root.zig -O ReleaseSafe --test-filter 'source'`；实际运行 `run-mmap` 和 `run-source-location` |
-| 字段/context/对象适配 | `test-field-keys`、`test-capture`、`test-adapter`、`test-redaction-paths`、`test-compile-fail` |
-| 内部提交参数与调用者快照 | `test-submission-snapshot`、`test-capture`、`test-redaction-paths`、prepared/binding 重点回归 |
-| Memory/Mmap与背压 | `test-journal-progress`、`test-journal-peak`、`test-async-storage`、`test-integration`、相关Runtime queue regression |
-| 并发共享producer交付 | `test-async-storage`；4线程×250记录×2轮、Memory block queue、accepted=written、pending=0；mid-flight `shutdown(.drain)`下rejected_closing与state=closed；mmap并发后clean reopen；1000次重复soak |
-| Journal/archive随机fuzz | `test-journal-fuzz`；20,000随机commit/peek/release、mmap reopen/recovery、随机archive record/message round-trip；seed打印，Debug/Safe/Fast；扩展1000-seed ReleaseSafe扫描 |
-| Journal槽位/generation坐标 | `test-journal-coordinates`；共享/SPSC八容量、完整序号/环回与有效CRC错误generation保留证据 |
-| v1/v2 journal升级兼容 | 根test/`test-logging`；真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写 |
-| 旧二进制journal fixture | [fixtures/journal](../tests/fixtures/journal/README.md)、根test/`test-logging`；`5b1fd7c`实际x86_64与aarch64二进制写出的v1/v2 journal在V3源码`recover=true`下读取 |
-| nested/轮转/schema组合恢复 | 根test/`test-logging`；prepared nested group/array经rolling输出+mmap schema journal，durable后同journal reopen、pending=0与replay追加 |
-| 配置和旧版本lifetime | `test-route-policies`、`test-configurations`、`test-transactions`、`test-route-filters`、`test-predicates` |
-| 配置替换并发 | `test-configurations`；shared async 4 producer×500、20次route/redaction替换与cut，另4 producer×500+20次filter reload；200次重复soak（含replacement/filter） |
-| TLS admission所有权与复用 | `test-admission-lifecycle`；相关 shared admission View、配置和deadline回归 |
-| CRC原生数学与dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`；根筛选 `partial CRC stripes`，确认实际cases；native/无AVX PCLMUL/generic分别验证 |
-| CRC分段/seed/读边界 | `test-crc-segments`；0..512长度与32对齐、20/24分段、任意seed、两端真实guard page |
-| ASCII扫描与转义失败前缀 | `test-escaping-tails`；短尾单字节/相邻字节、quoted JSON/text、JSON key/member、每个短缓冲前缀 |
-| 时钟与时间转换/恢复 | `test-clock-dispatch`、`test-time`（固定偏移与Python oracle）、`test-local-time`（consumer与独立zoneinfo） |
-| flush/deadline/关闭 | `test-deadline`、`test-single-threaded`、`test-integration` |
-| 实际文件/轮转 | `test-file-delivery`、`test-platform-host`、对应sink模块测试 |
-| 多文件系统行为 | tmpfs vs ext4 package consumer；tmpfs mmap journal按设计拒绝`VolatileFilesystem`，见[多文件系统证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) |
-| 共享文件系统行为 | `tests/shared_fs/vm_9p.py`；QEMU virtio-9p下sync/memory通过、mmap journal按设计`PreallocationUnsupported`拒绝，见[9p证据](../bench/evidence/2026-11-03-9p-shared-fs/README.md) |
-| 真实ENOSPC故障 | `tests/faults/vm_enospc.py`；child VM tmpfs填满后，直接FileSink、Runtime Memory+FileSink durable flush与RollingFileSink flush均返回`NoSpaceLeft`并latch |
-| 只读文件系统初始化 | `tests/faults/vm_readonly.py`；child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem` |
-| Journal ENOSPC预分配 | `tests/faults/vm_journal_enospc.py`；64MiB ext4填满后`Journal.create`返回`NoSpaceLeft` |
-| 子VM停机 | [power_loss](../tests/power_loss/README.md)；ext4/XFS/Btrfs/F2FS 16-run child-VM SIGKILL campaigns；非物理掉电 |
-| wire/Reader/压缩 | `test-decoder-matrix`、`test-fuzz`（runner-seed-driven，1000-seed扫描）、`test-query`、`test-compression` |
-| fused scratch生命周期/预算 | `test-wire-scratch`；三格式失败与Fallback后完整decoder复用、64顶层key与精确nested arena预算 |
-| 正则 | `test-regex-differential`、`test-regex-fuzz`、`test-regex-equivalence`；fuzz corpus由runner seed驱动，1000-seed扫描 |
-| build/dependency/分发 | `test-package`、`test-package-single-threaded`、`test-package-distribution`、`check-platforms` |
-| aarch64 QEMU用户态 | `zig test src/root.zig -target aarch64-linux-musl -O ReleaseSafe`、journal fuzz与`tests/package_consumer`交叉构建；见[aarch64证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) |
+| Logging configuration/output/ownership (including per-route queues) | `zig build test-logging test-outputs -Doptimize=ReleaseSafe -j1` |
+| codec/fields/thread registration modules | `zig test src/root.zig -O ReleaseSafe --test-filter 'codec'`; select subsets by actual test name |
+| Source paths/text locations | `zig test src/root.zig -O ReleaseSafe --test-filter 'source'`; run `run-mmap` and `run-source-location` |
+| Fields/context/object adapters | `test-field-keys`, `test-capture`, `test-adapter`, `test-redaction-paths`, `test-compile-fail` |
+| Internal submission arguments and caller snapshots | `test-submission-snapshot`, `test-capture`, `test-redaction-paths`, plus prepared/binding regressions |
+| Memory/Mmap and backpressure | `test-journal-progress`, `test-journal-peak`, `test-async-storage`, `test-integration`, and related Runtime queue regressions |
+| Concurrent shared-producer delivery | `test-async-storage`; 4 threads × 250 records × 2 rounds, Memory block queue, accepted=written, pending=0; mid-flight `shutdown(.drain)` produces rejected_closing and state=closed; clean reopen after concurrent mmap; 1000-run soak |
+| Journal/archive randomized fuzz | `test-journal-fuzz`; 20,000 random commit/peek/release, mmap reopen/recovery, random archive record/message round-trip; seeds printed; Debug/Safe/Fast; extended 1000-seed ReleaseSafe scan |
+| Journal slot/generation coordinates | `test-journal-coordinates`; shared/SPSC across eight capacities, full sequence/wrap, and valid-CRC wrong-generation evidence |
+| v1/v2 journal upgrade compatibility | Root tests/`test-logging`; real v1/v2 headers/extensions, CRC, commit/peek, reopen/recovery read/write under V3 sources |
+| Old-binary journal fixtures | [fixtures/journal](../tests/fixtures/journal/README.md), root tests/`test-logging`; v1/v2 journals written by real `5b1fd7c` x86_64 and aarch64 binaries read with V3 sources and `recover=true` |
+| Nested/rolling/schema combination recovery | Root tests/`test-logging`; prepared nested group/array through rolling output + mmap schema journal, durable reopen of the same journal, pending=0, and replay append |
+| Configuration and old-generation lifetime | `test-route-policies`, `test-configurations`, `test-transactions`, `test-route-filters`, `test-predicates` |
+| Concurrent configuration replacement | `test-configurations`; shared async 4 producers × 500, 20 route/redaction replacements and cuts, plus 4 producers × 500 + 20 filter reloads; 200-run soak including replacement/filter |
+| TLS admission ownership and reuse | `test-admission-lifecycle`; related shared admission View, configuration, and deadline regressions |
+| CRC native math and dispatch | `zig test src/platform/crc32.zig -O ReleaseSafe`; root filter `partial CRC stripes` with actual cases; verify native/no-AVX PCLMUL/generic separately |
+| CRC segmentation/seeds/read boundaries | `test-crc-segments`; lengths 0..512 with 32-byte alignment, 20/24-byte segments, arbitrary seeds, real guard pages on both sides |
+| ASCII scanning and escape failure prefixes | `test-escaping-tails`; short-tail single/adjacent bytes, quoted JSON/text, JSON key/member, every short-buffer prefix |
+| Clock and time conversion/recovery | `test-clock-dispatch`, `test-time` (fixed offsets and Python oracle), `test-local-time` (consumer and independent zoneinfo) |
+| flush/deadline/shutdown | `test-deadline`, `test-single-threaded`, `test-integration` |
+| Real files/rotation | `test-file-delivery`, `test-platform-host`, and corresponding sink module tests |
+| Multiple filesystem behavior | tmpfs vs ext4 package consumer; tmpfs mmap journal rejects `VolatileFilesystem` by design |
+| Shared filesystem behavior | `tests/shared_fs/vm_9p.py`; under QEMU virtio-9p sync/memory pass, while mmap journal rejects `PreallocationUnsupported` by design |
+| Real ENOSPC faults | `tests/faults/vm_enospc.py`; after filling a child-VM tmpfs, direct FileSink, Runtime Memory+FileSink durable flush, and RollingFileSink flush all return and latch `NoSpaceLeft` |
+| Read-only filesystem initialization | `tests/faults/vm_readonly.py`; FileSink and Journal return `ReadOnlyFileSystem` on a read-only child-VM ext4 |
+| Journal ENOSPC preallocation | `tests/faults/vm_journal_enospc.py`; after filling a 64 MiB ext4, `Journal.create` returns `NoSpaceLeft` |
+| Child-VM shutdown | [power_loss](../tests/power_loss/README.md); ext4/XFS/Btrfs/F2FS 16-run child-VM SIGKILL campaigns; not physical power loss |
+| wire/Reader/compression | `test-decoder-matrix`, `test-fuzz` (runner-seed-driven, 1000-seed scan), `test-query`, `test-compression` |
+| Fused scratch lifetime/budget | `test-wire-scratch`; three-format failures and complete decoder reuse after Fallback, 64 top-level keys, and exact nested arena budgets |
+| Regular expressions | `test-regex-differential`, `test-regex-fuzz`, `test-regex-equivalence`; fuzz corpus driven by runner seed, 1000-seed scan |
+| build/dependency/distribution | `test-package`, `test-package-single-threaded`, `test-package-distribution`, `check-platforms` |
+| aarch64 QEMU user mode | `zig test src/root.zig -target aarch64-linux-musl -O ReleaseSafe`, journal fuzz, and `tests/package_consumer` cross-build |
 
-表中build step统一加 `zig build ... -Doptimize=ReleaseSafe -j1`，平台对象检查内部固定ReleaseSafe。`--test-filter` 只是选择执行测试，不能把过滤后的通过计数描述为整库覆盖。
+Add `-Doptimize=ReleaseSafe -j1` to build steps in the table; platform object
+checks fix ReleaseSafe internally. `--test-filter` only selects tests to run and
+must not be described as full-library coverage.
 
-根测试可覆盖模块的相对import边界；直接把 `src/core/tests/` 文件作为独立根可能越过模块路径，优先从 `src/root.zig` 筛选。短纯模块可独立验证，例如 `zig test src/submit/source.zig`；有libc的系统时间测试使用 `zig test src/time/root.zig -lc`。
+Root tests cover relative import boundaries of modules. Running a file under
+`src/core/tests/` directly as an independent root may escape module paths;
+prefer filtering from `src/root.zig`. Short pure modules can be verified
+independently, for example `zig test src/submit/source.zig`; system-time tests
+that need libc use `zig test src/time/root.zig -lc`.
 
-## 完整门禁
+## Full gates
 
 ```sh
 zig build verify-fast -Doptimize=ReleaseSafe -j1 --summary all
 zig build verify-local test-package-distribution -Doptimize=ReleaseSafe -j1 --summary all
 zig build check-platforms -j1 --summary all
-zig build fmt bench-index hygiene links -j1
+zig build fmt hygiene links -j1
 zig build docs -j1
 ```
 
-日常改动先跑 `zig build test-unit`（root unit tests，不含 fuzz/crash）；需要更完整的快速门禁再跑 `verify-fast`（根/公共测试、compile-fail、fuzz、单线程）；提交前按影响运行 `verify-local` 或平台/分发门禁。`fmt` 检查Zig格式，`bench-index` 校验证据索引是否与目录一致，`hygiene` 检查 tracked 文件卫生与单文件大小，`links` 检查 Markdown 相对链接，`docs` 生成 Zig API 文档到 `zig-out/docs`。verify-local包含根/公共集成、deadline/配置/文件、工具、compile-fail、版本/损坏矩阵、真实SIGKILL、随机ACK恢复、独立包/单线程与示例编译。源码分发单独在此命令选择。平台step生成九目标真实对象：Linux两架构、Windows、macOS两架构、Android两架构、iOS device/simulator；这些对象不代表设备运行。
+For routine changes, start with `zig build test-unit` (root unit tests without
+fuzz/crash). For a broader fast gate, run `verify-fast` (root/public tests,
+compile-fail, fuzz, single-threaded). Before committing, run `verify-local` or
+the platform/distribution gate according to impact. `fmt` checks Zig
+formatting, `hygiene` checks tracked-file hygiene and single-file size, `links`
+checks relative Markdown links, and `docs` generates Zig API documentation under
+`zig-out/docs`. `verify-local` includes root/public integration,
+deadline/configuration/files, tools, compile-fail, version/corruption matrices,
+real SIGKILL, random ACK recovery, independent package/single-threaded builds,
+and example compilation. Source distribution is selected separately in this
+command. The platform step produces real objects for nine targets: two Linux
+architectures, Windows, two macOS architectures, two Android architectures, and
+iOS device/simulator; these objects do not represent device execution.
 
-Debug/ReleaseFast按变化影响补相关test；已有完整ReleaseSafe成功后，不为文档或日志记录变化重复全部故障campaign。单线程构建提供sync与普通flush/shutdown，timed/async返回明确能力错误。系统local专项显式链接平台libc，默认Linux根测试可按能力跳过local缓存测试；必须另确认专项oracle实际执行。
+Add relevant tests for Debug/ReleaseFast according to impact. After a complete
+ReleaseSafe success, do not repeat every fault campaign for documentation or log
+recording changes. Single-threaded builds provide sync and ordinary
+flush/shutdown; timed/async interfaces return explicit capability errors. The
+system-local specialization explicitly links platform libc; default Linux root
+tests may skip local-cache tests by capability, so separately confirm that the
+specialized oracle actually ran.
 
-## 输出与运行检查
+## Output and runtime checks
 
-例子通常追加cwd中的文件，核对当前stdout对应的session，避免把其他会话/重复运行的尾部混作本次结果。源码路径以仓库根解析，line/column和调用点核对。text无外围引号，JSON保持合法source字符串。格式/日期/脱敏/编号可按同一事件比较多个输出。
+Examples usually append files in the current working directory. Match the
+session in the current stdout and avoid mixing tails from other sessions or
+repeated runs into this result. Source paths resolve from the repository root;
+verify line/column and call sites. Text has no outer quotes, while JSON keeps a
+valid source string. Format/date/redaction/sequence can be compared across
+multiple outputs for the same event.
 
-运行示例是可逆接入检查，不替代崩溃/过载/durable测试；正常重开journal也不等于强杀或断电。工具只读导出应核验原文件未变。
+Running examples is a reversible integration check, not a replacement for
+crash/overload/durability tests; a normal journal reopen is not equivalent to a
+forced kill or power loss. Read-only tool export should verify that the original
+file is unchanged.
 
-## 性能与证据
+## Performance and evidence
 
-遵循 [benchmark-methodology.md](benchmark-methodology.md)，记录source commit/hash、binary、工具链/优化级别、输入/预算/实际后端、时钟、重复次数、完整记录/结果oracle与所有完成阶段。local日期microbenchmark、CRC/采样等局部成本与完整日志/应用流程分开。
+Follow [benchmark-methodology.md](benchmark-methodology.md) and record the source
+commit/hash, binary, toolchain/optimization level, inputs/budgets/actual backend,
+clock, repetition count, complete-record/result oracle, and every completion
+stage. Keep local date microbenchmarks, CRC/sampling costs, and complete
+log/application workflows separate.
 
-不将不同baseline百分比叠加成当前Foundation/spdlog排名。噪声超限保持inconclusive，原失败/慢值/负向、未完成trial和hardware/filesystem范围保留。性能验证主要入口见 [bench/](../bench/README.md)。
+Do not combine percentages from different baselines into a current
+cross-library ranking. Results above the noise limit stay inconclusive; original
+failures/slow values/negatives, incomplete trials, and hardware/filesystem scope
+are retained. The main performance entry points are under [bench/](../bench/README.md).
 
-`docs/implementation-status.md` 只维护当前能力、最近有身份的gate与剩余优先级；详细chronology放 `docs/history/` 或对应evidence。冻结源码与原始evidence不随目录整理重写。新输出/格式行为在指南同步说明，package分发根/支持模块同步检查。证据目录索引由 `python3 tools/bench_index.py` 生成，`--check` 可用于CI/提交前核验。
+`docs/implementation-status.md` maintains only current capabilities, recent
+identified gates, and remaining priorities; detailed chronology belongs under
+`docs/history/`. Frozen sources and raw evidence are not rewritten during
+directory reorganization. New output/format behavior is documented in the guide,
+and package distribution roots/support modules are checked together. Measurement
+results are not tracked in this repository; there is no generated evidence index
+to refresh.
 
-## 修改边界
+## Change boundaries
 
-变更前读拥有状态的源码，保留borrowed存储、stable writer地址、thread token、配置pins/lease、reservation/record ownership。仅为便于测试而公开私有实现会扩大API责任，应先选择模块边界或内部test import。
+Read the source that owns the state before changing it, and preserve borrowed
+storage, stable writer addresses, thread tokens, configuration pins/leases, and
+reservation/record ownership. Exposing private implementation only to simplify
+tests expands API responsibility; choose a module boundary or internal test
+import first.
 
-完成一个有验证的功能后提交；有remote时按用户偏好先拉取解决冲突，GitHub remote才推送。本地当前无remote时提交即形成可回溯版本。完整“业界最佳”目标只在对应性能、平台、故障和行为范围全部有证据后判定完成。
+Commit after completing a verified functional change. When a remote exists,
+pull first, resolve conflicts, and push only for remotes the user has authorized.
+The complete "industry best" goal is considered done only after performance,
+platform, fault, and behavior scopes each have corresponding evidence.

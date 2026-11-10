@@ -12,11 +12,6 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GENERATED_DIRS = (".zig-cache/", "zig-out/", "__pycache__/", "zig-pkg/")
 GENERATED_SUFFIXES = (".pyc",)
-REFERENCE_BINARIES = {
-    "reference-foundation",
-    "reference-foundation_tracing",
-    "reference-kron",
-}
 FORBIDDEN_SUFFIXES = (
     ".tar",
     ".tar.xz",
@@ -60,12 +55,6 @@ def main() -> int:
         failures.append(f"{len(oversized)} tracked file(s) exceed {args.max_bytes} bytes")
         for size, path in sorted(oversized, reverse=True)[:10]:
             failures.append(f"  {size:>10} {path}")
-
-    reference_binaries = [path for path in tracked if os.path.basename(path) in REFERENCE_BINARIES]
-    if reference_binaries:
-        failures.append(f"{len(reference_binaries)} tracked benchmark reference binary/binaries")
-        for path in reference_binaries[:10]:
-            failures.append(f"  {path}")
 
     raw_artifacts = [path for path in tracked if path.endswith(FORBIDDEN_SUFFIXES)]
     if raw_artifacts:

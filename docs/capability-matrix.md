@@ -1,46 +1,59 @@
-# 能力矩阵
+# Capability matrix
 
-本页把常用的模式、存储、格式和恢复/durable 边界放在一张表里，避免从多篇专题文档拼接组合规则。默认值以 `Route` 字段为准；所有 opt-in 快速路径都不改变默认 durable/CRC/recovery/queue 契约。
+This page combines the common mode, storage, format, and recovery/durable
+boundaries in one table so rules do not have to be assembled from several topic
+documents. Defaults follow the `Route` fields; every opt-in fast path leaves the
+default durable/CRC/recovery/queue contracts unchanged.
 
-## 运行模式与存储
+## Runtime modes and storage
 
-| 模式 / 存储 | 进程崩溃恢复 | durable | 适用场景 | 主要约束 |
+| Mode / storage | Process-crash recovery | Durable | Suitable scenario | Main constraint |
 | --- | --- | --- | --- | --- |
-| sync | 无 | 调用线程完成后可请求输出同步 | 小工具、单线程、低频日志 | 不做后台队列；timed/async 控制接口返回能力错误 |
-| shared Memory | 无，pending 丢失 | 输出可 durable，队列本身不恢复 | 常规后台日志 | 有界共享队列；崩溃丢失尚未交付记录 |
-| shared Mmap | 恢复完整 commit，至少一次重放 | journal checkpoint + 输出同步 | 需要进程崩溃恢复 | 需要可预分配、非 volatile 文件系统 |
-| SPSC Memory | 无，pending 丢失 | 输出可 durable，队列本身不恢复 | 固定线程且已验证收益 | 显式 attach/detach；每线程预分配队列 |
-| SPSC Mmap | 恢复完整 commit，至少一次重放 | journal checkpoint + 输出同步 | 固定线程 + 崩溃恢复 | 显式 attach/detach；独占恢复 |
-| `MmapSpool` | 无 journal recovery | **非 durable** | P1 mmap 最高吞吐、可接受无恢复 | 无 journal/CRC/recovery/ring/consumer；单 producer 或每 producer 独立 spool/channel |
+| sync | none | Output synchronization may be requested after the calling thread finishes | Small tools, single-threaded, low-frequency logging | No background queue; timed/async control interfaces return capability errors |
+| shared Memory | none; pending records lost | Outputs may be durable; the queue itself does not recover | Ordinary background logging | Bounded shared queue; undelivered records are lost on crash |
+| shared Mmap | Complete commits recovered, at-least-once replay | Journal checkpoint + output synchronization | Process-crash recovery required | Requires a preallocatable, non-volatile filesystem |
+| SPSC Memory | none; pending records lost | Outputs may be durable; the queue itself does not recover | Fixed threads with verified benefit | Explicit attach/detach; per-thread preallocated queues |
+| SPSC Mmap | Complete commits recovered, at-least-once replay | Journal checkpoint + output synchronization | Fixed threads + crash recovery | Explicit attach/detach; exclusive recovery |
+| `MmapSpool` | no journal recovery | **non-durable** | Highest P1 mmap throughput where no recovery is acceptable | No journal/CRC/recovery/ring/consumer; one producer per spool, or one spool/channel per producer |
 
-## 格式与输出
+## Formats and output
 
-| 格式 | 输出 | 备注 |
+| Format | Output | Notes |
 | --- | --- | --- |
-| text | 人类可读行 | 默认格式；source 位置以 `路径:行:列` 输出 |
-| json | 完整 JSON Lines | 支持 inline/schema、render cache 和 text fast path |
-| logfmt | key=value 行 | 与 text/json 共用字段捕获和过滤 |
-| binary | 自包含 journal/archive frame | `kroncat` 可只读查询、follow 和恢复 |
+| text | Human-readable lines | Default format; source locations print as `path:line:column` |
+| json | Complete JSON Lines | Supports inline/schema, render cache, and the text fast path |
+| logfmt | key=value lines | Shares field capture and filtering with text/json |
+| binary | Self-contained journal/archive frame | `kroncat` supports read-only queries, follow, and recovery |
 
-文件输出默认使用 portable backend；Linux `io_uring` 为显式 opt-in。轮转支持 size、time interval 或两者任一触发；归档使用标准 zlib。
+File output uses the portable backend by default; Linux `io_uring` is explicit
+opt-in. Rotation supports size, a time interval, or either trigger; archives use
+standard zlib.
 
-## opt-in 快速路径
+## Opt-in fast paths
 
-| 选项 | 收益方向 | 恢复/CRC | 组合约束 |
+| Option | Gain direction | Recovery/CRC | Combination constraints |
 | --- | --- | --- | --- |
-| `MemoryQueueOptions.verify_crc=false` | 省掉 memory slot CRC | 仅 volatile memory；默认 CRC 保持 | mmap/recoverable journal 拒绝；只适合接受未检测内存损坏的应用 |
-| `text_format` | producer 渲染最终 JSON，consumer 直接写出 | 无 journal recovery；要求 `verify_crc=false` | 单 route、JSON、async/SPSC、memory 或 `recover=false` mmap；不能与 render cache 同用 |
-| `render_cache` | producer 渲染到 volatile cache，consumer 命中直接写出 | 保留 journal/CRC/recovery；cache 本身 volatile | 需要 journal；支持 shared async/SPSC 的单 route JSON inline/schema；默认关闭 |
-| `MmapSpool` | producer 直接渲染进 file-backed mapping | 无 journal/CRC/recovery | 非 durable；单 producer 或每 producer 独立 spool/channel；可选 coarse timestamp |
+| `MemoryQueueOptions.verify_crc=false` | Skips Memory slot CRC | Volatile Memory only; default CRC remains | Rejected for mmap/recoverable journals; only for applications that accept undetected memory corruption |
+| `text_format` | Producer renders final JSON; consumer writes it directly | No journal recovery; requires `verify_crc=false` | Single JSON route, async/SPSC, Memory or `recover=false` mmap; cannot be combined with render cache |
+| `render_cache` | Producer renders into a volatile cache; consumer writes hits directly | Journal/CRC/recovery retained; the cache itself is volatile | Requires a journal; supports shared async/SPSC single-route JSON inline/schema; off by default |
+| `MmapSpool` | Producer renders directly into a file-backed mapping | No journal/CRC/recovery | Non-durable; one producer per spool, or one spool/channel per producer; optional coarse timestamp |
 
-## 完成边界
+## Completion boundaries
 
-- `flush()` 确认 required 输出 written。
-- `flushDurable()` 请求适用输出与 journal 的 durable 协议；不适用于 `MmapSpool`。
-- `shutdown()` 关闭入场并排空；`destroy()` 是阻塞清理，要求所有用户已停止。
-- Mmap commit 不等于断电保证；进程崩溃恢复是至少一次重放，不是 exactly-once。
-- 物理掉电、非 Linux 设备、NFS/CIFS/FUSE 和更广文件系统仍需独立资格。
+- `flush()` confirms required outputs written.
+- `flushDurable()` requests the durable protocol for applicable outputs and
+  journals; not applicable to `MmapSpool`.
+- `shutdown()` closes admission and drains; `destroy()` is blocking cleanup and
+  requires all users to have stopped.
+- An Mmap commit is not a power-loss guarantee; process-crash recovery is
+  at-least-once replay, not exactly-once.
+- Physical power loss, non-Linux devices, NFS/CIFS/FUSE, and broader filesystems
+  still require independent qualification.
 
-## 平台
+## Platforms
 
-Linux 有实际运行资格；Windows/macOS/Android/iOS 有实现、交叉编译或部分链接证据，仍需目标设备运行资格。aarch64-linux-musl 已在 QEMU 用户态执行 root suite 与 fuzz。详细边界见 [平台支持](platforms.md) 和 [当前验收状态](implementation-status.md)。
+Linux has real execution qualification. Windows/macOS/Android/iOS have
+implementations and cross-compilation or partial-link evidence, but still need
+target-device execution qualification. aarch64-linux-musl runs the root suite and
+fuzz under QEMU user mode. See [platform support](platforms.md) and
+[current acceptance status](implementation-status.md) for detailed boundaries.

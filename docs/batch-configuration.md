@@ -1,31 +1,86 @@
-# 后台批次的配置复用
+# Configuration reuse in background batches
 
-后台从一个journal取出有界checked交付窗口后，对其中每个配置版本持有一个受保护的View。当前窗口可以合并剩余64条服务量子内已就绪记录，默认最多256条；相同generation与fingerprint的后续记录复用View，不再逐条扫描配置表、增加并减少reader计数。配置组仍最多64项，与配置表上限一致。这个做法借鉴Quill和Foundation将消费端重复操作合并到批次的方向；journal的commit、CRC、顺序和每条回收检查保持不变。新窗口的写出/确认取舍见[合并交付](coalesced-delivery.md)。
+After the background takes a bounded checked-delivery window from a journal, it
+holds one protected View for each configuration generation in that window. The
+current window can merge records already ready within the remaining 64-record
+service quanta, up to 256 by default; later records with the same generation and
+fingerprint reuse the View instead of scanning the configuration table and
+incrementing/decrementing reader counts per record. A configuration group still
+has at most 64 entries, matching the configuration table limit. This borrows the
+direction of Quill and Foundation coalescing repeated consumer operations into a
+batch; journal commit, CRC, ordering, and per-record reclamation checks are
+unchanged. See [coalesced delivery](coalesced-delivery.md) for the new window's
+write/acknowledgement trade-off.
 
-临时批次对象位于consumer栈上，容量固定为64组，不分配堆内存。记录解码后仍核对完整配置身份与route_mask，按原route、format和sink交付；各组累积route mask，执行相同written/durable barrier。旧View在整批交付、barrier和record reclaim完成后才释放。错误路径也通过defer释放批次View，但不撤销未确认记录的pending pin，不触发资源lease提前释放。
+The temporary batch object lives on the consumer stack with fixed capacity for 64
+groups and allocates no heap memory. After decoding, records still verify their
+complete configuration identity and route_mask and are delivered by original
+route, format, and sink; each group accumulates its route mask and executes the
+same written/durable barrier. Old Views are released only after the entire batch
+is delivered, barriers complete, and records are reclaimed. Error paths release
+batch Views through `defer` without dropping pending pins for unacknowledged
+records or triggering early resource-lease release.
 
-当前Runtime捕获的记录有明确非零route generation。历史记录的generation=0则每次重新执行Manager.find的完整指纹/歧义校验，再复用已经解析出的相同snapshot；不会以第一个命中替代历史恢复身份验证。filter-only reload和full replacement的发布方式不变，缓存只存在于当前批次，不保留跨批次的裸指针。
+Records captured by the current Runtime have a definite nonzero route generation.
+Historical generation=0 records re-run the complete `Manager.find` fingerprint/
+ambiguity check every time, then reuse the same resolved snapshot; the first hit
+never replaces historical recovery-identity validation. Filter-only reload and
+full replacement publish as before, and the cache exists only for the current
+batch without retaining raw pointers across batches.
 
-每条record仍独立确认，所有原CRC校验继续执行；这轮配置View复用没有引入批量回收API或改变accepted/written/durable协议。后续已单独加入durable route位图预计算和连续channel的written统计聚合，验证与测量见 [批内确认与统计](batch-accounting.md)。journal游标与reclaim仍逐条处理，不能把快照复用称为已完成全部批处理。
+Each record is still acknowledged independently, and all original CRC checks
+continue. This round of configuration View reuse did not introduce a batched
+reclamation API or change accepted/written/durable protocols. Durable-route
+bitmap precomputation and contiguous-channel written accounting were added
+separately; see [batch acknowledgement and accounting](batch-accounting.md).
+Journal cursors and reclaim remain per-record, and snapshot reuse is not the same
+as completing all batch processing.
 
-## 验证
+## Verification
 
-模块测试直接核对真实Manager.find调用次数：同一版本64次选择只有一次查找；64个不同generation各查找一次，即使目标指纹相同也保持独立View。持有View时旧版本不能collect，批次结束后可回收并仅释放一次lease。错误指纹/未知generation继续报错；历史generation=0每次重新查找且复用不分配。
+Module tests directly check real `Manager.find` call counts: 64 selections of the
+same generation perform one lookup; 64 different generations each perform one
+lookup, even when target fingerprints match, and keep independent Views. The old
+generation cannot be collected while a View is held; after the batch ends it can
+be reclaimed and the lease is released exactly once. Wrong fingerprints/unknown
+generations still return errors; historical generation=0 re-looks up every time
+and reuse does not allocate.
 
-真实后台测试用reservation gap预先建立31条完整事件，再开放consumer，核对共享与SPSC队列在31次sink回调间没有额外find调用。另一个混合版本测试在新sink失败时核对旧输出前缀、全部6个journal record保留、written为0、两个版本无临时reader泄漏，record pin与lease均保留。原配置事务、资源热替换、deadline与跨进程恢复测试继续执行。
+A real background test uses a reservation gap to prebuild 31 complete events,
+then opens the consumer and verifies that shared and SPSC queues perform no extra
+`find` calls across 31 sink callbacks. Another mixed-generation test verifies that
+when a new sink fails, the old output prefix is preserved, all six journal records
+remain, written is zero, neither generation leaks a temporary reader, and record
+pins and leases remain. Existing configuration transaction, hot resource
+replacement, deadline, and cross-process recovery tests continue to run.
 
-完整流程before/after使用同一JSON布局、系统墙钟、512-byte journal载荷预算、256槽队列、64KiB文件buffer、written flush与shutdown/清理。比较包含shared/SPSC、Memory/Mmap和prepared schema，固定CPU affinity并交替试验顺序。原始报告与源码/二进制身份见 `bench/evidence/2026-11-01-batch-configuration/`；局部查找次数下降不能直接换算为端到端日志吞吐。
+The complete-workflow before/after comparison uses the same JSON layout, system
+wall clock, 512-byte journal payload budget, 256-slot queue, 64 KiB file buffer,
+written flush, and shutdown/cleanup. It includes shared/SPSC, Memory/Mmap, and
+prepared schema, with fixed CPU affinity and alternating trial order. A local
+reduction in lookup count does not convert directly into end-to-end log
+throughput.
 
-## 完整流程测量
+## Complete-workflow measurement
 
-5个配置、sampled/batch两种独立进程，各5对before/after，共100个试验。每个试验100000条测量记录和1000条预热，逐条解析核对1010万条完整日志。应用与库均以ReleaseFast构建并保留frame pointer，固定CPU0/2/4/6/8/10。记录producer时间、最终written flush、shutdown、对象清理及调用分位数；没有省略时间戳、字段或错误检查。
+Five configurations, sampled/batch in separate processes, five before/after pairs
+each, for 100 trials. Each trial used 100,000 measured records and 1,000 warmup
+records, parsing and verifying 10.1 million complete logs. Application and
+library were built with ReleaseFast and frame pointers, fixed to CPU
+0/2/4/6/8/10. Producer time, final written flush, shutdown, object cleanup, and
+call quantiles were recorded; no timestamps, fields, or error checks were omitted.
 
-| batch模式 | before中位条/秒 | after中位条/秒 | 本轮资格 |
+| Batch mode | Before median records/s | After median records/s | Qualification |
 | --- | ---: | ---: | --- |
-| shared Memory P1 | 1,156,635 | 1,259,012 | 本机约8.9%提升，跨轮spread均低于10% |
+| shared Memory P1 | 1,156,635 | 1,259,012 | about 8.9% local gain; cross-round spread below 10% |
 | shared Memory P4 | 1,112,450 | 1,138,738 | inconclusive |
 | SPSC Memory P4 | 1,098,274 | 1,205,207 | inconclusive |
 | SPSC Mmap P4 | 1,143,207 | 1,165,445 | inconclusive |
 | SPSC Mmap P4 prepared | 1,194,094 | 1,159,759 | inconclusive |
 
-这是本次开发宿主的同条件结果，不代表所有工作负载或平台。prepared场景没有观察到收益，较高producer速度也会改变backpressure与后台批次大小；不能把各阶段中位数相减解释为每条日志的独立成本。全部min/max、分位数和慢值保留于comparison.json。既有跨库对照使用不同构建快照，应在累计优化后重新同轮运行。
+These are same-condition results on this development host and do not represent
+every workload or platform. The prepared scenario showed no gain, and higher
+producer speed also changes backpressure and background batch size; stage medians
+cannot be subtracted to explain per-record cost. All min/max, quantiles, and slow
+values were retained. Existing cross-library comparisons used different build
+snapshots and would need a same-round rerun after cumulative optimizations.

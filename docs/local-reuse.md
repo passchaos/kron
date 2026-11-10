@@ -1,31 +1,67 @@
-# 本地仓库复用评估
+# Local repository reuse assessment
 
-2026-10-31 调研 `~/project-z` 的 46 个主要仓库，排除临时 worktree、vendor 与 zig-pkg。先核对 README、实际 API、Zig 版本、依赖和存储语义，再决定复用范围。没有修改其他仓库，也没有把目标描述当作已经验证的性能成绩。
+On 2026-10-31, 46 major repositories under `~/project-z` were surveyed, excluding
+temporary worktrees, vendor directories, and `zig-pkg`. READMEs, actual APIs, Zig
+versions, dependencies, and storage semantics were checked before deciding reuse
+scope. No other repository was modified, and target descriptions were not treated
+as verified performance results.
 
-| 仓库/实际组件 | 对 kron 的用途 | 当前决定 |
+| Repository/actual component | Use for kron | Current decision |
 | --- | --- | --- |
-| Vort `src/checksum.zig` 的 `crc32Best`、`crc32UpdateBest`、`crc32Combine` | 校验 IEEE CRC32 的一次性、增量、分块和硬件实现兼容性 | 可选oracle；journal slot采用自有IEEE实现，native x86_64可选PCLMUL、其他目标portable slice-by-16，无Vort生产依赖 |
-| ZKV `src/storage/faultable_device.zig` 的 `FaultableDevice(capacity,max_writes)` | 固定数组、volatile/durable 分离、写前缀持久化、失败 sync 与 crash，检查双 checkpoint 的更新协议 | 已加入可选持久化模型检查，直接使用实际模型和 kron 协议，无复制 |
-| ZKV `src/storage/read_window.zig` 的 `Cache(slot_count)` | 固定窗口、borrow pin、positional/mmap 与增长尾部刷新 | 留给未来 kroncat 索引随机查询；当前顺序 consumer 无直接收益 |
-| Netz `src/mqtt/persistence/{commit_log,durability}.zig` | 参考完整提交损坏与短尾部的区别，以及 file sync→replace→directory sync | 保留语义参考；kron 已有实现，整包依赖 vail/pbz/zio，不引入 |
-| Zigraft `Impl/DynRef/DynMut` | 两指针 borrowed 动态视图与编译期接口契约 | kron 现有 sink vtable 已覆盖需要，引入收益不足 |
-| MCAP 的 chunk、CRC、positional index/reference replay | 工具与归档索引设计参考 | 自有日志格式已有恢复与兼容协议；不改变 journal 为 MCAP，不引入整包 |
+| Vort `src/checksum.zig` `crc32Best`, `crc32UpdateBest`, `crc32Combine` | Verify IEEE CRC32 one-shot, incremental, segmented, and hardware-implementation compatibility | Optional oracle; journal slots use kron's own IEEE implementation with optional PCLMUL on native x86_64 and portable slice-by-16 elsewhere; no Vort production dependency |
+| ZKV `src/storage/faultable_device.zig` `FaultableDevice(capacity,max_writes)` | Fixed arrays, volatile/durable separation, write-prefix persistence, failed sync and crash, dual-checkpoint update protocol | Added as an optional persistence-model check, using the actual model and kron protocol without copying |
+| ZKV `src/storage/read_window.zig` `Cache(slot_count)` | Fixed window, borrow pin, positional/mmap and growing-tail refresh | Reserved for future `kroncat` indexed random queries; the current sequential consumer has no direct gain |
+| Netz `src/mqtt/persistence/{commit_log,durability}.zig` | Reference distinction between complete-commit corruption and short tails, plus file sync→replace→directory sync | Semantic reference only; kron already has an implementation, and the whole package depends on vail/pbz/zio, so it was not introduced |
+| Zigraft `Impl/DynRef/DynMut` | Two-pointer borrowed dynamic views and compile-time interface contracts | The existing sink vtable already covers the need; introducing it has insufficient benefit |
+| MCAP chunks, CRC, positional index/reference replay | Tool and archive-index design reference | The existing log format already has recovery and compatibility protocols; the journal is not changed to MCAP and the whole package is not introduced |
 
-这些候选都声明 Zig 0.16。Zigraft、Netz 顶层提供 MIT 许可证；Vort、ZKV、MCAP、Hetu、Pangu、Alea、Zev 顶层未发现许可证文件。当前检查使用显式本地路径，默认构建和发布包不复制这些源码；正式采用生产依赖时再固定版本与发布授权。当前 package 的 `.dependencies` 仍为空。
+These candidates all declare Zig 0.16. Zigraft and Netz provide top-level MIT
+licenses; no top-level license file was found for Vort, ZKV, MCAP, Hetu, Pangu,
+Alea, or Zev. The current checks use explicit local paths, and the default build
+and release package do not copy these sources; pin versions and release
+authorization before adopting a production dependency. The current package
+`.dependencies` remains empty.
 
-没有找到比 kron 现有 io_uring 后端更合适的独立本地实现，也没有找到比标准库 arena 与现有流式 JSON encoder 更小的公共组件。Hetu 的只读整文件 mapping 不能替代日志所需的独占锁、空间预分配、共享可写映射与恢复协议；Zev 的通用 SIMD 包装不能直接替代 CRC 多项式折叠。Alea 的可复现 corpus 思路可参考，但现有标准库 PRNG 已满足测试要求。
+No independent local implementation better suited than kron's existing io_uring
+backend was found, and no smaller public component than the standard-library arena
+and the existing streaming JSON encoder was found. Hetu's read-only whole-file
+mapping cannot replace the exclusive lock, space preallocation, shared writable
+mapping, and recovery protocol required by logging; Zev's generic SIMD wrapper
+cannot directly replace CRC polynomial folding. Alea's reproducible-corpus idea is
+useful, but the standard-library PRNG already satisfies test requirements.
 
-## 实际验证
+## Actual verification
 
 ```sh
 zig build check-local-reuse -Dvort-path=/home/passchaos/project-z/vort -Doptimize=ReleaseSafe -j1
 zig build check-local-faults -Dzkv-path=/home/passchaos/project-z/zkv -Doptimize=ReleaseSafe -j1
 ```
 
-Vort 检查通过 **416 组**不同长度/对齐输入，核对一次性 CRC、增量 update、combine、journal v1/v2 的完整校验范围及压缩归档头。当前 x86_64 编译选择 `hardware`。这证明被测实现与持久格式兼容，不证明完整日志性能提升。命令、源码 SHA256 与输出在 `bench/evidence/2026-10-31-local-reuse/checksum-interoperability.json`。
+The Vort check passes **416 groups** of different length/alignment inputs,
+verifying one-shot CRC, incremental update, combine, complete journal v1/v2
+coverage, and compressed archive headers. The current x86_64 build selects
+`hardware`. This proves compatibility with the tested implementation and
+persistent format, not complete logging performance.
 
-2026-11-01自有CRC改用16-byte slicing后，416组实际Vort互操作ReleaseSafe重新通过，日志与当前源码身份见 `bench/evidence/2026-11-01-crc-slicing16/`。随后native x86_64加入编译期PCLMUL folding，portable表继续作为通用/非x86/短输入路径；416组互操作再次通过并报告`backend=hardware`，见 `bench/evidence/2026-11-01-pclmul-crc/`。这证明持久格式兼容与primitive加速，完整日志吞吐仍须按同轮跨库测量判断，不能用互操作结果单独宣称整体领先。
+After kron's own CRC moved to 16-byte slicing on 2026-11-01, the 416-group Vort
+interoperability check passed again under ReleaseSafe. Native x86_64 then gained
+compile-time PCLMUL folding, with the portable table retained for generic/non-x86/
+short inputs; the 416-group check passed again and reported `backend=hardware`.
+This proves persistent-format compatibility and primitive acceleration; complete
+logging throughput still requires same-round measurement, and interoperability
+alone does not establish an overall lead.
 
-ZKV 模型检查通过 **3,120 个持久前缀场景**及 **8 个非法边界场景**。覆盖双槽、空/旧有效目标、0–64 字节持久前缀、直接 crash/失败 sync 后 crash，以及 sequence/epoch 的进位与上界。新 checkpoint 的有效字段只有前20字节，后44字节为未变的零填充，因此前缀20起完整目标 entry 已一致，可以合法选择新边界；前缀0–19保持旧边界。测试使用实际 `journal/format.zig` 的编解码和 CRC，不能代表真实 mmap/fsync/物理断电，也不保证 CRC32 检出所有可能碰撞。
+The ZKV model check passes **3,120 persistent-prefix scenarios** and **8 invalid
+boundary scenarios**. It covers dual slots, empty/old valid targets, 0–64-byte
+persistent prefixes, direct crash/failed-sync-then-crash, and sequence/epoch
+carry and upper bounds. A new checkpoint's valid fields are only the first 20
+bytes, with the following 44 bytes unchanged zero padding, so a complete target
+entry from prefix 20 onward is identical and can legitimately choose the new
+boundary; prefixes 0–19 keep the old boundary. The test uses the actual
+`journal/format.zig` encoding/decoding and CRC and cannot represent real
+mmap/fsync/physical power loss or guarantee that CRC32 detects every possible
+collision.
 
-受控性能回归工具另见 [performance-regression.md](performance-regression.md)。同一二进制的20次自基线试验全部完成交付，但噪声超过阈值，结果为 `inconclusive`；原始报告归档于 `bench/evidence/2026-10-31-controlled-regression/`。
+See [performance-regression.md](performance-regression.md) for the controlled
+performance regression tool. Twenty same-binary self-baseline trials completed
+delivery, but noise exceeded the threshold and the result was `inconclusive`.

@@ -1,32 +1,81 @@
-# 平台支持与能力边界
+# Platform support and capability boundaries
 
-目标平台为 **Windows、Linux、macOS、Android 和 iOS**。当前文件、journal、时钟和线程接口使用共同公共 API；与操作系统相关的映射/预分配/同步实现分别位于 `src/platform/mapping/{linux,windows,darwin}.zig`。当前共享 journal 要求64位、小端目标；32位 journal 没有资格。
+Target platforms are **Windows, Linux, macOS, Android, and iOS**. File, journal,
+clock, and thread interfaces use a common public API; OS-specific mapping,
+preallocation, and synchronization implementations live in
+`src/platform/mapping/{linux,windows,darwin}.zig`. Shared journals currently
+require a 64-bit little-endian target; 32-bit journals are not qualified.
 
-| 平台 | 文件与共享 journal 实现 | 文件后端/时钟 | 当前验证 |
+| Platform | File and shared journal implementation | File backend/clock | Current verification |
 | --- | --- | --- | --- |
-| Linux x86_64/aarch64 | fallocate、MAP_SHARED、msync、file/dir fsync | portable，可选io_uring；NativeClock；x86_64可选TSC | x86_64真实单机运行/崩溃门禁；两架构公共调用路径ReleaseSafe对象编译 |
-| Windows x86_64 | FileAllocationInformation、CreateFileMappingW/MapViewOfFile、FlushViewOfFile、文件flush | portable；标准库原生系统时钟fallback | 完整公共调用路径对象编译；Windows后端PE链接与KERNEL32/ntdll导入检查；独立 Zig 包消费应用 PE 链接；尚未运行真机 |
-| macOS arm64/x86_64 | F_PREALLOCATE、MAP_SHARED、msync、fsync；strict durable额外F_FULLFSYNC | portable；标准库原生系统时钟fallback | 两架构实际公共路径Mach-O对象编译；尚未运行真机 |
-| Android arm64/x86_64 | Linux映射实现；app可写文件系统路径 | portable；允许时可选io_uring；NativeClock | Android ABI公共调用路径对象编译；尚未设备运行 |
-| iOS arm64/device与arm64/simulator | Darwin映射实现；app沙盒可写路径 | portable；标准库原生系统时钟fallback | device/simulator实际公共路径Mach-O对象编译；尚未设备运行 |
+| Linux x86_64/aarch64 | fallocate, MAP_SHARED, msync, file/dir fsync | portable, optional io_uring; NativeClock; optional x86_64 TSC | x86_64 real-machine execution/crash gates; ReleaseSafe object compilation of public call paths on both architectures |
+| Windows x86_64 | FileAllocationInformation, CreateFileMappingW/MapViewOfFile, FlushViewOfFile, file flush | portable; standard-library native system-clock fallback | Complete public call-path object compilation; Windows backend PE linking and KERNEL32/ntdll import checks; independent Zig package consumer PE linking; no real-device execution yet |
+| macOS arm64/x86_64 | F_PREALLOCATE, MAP_SHARED, msync, fsync; strict durable adds F_FULLFSYNC | portable; standard-library native system-clock fallback | Mach-O object compilation of real public paths on both architectures; no real-device execution yet |
+| Android arm64/x86_64 | Linux mapping implementation; app-writable filesystem paths | portable; optional io_uring where allowed; NativeClock | Android ABI public call-path object compilation; no device execution yet |
+| iOS arm64/device and arm64/simulator | Darwin mapping implementation; app sandbox writable paths | portable; standard-library native system-clock fallback | Mach-O object compilation of real public paths for device/simulator; no device execution yet |
 
-`zig build check-platforms -j1` 强制生成9个目标的实际对象，入口 `src/platform_check.zig` 会分析同步文件写入、静态时钟、filter reload、flush/deadline/shutdown、SPSC attach/emit/detach、schema-capable journal、恢复Reader。它比只检查声明覆盖更多实际路径，但**交叉编译不证明运行成功、系统调用可用或设备耐久性**。Apple app链接需要正常Xcode SDK/libSystem；Android app链接需要正常NDK/bionic，本机对象检查没有安装或替代这些SDK。
+`zig build check-platforms -j1` forces actual object generation for nine
+targets. The `src/platform_check.zig` entry exercises synchronous file writes,
+static clocks, filter reload, flush/deadline/shutdown, SPSC attach/emit/detach,
+schema-capable journals, and recovery Reader. This covers more real paths than a
+declaration-only check, but **cross-compilation does not prove successful
+execution, syscall availability, or device durability**. Apple app linking needs
+a normal Xcode SDK/libSystem; Android app linking needs a normal NDK/bionic. The
+host object check does not install or substitute for those SDKs.
 
-`kron.platform` 提供编译期 `target`、`synchronous`、`shared_journal`、`asynchronous`、`spsc`、`directory_durable_protocol`、`io_uring` 和 `tsc`。能力值表示实现存在；运行时磁盘、权限、内核、app沙盒或文件系统仍可返回明确错误。自动后端在io_uring不可用时选择portable。
+`kron.platform` provides compile-time `target`, `synchronous`, `shared_journal`,
+`asynchronous`, `spsc`, `directory_durable_protocol`, `io_uring`, and `tsc`.
+Capability values mean the implementation exists; runtime disk, permissions,
+kernel, app sandbox, or filesystem can still return explicit errors. The
+automatic backend selects portable when io_uring is unavailable.
 
-系统本地时间是显式可选能力：`.timestamp = .{ .zone = .local }`。Linux通过dependency的 `system-local-time=true` 或应用链接libc启用，默认固定偏移不增加libc依赖；Apple/Android采用系统libc的localtime转换，Windows采用原生动态时区API。异步消费者按事件Unix整秒缓存，producer保持原始时间戳捕获。时区来源身份、运行期间保持时区环境稳定及历史非分钟偏移的错误边界见 [时间文档](time.md#系统本地时间)。本地时间的Linux实测和其他目标对象编译分别记录，不代替非Linux设备资格。
+System local time is an explicit optional capability:
+`.timestamp = .{ .zone = .local }`. Linux enables it through the dependency's
+`system-local-time=true` or by linking libc in the application; the default
+fixed-offset path adds no libc dependency. Apple/Android use system libc localtime
+conversion, and Windows uses the native dynamic timezone API. The asynchronous
+consumer caches per event Unix second, while the producer keeps raw timestamp
+capture. See [time documentation](time.md#system-local-time) for timezone-source
+identity, keeping the timezone environment stable at runtime, and historical
+non-minute-offset errors. Linux local-time measurements and other-target object
+compilation are recorded separately and do not replace non-Linux device
+qualification.
 
-## 同步与durable
+## Synchronization and durability
 
-各平台的显式durable协议区分页同步与文件同步。mmap journal初始化与schema-ready通过文件发布协议完成；Linux/Android全文件fsync已经覆盖共享映射脏页，冷发布省去前面的重复msync，其他平台保留映射flush，源码与验证见[Mmap发布](mmap-publication.md)。accepted表示事件已完整提交到共享文件映射，内存异步的accepted只进入进程内queue。两者都不能替代设备断电的durable确认，详见 [异步存储](async-storage.md)。
+Explicit durable protocols differ between page synchronization and file
+synchronization on each platform. Mmap journal initialization and schema-ready
+complete through the file publication protocol; on Linux/Android, whole-file
+fsync already covers shared-mapping dirty pages, so cold publication omits the
+preceding duplicate msync, while other platforms keep mapping flush. See
+[Mmap publication](mmap-publication.md). Accepted means the event was completely
+committed to the shared file mapping; Memory asynchronous acceptance only enters
+an in-process queue. Neither replaces device power-loss durable confirmation; see
+[asynchronous storage](async-storage.md).
 
-Linux/Android strict durable执行msync、文件sync和父目录sync。Darwin strict durable进一步执行F_FULLFSYNC，若文件/目录不支持这一协议返回 `UnsupportedDurability`，不会降低为普通flush成功。Darwin预分配核对已分配块数，只申请差额，失败fallback重新核对，避免重开journal反复扩大实际磁盘保留。
+Linux/Android strict durable performs msync, file sync, and parent-directory
+sync. Darwin strict durable additionally performs F_FULLFSYNC and returns
+`UnsupportedDurability` if the file/directory does not support this protocol
+rather than downgrading to an ordinary successful flush. Darwin preallocation
+checks allocated blocks and requests only the difference; failure falls back to
+rechecking so reopening a journal does not repeatedly grow actual disk
+reservation.
 
-Windows可以页flush与文件flush，但本实现没有可确认新建目录项耐久的等价协议，因此 `directory_durable_protocol=false`，文件sink/journal strict durable返回 `UnsupportedDurability`。同步written和普通mmap异步/进程崩溃恢复仍可使用。没有把FlushViewOfFile当作完整设备durable保证。
+Windows can flush pages and files, but this implementation has no equivalent
+protocol that confirms durability of a newly created directory entry, so
+`directory_durable_protocol=false`, and file sink/journal strict durable returns
+`UnsupportedDurability`. Synchronous written and ordinary mmap async/process-crash
+recovery remain available. FlushViewOfFile is not treated as a complete device
+durability guarantee.
 
-移动应用必须由宿主传入沙盒内路径；日志库不会请求额外权限或保证系统挂起时继续执行。应用需要在平台生命周期回调内显式flush/shutdown并处理结果。iOS保护文件在锁屏或系统挂起时可能不可访问；Android的内核策略可能拒绝io_uring，这些均通过实际I/O结果处理。
+Mobile applications must pass sandbox paths from the host; the logging library
+does not request extra permissions or guarantee execution while the system is
+suspended. Applications must explicitly flush/shutdown in platform lifecycle
+callbacks and handle the results. iOS protected files may be inaccessible while
+locked or suspended; Android kernel policy may reject io_uring. Both are handled
+through actual I/O results.
 
-## 运行验证
+## Execution verification
 
 ```sh
 zig build verify-local -Doptimize=ReleaseFast -j1
@@ -36,14 +85,40 @@ zig build test-package test-package-single-threaded -Doptimize=ReleaseSafe -j1
 zig build test-platform-host -Doptimize=ReleaseSafe -j1
 ```
 
-独立 Zig 包消费项目实际运行五种模式的 Linux 结果与 Windows PE 链接证据位于 `bench/evidence/2026-10-31-package-consumer/`。测试驱动按宿主选择 Windows `.exe` 后缀；报告包含实际宿主、工具链和线程计数。仅 Linux 单线程运行使用 `/proc/self/task` 确认 OS 线程数，其他平台不会把缺少这一检查记作通过。源码归档接入另见 [Zig 包接入](package.md)。
+The independent Zig package consumer actually ran five modes on Linux and linked
+a Windows PE; that evidence is no longer tracked. The test driver selects the
+Windows `.exe` suffix per host; reports include the actual host, toolchain, and
+thread count. Only the Linux single-threaded run uses `/proc/self/task` to confirm
+the OS thread count; other platforms do not record a missing check as a pass. See
+[Zig package integration](package.md) for source-archive consumption.
 
-单线程构建仅支持同步runtime；普通文件flush、durable能力与shutdown可用，timed控制返回 `TimedControlUnavailable`，async/SPSC初始化返回 `ThreadsUnavailable`。当前Linux可执行文件确认进程仅一个线程，初始化后提交/flush没有新增runtime分配。
+Single-threaded builds support only the synchronous runtime; ordinary file flush,
+durable capabilities, and shutdown are available, timed control returns
+`TimedControlUnavailable`, and async/SPSC initialization returns
+`ThreadsUnavailable`. The current Linux executable confirms a single process
+thread and no new runtime allocation for submit/flush after initialization.
 
-Linux的SIGKILL与子QEMU停机证据继续有效于被测Linux配置；不可用作Windows/Apple/Android真机断电资格。后续各平台必须以设备运行、崩溃恢复、文件系统和生命周期测试补足运行证据。
+Linux SIGKILL and child-QEMU shutdown evidence remains valid for the tested Linux
+configuration; it cannot be used as Windows/Apple/Android device power-loss
+qualification. Each platform must supplement execution evidence with device
+runs, crash recovery, filesystem, and lifecycle tests.
 
-## 可在目标设备运行的 Zig 自校验
+## Zig self-check runnable on target devices
 
-独立消费应用的 `qualify DIRECTORY` 入口使用原生 Zig 校验五种提交模式、Unicode文件名、filter reload、初始化后runtime零分配、深拷贝/脱敏、普通与schema journal关闭重开、只读inspection、独占锁、轮转保留和实际durable能力。测试结果作为JSON返回；移动Zig宿主可直接调用同一 `platform.zig` 中的 `run(allocator, io, sandbox_directory)`，无需Python或子进程，接入见 [package.md](package.md)。
+The independent consumer's `qualify DIRECTORY` entry uses native Zig to verify
+five submission modes, Unicode file names, filter reload, zero Runtime allocation
+after initialization, deep copy/redaction, ordinary and schema journal
+close-reopen, read-only inspection, exclusive locking, rotation retention, and
+actual durable capabilities. Results are returned as JSON; a mobile Zig host can
+call `run(allocator, io, sandbox_directory)` in the same `platform.zig` without
+Python or a subprocess. See [package.md](package.md) for integration.
 
-Linux ReleaseSafe 普通构建和single-threaded构建、普通ReleaseFast构建以及本地fetch源码包均实际通过；单线程报告仅包含sync模式。测试重复使用已有目录必须失败且保留原有输出，相关独立包测试通过。含自校验入口的Windows独立应用已实际PE链接通过。设备验收需要在设备上执行该入口并保存报告，不能用Linux自校验或Windows链接替代。当前主机没有Wine/Android设备与模拟器/Apple SDK或设备，因此尚未产生其他四平台的运行报告。
+Linux ReleaseSafe normal and single-threaded builds, a normal ReleaseFast build,
+and a locally fetched source package all passed actual execution; the
+single-threaded report contains only sync mode. Reusing an existing test directory
+must fail and preserve existing output, and the independent package test passed.
+A Windows independent application including the self-check entry linked as a PE.
+Device acceptance requires running this entry on the device and saving the
+report; Linux self-checks or Windows linking are not substitutes. This host has
+no Wine/Android device or emulator/Apple SDK or device, so no execution reports
+exist for the other four platforms.

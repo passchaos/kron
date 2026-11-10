@@ -1,6 +1,17 @@
-# Memory/Mmap consumer 服务预算
+# Memory/Mmap consumer service budget
 
-`consumer_batches_per_queue` 在 Runtime 初始化时选择后台从一条队列连续处理的服务量子数，允许1到4，默认4。每个量子最多64条记录；当前可将剩余量子内已经就绪的连续记录合成一个checked交付窗口，完整写出/barrier和逐条回收后，再取新窗口或服务下一个队列。短窗口也扣除至少一个量子，默认最多连续服务256条，显式1则最多64条。共享主队列与SPSC channel使用同一预算，只有一条队列时仍按该预算运行。同步模式没有后台drain，初始化时仍校验该选项的范围。具体合并与确认边界见[合并交付](coalesced-delivery.md)。
+`consumer_batches_per_queue` selects how many service quanta the background
+processes consecutively from one queue, from 1 to 4, defaulting to 4. Each quantum
+contains at most 64 records; the current implementation can merge already-ready
+contiguous records within the remaining quanta into one checked delivery window,
+then take a new window or serve the next queue after complete writing/barriers
+and per-record reclamation. A short window also charges at least one quantum, so
+the default serves at most 256 records consecutively, and an explicit 1 serves at
+most 64. The shared main queue and SPSC channels use the same budget, and a single
+queue still follows it. Synchronous mode has no background drain, but the option
+range is still validated at initialization. See
+[coalesced delivery](coalesced-delivery.md) for merge and acknowledgement
+boundaries.
 
 ```zig
 const runtime = try kron.Runtime.create(allocator, io, .{
@@ -13,22 +24,96 @@ const runtime = try kron.Runtime.create(allocator, io, .{
 });
 ```
 
-Mmap使用同一选项，只将queue配置替换为journal文件配置。预算不是延迟deadline，也不改变accepted/written/durable、每线程FIFO、CRC、schema检查、配置快照或slot回收。它在创建时固定，不经过热配置发布；0或大于4的值在分配和创建journal之前返回`InvalidOptions`。
+Mmap uses the same option with the queue configuration replaced by a journal file.
+The budget is not a latency deadline and does not change accepted/written/
+durable, per-thread FIFO, CRC, schema checks, configuration snapshots, or slot
+reclamation. It is fixed at creation and does not pass through hot configuration
+publication; 0 or values above 4 return `InvalidOptions` before allocation and
+journal creation.
 
-较小预算可以缩短积压peer的服务间隔，同时改变批次局部性与满队列producer的等待分布。p99和p99.9可能呈现不同方向，不能从更公平的服务顺序推断所有分位数更低。默认4保持现有调度，应用应按自己的Memory/Mmap负载分别测量吞吐、p99与p99.9再选择。
+A smaller budget can shorten the service interval for a backlogged peer while
+changing batch locality and the waiting distribution of producers on a full
+queue. p99 and p99.9 may move in different directions, and a fairer service order
+does not imply lower values at every quantile. The default 4 preserves existing
+scheduling; applications should measure throughput, p99, and p99.9 separately for
+their own Memory/Mmap workloads before choosing.
 
-确定性真实后台测试在首条写入回调处建立屏障，然后积压160条busy日志和一条peer日志。在Memory/Mmap、共享peer与SPSC peer四种组合中，预算1/2/3/4时，peer分别在第1/65/129/161条busy输出后得到服务；线程内sequence、written计数、零剩余积压和初始化后零分配均核对。该验证以记录数界定服务间隔，不宣称操作系统的墙钟调度上界。
+A deterministic real-background test installs a barrier at the first write
+callback, then backs up 160 busy logs and one peer log. Across Memory/Mmap and
+shared peer/SPSC peer combinations, budgets 1/2/3/4 serve the peer after the
+1st/65th/129th/161st busy output respectively; per-thread sequence, written
+counts, zero remaining backlog, and zero allocation after initialization are
+verified. This verification bounds the service interval by record count and does
+not claim an OS wall-clock scheduling bound.
 
-公共集成测试另外观察SPSC满队列上的真实futex等待，shutdown唤醒已admitted producer，后者返回`rejected_closing`并abort自己的未完成reservation。Memory/Mmap分别核对没有accepted记录、没有输出和没有积压残留。原deadline、配置替换、文件错误与恢复测试继续约束同样的生命周期。
+Public integration tests also observe a real futex wait on a full SPSC queue;
+shutdown wakes the admitted producer, which returns `rejected_closing` and aborts
+its unfinished reservation. Memory/Mmap separately verify no accepted records, no
+output, and no residual backlog. Existing deadline, configuration replacement,
+file-error, and recovery tests continue to constrain the same lifecycle.
 
-`bench/cpp_reference/kron_reference.zig`支持`--consumer-batches=1`至4并在JSON报告中保存值。Memory/Mmap完整性能报告与测量源码、原始失败和默认预算对照位于`bench/evidence/2026-11-01-channel-fairness/`。
+The former cross-library reference harness supported `--consumer-batches=1`
+through 4 and stored the value in JSON reports; that harness has been removed.
+Complete Memory/Mmap performance reports and measurement sources are no longer
+tracked.
 
-同一可执行文件的40项完整文件对照分别验证Memory/Mmap四producer，100k测量记录＋1k预热，五对sampled/batch，共核对404万条JSON。预算4→1的Memory p99中位约10.9→82.8µs、p99.9约377.7→114.7µs；Mmap p99约9.1→84.5µs、p99.9约391.0→110.7µs。所有分位数与吞吐组均因spread超门限标inconclusive；取舍在更早的独立候选对照中也观察到。默认4保持，显式1不能被描述为整体更快或所有尾延迟更低。原始每项计数、顺序、hash、关闭和初始化结果见`tuned-results.jsonl`与`tuned-comparison.json`。
+Forty complete-file trials from the same executable verified Memory/Mmap with four
+producers, 100k measured records + 1k warmup, five sampled/batch pairs, and 4.04
+million JSON records. Moving the budget from 4 to 1 changed Memory p99 median
+from about 10.9 to 82.8 µs and p99.9 from about 377.7 to 114.7 µs; Mmap p99 from
+about 9.1 to 84.5 µs and p99.9 from about 391.0 to 110.7 µs. All quantiles and
+throughput groups were inconclusive because spread exceeded the threshold, and
+the trade-off was also observed in earlier independent candidate comparisons. The
+default remains 4; explicit 1 cannot be described as overall faster or as lower
+tail latency everywhere.
 
-基于`714c470/e8bd353`另测跨队列64条轮次合并窗口：每队列保留原1..4量子，总窗口最多256条，输出屏障共享且逐条CRC/回收保持。四队列Memory/Mmap×inline/schema、稀疏六队列容量分割、peek/flush/durable与晚期损坏定向Debug/Safe/Fast各26项通过，原1/65/129/161 peer位置保持。但440项完整流程/PMU/单量子控制核对5244万条JSON后，吞吐/尾延迟全部因波动保持inconclusive；inline SPSC Memory/Mmap P4 p99.9中位约352µs→86µs，p99却约0.6µs→72–73µs，用户态指令增加约0.58%–0.71%。额外80项与现有一量子控制也未证明一般优势，候选已全量否决，生产恢复原调度。完整失败、资源和正负分布见`bench/evidence/2026-11-01-cross-queue-delivery/`。下一步等待路径优化需从实际进度/唤醒证据出发，不能只挑低p99.9推广默认策略。
+A separate cross-queue 64-record round-coalescing window was tested on
+`714c470/e8bd353`: each queue kept its original 1..4 quanta, the total window was
+at most 256 records, output barriers were shared, and per-record CRC/reclaim was
+retained. Four-queue Memory/Mmap × inline/schema, sparse six-queue capacity
+splitting, peek/flush/durable and late-corruption targeted Debug/Safe/Fast tests
+passed 26 each, and the original 1/65/129/161 peer positions were preserved.
+However, 440 complete-workflow/PMU/single-quantum control trials verifying 52.44
+million JSON records left throughput/tail latency inconclusive because of
+variance; inline SPSC Memory/Mmap P4 p99.9 median moved from about 352 to 86 µs
+while p99 moved from about 0.6 to 72–73 µs, and user instructions rose about
+0.58%–0.71%. Another 80 trials against the existing single-quantum control did not
+prove a general advantage, so the candidate was fully rejected and production
+restored the original scheduling. Future waiting-path optimization should start
+from actual progress/wakeup evidence rather than generalizing a lower p99.9 into a
+default policy.
 
-SPSC满队列等待现在使用本队列的进程内space epoch。其他队列的完成不会推进该epoch；本队列tombstone/已确认窗口完成后推进，并在已有等待者时唤醒它。只有一位合法SPSC owner登记等待，登记后重新检查worker错误/closing；seq_cst的epoch/登记顺序使并发通知要么唤醒已登记者，要么改变futex检查的expected值。worker退出/错误和shutdown对所有稳定channel通知，即使其本队列没有写出进展。共享producer与control的原global progress协议保持，服务预算与FIFO不变。
+SPSC full-queue waiting now uses the local queue's in-process space epoch.
+Completion on another queue does not advance this epoch; completion of this
+queue's tombstone/acknowledged window advances it and wakes an existing waiter.
+Only one legitimate SPSC owner registers a wait, and after registration it
+rechecks worker errors/closing; the seq_cst epoch/registration order ensures a
+concurrent notification either wakes the registered waiter or changes the
+expected value observed by the futex check. Worker exit/errors and shutdown
+notify every stable channel, even when its own queue made no write progress. The
+original global progress protocol for shared producers/control is unchanged, as
+are service budget and FIFO.
 
-独立诊断各12项前后核对242.4万条JSON，SPSC每试验本队列written未变化的wait返回从832–1137降为0；该观测包含立即返回，不能直接解释为真实睡眠次数或完整速度。正式400项文件/PMU/百万条检查核对8440万条JSON。Memory inline SPSC P4长sampled调用p99.9中位366.312→340.708µs（−6.99%），两侧CV/spread通过且区间不重叠；p50/p99与Mmap尾部仍未取得一般资格，极端等待仍约340µs。短流程P1吞吐负向中位约10%与较大波动保留，百万条P1 batch未重现该负向、中位+2.26%但区间重叠。不扩大队列/file budget或增加分配次数，每Journal进程内control增64字节。本队列回收、sleep前shutdown、epoch回绕与不同队列worker失败的真实并发回归见`bench/evidence/2026-11-01-queue-progress/`，不据此更新Foundation跨库排名。
+Twelve independent diagnostic trials before/after verified 2.424 million JSON
+records; wait returns for unchanged local-queue written fell from 832–1137 to 0
+per SPSC trial. This observation includes immediate returns and does not directly
+mean real sleep count or complete speed. Formal 400 file/PMU/one-million-record
+checks verified 84.40 million JSON records. Memory inline SPSC P4 long sampled
+call p99.9 median moved from 366.312 to 340.708 µs (−6.99%), with both-side
+CV/spread passing and non-overlapping intervals; p50/p99 and Mmap tails still did
+not qualify generally, and the extreme wait remains about 340 µs. Short-workflow
+P1 throughput retained a negative median around 10% and large variance; the
+one-million-record P1 batch did not reproduce it (median +2.26%, intervals
+overlapping). Queue/file budgets and allocation counts did not increase, and each
+Journal gains 64 bytes of in-process control. Real concurrency regressions cover
+local-queue reclamation, shutdown before sleep, epoch wrap, and worker failures on
+different queues. This does not update a cross-library ranking.
 
-全局进度等待者登记的后续实验已否决：SPSC全局wake调用约414–425→4–8、共享约减少一半，但200项完整流程与80项更长的shared独立复测（共4428万JSON）未证明共享路径整体收益。Memory batch复测中位P1/P4为−1.02%/−2.91%，区间重叠；其他吞吐和尾部组互有正负。生产继续使用原通知协议，源码、全部慢值和决策见 [否决记录](../bench/evidence/2026-11-02-global-progress/README.md)。常规应用优先shared Memory/Mmap；SPSC作为高级可选和退化控制保留。
+A follow-up experiment that registered waiters for global progress was rejected:
+SPSC global wake calls fell from about 414–425 to 4–8 and shared calls roughly
+halved, but 200 complete workflows plus 80 longer shared independent rechecks
+(44.28 million JSON records) did not prove an overall shared-path gain. Memory
+batch rechecks had P1/P4 medians of −1.02%/−2.91% with overlapping intervals;
+other throughput and tail groups were mixed. Production keeps the original
+notification protocol. Ordinary applications should prefer shared Memory/Mmap;
+SPSC remains an advanced option and degradation control.

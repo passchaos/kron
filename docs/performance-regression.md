@@ -158,7 +158,7 @@ Those new reports are preserved under
 `/tmp/kron-controlled-regression-baseline.json`,
 `/tmp/kron-controlled-regression-candidate.json`, and
 `/tmp/kron-controlled-regression-comparison.json`. Temporary evidence can be
-cleaned by the environment. The earlier file, C++, clock, prepared-schema and
+cleaned by the environment. The earlier file, clock, prepared-schema, and
 snapshot pilot reports were not overwritten. Establish a production regression
 baseline from a controlled build and machine with understood noise before using
 the default threshold as a release gate.

@@ -1,9 +1,0 @@
-{
-  "scope": "read-only direct CAS proof, no benchmark inference",
-  "invariant": "published shared peak only grows; mode fixed; init/recovery resets before publication",
-  "success": "CAS sets c only while c>expected, strictly increases peak",
-  "failure": "returned q<c retries, q>=c exits; spurious equal returned old retries. No numeric ABA because shared peak cannot decrease.",
-  "occupancy": "capture original occupied.fetchAdd result, never re-read occupied as replacement count",
-  "ordering": "all original peak operations monotonic; no publication synchronization role changed",
-  "possible_codegen_cost": "optional atomic cmpxchg result may create tag/spill or count arithmetic path changes; inspect actual assembly first"
-}

@@ -1,9 +1,0 @@
-{
-  "scope": "Read-only concurrency review, no performance inference",
-  "resets": "create init0 and scanRecovery pending before pointer publication only",
-  "shared_updates": "published shared high_water only monotonic fetchMax; reclaim changes occupied only",
-  "mode": "single/exclusive producer uses original conditional store; retire/reactivate do not reset peak; producer_mode fixed",
-  "safety": "If c<=observed_peak, every subsequent modification is>=observed_peak>=c. Stale low reads only cause redundant fetchMax. A low updater after higher max cannot decrease the atomic maximum.",
-  "ordering": "Peak is monotonic diagnostic state, not a release/acquire synchronization variable. Slot/turn and admissions publication unchanged.",
-  "findings": []
-}

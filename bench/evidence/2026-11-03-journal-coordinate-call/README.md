@@ -1,9 +1,0 @@
-# Journal 坐标与既有校验调用边界
-
-独立候选，保持完整cachedcoords数学，但validateSlot显式never_inline调用原slotChecksum，避免前variant意外扩为三CRC call和增加32Bframe。原baseline4e35989的validator确有这个调用，不新增unchecked逻辑、不跳CRC/schema，也不弱化实际seq/gen/len/marker/errors。当前仅directive改变，不由inline/noinline词推性能。
-
-前variant arbitrarycapacity queue稳退已拒，所有source/bin/报告保留。此variant对原4e35989独立验证，先safe实际新tests及所有journal控制、actualoldCRCboundary/stack/noextraDIV，再两topology8capacity队列和完整JSON。新field位置/size与所有表/三checks仍独立核验。
-
-variantSafe两个新cases+15aggregate通过，relatedjournal78项通过；actualvalidator692B恢复before0x58frame/twocalls(slotChecksum+ready)，不再持有inlineCRC局部header，slotChecksum156B原样。任意cap仍consumer5DIV/pow0，CRC全部保持。队列两topology800rawbatch均seqchecksum一致，但8capacity都不确定，所有中位negative：nonpow约0.90..0.93，pow约0.95..0.98；不虚称本variant稳定回退，也没有任何完整loggingtrial。无保留依据，variant撤回，archive/source/bytes/原raw保持，后续入口特化设计不能继承前序速度比。
-
-恢复最终验证：relatedSafe12/12steps64/64tests、journal筛选78/78；新两实质cases在Debug/Fast/genericSafe实际执行（各17total含15aggregate）通过；源码分发五fresh modes和九目标对象12/12steps成功。对象不是设备运行，production恢复逐文件原样，所以不重复全库SIGKILLfaultgate。原patch空白/log尾空行保留，source/docdiff/zigfmt范围分开记录。完整身份在qualification.json，全部session结束。

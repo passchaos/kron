@@ -31,8 +31,8 @@ jobs:
           key: zig-0.16.0-${{ runner.os }}-${{ hashFiles('build.zig', 'build.zig.zon') }}
           restore-keys: |
             zig-0.16.0-${{ runner.os }}-
-      - name: Repository, evidence and docs checks
-        run: zig build fmt bench-index hygiene docs links -j1 --summary all
+      - name: Repository and docs checks
+        run: zig build fmt hygiene docs links -j1 --summary all
       - name: Fast unit tests
         run: zig build test-unit -Doptimize=ReleaseSafe -j1 --summary all
       - name: Unit and integration tests
@@ -42,7 +42,7 @@ jobs:
       - name: Regex differential and fuzz gates
         run: zig build test-regex-differential test-regex-fuzz test-regex-equivalence -Doptimize=ReleaseSafe -j1 --summary all
       - name: Benchmark and report self-tests
-        run: zig build test-regression test-managed-output-report test-cpp-reference-report test-bench test-application-bench test-dispatch test-snapshot test-sampling-bench test-encoding-bench test-capture-bench test-regex-bench -Doptimize=ReleaseSafe -j1 --summary all
+        run: zig build test-regression test-managed-output-report test-bench test-application-bench test-dispatch test-snapshot test-sampling-bench test-encoding-bench test-capture-bench test-regex-bench -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
         run: zig build check-platforms -j1 --summary all
       - name: Package, platform-host and recovery gates

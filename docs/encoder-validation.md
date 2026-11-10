@@ -1,31 +1,81 @@
-# 完整记录编码的校验复用
+# Validation reuse for complete-record encoding
 
-text、JSON、logfmt的公开encode入口保留相同签名与输出布局。每次调用先完整校验attributes和format_args，共享256个value节点、8层container深度与重复key规则；成功后才进入同一模块内的私有递归输出。字段值不再逐项重复调用validateValue，固定类型metadata也直接使用同一私有输出方法。
+The public text, JSON, and logfmt `encode` entries keep the same signatures and
+output layout. Each call first validates attributes and format_args completely,
+sharing the 256-value-node budget, 8-level container depth, and duplicate-key
+rules; only after success does it enter the module-private recursive output.
+Field values are no longer validated one by one, and fixed-type metadata uses the
+same private output method.
 
-完整编码入口不返回校验凭证，不导出可绕过验证的value writer，也不允许把校验结果保留到另一次调用。独立common.value继续完整验证自己的输入，延迟格式化中的nested参数仍通过这个安全入口渲染。所有descriptor、key和借用bytes必须在整个编码调用期间保持有效且不变，writer回调也必须遵守这个借用条件。
+The complete encoding entry does not return a validation credential, does not
+export a value writer that bypasses validation, and does not allow a validation
+result to be retained for another call. Standalone `common.value` still fully
+validates its input, and nested arguments in deferred formatting still render
+through this safe entry. All descriptors, keys, and borrowed bytes must remain
+valid and unchanged for the entire encoding call, and Writer callbacks must obey
+the same borrowing condition.
 
-checked wire parser 的 `valueWith(receiver)` 复用同一套 tag、长度、节点、深度、nested、重复key 与 arena 检查，成功后以 comptime tag 和 typed payload 回调；公开 `value()` 仍构造原 `Value`，array/group 仍完整解析后才交给 callback。融合 renderer 因此跳过中间 `Value` 和通用二次分派，但没有放宽验证或错误优先级；独立差分和完整门禁见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。
+The checked wire parser's `valueWith(receiver)` reuses the same tag, length, node,
+depth, nested, duplicate-key, and arena checks, then calls back with a comptime
+tag and typed payload; public `value()` still constructs the original `Value`,
+and arrays/groups are fully parsed before callbacks. The fused renderer therefore
+skips intermediate `Value` and generic second dispatch without relaxing
+validation or error precedence; see
+[wire scalar notes](performance-hotspots.md) for differential and full-gate
+details.
 
-结构上把UTF-8流式转义、hex和可逆key表示拆到escaping.zig；common.zig拥有完整记录校验、三种布局和私有value输出，json/text/logfmt模块保留公开入口与各自golden测试。独立格式入口以comptime选择布局，不增加运行时格式分发。没有生产依赖、堆分配、完整消息scratch或新wire格式。
+Structurally, UTF-8 streaming escaping, hex, and reversible key representation
+are split into `escaping.zig`; `common.zig` owns complete-record validation, the
+three layouts, and private value output, while json/text/logfmt modules keep
+public entries and their golden tests. Independent format entries select layout at
+comptime and add no runtime format dispatch. There is no production dependency,
+heap allocation, complete-message scratch, or new wire format.
 
-这一步对应Foundation formatter减少重复工作与集中处理的方向。当前仍保留原std.Io.Writer写入顺序和输出片段，没有加入两遍输出长度计算或缓存格式模板；Foundation的日历日期缓存不适用于保持完整timestamp_ns的JSON输出。
+This corresponds to Foundation formatter's direction of reducing duplicate work
+and centralizing processing. The current code keeps the original
+`std.Io.Writer` write order and output fragments, without two-pass output-length
+computation or cached format templates; Foundation's calendar-date cache does not
+apply to JSON output that preserves full `timestamp_ns`.
 
-## 正确性证据
+## Correctness evidence
 
-- 实际公开text/JSON/logfmt入口覆盖全部11种value tag、嵌套容器和unused格式参数，记录的14个节点只校验14次。旧实现被相同测试以27次遍历拒绝；测试用单独复制的旧源码，不修改测量baseline。
-- 独立common.value仍验证合法完整树，并在重复key失败时保持零输出。原cycle、深度、重复key、attributes/arguments共享预算测试继续覆盖全部encoder格式。
-- 对冻结旧源码与当前源码进行独立模块对照，12个完整text/JSON/logfmt输出逐字节相同；16,486种短缓冲区容量的错误和已写前缀相同。输入包含整数极值、NaN/Inf/subnormal、畸形UTF-8、可逆key、source/trace、secret、nested和跨参数UTF-8拼接。
-- 原JSON解析与golden、logfmt nested、流式转义、长消息和capture深拷贝测试继续验证。格式错误与底层writer失败仍返回原错误；“无效树零输出”不表示任意I/O失败均零输出。
+- Actual public text/JSON/logfmt entries cover all 11 value tags, nested
+  containers, and unused format arguments; a record with 14 nodes validates
+  exactly 14 times. The same test rejects the old implementation at 27
+  traversals; the test uses a separately copied old source and does not modify the
+  measurement baseline.
+- Standalone `common.value` still validates valid complete trees and produces
+  zero output when duplicate keys fail. Original cycle, depth, duplicate-key, and
+  shared attributes/arguments budget tests continue to cover every encoder format.
+- An independent module comparison between frozen old source and current source
+  matches 12 complete text/JSON/logfmt outputs byte-for-byte; 16,486 short-buffer
+  capacity cases match errors and written prefixes. Inputs include integer
+  extremes, NaN/Inf/subnormal, malformed UTF-8, reversible keys, source/trace,
+  secret, nested values, and cross-argument UTF-8 joining.
+- Original JSON parsing/goldens, logfmt nesting, streaming escaping, long messages,
+  and capture deep-copy tests continue to verify behavior. Format errors and
+  underlying Writer failures still return the original errors; "zero output for
+  invalid trees" does not mean zero output for arbitrary I/O failures.
 
-完整文件测量、精确源码/二进制身份与最终门禁保存在 `bench/evidence/2026-11-01-encoder-validation/`。局部遍历次数减少不能替代端到端吞吐或Quill/Foundation排名的证据。
+A local reduction in traversal count cannot replace end-to-end throughput
+evidence or a cross-library ranking.
 
-当前Debug/ReleaseSafe编码定向各23/23通过；完整ReleaseFast verify-local通过76/76构建步骤、480/480 Zig测试，包含当前/历史格式解码矩阵、独立包五模式与Linux宿主自校验、配置替换、固定/随机SIGKILL以及查询工具。最终ReleaseSafe通过16/16构建步骤：九目标实际生成公共路径对象，真实文件交付与配置集成18/18通过。精确来源见 [qualification.json](../bench/evidence/2026-11-01-encoder-validation/qualification.json)。先前478项是批内统计轮次的历史证据，不能替代本轮校验；非Linux设备实际运行仍未取得。
+Current Debug/ReleaseSafe encoding-targeted tests pass 23/23 each; complete
+ReleaseFast `verify-local` passes 76/76 build steps and 480/480 Zig tests,
+including current/historical format decode matrices, independent package five-mode
+and Linux host self-checks, configuration replacement, fixed/random SIGKILL, and
+query tools. Final ReleaseSafe passes 16/16 build steps: nine targets actually
+generate public-path objects, and real file delivery plus configuration
+integration pass 18/18. Non-Linux device execution is still not qualified.
 
-## 完整流程与慢值调查
+## Complete workflow and slow-value investigation
 
-100次完整文件对照逐条验证1010万条日志，包含最终written flush、shutdown与对象清理，保留全部字段和系统timestamp。每个配置的sampled/batch分别运行5对before/after，CPU固定0/2/4/6/8/10。
+One hundred complete-file comparisons verified 10.1 million logs one by one,
+including final written flush, shutdown, and object cleanup, while retaining all
+fields and system timestamps. Sampled/batch ran five before/after pairs per
+configuration with CPU 0/2/4/6/8/10 fixed.
 
-| batch模式 | before中位条/秒 | after中位条/秒 | 中位变化 | 本轮资格 |
+| Batch mode | Before median records/s | After median records/s | Median change | Qualification |
 | --- | ---: | ---: | ---: | --- |
 | shared Memory P1 | 1,088,241 | 924,220 | −15.07% | inconclusive |
 | shared Memory P4 | 1,188,972 | 1,226,172 | +3.13% | inconclusive |
@@ -33,10 +83,31 @@ checked wire parser 的 `valueWith(receiver)` 复用同一套 tag、长度、节
 | SPSC Mmap P4 | 1,190,182 | 1,121,010 | −5.81% | inconclusive |
 | SPSC Mmap P4 prepared | 1,222,309 | 968,104 | −20.80% | inconclusive |
 
-所有吞吐组至少一侧CV或spread超过10%，trial-bootstrap中位置信区间全部重叠。候选的明显慢值不能删去，也不能单凭节点计数下降认定端到端改善；SPSC Memory after的各次结果为0.884/1.233/1.224/0.903/0.924M条/s。完整原始数据见 [comparison.json](../bench/evidence/2026-11-01-encoder-validation/comparison.json)。
+Every throughput group had at least one side's CV or spread above 10%, and all
+trial-bootstrap median intervals overlapped. The candidate's clear slow values
+cannot be removed, and a lower node count alone does not establish an end-to-end
+improvement; SPSC Memory after runs were 0.884/1.233/1.224/0.903/0.924M records/s.
 
-为调查慢值，另执行5对固定CPU0的编码probe：每进程分别编码30万条5个scalar和30万条20个nested scalar的JSON，逐条变动数值、完整输出参与Wyhash，before/after的checksum和字节数一致。用户态core PMU的整进程指令中位减少14.27%、cycles减少17.90%；两类墙钟时间仍未通过噪声阈值。该结果涵盖编码、数值更新与输出消费，不包含journal、文件I/O或后台交付。
+To investigate the slow values, five additional encoding probes fixed to CPU 0
+each encoded 300,000 records with five scalars and 300,000 with 20 nested scalars
+as JSON per process, varying values per record and including complete output in
+Wyhash; before/after checksums and byte counts matched. Whole-process user-space
+core PMU instructions fell 14.27% and cycles 17.90% by median; both wall-clock
+measurements still failed the noise threshold. This covers encoding, value
+updates, and output consumption, not journal, file I/O, or background delivery.
 
-进一步对最明显慢值的P4 SPSC Memory完整文件流程运行5对30万条试验，额外验证301万条日志。整进程用户态指令中位减少2.55%，cycles中位增加2.62%，task-clock增加2.15%；before的cycles/task-clock跨轮spread约17.6%/19.7%。完整吞吐中位1.200M→1.265M（+5.39%），仍inconclusive。软件context-switch/migration计数也有较大波动，不能据此断言最初慢值的唯一原因。
+Five additional 300,000-record trials of the most clearly negative P4 SPSC Memory
+complete file workflow verified another 3.01 million logs. Whole-process user
+instructions fell 2.55% by median, while cycles rose 2.62% and task-clock 2.15%;
+before cycles/task-clock cross-round spread was about 17.6%/19.7%. Complete
+throughput median rose from 1.200M to 1.265M (+5.39%) and remained inconclusive.
+Software context-switch/migration counts also varied widely, so the original slow
+values cannot be attributed to a single cause.
 
-这些证据支持编码实际工作量减少，但尚不能确认完整日志稳定提速或彻底排除特定工作负载退化。保留实现、全部负向结果和CPU计数，后续在更稳定环境继续验证；不会把独立probe的cycles变化换算成完整文件吞吐。测量边界是written，不是fsync/durable。既有跨库表使用较早源码，累计优化后的Foundation/Quill比较必须同轮复测。
+These results support a real reduction in encoding work but do not confirm stable
+complete-log speedups or rule out regressions on specific workloads. The
+implementation and all negative results/CPU counts were retained for verification
+in a more stable environment; standalone probe cycle changes are not converted
+into complete-file throughput. The measurement boundary is written, not
+fsync/durable. Any cumulative cross-library comparison would require a same-round
+re-measurement.

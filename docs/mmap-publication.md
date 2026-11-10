@@ -1,15 +1,47 @@
-# Linux Mmap 初始化与 schema 发布
+# Linux Mmap initialization and schema publication
 
-Linux/Android 的冷发布通过全文件 `fsync`，再同步父目录。Linux 内核的 `msync(MS_SYNC)` 调用 `vfs_fsync_range`；`fsync` 调用同一文件系统操作，范围为整个文件，并包含文件元数据。因此冷发布先 `msync` 再 `fsync` 会重复等待相同映射数据写回。
+Linux/Android cold publication uses a whole-file `fsync`, then synchronizes the
+parent directory. The Linux kernel's `msync(MS_SYNC)` calls
+`vfs_fsync_range`; `fsync` calls the same filesystem operation over the whole
+file and includes file metadata. A cold publication that calls `msync` and then
+`fsync` therefore waits twice for the same mapping data to be written back.
 
-`platform.Mapping.publish` 在 Linux/Android 省去前面的 `msync`，保留全文件 `fsync` 和父目录 `fsync`。其他平台保留映射 flush 与文件发布的原顺序。显式 `Mapping.syncFile/sync`、journal durable checkpoint 和 durable reclaim 仍保持原映射、文件与目录同步协议。初始化继续执行文件预分配与可写页触碰，文件格式和资源预算没有变化。
+`platform.Mapping.publish` omits the preceding `msync` on Linux/Android while
+keeping whole-file `fsync` and parent-directory `fsync`. Other platforms keep the
+original mapping-flush and file-publication order. Explicit
+`Mapping.syncFile/sync`, journal durable checkpoints, and durable reclaim still
+follow the original mapping/file/directory synchronization protocol.
+Initialization still performs file preallocation and writable-page touching; file
+format and resource budgets are unchanged.
 
-这是 Linux 的文件同步契约，不能推广为所有平台的映射 flush 等价性。源码依据来自 Linux v6.8 的 `mm/msync.c`、`fs/sync.c` 和 `fs/ext4/fsync.c`，包括范围写回、文件系统 journal 提交、设备 flush 和回写错误处理。所读源码的 URL、SHA256 与相关片段保存在 `bench/evidence/2026-11-01-mmap-publication/`。
+This is a Linux file-synchronization contract and cannot be generalized into
+mapping-flush equivalence on every platform. The source basis comes from Linux
+v6.8 `mm/msync.c`, `fs/sync.c`, and `fs/ext4/fsync.c`, including range writeback,
+filesystem journal commit, device flush, and writeback error handling.
 
-初始化的文件或目录 `fsync` 失败会向调用方返回错误，并释放映射与独占文件锁。schema 发布中，即使文件同步成功，目录同步失败也保持 descriptor 未就绪；producer 不能 reserve 引用该 schema 的记录，成功重试后才发布 ready。已有 failed-sync/reopen 资格继续执行。
+An initialization file or directory `fsync` failure returns an error to the caller
+and releases the mapping and exclusive file lock. During schema publication, even
+if file sync succeeds, a directory sync failure leaves the descriptor unready;
+producers cannot reserve records that reference that schema, and ready is
+published only after a successful retry. Existing failed-sync/reopen qualification
+continues to run.
 
-静态 ReleaseSafe writer 已通过 Linux 6.8/ext4 子 QEMU 强杀验证：schema ACK17/31 和普通 inline ACK3 后恢复，每条已确认 JSON 与 checkpoint 保留，snapshot 验证没有改变原始镜像。这些是指定虚拟机、文件系统和确认点的证据；其他平台和设备资格仍按主验收清单推进。
+The static ReleaseSafe writer has been verified by force-killing a Linux
+6.8/ext4 child QEMU: after schema ACK 17/31 and ordinary inline ACK 3, every
+acknowledged JSON record and checkpoint was retained, and snapshot verification
+did not change the original image. This is evidence for the specified virtual
+machine, filesystem, and acknowledgement points; other platforms and devices
+remain on the main acceptance list.
 
-真实 SPSC 四 producer 初始化的调用数由五次 `msync`、十次文件/目录 `fsync`，变为零次 `msync`、十次 `fsync`；五次预分配不变。160 次完整 Memory/Mmap、shared/SPSC、P1/P4 文件试验逐条核对 1616 万条 JSON。启动与吞吐全部因波动标 `inconclusive`，共享 Mmap 的初始化出现较慢中位，SPSC Mmap 的初始化中位下降，全部慢值保留。此修改减少重复同步调用，尚未取得稳定冷启动或吞吐提升资格。
+A real four-producer SPSC initialization changed its call counts from five
+`msync` plus ten file/directory `fsync` to zero `msync` plus ten `fsync`; the five
+preallocations are unchanged. One hundred sixty complete Memory/Mmap, shared/
+SPSC, P1/P4 file trials verified 16.16 million JSON records. Startup and
+throughput were all marked `inconclusive` because of variance; shared Mmap
+initialization had a slower median, SPSC Mmap initialization median fell, and all
+slow values were retained. The change reduces duplicate sync calls but has not
+qualified a stable cold-start or throughput gain.
 
-完整输入、各阶段时间、调用分位数、文件 hash、失败与恢复记录见[验收报告](../bench/evidence/2026-11-01-mmap-publication/README.md)。后续对 Foundation 的性能判断仍需用当前源码同轮复测，不能把这项局部变化叠加到较早的排名。
+A later cross-library performance judgment would still require a same-round
+re-measurement with current sources; this local change cannot be added to an older
+ranking.

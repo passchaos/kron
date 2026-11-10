@@ -1,27 +1,66 @@
-# 作为 Zig 项目的默认日志库
+# Using kron as a Zig project's default logger
 
-kron 已可作为固定 Zig 0.16、Linux 单机应用的默认日志实现。结构化输出、过滤与热配置、脱敏、同步/共享异步/SPSC、文件轮转、归档和进程恢复都有实际运行与错误边界门禁。应用需要明确选择队列预算、过载策略和关闭方式，并固定依赖版本；当前包版本0.1.0，不将未来API兼容性视为已经承诺。
+kron can serve as the default logging implementation for Linux single-machine
+applications pinned to Zig 0.16. Structured output, filtering and hot
+configuration, redaction, sync/shared-async/SPSC, file rotation, archives, and
+process recovery all have real execution and error-boundary gates. Applications
+must explicitly choose queue budgets, overload policy, and shutdown behavior, and
+pin the dependency version; the current package version is 0.1.0, and future API
+compatibility is not promised.
 
-推荐先使用 `kron.Logging`，选择普通共享异步 Memory队列、portable文件后端和text/JSON输出。它统一管理全部配置输出与底层Runtime，覆盖通常的单机应用使用方式。最小程序见 [quick_start.zig](../examples/quick_start.zig)，后台文件日志见 [file_logging.zig](../examples/file_logging.zig)，全部参数与线程/context生命周期见 [详细使用指南](usage.md)。默认 `.{}` 使用stderr同步日志，服务在各route显式设置 `.mode=.asynchronous`。
+Start with `kron.Logging`, a shared asynchronous Memory queue, the portable file
+backend, and text/JSON output. It uniformly manages all configured outputs and the
+underlying Runtime, covering the usual single-machine application pattern. See
+[quick_start.zig](../examples/quick_start.zig) for a minimal program,
+[file_logging.zig](../examples/file_logging.zig) for background file logging, and
+the [detailed usage guide](usage.md) for all parameters and thread/context
+lifetime. The default `.{}` logs synchronously to stderr; services should
+explicitly set `.mode = .asynchronous` on each route.
 
-常规服务以shared Memory/Mmap为主要路径，普通scoped logger即可供多producer使用，通常不需要SPSC或thread attachment。SPSC保留为固定OS线程的高级可选能力：每线程队列会增加空间与Mmap准备成本，任务迁移受限，当前p99.9也没有一般优势；只有应用实测确认收益时才采用。Foundation的Memory与单Mmap同样是共享队列，不提供SPSC模式。
+Ordinary services should use shared Memory/Mmap as the main path; a normal
+`scoped` logger is sufficient for multiple producers and usually does not need
+SPSC or thread attachment. SPSC remains an advanced option for fixed OS threads:
+per-thread queues add space and Mmap preparation cost, task migration is
+restricted, and p99.9 currently has no general advantage. Adopt it only after the
+application measures a benefit.
 
-参数按应用需求配置：
+Configure parameters according to application needs:
 
-| 需求 | 建议 |
+| Requirement | Recommendation |
 | --- | --- |
-| 小工具或单线程应用 | 同步模式，显式处理flush/关闭错误 |
-| 后台文件日志 | 共享异步Memory，固定槽与record预算，portable后端 |
-| 限制日志对应用的阻塞 | 根据业务选择drop_newest，并监控丢弃/错误；block会在满队列时等待 |
-| 停止进程后仍需恢复accepted未交付事件 | Mmap journal，稳定输出身份，接受初始化/磁盘预算与至少一次重复 |
-| 极高频、线程数固定且已测到共享争用 | 显式SPSC attachment，分别验证p99/p99.9和总队列保留 |
-| 需要确认抵抗系统掉电 | 显式durable与实际平台/文件系统资格；written/Memory accepted不能代替它 |
-| 接入现有std.log调用 | 根std_options使用`kron.Logging.std_log`，调用bindStdLog，在关闭前unbindStdLog |
+| Small tool or single-threaded application | Sync mode, with explicit flush/shutdown error handling |
+| Background file logging | Shared async Memory, fixed slot and record budgets, portable backend |
+| Limit logging's blocking impact on the application | Choose `drop_newest` according to business needs and monitor drops/errors; `block` waits on a full queue |
+| Recover accepted-but-undelivered events after process stop | Mmap journal, stable output identity, accepting initialization/disk budget and at-least-once duplication |
+| Very high frequency, fixed thread count, measured shared contention | Explicit SPSC attachment, verifying p99/p99.9 and total queue retention separately |
+| Confirm resistance to system power loss | Explicit durable plus actual platform/filesystem qualification; written or Memory accepted are not substitutes |
+| Integrate existing `std.log` calls | Use `kron.Logging.std_log` in root `std_options`, call `bindStdLog`, and `unbindStdLog` before shutdown |
 
-应用生命周期顺序为：创建I/O和Logging、开始生产者；停止所有logger/token用户并detach、解除std.log绑定、显式flush/shutdown、销毁Logging和I/O。直接使用高级Runtime时，另外保证Runtime先于sink销毁。需要看到错误时使用`tryEmit`/flush/shutdown结果，普通void日志也应通过health/错误回调监控后台失败。std.log桥有自身的unbound/oversize/error统计，应在程序日志调用开始前绑定；它使用有界producer格式化缓冲，不具备typed路径的延迟格式化性能。
+Application lifetime order: create I/O and Logging, start producers; stop all
+logger/token users and detach, unbind `std.log`, explicitly flush/shutdown,
+destroy Logging and I/O. When using the advanced Runtime directly, also ensure
+Runtime is destroyed before the sink. Use `tryEmit`/flush/shutdown results when
+errors must be observed; ordinary void logging should still monitor background
+failures through health/error callbacks. The `std.log` bridge has its own
+unbound/oversize/error statistics and should be bound before application logging
+starts; it uses a bounded producer formatting buffer and does not have the typed
+path's deferred-formatting performance.
 
-选择“项目默认”不需要在所有基准超过Foundation/spdlog。对于实际发布，仍需在应用的目标负载上测试背压、关闭和输出完整性。当前已确认的限制包括SPSC饱和p99.9约340µs、Mmap冷启动/channel准备成本和schema吞吐/尾部取舍；默认使用应依据应用的日志频率与可靠性要求，而不以局部中位改善作为保证。
+Choosing kron as a project default does not require beating every benchmark
+competitor. For an actual release, test backpressure, shutdown, and output
+completeness on the application's target workload. Known limits include SPSC
+saturation p99.9 around 340 µs, Mmap cold-start/channel preparation cost, and
+schema throughput/tail trade-offs; choose defaults from the application's log
+frequency and reliability requirements, not from a local median improvement.
 
-Windows/macOS/Android/iOS目前具有实现和交叉编译/部分链接证据，仍缺真实设备的日志/生命周期/journal恢复资格。跨平台生产应用应先运行`tests/package_consumer/platform.zig`的目标设备自校验并补充自身故障场景。长期fuzz/sanitizer、多文件系统掉电与更多业务负载资格继续见`implementation-status.md`。
+Windows/macOS/Android/iOS currently have implementations and cross-compilation or
+partial-link evidence but still lack real-device logging/lifecycle/journal
+recovery qualification. Cross-platform production applications should first run
+the target-device self-check in `tests/package_consumer/platform.zig` and add
+their own fault scenarios. Long-running fuzz/sanitizers, multi-filesystem
+power-loss testing, and broader business-workload qualification remain tracked in
+`implementation-status.md`.
 
-接入入口：[详细使用指南](usage.md)、[Zig包](package.md)、[生命周期](lifecycle.md)、[平台资格](platforms.md)、[std.log示例](../examples/std_log.zig)。
+Entry points: [detailed usage guide](usage.md), [Zig package](package.md),
+[lifecycle](lifecycle.md), [platform qualification](platforms.md),
+[std.log example](../examples/std_log.zig).

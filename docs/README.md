@@ -1,62 +1,71 @@
-# 文档导航
+# Documentation navigation
 
-从 [使用指南](usage.md) 开始接入，从 [当前验收状态](implementation-status.md) 判断能力与资格，从 [开发与验证](development.md) 开始修改仓库。公共应用入口是 `kron.Logging`，底层 API 和设计研究在各专题中说明。
+Start with the [usage guide](usage.md) to integrate the library, use
+[current acceptance status](implementation-status.md) to judge capabilities and
+qualification, and use [development and verification](development.md) when
+changing the repository. The public application entry point is `kron.Logging`;
+lower-level APIs and design notes are covered in the topic documents.
 
-## 使用与能力
+## Usage and capabilities
 
-| 主题 | 文档 |
+| Topic | Document |
 | --- | --- |
-| 初始化、logger、字段、线程、输出、错误 | [使用指南](usage.md) |
-| Zig 依赖、构建、源码分发、单线程消费 | [包接入](package.md) |
-| 项目默认日志的选择 | [默认接入建议](default-logging.md) |
-| borrowed/owned、字段捕获 | [capture](capture.md) |
-| array/group、显式对象适配 | [结构化值](structured-values.md) |
-| 动态 filter、来源事务、旧配置资源 | [配置](configuration.md) |
-| 条件与有界正则 | [predicate](predicates.md) |
-| 全局采样、phase 与 bypass | [采样](sampling.md) |
-| UTC/固定偏移/系统local、RFC3339、日期和时长 | [时间](time.md) |
-| Memory/Mmap 的选择 | [异步存储](async-storage.md) |
-| 模式/存储/格式/恢复/durable 组合 | [能力矩阵](capability-matrix.md) |
-| flush、durable、deadline、shutdown | [生命周期](lifecycle.md) |
-| 文件短写、轮转、同步与错误锁存 | [文件可靠性](file-reliability.md) |
-| 四种编码与协议版本 | [编码](encoding.md) |
-| 标准 zlib 压缩归档 | [压缩归档](compressed-archive.md) |
-| 预注册 metadata/schema | [schema](schema.md) |
-| 平台实现、编译与设备运行 | [平台支持](platforms.md) |
+| Initialization, loggers, fields, threads, outputs, errors | [Usage guide](usage.md) |
+| Zig dependency, build, source distribution, single-threaded consumers | [Package integration](package.md) |
+| Choosing project-default logging | [Default integration advice](default-logging.md) |
+| Borrowed/owned values and field capture | [Capture](capture.md) |
+| Arrays/groups and explicit object adapters | [Structured values](structured-values.md) |
+| Dynamic filters, source transactions, old configuration resources | [Configuration](configuration.md) |
+| Conditions and bounded regular expressions | [Predicates](predicates.md) |
+| Global sampling, phases, and bypass | [Sampling](sampling.md) |
+| UTC, fixed offsets, system local time, RFC3339, dates, durations | [Time](time.md) |
+| Choosing Memory or Mmap | [Asynchronous storage](async-storage.md) |
+| Mode/storage/format/recovery/durable combinations | [Capability matrix](capability-matrix.md) |
+| flush, durable, deadline, shutdown | [Lifecycle](lifecycle.md) |
+| File short writes, rotation, synchronization, error latching | [File reliability](file-reliability.md) |
+| Four encodings and protocol versions | [Encoding](encoding.md) |
+| Standard zlib compressed archives | [Compressed archive](compressed-archive.md) |
+| Pre-registered metadata/schema | [Schema](schema.md) |
+| Platform implementations, compilation, device qualification | [Platform support](platforms.md) |
 
-## 架构与开发
+## Architecture and development
 
-| 主题 | 文档 |
+| Topic | Document |
 | --- | --- |
-| 统一 owner 与 tracing 设计映射 | [接口架构](api-design.md) |
-| 目录职责、依赖、测试位置与扩展边界 | [代码结构](code-structure.md) |
-| 常用 gate、精细验证与证据维护 | [开发与验证](development.md) |
-| 整体产品目标、协议与验收要求 | [整体设计](design.md) |
-| Journal 槽位、CRC、恢复与所有权协议 | [Journal 协议](journal-protocol.md) |
-| 已有能力、最近门禁、剩余优先级 | [当前验收状态](implementation-status.md) |
-| 本地项目调研与复用边界 | [本地复用](local-reuse.md) |
-| 示例、集成/故障测试、基准与工具 | [examples](../examples/README.md)、[tests](../tests/README.md)、[bench](../bench/README.md)、[tools](../tools/README.md) |
-| 贡献流程、安全报告与许可证 | [CONTRIBUTING](../CONTRIBUTING.md)、[SECURITY](../SECURITY.md)、[LICENSE](../LICENSE) |
-| 版本与近期变更 | [变更记录](../CHANGELOG.md) |
+| Unified owner and tracing design mapping | [API architecture](api-design.md) |
+| Directory responsibilities, dependencies, test placement, extension boundaries | [Code structure](code-structure.md) |
+| Common gates, targeted verification, evidence maintenance | [Development and verification](development.md) |
+| Overall product goals, protocols, acceptance requirements | [Overall design](design.md) |
+| Journal slots, CRC, recovery, ownership protocol | [Journal protocol](journal-protocol.md) |
+| Existing capabilities, recent gates, remaining priorities | [Current acceptance status](implementation-status.md) |
+| Local project research and reuse boundaries | [Local reuse](local-reuse.md) |
+| Examples, integration/fault tests, benchmarks, tools | [examples](../examples/README.md), [tests](../tests/README.md), [bench](../bench/README.md), [tools](../tools/README.md) |
+| Contribution process, security reporting, license | [CONTRIBUTING](../CONTRIBUTING.md), [SECURITY](../SECURITY.md), [LICENSE](../LICENSE) |
+| Versions and recent changes | [Changelog](../CHANGELOG.md) |
 
-## 性能机制与测量
+## Performance mechanisms and measurement
 
-这些文档各自保留测试时的源码与负载身份。局部 before/after 不推导当前跨库排名，inconclusive、失败与负向结果继续保留。
+Each document preserves the source and workload identity used at measurement
+time. Local before/after results do not establish a current cross-library
+ranking; inconclusive, failed, and negative results remain part of the record.
 
-| 范围 | 文档 |
+| Scope | Document |
 | --- | --- |
-| 计时边界、输入与复现 | [基准方法](benchmark-methodology.md) |
-| 证据保留、外置与新增流程 | [证据保留策略](benchmark-evidence-policy.md) |
-| 完整业务计算和无 logger 基线 | [应用影响](application-benchmark.md) |
-| 完整 C++/Foundation 工作流 | [完整对照](cpp-full-workflow.md)、[对照复现](cpp-comparison.md) |
-| 回归统计与噪声 | [性能回归](performance-regression.md) |
-| 机制调研、优化优先级 | [业界参考](industry-performance-lessons.md)、[热点](performance-hotspots.md) |
-| 消费者公平性与队列通知 | [调度](consumer-scheduling.md) |
-| 配置、确认与批处理 | [配置复用](batch-configuration.md)、[统计确认](batch-accounting.md)、[批次合并](coalesced-delivery.md) |
-| route 掩码与过滤工作量 | [路由过滤](route-filter-performance.md)、[正则](regex-performance.md) |
-| Mmap 发布与时钟选择 | [冷发布](mmap-publication.md)、[TSC](tsc-clock.md) |
-| 编码校验、数字与转义 | [校验复用](encoder-validation.md)、[十进制](decimal-output.md)、[ASCII](ascii-output.md) |
+| Timing boundaries, inputs, reproduction | [Benchmark methodology](benchmark-methodology.md) |
+| Evidence retention, external storage, new-experiment workflow | [Evidence retention policy](benchmark-evidence-policy.md) |
+| Complete business computation and no-logger baseline | [Application impact](application-benchmark.md) |
+| Regression statistics and noise | [Performance regression](performance-regression.md) |
+| Mechanism research and optimization priorities | [Industry reference](industry-performance-lessons.md), [Hotspots](performance-hotspots.md) |
+| Consumer fairness and queue notification | [Scheduling](consumer-scheduling.md) |
+| Configuration reuse, acknowledgements, batching | [Configuration reuse](batch-configuration.md), [Accounting](batch-accounting.md), [Batch coalescing](coalesced-delivery.md) |
+| Route masks and filtering work | [Route filtering](route-filter-performance.md), [Regular expressions](regex-performance.md) |
+| Mmap publication and clock selection | [Cold publication](mmap-publication.md), [TSC](tsc-clock.md) |
+| Encoder validation, numbers, escaping | [Validation reuse](encoder-validation.md), [Decimal](decimal-output.md), [ASCII](ascii-output.md) |
 
-## 历史与证据
+## History and evidence
 
-[history/](history/README.md) 保存旧设计草案、README 的历次性能叙述和详细验收 chronology。原始日志与冻结源码仍在 `bench/evidence/`、`bench/cpp_reference/evidence/`、`tests/power_loss/evidence/`；完整目录见 [证据索引](../bench/evidence/INDEX.md)，历史快照不作为当前使用接口。
+[history/](history/README.md) preserves older design drafts, previous README
+performance narratives, and the detailed acceptance chronology. Benchmark
+evidence and frozen reference sources are no longer tracked in the repository;
+the remaining history documents summarize their conclusions. Historical
+snapshots do not describe the current public API.

@@ -8,37 +8,33 @@ verification note.
 
 ### Changed
 
-- Source distribution carries benchmark sources and scripts, but excludes
-  `bench/evidence/` and `bench/cpp_reference/evidence/`.
-- README and `docs/implementation-status.md` keep current state; detailed
-  performance chronology moved to `docs/history/`.
+- Source distribution carries benchmark sources and scripts, but no measured
+  results or frozen reference-implementation sources.
+- README and `docs/implementation-status.md` describe current state; detailed
+  performance chronology remains under `docs/history/`.
 - Runtime route/channel limits use shared constants instead of 64/65 literals.
 - The optional global logging owner uses an atomic acquire/release slot.
 - Extracted pure TSC calibration math into `src/platform/tsc_math.zig`; clock
-  state, cross-core probe and fallback remain in `tsc_clock.zig`.
+  state, cross-core probe, and fallback remain in `tsc_clock.zig`.
 - Extracted cold route payload construction and comparison into
-  `src/config/routes_payload.zig`; Snapshot/Manager hot path remains in
+  `src/config/routes_payload.zig`; the Snapshot/Manager hot path remains in
   `routes.zig`.
-- Rewrote `main` history to remove reference binaries, tar snapshots and raw
-  profiling data; pre-rewrite history is preserved in
-  `/nav_env/project-z/kron-pre-evidence-rewrite.bundle` (outside Git).
+- Documentation is written in English.
 
 ### Added
 
 - MIT license.
 - CONTRIBUTING.md and SECURITY.md.
 - Capability matrix for mode/storage/format/recovery/durable combinations.
-- Benchmark evidence retention policy and history-rewrite boundary.
-- Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
-  template.
-- `zig build fmt`, `bench-index`, `hygiene`, `links`, `docs`, `test-unit` and
-  `verify-fast` steps.
+- Benchmark retention policy and history-rewrite boundary.
+- `zig build fmt`, `hygiene`, `links`, `docs`, `test-unit`, and `verify-fast`
+  steps.
 - Repository hygiene guard and GitHub Actions CI, including docs, Markdown
   links, compile-fail/fuzz/decoder/single-threaded gates, regex
   differential/fuzz/equivalence gates, benchmark/report self-tests,
   cross-platform compile checks, native platform-host qualification, package
-  distribution/single-threaded consumer and crash/recovery gates; CI uses
-  read-only permissions, superseded-run cancellation and Zig build caching.
+  distribution/single-threaded consumer, and crash/recovery gates. CI uses
+  read-only permissions, superseded-run cancellation, and Zig build caching.
   Coverage boundaries are documented in `docs/development.md`.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
@@ -50,11 +46,15 @@ verification note.
 
 ### Removed
 
-- Tracked benchmark reference executables under `bench/evidence/`; their
-  identity remains in each experiment's `manifest.json` (`binary_sha256`).
+- C++ and Rust cross-library benchmark harnesses, including the spdlog, Quill,
+  Foundation, and Foundation tracing reference programs.
+- Frozen Foundation C++/Rust source snapshots and all benchmark evidence
+  directories under `bench/evidence/` and `bench/cpp_reference/evidence/`.
+- C++ comparison drivers, analyzers, qualification scripts, report self-tests,
+  the generated evidence index, and the `bench-index` build step.
 
 ## 0.1.0 - 2026-11-01
 
 - Initial kron source import: structured logging, bounded Memory/Mmap queues,
   text/JSON/logfmt/binary encoders, rolling files, configuration, sampling,
-  redaction, archive reader and recovery boundaries.
+  redaction, archive reader, and recovery boundaries.

@@ -1,6 +1,11 @@
-# Persistent schema 与预注册 logger
+# Persistent schema and pre-registered loggers
 
-普通 v1 journal 每条事件自包含。显式设置 `Journal.Options.schema_capacity > 0` 时启用 v2：数据槽仍从 offset 4096 开始，固定 metadata 表追加在文件尾部。字段名、格式串、scope 和 source 保存一次；引用事件只复制动态值、trace 信息、路由决策和序号。
+A normal v1 journal makes every event self-contained. Setting
+`Journal.Options.schema_capacity > 0` explicitly enables v2: data slots still
+start at offset 4096, and a fixed metadata table is appended at the end of the
+file. Field names, format strings, scope, and source are stored once; reference
+events copy only dynamic values, trace information, routing decisions, and
+sequence numbers.
 
 ```zig
 const runtime = try kron.Runtime.create(allocator, io, .{
@@ -21,55 +26,147 @@ const log = try runtime.loggerWithSchema(binding);
 _ = try log.tryLogf(.info, "request {d}", .{@as(u64, 42)}, .{ .status = @as(u16, 201) });
 ```
 
-统一应用入口可用 `logging.prepared(example)`；SPSC 用 `logging.attachPreparedThread(example)`，内部附着并注册对应channel，使用结束后detach，准备失败会撤销附着。配置和完整步骤见 [使用指南](usage.md#prepared与stdlog)。
+The unified application entry can use `logging.prepared(example)`; SPSC uses
+`logging.attachPreparedThread(example)`, which attaches and registers the
+corresponding channel internally, followed by `detach` when finished. A
+preparation failure rolls back the attachment. See the
+[usage guide](usage.md#prepared-events-and-stdlog) for configuration and complete
+steps.
 
-高级 Runtime 的 SPSC 使用 `prewarmThreadSchema(channel, example)` 与
-`threadLoggerWithSchema(attached, binding)`，保留原 attachment 的 cookie、generation
-和线程约束。可运行例子见 [prepared.zig](../examples/prepared.zig)。
+Advanced Runtime SPSC uses `prewarmThreadSchema(channel, example)` and
+`threadLoggerWithSchema(attached, binding)`, preserving the original attachment's
+cookie, generation, and thread constraints. See
+[prepared.zig](../examples/prepared.zig) for a runnable example.
 
-## 注册与热路径
+## Registration and hot path
 
-prewarm 是显式冷路径：生成 canonical metadata，查重、提交定义并同步文件，再发布进程内 ready 标志。准备好的 logger 直接使用稳定引用，不在每条事件上重新注册、解析或同步 schema。
+Prewarm is an explicit cold path: it generates canonical metadata, checks for
+duplicates, commits the definition and synchronizes the file, then publishes an
+in-process ready flag. A prepared logger uses the stable reference directly and
+does not re-register, parse, or synchronize the schema per event.
 
-普通 prewarm 从例子推断当前 captured value kind。`schema_site.metadata` 与 `Runtime.prewarmFormat` 根据 comptime Args/Fields 类型生成完整 kind mask，optional 包含 null，Value 可覆盖已知类型；`prewarmMetadata` 在注册前变换固定 redaction 的 drop/mask 形状。字段名/顺序、格式串或 source 改变时返回 `SchemaMismatch`，不会静默退化或生成新 schema。
+Ordinary prewarm infers the current captured value kind from the example.
+`schema_site.metadata` and `Runtime.prewarmFormat` generate the complete kind
+mask from comptime Args/Fields types, with optional including null and Value able
+to override known types; `prewarmMetadata` transforms the drop/mask shape of
+fixed redaction before registration. Changing field names/order, format string,
+or source returns `SchemaMismatch` instead of silently degrading or creating a
+new schema.
 
-schema 不保存示例值，redaction 在 metadata 与动态捕获之前生效。动态字符串仍在调用返回前复制到 journal。预注册与普通 logger 共享 filter、sampling、context 覆盖、secret、flush、shutdown 和错误语义。
+Schemas do not store example values; redaction takes effect before metadata and
+dynamic capture. Dynamic strings are still copied into the journal before the
+call returns. Pre-registered and ordinary loggers share filter, sampling,
+context overrides, secrets, flush, shutdown, and error semantics.
 
-## 文件与恢复契约
+## File and recovery contract
 
-- 文件头 v2 与 CRC 保护的 schema extension 定义尾部区域，capacity/stride 计入所有 channel 的总 journal 预算。
-- 每个定义占独立固定槽，ID 在文件生命周期内不回收/复用；表满或定义过大返回明确错误。
-- 内容哈希使用 canonical metadata 的 SHA-256 截取 128 bits，哈希命中后仍比较完整 metadata，不能用地址或部分参数 hash 当身份。
-- 引用包含 ID、版本和内容 hash；数据 CRC 覆盖引用及 payload。
-- 定义 commit 后必须成功 sync，才能 markReady 和提交引用事件；失败时禁止引用，保留证据并允许重试。
-- reopen 在修改数据游标之前校验 schema 表与所有引用。损坏、缺失和未知版本不被当成普通过滤。
-- `kroncat` 只读复制定义和 payload，校验稳定快照，不依赖原程序二进制或进程地址。
-- 后台交付线程 将引用还原为 Event 后仍输出普通 text/JSON 和自包含 archive frame。
+- The v2 file header and CRC-protected schema extension define the tail region;
+  capacity/stride count against the total journal budget of all channels.
+- Each definition occupies an independent fixed slot; IDs are never reclaimed or
+  reused during the file lifetime. A full table or oversized definition returns
+  an explicit error.
+- Content hashing uses the first 128 bits of the canonical metadata SHA-256;
+  after a hash hit, the complete metadata is still compared. Addresses or partial
+  argument hashes are never used as identity.
+- A reference contains ID, version, and content hash; data CRC covers the
+  reference and payload.
+- A definition must successfully sync after commit before `markReady` and before
+  reference events may be submitted; on failure, referencing is forbidden,
+  evidence is preserved, and retry is allowed.
+- Reopen validates the schema table and every reference before modifying data
+  cursors. Corruption, missing definitions, and unknown versions are not treated
+  as ordinary filtering.
+- `kroncat` copies definitions and payloads read-only, validates a stable
+  snapshot, and does not depend on the original program binary or process
+  addresses.
+- Background delivery expands a reference back into an Event and still emits
+  ordinary text/JSON and self-contained archive frames.
 
-减少的是 producer 捕获字节和重复 metadata，不自动减少固定 data slot stride 占用。v1 默认配置保持兼容；开启 v2 后不应拿旧 v1 layout 选项打开文件。
+The saving is in producer-captured bytes and repeated metadata, not automatically
+in fixed data-slot stride occupancy. The v1 default configuration remains
+compatible; after enabling v2, do not open the file with old v1 layout options.
 
-journal 文件版本、event codec 版本和 archive 帧版本是独立协议。当前自包含 event v4 和 schema引用 payload v5 使用84字节头，保存恢复目标指纹与route generation；历史自包含 v1 为68字节，历史自包含 v3 和schema引用 v2 为76字节。当前读取器保留上述历史版本，缺失的路由身份字段恢复为0；未知版本明确拒绝。archive frame容器保持版本1，payload按其自身codec版本读取。没有稳定route指纹的legacy记录可以只读导出，但运行时不能把它静默重放到未知目标。
+Journal file version, event codec version, and archive frame version are
+independent protocols. Current self-contained event v4 and schema-reference
+payload v5 use an 84-byte header that stores the recovery target fingerprint and
+route generation; historical self-contained v1 is 68 bytes, and historical
+self-contained v3 plus schema-reference v2 are 76 bytes. The current reader keeps
+these historical versions and restores missing routing-identity fields as zero;
+unknown versions are rejected explicitly. The archive frame container remains
+version 1, and its payload is read according to its own codec version. Legacy
+records without a stable route fingerprint can be exported read-only, but Runtime
+cannot silently replay them to an unknown target.
 
-schema定义本身也有独立版本：scalar定义v1、支持array/group的定义v2。当前v5事件可使用scalar或nested定义；历史v2引用载荷的兼容矩阵使用scalar定义。不要将journal文件v2、schema定义v2与事件引用v2当成同一个版本。
+Schema definitions have their own versions: scalar definition v1 and
+array/group-capable definition v2. Current v5 events may use scalar or nested
+definitions; the historical v2 reference-payload compatibility matrix uses scalar
+definitions. Do not confuse journal file v2, schema definition v2, and event
+reference v2.
 
-## 验证范围
+## Verification scope
 
-模块测试覆盖去重、碰撞比较、metadata 深复制、表容量、sync/ready 故障、reservation 缺口、独立重开、Reader 只读恢复和热路径 allocator。共享/SPSC prepared Runtime 测试验证实际 后台交付线程 输出。
+Module tests cover deduplication, collision comparison, metadata deep copies,
+table capacity, sync/ready failures, reservation gaps, independent reopen,
+Reader read-only recovery, and hot-path allocator behavior. Shared/SPSC prepared
+Runtime tests verify actual background delivery output.
 
-`zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1` 覆盖历史/当前inline载荷、scalar schema与nested schema、动态message与deferred template的8组输入。每组2048次变异、所有截断和短scratch容量均检查边界；合法解码必须精确再编码且所有借用字符串/描述符位于输入、schema或调用者scratch。schema定义变异后重新计算完整性字段，直接检查结构拒绝；8个真实文件由公开Reader各只读导出两次。该矩阵也包含于 `test-fuzz`，属于有界回归，不替代长期fuzz。
+`zig build test-decoder-matrix -Doptimize=ReleaseSafe -j1` covers eight input
+groups: historical/current inline payloads, scalar schema, nested schema, dynamic
+message, and deferred template. Each group runs 2,048 mutations, all truncations,
+and short-scratch capacities; a valid decode must re-encode exactly, and every
+borrowed string/descriptor must lie within the input, schema, or caller scratch.
+Schema definition mutations recompute integrity fields and directly check
+structural rejection; eight real files are exported twice read-only through the
+public Reader. The matrix is also part of `test-fuzz` and is a bounded
+regression, not a replacement for long-running fuzz.
 
-QEMU harness 的 `--schema` 选项运行真实 v2 writer。在当前 Linux/ext4 试验中，ACK 3 后强杀整个 QEMU，重启确认全部已 ACK 文件记录及 durable checkpoint；这仍是特定子 VM 的停机试验，不是物理断电的普遍保证。
+The QEMU harness `--schema` option runs the real v2 writer. In the current
+Linux/ext4 trial, the whole QEMU process was force-killed after ACK 3, and restart
+confirmed all ACKed file records and the durable checkpoint. This remains a
+specific child-VM shutdown trial, not a general physical power-loss guarantee.
 
-## Schema consumer融合输出
+## Schema consumer fused output
 
-已就绪的普通schema事件在当前窗口至少64条、只有一个JSON/text/logfmt目标、无deferred message和format args时，可在消费者输出scratch中直接读取定义和动态值，省去top-level字段数组物化与随后的属性遍历。定义仍由拥有journal的registry解析，类型mask、节点/深度、nested descriptor、完整payload长度和schema身份均继续校验；任何损坏记录都在完整渲染成功前被拒绝，不进入sink。
+When a ready ordinary schema event window has at least 64 records, exactly one
+JSON/text/logfmt target, no deferred message, and no format arguments, the
+consumer can read the definition and dynamic values directly into output scratch,
+avoiding top-level field-array materialization and a subsequent attribute
+traversal. The definition is still resolved by the journal-owning registry, and
+type masks, node/depth, nested descriptors, complete payload length, and schema
+identity are still validated; any corrupt record is rejected before complete
+rendering and never reaches the sink.
 
-静态key唯一性由原schema定义校验保证，scope/source和可选静态message借用已验证定义；这些借用只在当前受保护记录的交付期间使用。动态message、历史v2 scalar定义、nested v5和三种文本输出均有逐字节对照。少于64条的窗口、template/args、多route和binary继续使用materialized resolve；同一记录的canonical definition查找可在fallback内复用。路由拒绝的冷路径保留先decode、再报告路由错误的优先级。
+Static key uniqueness is guaranteed by the original schema definition; scope/
+source and optional static messages borrow validated definitions, and these
+borrows are used only during delivery of the current protected record. Dynamic
+messages, historical v2 scalar definitions, nested v5, and all three text outputs
+have byte-for-byte comparisons. Windows with fewer than 64 records,
+template/args, multiple routes, and binary continue to use materialized resolve;
+the canonical definition lookup for the same record may be reused inside
+fallback. The cold path for route rejection preserves decode-first, then
+route-error precedence.
 
-原服务预算、输出written/durable barrier、第二次CRC回收、配置pin和至少一次恢复契约继续适用。性能与故障证据见[schema消费者对照](../bench/evidence/2026-11-01-consumer-post-coalescing/README.md)，不能从该路径的局部CPU变化推导跨库排名。
+The original service budget, output written/durable barriers, second CRC
+reclaim, configuration pins, and at-least-once recovery contract still apply. The
+local CPU changes of this path do not establish a cross-library ranking.
 
-## Prepared提交内的值长度复用
+## Value-length reuse in prepared submission
 
-无脱敏规则的prepared提交在原有predicate之前完成一次全树校验，同时统计动态value和nested key字节。private submission context只在本次未改写的调用内携带该长度；canonical schema解析、shape/type/level、full/drop/fallback和容量检查仍在原边界执行。trace/header/dynamic message长度在canonical确定载荷形状后加入。`reference_encoding.zig`是内部共用实现，公开`encodedReferenceSize`/`encodeReference`仍每次校验完整树，不导出measured encoder或可保存校验凭证，也不信任Event.tree_validated或调用方Binding.definition。
+A prepared submission with no redaction rules performs one full-tree validation
+before the original predicate and counts dynamic value and nested-key bytes. The
+private submission context carries that length only within the same unchanged
+call; canonical schema resolution, shape/type/level, full/drop/fallback, and
+capacity checks still run at their original boundaries. Trace/header/dynamic
+message lengths are added after the canonical payload shape is determined.
+`reference_encoding.zig` is an internal shared implementation; public
+`encodedReferenceSize`/`encodeReference` still validate the complete tree every
+time, do not export a measured encoder or saveable validation credential, and do
+not trust `Event.tree_validated` or the caller's `Binding.definition`.
 
-redaction会改写树，继续独立校验原/新事件，不复用改写前的长度。reserve/commit/consumer/reclaim的ready引用检查、CRC、record pin和barrier均保持。真实Memory/Mmap×shared/SPSC计数确认五个value只在runtime提交内校验五次，公开codec另独立校验五次；predicate与full/drop/fallback错误顺序、超长/无效level、伪造hint和脱敏路径有实际测试。完整对照与旧codec差分见`bench/evidence/2026-11-01-prepared-measure/`。
+Redaction rewrites the tree and keeps independent validation of original/new
+events, without reusing the pre-rewrite length. Ready-reference checks, CRC,
+record pins, and barriers for reserve/commit/consumer/reclaim are unchanged. Real
+Memory/Mmap × shared/SPSC counting confirms that five values are validated five
+times inside Runtime submission and another five times by the public codec;
+predicate and full/drop/fallback error order, oversized/invalid levels, forged
+hints, and redaction paths have actual tests.

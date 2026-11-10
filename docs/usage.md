@@ -1,10 +1,16 @@
-# kron 使用指南
+# kron usage guide
 
-应用从 `kron.Logging.create` 接入。一个 Logging 管理 `outputs` 列表中的全部输出，每个 route 拥有独立的模式、队列、过滤、采样、脱敏、文件资源和交付状态。`scoped` 返回向这些输出分发的 logger。默认列表是 `&.{.{}}`，即一个名为 `stderr` 的同步 text 输出，最低级别为 info。
+Applications integrate through `kron.Logging.create`. One `Logging` instance
+manages every output in its `outputs` list. Each route owns its mode, queue,
+filtering, sampling, redaction, file resources, and delivery state. `scoped`
+returns a logger that dispatches to those outputs. The default list is
+`&.{.{}}`: one synchronous text output named `stderr` with an info threshold.
 
-本指南面向 Zig 0.16；依赖声明与构建配置见 [包消费](package.md)，内部职责与 tracing 的设计对应见 [接口架构](api-design.md)。
+This guide targets Zig 0.16. See [package consumption](package.md) for dependency
+declarations and build configuration, and [API architecture](api-design.md) for
+internal responsibilities and the tracing design mapping.
 
-## 最小程序
+## Minimal program
 
 ```zig
 const std = @import("std");
@@ -20,11 +26,16 @@ pub fn main(init: std.process.Init) !void {
 }
 ```
 
-`log.info/debug/warn/err/fatal/trace` 通过 diagnostics 报告错误。需要应用处理错误时使用 `tryEmit`、`tryLogf` 或带源码位置的 `tryEmitAt`、`tryLogfAt`。普通 logger 是借用值，无须 destroy。停止全部使用者之后关闭 Logging，再销毁 owner，最后清理应用 I/O 环境。
+`log.info/debug/warn/err/fatal/trace` report errors through diagnostics. Use
+`tryEmit`, `tryLogf`, or the source-location variants `tryEmitAt` and
+`tryLogfAt` when the application must handle errors. An ordinary logger is a
+borrowed value and does not need to be destroyed. Stop all users before shutting
+down `Logging`, then destroy the owner, and finally clean up the application I/O
+environment.
 
-## 一个文件与多个输出
+## One file and multiple outputs
 
-单个文件也是一个元素的列表：
+A single file is also a one-element list:
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
@@ -53,9 +64,15 @@ logging.scoped("http").info("completed", .{ .status = @as(u16, 200) });
 try logging.shutdown();
 ```
 
-异步模式未配置 queue 时使用有界 Memory。文件默认追加，父目录需要已存在；相对路径基于 cwd，`target.file.dir` 可传已打开的目录。Logging 拥有文件与轮转文件资源，FileSink 拥有自己打开的父目录句柄。
+Asynchronous mode uses a bounded Memory queue when no queue is configured. Files
+are appended by default and the parent directory must already exist. Relative
+paths are resolved against the current working directory; `target.file.dir`
+accepts an already-open directory. `Logging` owns file and rotating-file
+resources; a `FileSink` owns any parent-directory handle it opens.
 
-多个输出直接增加 route；下面的文件采用 SPSC/Mmap 保留全部事件，stdout 采用共享 Memory，每两条取一条并允许满队列丢弃。二者均使用本地时间：
+Add a route for each additional output. The following file route uses SPSC/Mmap
+to retain every event, while stdout uses shared Memory, keeps every second
+event, and may drop on a full queue. Both use local time:
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
@@ -122,83 +139,127 @@ const logging = try kron.Logging.create(allocator, io, .{
 });
 ```
 
-模式、容量、满队列策略、过滤、采样、脱敏都属于各自 route。每次调用只构造一次 typed 字段描述和时间戳；各管线独立判断、脱敏、复制、编码及交付。一次调用可被文件接受而被 stdout 采样或丢弃。`block` 或同步慢输出仍会延长这次调用；要让低优先级输出减少对 producer 的等待，使用异步队列和 `drop_newest`。`best_effort` 控制失败传播，本身不改变等待策略。
+Mode, capacity, full-queue policy, filtering, sampling, and redaction all belong
+to the individual route. Each call constructs the typed field description and
+timestamp once; every pipeline independently decides, redacts, copies, encodes,
+and delivers. A single call can be accepted by the file output while being
+sampled or dropped by stdout. A `block` route or a slow synchronous output still
+extends the call. To reduce producer waiting on a low-priority output, use an
+asynchronous queue and `drop_newest`. `best_effort` controls error propagation;
+it does not change the waiting policy.
 
-## Route配置与默认值
+## Route configuration and defaults
 
-`Logging.Options`只有两个字段：`outputs`（默认`&.{.{}}`）和`max_total_queue_bytes`（默认256MiB）。模式、队列、过滤与输出策略直接设置在每个`Logging.Route`上；未填写的字段采用该Route类型的默认值。
+`Logging.Options` has only two fields: `outputs` (default `&.{.{}}`) and
+`max_total_queue_bytes` (default 256 MiB). Mode, queue, filtering, and output
+policies are set directly on each `Logging.Route`; omitted fields take that
+route type's defaults.
 
-默认列表包含一个名为stderr的同步text输出，info过滤。多个输出分别配置。
+The default list contains one synchronous text output named `stderr` with an
+info filter. Multiple outputs are configured separately.
 
-| Route参数 | 默认值 | 含义 |
+| Route field | Default | Meaning |
 | --- | --- | --- |
-| `mode` | `.sync` | `.sync`、`.asynchronous` 或 `.spsc` |
-| `queue` | null | 同步自动 `.none`；异步自动 Memory；可显式 Memory/Mmap |
-| `overflow` | `.block` | `.block`、`.drop_newest`、`.fallback_sync` |
-| `format` | `.text` | `.text`、`.json`、`.logfmt`、`.binary` |
-| `timestamp` | null | 可读 UTC/固定偏移/local 日期选项 |
-| `filter` | `"info"` | 默认与 scope 级别阈值 |
-| `min_level` | null | 附加最低级别限制 |
+| `mode` | `.sync` | `.sync`, `.asynchronous`, or `.spsc` |
+| `queue` | null | Sync implies `.none`; asynchronous implies Memory; Memory/Mmap may be explicit |
+| `overflow` | `.block` | `.block`, `.drop_newest`, `.fallback_sync` |
+| `format` | `.text` | `.text`, `.json`, `.logfmt`, `.binary` |
+| `timestamp` | null | Optional readable UTC/fixed-offset/local date |
+| `filter` | `"info"` | Default and scope-level thresholds |
+| `min_level` | null | Additional minimum-level restriction |
 | `sampling` | `.none` | none/count/every/token_bucket |
-| `sample_bypass` | `.warn` | 此级别及以上绕过采样，仍受过滤和条件限制 |
-| `redaction` | 空规则 | 各自队列接受前的递归脱敏 |
-| `predicate` | null | 基于事件字段的接受条件 |
-| `delivery` | `.required` | required 失败传播；best_effort 记录失败并继续 |
-| `reclaim_after` | `.written` | 队列记录在 written 或 durable 后回收 |
-| `max_threads` | 4 | SPSC 最大附着线程数 |
-| `max_encoded_record_bytes` | 64 KiB | 此管线完整输出记录的 scratch 上限 |
-| `max_journal_bytes` | 256 MiB | 此管线全部队列的 backing 上限 |
-| `consumer_batches_per_queue` | 4 | 每轮每队列消费批数，范围1..4 |
-| `diagnostics` | `.{} ` | 本输出的错误 hook 与 context |
+| `sample_bypass` | `.warn` | This level and above bypass sampling, subject to filtering and predicates |
+| `redaction` | empty rules | Recursive redaction before each queue accepts the value |
+| `predicate` | null | Acceptance condition based on event fields |
+| `delivery` | `.required` | required propagates failures; best_effort records and continues |
+| `reclaim_after` | `.written` | Reclaim queue records after written or durable |
+| `max_threads` | 4 | Maximum attached threads for SPSC |
+| `max_encoded_record_bytes` | 64 KiB | Scratch limit for a complete output record on this pipeline |
+| `max_journal_bytes` | 256 MiB | Backing limit for all queues on this pipeline |
+| `consumer_batches_per_queue` | 4 | Batches consumed per queue per round, range 1..4 |
+| `diagnostics` | `.{}` | Error hook and context for this output |
 
-`name` 默认 `"stderr"`，`target` 默认 `.stderr`，均只在 route 中设置。多个 route 应显式命名。target 支持 `.stderr`、`.stdout`、`.writer`、`.file`、`.rolling_file`，它描述物理目标；列表同时表达单个和多个输出。
+`name` defaults to `"stderr"` and `target` defaults to `.stderr`; both are set
+only on a route. Give multiple routes explicit names. The target supports
+`.stderr`, `.stdout`, `.writer`, `.file`, and `.rolling_file`; it describes the
+physical destination, while the list expresses one or many outputs.
 
-`redaction=&.{}`表示不配置规则，`sampling=.none`表示不采样，`timestamp=null`和`predicate=null`表示不启用可读时间或字段条件。queue=null根据mode自动选择：sync使用none，异步/SPSC使用Memory；显式为sync配置queue会报错。多个Mmap route须分别使用不同journal路径。
+`redaction = &.{}` means no rules, `sampling = .none` means no sampling, and
+`timestamp = null` plus `predicate = null` means no readable time or field
+condition. `queue = null` is resolved from the mode: sync uses none, while
+asynchronous/SPSC use Memory. Explicitly configuring a queue for sync is an
+error. Multiple Mmap routes must use distinct journal paths.
 
-默认 Memory 参数为 capacity256、max_record_bytes8192、schema_capacity0、max_schema_bytes8192。每个 SPSC 管线还保留普通共享队列，总队列数为 `max_threads + 1`。合计队列预算不包含文件 staging、Runtime 配置 metadata、输出 scratch 或 logger context。
+The default Memory parameters are capacity 256, max_record_bytes 8192,
+schema_capacity 0, and max_schema_bytes 8192. Each SPSC pipeline also retains an
+ordinary shared queue, so the total queue count is `max_threads + 1`. The total
+queue budget excludes file staging, Runtime configuration metadata, output
+scratch, and logger context.
 
-FileSink.Options 包含 `path`、`dir`、`buffer_bytes=64 KiB`、`backend=.portable`、`queue_depth=4`、`append=true`。Linux 可显式选择 `.linux_uring` 或 `.auto`；当前deferred consumer批量写出中portable为实测默认，见[文件可靠性](file-reliability.md)与[后端诊断](../bench/evidence/2026-11-03-io-uring-diagnostic/README.md)。本指南示例采用 portable。
+`FileSink.Options` includes `path`, `dir`, `buffer_bytes = 64 KiB`,
+`backend = .portable`, `queue_depth = 4`, and `append = true`. Linux may
+explicitly select `.linux_uring` or `.auto`; the portable backend is the measured
+default for deferred-consumer batched writes. See
+[file reliability](file-reliability.md). The examples in this guide use
+portable.
 
-创建失败会释放已获得的内存、句柄与 Runtime。非法策略和 queue 预算在打开输出前检查；合法配置后续发生 OOM/I/O 错误时，已经创建或截断的文件内容不会被恢复。
+Creation failure releases acquired memory, handles, and Runtime state. Invalid
+policies and queue budgets are checked before opening outputs; for a valid
+configuration, later OOM or I/O failures do not restore files that were already
+created or truncated.
 
-## 方法与结果
+## Methods and results
 
-| 方法 | 用途 |
+| Method | Purpose |
 | --- | --- |
-| `scoped(scope)` | 无分配地取得向全部输出分发的 logger |
-| `scopedOutput(name, scope)` | 只向指定输出提交的直接 logger，适合热点循环 |
-| `attachThread(scope)` | 给全部 SPSC 输出取得各自线程 channel；其他输出继续普通路径 |
-| `prepared(shape)` | 为全部异步管线预注册形状；同步输出使用普通捕获 |
-| `attachPreparedThread(shape)` | 附着并为相应线程 channel 注册形状 |
-| `reloadFilter(spec)` / `setLevel(level)` | 顺序更新全部输出的过滤 |
-| `reloadOutputFilter(name, spec)` | 更新单个输出过滤 |
-| `reloadFilterFile(path)` | 顺序为输出读取并更新过滤 |
-| `flush()` / `flushDurable()` | 确认全部适用输出 written/durable |
-| `flushOutputs(names)` / `flushOutputsDurable(names)` | 确认指定输出；显式选中的错误会传播 |
-| `flushUntil(deadline)` / `flushDurableUntil(deadline)` | 使用一个绝对截止时间确认输出 |
-| `shutdown()` / `shutdownUntil(deadline)` | 先关闭全部管线入场，再顺序排空 |
-| `health()` / `outputHealth(name)` | 汇总或指定输出状态 |
-| `lastResults()` | 此 OS 线程最近一次分发的逐输出结果，顺序与 outputs 一致 |
-| `runtime(name)` | 借用指定输出的高级 Runtime，生命周期由 Logging 管理 |
-| `bindStdLog()` / `unbindStdLog()` | 绑定或解除标准日志桥接 |
-| `destroy()` | 停止全部使用者后清理全部拥有资源 |
+| `scoped(scope)` | Obtain an allocation-free logger that dispatches to all outputs |
+| `scopedOutput(name, scope)` | Direct logger that submits only to the named output; useful in hot loops |
+| `attachThread(scope)` | Obtain this thread's channel for every SPSC output; other outputs continue on the ordinary path |
+| `prepared(shape)` | Pre-register a shape for all asynchronous pipelines; synchronous outputs use ordinary capture |
+| `attachPreparedThread(shape)` | Attach and register the shape for the corresponding thread channels |
+| `reloadFilter(spec)` / `setLevel(level)` | Sequentially update filtering for all outputs |
+| `reloadOutputFilter(name, spec)` | Update filtering for one output |
+| `reloadFilterFile(path)` | Read and apply filter updates for outputs sequentially |
+| `flush()` / `flushDurable()` | Confirm written/durable for all applicable outputs |
+| `flushOutputs(names)` / `flushOutputsDurable(names)` | Confirm named outputs; errors from explicitly selected outputs propagate |
+| `flushUntil(deadline)` / `flushDurableUntil(deadline)` | Confirm outputs using one absolute deadline |
+| `shutdown()` / `shutdownUntil(deadline)` | Close admission on all pipelines, then drain sequentially |
+| `health()` / `outputHealth(name)` | Aggregate or per-output status |
+| `lastResults()` | Per-output results of this OS thread's most recent dispatch, in `outputs` order |
+| `runtime(name)` | Borrow the advanced Runtime for a named output; `Logging` owns its lifetime |
+| `bindStdLog()` / `unbindStdLog()` | Bind or unbind the standard logging bridge |
+| `destroy()` | Release all owned resources after all users have stopped |
 
-`tryEmit/tryLogf` 的结果如下：
+`tryEmit`/`tryLogf` return:
 
-| 结果 | 含义 |
+| Result | Meaning |
 | --- | --- |
-| `.accepted` | 至少一个输出接受；仍需 flush/shutdown 确认后台完成 |
-| `.filtered` | 条件/级别拒绝；或仅有 best_effort 失败且没有输出接受 |
-| `.sampled` | 采样拒绝 |
-| `.dropped_full` / `.dropped_oversize` | 队列满或记录过大而丢弃 |
-| `.rejected_closing` | 入场已关闭，或线程 token/重入检查拒绝 |
-| 错误 | 捕获或 required 输出失败；其他输出仍可能成功 |
+| `.accepted` | At least one output accepted; flush/shutdown is still required to confirm background completion |
+| `.filtered` | Rejected by a condition/level, or only best_effort outputs failed and none accepted |
+| `.sampled` | Rejected by sampling |
+| `.dropped_full` / `.dropped_oversize` | Dropped because the queue was full or the record was too large |
+| `.rejected_closing` | Admission is closed, or the thread token/reentrancy check rejected the call |
+| Error | Capture failed or a required output failed; other outputs may still have succeeded |
 
-多个输出的提交没有回滚事务。遇到 required 错误仍尝试其他已入场输出，随后返回该错误；请通过 `lastResults()` 检查部分成功，避免盲目重试导致重复。每个元素为 `.result: EmitResult` 或 `.err: anyerror`；返回的 slice 借用到同线程下一次分发，需保留时复制。全被捕获前过滤/采样时不调用 lazy provider。递归日志被拒绝，允许有界嵌套独立 Logging（最多8层，Runtime入场合计最多64）。
+Submissions to multiple outputs are not a rollback transaction. On a required
+error, other already-admitted outputs are still attempted, then the error is
+returned. Inspect `lastResults()` for partial success instead of retrying
+blindly and duplicating records. Each element is either `.result: EmitResult` or
+`.err: anyerror`; the returned slice is borrowed until the next dispatch on the
+same thread, so copy it if it must be retained. Lazy providers are not invoked
+when every output filters or samples the event before capture. Recursive logging
+is rejected; bounded nested independent `Logging` instances are allowed (up to
+8 levels, and at most 64 Runtime admissions in total).
 
-汇总 health 的 accepted/written 等按输出提交统计，一条事件写两处计两次；队列大小与channel合计，混合存储报告 `.mixed`。它是观察性状态，各原子值不是事务快照。异步 `.accepted` 仅表示复制并接受记录，后续 sink 失败由输出 health、diagnostics 和 flush/shutdown 报告，不能由调用时的结果预知。
+Aggregate health counts accepted/written and similar values per output
+submission, so one event written to two places counts twice; queue sizes are
+summed across channels, and mixed storage is reported as `.mixed`. This is
+observational state, not a transactional snapshot of every atomic value.
+Asynchronous `.accepted` only means the record was copied and accepted; later
+sink failures are reported through output health, diagnostics, and
+flush/shutdown, and cannot be predicted from the call result.
 
-## 字段与格式串
+## Fields and format strings
 
 ```zig
 log.info("completed", .{
@@ -209,7 +270,12 @@ log.info("completed", .{
 _ = try log.tryLogf(.info, "request {d}: {s}", .{ @as(u64, 42), "done" }, .{});
 ```
 
-typed 格式串在编译期验证，异步消费者执行最终格式化。普通字段支持标量、optional、字符串、bytes、显式 array/group 等；任意对象要显式选择字段，见 [字段捕获](capture.md)、[结构化值](structured-values.md) 和 [structured.zig](../examples/structured.zig)。
+Typed format strings are validated at compile time, and the asynchronous
+consumer performs final formatting. Ordinary fields support scalars, optionals,
+strings, bytes, explicit arrays/groups, and similar values; arbitrary objects
+must select fields explicitly. See [field capture](capture.md),
+[structured values](structured-values.md), and
+[structured.zig](../examples/structured.zig).
 
 ```zig
 const fields = [_]kron.Field{
@@ -220,11 +286,21 @@ const fields = [_]kron.Field{
 _ = try log.tryEmit(.info, "structured", @as([]const kron.Field, &fields));
 ```
 
-顶层字段最多64项；attributes和格式参数共同受8层容器、256个value节点预算约束，循环、重复group key、过深、过大记录会被拒绝。Secret 的原值不会进入捕获。redaction 的 key 精确匹配完整字段名，并递归作用于group；点号不表示嵌套路径。每个 route 的规则在值复制进该 route 队列之前执行，不修改 caller 数据或其他输出。
+A top-level event has at most 64 fields. Attributes and format arguments share a
+budget of 8 container levels and 256 value nodes; cycles, duplicate group keys,
+excessive depth, and oversized records are rejected. A `Secret` value never
+enters capture. Redaction keys match the complete field name exactly and apply
+recursively to groups; dots do not express a nested path. Each route applies its
+rules before copying the value into that route's queue, without modifying caller
+data or other outputs.
 
-自定义 `{f}` formatter 可显式采用 `tryLogfPreencoded(level, buffer, fmt, args, fields)`；应用提供字节预算，在 producer 格式化。普通 typed deferred 不借用 formatter 给后台。
+A custom `{f}` formatter may explicitly use
+`tryLogfPreencoded(level, buffer, fmt, args, fields)`; the application supplies
+the byte budget and formats on the producer. Ordinary typed deferred formatting
+does not borrow the formatter for background use.
 
-函数实参在调用前求值。高成本字段用 `enabled()` guard 或 lazy provider，将工作放在 `fields()` 内：
+Function arguments are evaluated before the call. Guard expensive fields with
+`enabled()` or put the work inside a lazy provider's `fields()`:
 
 ```zig
 const Details = struct {
@@ -238,9 +314,10 @@ var calls: usize = 0;
 _ = try log.tryEmitLazy(.debug, "details", Details{ .calls = &calls });
 ```
 
-`enabled()` 检查过滤，不消耗采样配额，不保证下一次提交被接受。
+`enabled()` checks filtering without consuming a sampling slot; it does not
+guarantee that the next submission will be accepted.
 
-## Context、过滤和线程
+## Context, filtering, and threads
 
 ```zig
 const service = logging.scoped("http").withBorrowed(.{ .service = "api" });
@@ -248,14 +325,21 @@ const request = service.withBorrowed(.{ .request_id = "req-42", .status = @as(u1
 request.info("completed", .{ .status = @as(u16, 200) });
 ```
 
-字段合并顺序为 parent < child < event。withBorrowed 不分配，slice/容器依赖存储须覆盖 child 的全部使用；普通 scope 也是借用字节。withOwned 在创建时深拷贝整个合并context，emit不再分配，应用等所有衍生值使用结束后 destroy context 一次。
+Fields merge in parent < child < event order. `withBorrowed` does not allocate;
+slice/container storage must cover every use of the child. An ordinary scope is
+also borrowed bytes. `withOwned` deep-copies the complete merged context at
+creation, so emit does not allocate; the application destroys the context once
+after all derived values are no longer used.
 
 ```zig
 var owned = try log.withOwned(allocator, .{ .user = @as([]const u8, &name) });
 defer owned.destroy();
 ```
 
-异步接受成功之前已经复制消息和动态值，本次调用返回后可以覆写 event 源buffer。borrowed writer 对象、缓冲及 diagnostics.context 必须存活至 Logging.destroy 返回。
+The message and dynamic values are copied before asynchronous acceptance
+succeeds, so the event source buffer may be overwritten after the call returns.
+Borrowed writer objects, buffers, and `diagnostics.context` must remain alive
+until `Logging.destroy` returns.
 
 ```zig
 try logging.reloadFilter("info,http=debug,db.query=trace,noisy=off");
@@ -263,11 +347,24 @@ try logging.reloadOutputFilter("stdout", "warn");
 try logging.setLevel(.warn);
 ```
 
-scope 规则覆盖默认阈值，子scope采用最具体匹配；setLevel仅改变默认值，保留scope覆盖，全量关闭使用reloadFilter("off")。采样配额在每个route的全部producer间共享，filter-only更新不重置配额。全输出更新是顺序操作，非法filter先验证；并发关闭或I/O错误仍可能留下部分更新，跨输出不承诺原子发布。单Runtime的高级配置事务见 [配置文档](configuration.md)。
+Scope rules override the default threshold, and child scopes use the most
+specific match. `setLevel` changes only the default while preserving scope
+overrides; use `reloadFilter("off")` to disable everything. Sampling quotas are
+shared by all producers on each route, and filter-only updates do not reset
+them. Updating all outputs is sequential; invalid filters are validated first,
+but concurrent shutdown or I/O errors can still leave a partial update.
+Cross-output atomic publication is not promised. See
+[configuration](configuration.md) for the advanced per-Runtime configuration
+transaction.
 
-环境变量由应用显式采用：`kron.environment.merge(.{ .environment = kron.environment.fromMap(init.environ_map) })` 的 filter_spec 可放入各route.filter；日志调用不读取环境或配置文件。
+Environment variables are adopted explicitly by the application:
+`kron.environment.merge(.{ .environment = kron.environment.fromMap(init.environ_map) })`
+produces a `filter_spec` that can be assigned to each `route.filter`. Logging
+calls do not read the environment or configuration files.
 
-常规多producer使用scoped走共享队列，不需要附着线程。SPSC是固定OS线程的高级选项，仅在应用确认收益后使用：
+Ordinary multi-producer use should call `scoped` and use shared queues; thread
+attachment is not required. SPSC is an advanced option for fixed OS threads and
+should be used only after the application has verified a benefit:
 
 ```zig
 const log = try logging.attachThread("worker");
@@ -275,31 +372,66 @@ _ = try log.tryEmit(.info, "ready", .{});
 try log.detach();
 ```
 
-scope 在附着时复制，全部SPSC输出各取得一个channel。任一输出的channel预算耗尽会回滚此次附着；可附着线程数受最小SPSC预算约束。handle只能在所属OS线程使用，detach使其所有复制品和衍生handle失效；旧handle不会取得新attachment。channel在初始化时预分配，detach后仍保留供消费者排空。
+The scope is copied at attach time, and every SPSC output obtains one channel.
+If any output's channel budget is exhausted, the whole attachment is rolled
+back. The number of attachable threads is constrained by the smallest SPSC
+budget. A handle may be used only on its owning OS thread; `detach` invalidates
+all copies and derived handles. An old handle never obtains a new attachment.
+Channels are preallocated at initialization and remain after detach so the
+consumer can drain them.
 
-普通scoped可供多producer使用，在SPSC管线仍走普通共享队列。可迁移线程的任务使用普通logger。每channel保证producer顺序，多个channel与独立输出不保证同一全局顺序。关闭前先停止producer并join/detach；详见 [threaded.zig](../examples/threaded.zig)。
+An ordinary `scoped` logger may be used by multiple producers and still uses the
+ordinary shared queue on SPSC pipelines. Tasks that migrate between threads
+should use an ordinary logger. Each channel preserves producer order; multiple
+channels and independent outputs do not guarantee one global order. Stop
+producers and join/detach before shutdown. See
+[threaded.zig](../examples/threaded.zig).
 
-## Memory、Mmap与完成边界
+## Memory, Mmap, and completion boundaries
 
-Memory适合常规后台输出，进程异常退出会丢失尚未交付的记录。Mmap明确配置path，日志接受到文件映射队列，重开时自动校验并恢复完整pending记录。每个Mmap route必须输出到file或rolling_file，包括best_effort route；stdout/writer应选Memory或sync。高级自定义恢复sink使用Runtime。
+Memory is suitable for ordinary background output; records not yet delivered
+are lost on abnormal process exit. Mmap requires an explicit path. Accepted
+records enter a file-backed mapped queue, and reopening validates and recovers
+complete pending records automatically. Every Mmap route must output to a file
+or rolling file, including best_effort routes; stdout/writer routes should use
+Memory or sync. Advanced custom recovery sinks use Runtime.
 
-完整混合例子见 [mmap.zig](../examples/mmap.zig)：Mmap文件和Memory stdout均输出本地时间，file为required，stdout为best_effort。相同journal/layout/目标/时间身份下重开自动恢复；健康关闭后只追加新事件。
+See [mmap.zig](../examples/mmap.zig) for a complete mixed example: the Mmap file
+and Memory stdout both emit local time, the file is required, and stdout is
+best_effort. Reopening with the same journal/layout/target/time identity
+recovers automatically; after a clean shutdown, only new events are appended.
 
-| 边界 | Memory | Mmap |
+| Boundary | Memory | Mmap |
 | --- | --- | --- |
-| accepted | 已复制并提交进程内队列 | 已复制并commit映射队列，不等于断电保证 |
-| written | 排空先前记录并完成sink写入屏障 | 再推进适用回收/checkpoint |
-| durable | 同步支持的输出文件，队列仍非持久化 | 同步适用文件和journal/checkpoint |
+| accepted | Copied and committed to an in-process queue | Copied and committed to the mapped queue; not a power-loss guarantee |
+| written | Prior records drained and the sink write barrier completed | Additionally advances applicable reclamation/checkpoints |
+| durable | Synchronizes supported output files; the queue remains non-persistent | Synchronizes applicable files and the journal/checkpoint |
 
-默认reclaim_after=written；durable回收要求Mmap，并增加同步成本。全局flushDurable跳过best_effort输出；其余required输出不支持durable时返回UnsupportedDurability。显式flushOutputsDurable选中的best_effort输出也必须满足要求。
+The default is `reclaim_after = .written`; durable reclamation requires Mmap and
+adds synchronization cost. Global `flushDurable` skips best_effort outputs; if
+another required output does not support durability, it returns
+`UnsupportedDurability`. A best_effort output explicitly selected by
+`flushOutputsDurable` must also satisfy the requirement.
 
-Mmap恢复允许至少一次重复，例如文件已经写出而队列尚未确认时崩溃。各管线有自己的session/channel/sequence与配置版本，可用于各输出内去重；关联同一逻辑事件请添加应用event_id。同一事件的timestamp_ns和source一致，不承诺各输出身份相同。
+Mmap recovery allows at-least-once duplication, for example when a crash occurs
+after the file was written but before the queue acknowledged it. Each pipeline
+has its own session/channel/sequence and configuration generation, which can be
+used for per-output deduplication; add an application `event_id` to correlate
+the same logical event. The `timestamp_ns` and source of one event are
+consistent, but output identities are not guaranteed to match.
 
-SPSC文件名包括普通journal和 `app.journal.thread-0.journal` 等channel文件，均计入预算。诊断工具：`zig-out/bin/kroncat --json --recover app.journal`；只读导出不替代Runtime目标身份校验。跨代恢复与lease见 [配置文档](configuration.md)。
+SPSC file names include the ordinary journal and channel files such as
+`app.journal.thread-0.journal`, all counted against the budget. Diagnostic tool:
+`zig-out/bin/kroncat --json --recover app.journal`; read-only export does not
+replace Runtime target-identity validation. See
+[configuration](configuration.md) for cross-generation recovery and leases.
 
-## Prepared与std.log
+## Prepared events and std.log
 
-异步prepared需要每个异步route配置schema_capacity>0，schema计入queue预算。同步route使用普通捕获。注册为冷路径，bindings由Logging拥有至destroy。
+Asynchronous prepared events require `schema_capacity > 0` on each asynchronous
+route, and schemas count against the queue budget. Synchronous routes use
+ordinary capture. Registration is a cold path; `Logging` owns the bindings until
+destroy.
 
 ```zig
 const shape: kron.Event = .{
@@ -315,9 +447,14 @@ const log = try logging.prepared(shape);
 _ = try log.tryLogf(.info, "request {d} completed", .{@as(u64, 42)}, .{ .status = @as(u16, 201) });
 ```
 
-附着版本采用attachPreparedThread并detach。shape绑定消息模板、字段顺序和kind，改变返回SchemaMismatch；optional完整kind选择使用高级metadata接口，见 [schema](schema.md) 和 [prepared.zig](../examples/prepared.zig)。prepared的收益按工作负载测量，不保证所有事件更快。
+The attached variant uses `attachPreparedThread` and `detach`. A shape binds the
+message template, field order, and kinds; changing them returns
+`SchemaMismatch`. Use the advanced metadata interface for optional full-kind
+selection; see [schema](schema.md) and [prepared.zig](../examples/prepared.zig).
+Prepared-event benefits are workload-specific and not guaranteed to be faster
+for every event.
 
-标准日志桥接配置在应用根模块：
+Configure the standard logging bridge in the application root module:
 
 ```zig
 const LogBridge = kron.Logging.std_log;
@@ -327,11 +464,17 @@ pub const std_options: std.Options = .{
 };
 ```
 
-初始化之后bindStdLog，停止全部std.log用户后unbindStdLog。Logging.destroy只解除自己的绑定。桥接使用有界16KiB producer格式化缓冲；检查LogBridge.statistics()的unbound/oversize/errors。完整例子见 [std_log.zig](../examples/std_log.zig)。
+Call `bindStdLog` after initialization, and `unbindStdLog` after all `std.log`
+users have stopped. `Logging.destroy` removes only its own binding. The bridge
+uses a bounded 16 KiB producer formatting buffer; inspect
+`LogBridge.statistics()` for unbound/oversize/errors. See
+[std_log.zig](../examples/std_log.zig) for a complete example.
 
-## 全局 owner（可选）
+## Global owner (optional)
 
-库代码无法逐层传递 logger 时，应用可以安装一个进程级 `Logging` owner；scope 由调用点决定，因此不同库可以各用自己的稳定名称：
+When library code cannot pass a logger through every layer, the application may
+install a process-wide `Logging` owner. The scope is chosen at the call site, so
+different libraries can use their own stable names:
 
 ```zig
 kron.setGlobalLogging(logging);
@@ -342,11 +485,22 @@ kron.infoAt(@src(), "mylib.http", "request done", .{ .status = @as(u16, 200) });
 kron.logfAt(@src(), .info, "mylib.db", "pool size {d}", .{@as(u8, 10)}, .{});
 ```
 
-`global.scoped(scope)` 返回 `?Logger`，未安装时为 null；`enabled(level, scope)` 可在构造昂贵字段前检查。全局槽只保存一个 `*Logging`，必须在启动 worker 前安装、所有使用者停止后清除；测试或多实例场景应显式注入 `Logging.Logger`。未安装时所有全局调用为 no-op。`logAt`/`logfAt`/`infoAt` 等带 `At` 的入口显式接收 `@src()`，用于保留结构化 source。
+`global.scoped(scope)` returns `?Logger`, or null when no owner is installed;
+`enabled(level, scope)` can check before constructing expensive fields. The
+global slot stores exactly one `*Logging`; install it before starting workers
+and clear it after all users stop. Tests and multi-instance scenarios should
+inject `Logging.Logger` explicitly. All global calls are no-ops when no owner is
+installed. Entries with `At`, such as `logAt`/`logfAt`/`infoAt`, accept
+`@src()` explicitly to preserve structured source information.
 
-## 时间、trace 与源位置
+## Time, trace, and source location
 
-route.timestamp可设置 `.{} `（可读UTC）、固定offset/precision或 `.{ .zone = .local }`。local采用OS时区/DST规则，按事件整秒缓存；异步在消费者转换，sync/fallback_sync在调用线程转换。Linux依赖启用 `.@"system-local-time"=true` 或应用link_libc，运行期间保持TZ稳定，见 [时间处理](time.md)。
+`route.timestamp` accepts `.{}` (readable UTC), a fixed offset/precision, or
+`.{ .zone = .local }`. Local time follows OS timezone/DST rules and is cached per
+whole event second; asynchronous routes convert in the consumer, while
+sync/fallback_sync routes convert on the calling thread. On Linux, enable
+`.@"system-local-time" = true` or link libc in the application, and keep `TZ`
+stable at runtime. See [time handling](time.md).
 
 ```zig
 const traced = log.withTrace(.{
@@ -357,27 +511,44 @@ const traced = log.withTrace(.{
 _ = try traced.tryLogfAt(@src(), .info, "response {d}", .{@as(u16, 200)}, .{});
 ```
 
-示例ID仅作演示，应用传入有效关联ID。trace显式传播，不自动生成ID或继承异步任务；普通日志方法不自动记录source，带At方法接受调用点@src()。
+The example IDs are illustrative; applications pass valid correlation IDs.
+Trace context propagates explicitly and is not generated automatically or
+inherited by asynchronous tasks. Ordinary logging methods do not record source;
+`At` methods accept the call-site `@src()`.
 
-JSON source保留module/file/function/line/column，scope是应用业务组件标签。text以 `source= examples/mmap.zig:行:列` 显示仓库相对路径，不加外围引号，方便IDE终端跳转。@src().file相对模块源码根；本仓库从根examples.zig导入，保留examples/前缀。入口为src/main.zig的应用使用编译期映射：
+JSON source retains module/file/function/line/column, while `scope` is the
+application's business-component label. Text prints
+`source= examples/mmap.zig:line:column` using a repository-relative path without
+outer quotes, which makes IDE terminal links work. `@src().file` is relative to
+the module source root; this repository imports from the root `examples.zig`, so
+the `examples/` prefix is preserved. Applications whose entry point is
+`src/main.zig` can use the compile-time mapping:
 
 ```zig
 _ = try log.tryLogfAt(kron.source.fromModule("src", @src()), .info, "request {d} completed", .{request}, .{});
 ```
 
-helper保留其他source字段，规范 `/`，拒绝绝对路径和越过仓库根目录的 `..`，日志调用不查文件或拼接路径。多模块分别传仓库相对源码目录。
+The helper preserves other source fields, normalizes `/`, and rejects absolute
+paths and `..` that escapes the repository root. Logging calls do not inspect
+files or join paths. Pass the repository-relative source directory for each
+module separately.
 
-text侧重可读性，使用 `key= value`；logfmt保留可解析的 `key=value`，按需引用转义；JSON保留结构与类型，binary用于工具链。不要用logfmt解析器解析text。完整source输出见 [source_location.zig](../examples/source_location.zig)。
+Text prioritizes readability and uses `key= value`; logfmt keeps parseable
+`key=value` with quoting/escaping as needed; JSON preserves structure and types;
+binary is for tooling. Do not parse text with a logfmt parser. See
+[source_location.zig](../examples/source_location.zig) for complete source
+output.
 
-## 轮转、deadline与验证
+## Rotation, deadlines, and verification
 
-轮转文件直接配置在route.target.rolling_file。支持三种选择：
+Configure rotating files directly in `route.target.rolling_file`. Three choices
+are supported:
 
-| 配置 | 触发条件 |
+| Configuration | Trigger |
 | --- | --- |
-| `max_bytes=10*1024*1024` | 下一条完整记录会使active文件超过10MiB时轮转 |
-| `rotation_interval_ns=60*std.time.ns_per_s` | 从本轮第一条记录起经过60秒，下一条非空记录前轮转 |
-| 同时设置两者 | 任一条件满足即轮转，同一条记录最多触发一次 |
+| `max_bytes = 10 * 1024 * 1024` | Rotate when the next complete record would make the active file exceed 10 MiB |
+| `rotation_interval_ns = 60 * std.time.ns_per_s` | Rotate before the next non-empty record after 60 seconds from the first record in the current round |
+| Both set | Rotate when either condition is met; one record triggers at most one rotation |
 
 ```zig
 .{
@@ -393,30 +564,65 @@ text侧重可读性，使用 `key= value`；logfmt保留可解析的 `key=value`
 }
 ```
 
-max_bytes默认null，禁用大小条件；rotation_interval_ns默认null，禁用时间条件，两者至少设置一个。时间轮转使用单调时间间隔，创建/reopen重置计时，进程停机时间不累计，不对齐整点或午夜；没有新日志时不创建空归档。单条记录仍须满足buffer_bytes，启用大小限制时还须满足max_bytes。
+`max_bytes` defaults to null, disabling the size condition;
+`rotation_interval_ns` defaults to null, disabling the time condition. At least
+one must be set. Time rotation uses a monotonic interval, resets on
+create/reopen, does not accumulate process downtime, and does not align to the
+hour or midnight; no empty archive is created when no new logs arrive. A single
+record must still fit `buffer_bytes` and, when the size limit is enabled,
+`max_bytes`.
 
-归档保留active和`.1`..`.retention`，`.1`最新。目标及journal路径应各自独立；检测到重复目标或journal冲突时创建返回错误。完整 [rolling.zig](../examples/rolling.zig) 同时演示独立的大小文件、时间文件和stderr输出。
+Archives retain the active file and `.1` through `.retention`, with `.1` being
+the newest. Target and journal paths must be distinct; duplicate targets or
+journal conflicts make creation fail. The complete
+[rolling.zig](../examples/rolling.zig) demonstrates independent size-based and
+time-based files plus a stderr output.
 
+Deadline-aware control uses `kron.Deadline.after(io, std.time.ns_per_s)`. All
+pipelines share the absolute deadline, and resources remain valid after a
+timeout. `shutdown` has already closed all admission, so retry `shutdown` to
+confirm and destroy after users stop. Single-threaded builds support only sync,
+ordinary flush, and shutdown; deadline variants return
+`TimedControlUnavailable`.
 
-带deadline的控制使用 `kron.Deadline.after(io, std.time.ns_per_s)`。全部管线共用绝对截止时间，超时后资源仍然有效；shutdown已关闭全部入场，必须重试shutdown确认并在停止用户后destroy。单线程仅sync/普通flush/shutdown，带deadline返回TimedControlUnavailable。
+The default path remains allocation-free per event, but multiple outputs add
+their own copy, encoding, configuration, and background-thread costs. Hot paths
+with one target can use `scopedOutput`; an already-encoded record cannot be
+reused across independent queues. Same-format reuse is still possible across
+multiple routes in an advanced Runtime shared pipeline, where the application
+manages sink lifetime.
 
-默认路径保持无每事件分配，但多输出增加各自复制、编码、配置和后台线程成本。只用一个目标的热点可取scopedOutput；多个独立队列之间不能复用已经编码的record。同格式复用仍可在高级Runtime的共享管线多route中使用，需自行管理sink生命周期。
+## Performance mode selection
 
-## 性能模式选择
-
-| 场景 | 推荐模式 | 当前证据 |
+| Scenario | Recommended mode | Current evidence |
 | --- | --- | --- |
-| 需要 recovery、CRC、三检查点、多 route、rolling 或 durable | 默认 `Logging`/`Runtime` | durable 默认路径；完整 E-core 240-trial 矩阵（kron 全配置开启自适应 cache）为 19 lead/9 peer/36 inc，剩余 peer lead 全部在 mmap |
-| async JSON 高吞吐，仍需 journal/CRC/recovery | `render_cache` opt-in（backlog 自适应） | E-core 32配置×5轮：P1 inline +8.5%–17.9%、P1 schema −2.3%–+3.9%、P4 inline +38.9%–57.1%、P4 schema +7.9%–51.2%，32个配对无peer lead。SPSC多producer schema通过`attached_count`使用shared 1/2环（P4 memory batch +2.5%中位、P1 parity）。5轮 peer：P1 memory inline sampled 对两前端 1.219/1.029 qualified（SPSC 1.273/1.076），SPSC P4 memory inline 1.20–1.32 qualified；P1 mmap durable 0.765–0.906（仍 peer lead）。cache 是 volatile，journal/CRC/recovery 保留，恢复时回退 deferred render |
-| P1 memory 或 P4 最高吞吐，可接受无 recovery | `text_format=true` opt-in | E-core 5轮 peer：P1 memory batch 2.522M，对 Foundation/tracing 1.386/1.140 qualified；P4 memory 4.09M，对两前端 1.79–1.90 qualified；P1 mmap 2.525M，对 Foundation 1.179 lead、对 tracing 0.917 peer lead |
-| P1 mmap 最高吞吐、单 producer、无 recovery | `MmapSpool` opt-in | E-core 5轮 peer：batch 3.22M、sampled 2.75M；sampled 对 Foundation/tracing 1.400/1.110 qualified；batch 中位 1.52/1.13，因 spread inconclusive |
-| P1 mmap 需要 journal/recovery | 默认 durable `Runtime` | 不是最快；生产 `text_format` P1 mmap 对 tracing 为 0.917 |
+| Recovery, CRC, three checkpoints, multiple routes, rolling, or durable required | Default `Logging`/`Runtime` | Durable default path; the complete contract remains enabled |
+| High-throughput async JSON while retaining journal/CRC/recovery | `render_cache` opt-in (adaptive backlog) | Volatile cache only; journal/CRC/recovery remain, and recovery falls back to deferred rendering |
+| Highest P1 memory or P4 throughput, no recovery required | `text_format = true` opt-in | Opt-in fast path; default durable/CRC/recovery/queue contracts are unchanged |
+| Highest P1 mmap throughput, single producer, no recovery | `MmapSpool` opt-in | Non-durable fast mode; not a replacement for the durable path |
+| P1 mmap with journal/recovery required | Default durable `Runtime` | Not the fastest mode; production defaults remain conservative |
 
-选择原则：先按 recovery/durable 需求决定默认路径；async JSON 需要保留 journal/CRC/recovery 时用自适应 `render_cache`（P1 inline 与 P4 都有正收益，P1 schema 约中性）；只有明确接受“崩溃可能丢失尾部记录”时才用 `text_format` 或 `MmapSpool`。`text_format` 适合 P1 memory/P4 最高吞吐，`MmapSpool` 适合单 producer 的 P1 mmap 最高吞吐；P1 mmap 的 durable+cache 仍落后 tracing，优先 `text_format` 或 `MmapSpool`。
+Selection rule: first choose the default path from recovery/durable
+requirements. Use adaptive `render_cache` when async JSON must retain
+journal/CRC/recovery. Use `text_format` or `MmapSpool` only when the application
+explicitly accepts that a crash may lose tail records. `text_format` targets the
+highest P1 memory/P4 throughput, while `MmapSpool` targets the highest
+single-producer P1 mmap throughput. Durable P1 mmap with the cache remains behind
+the previous tracing comparison; prefer `text_format` or `MmapSpool` only when
+non-durable operation is acceptable.
+
+Cross-library reference harnesses and their measured evidence are no longer
+tracked in this repository. The recommendations above describe the local
+contract and retained opt-in paths, not a current cross-library ranking.
 
 ## Mmap spool fast mode
 
-`kron.MmapSpool` 是每个 spool 单 producer、非 durable 的 opt-in fast mode：producer 把最终 JSON 直接渲染进 file-backed 映射，一个 writer 线程按约 1MiB 调度 `msync(MS_ASYNC)`，`shutdown` 把文件截断到已渲染字节。没有 journal、CRC、recovery、ring 或 consumer；默认 `Logging`/`Runtime` durable 路径不变。
+`kron.MmapSpool` is a non-durable opt-in fast mode with one producer per spool:
+the producer renders final JSON directly into a file-backed mapping, one writer
+thread schedules `msync(MS_ASYNC)` at roughly 1 MiB intervals, and `shutdown`
+truncates the file to the rendered byte count. There is no journal, CRC,
+recovery, ring, or consumer. The default `Logging`/`Runtime` durable path is
+unchanged.
 
 ```zig
 const spool = try kron.MmapSpool.create(allocator, io, .{
@@ -431,7 +637,10 @@ try spool.flush(.written);
 try spool.shutdown();
 ```
 
-多线程应用使用“每线程一个 spool”：每个线程创建自己的 path 和 channel，避免共享 tail/queue；文件数等于 producer 数，应用负责合并或分别归档。
+Multi-threaded applications use one spool per thread: each thread creates its
+own path and channel, avoiding a shared tail/queue. The file count equals the
+producer count, and the application is responsible for merging or archiving
+them separately.
 
 ```zig
 const spool = try kron.MmapSpool.create(allocator, io, .{
@@ -442,22 +651,30 @@ const spool = try kron.MmapSpool.create(allocator, io, .{
 });
 defer spool.destroy();
 const log = spool.logger("app");
-// 该线程独占 spool；结束时 flush(.written) + shutdown()。
+// This thread owns the spool; finish with flush(.written) + shutdown().
 ```
 
-边界：
+Boundaries:
 
-- 每个 spool 只支持一个 producer；`channel` 可配置（多线程时建议每线程不同），`sequence` 在每个 spool 内从 1 递增。
-- `flush(.written)` 只保证 dirty page 对读者可见，不是设备 durable；`flush(.durable)` 返回 `UnsupportedDurability`。进程崩溃可能留下部分尾部记录，`shutdown` 会截断到最后一条完整记录。
-- `capacity_bytes` 是映射/内存预算；容量耗尽返回 `dropped_full`，单条超出剩余空间返回 `dropped_oversize`，不会发布部分记录。
-- `timestamp_period>1` 会复用一次 clock capture；staleness 以 clock-call 计数而非时间为界，需要精确时间时保持 1。
-- 需要 recovery、CRC、三检查点、rolling/多 route 或 durable 时使用默认 `Logging`/`Runtime`。
+- Each spool supports exactly one producer. `channel` is configurable (use a
+  different value per thread in multi-threaded use), and `sequence` starts at 1
+  and increments within each spool.
+- `flush(.written)` only makes dirty pages visible to readers; it is not device
+  durability. `flush(.durable)` returns `UnsupportedDurability`. A process crash
+  may leave a partial tail record; `shutdown` truncates to the last complete
+  record.
+- `capacity_bytes` is the mapping/memory budget. Exhaustion returns
+  `dropped_full`; a record larger than the remaining space returns
+  `dropped_oversize`. Partial records are never published.
+- `timestamp_period > 1` reuses one clock capture; staleness is bounded by
+  clock-call count rather than time. Keep it at 1 when precise timestamps are
+  required.
+- Use the default `Logging`/`Runtime` when recovery, CRC, three checkpoints,
+  rolling/multiple routes, or durability are required.
 
-性能证据：P-core spool batch 3.74–3.85M、sampled 3.19–3.35M；E-core batch 2.92–3.01M、sampled 2.57–2.62M；对 Foundation/tracing 中位 1.05–1.83x，没有 qualified peer lead；部分同窗口配对因 peer spread 保持 inconclusive。见 [mmap spool A/B](../bench/evidence/2026-11-04-mmap-spool/README.md)。
-
-多 producer 每线程一个 spool（E-core，ts64，5 轮）：P1 batch 3.24M、sampled 2.78M，对 Foundation 1.39–1.47 qualified、对 tracing sampled 1.11 qualified；**P4 batch 8.20M、sampled 7.62M，对 Foundation 2.57–2.72x、对 tracing 2.91–3.22x**。这是非 durable fast mode，不能替代 durable 排名；见 [multi-producer spool](../bench/evidence/2026-11-08-mmap-spool-multi/README.md)。
-
-可运行示例索引见 [examples](../examples/README.md)。相关验证：
+Performance evidence and cross-library comparison reports are not tracked in the
+repository. See [examples](../examples/README.md) for runnable examples and the
+verification commands below.
 
 ```sh
 zig build test-logging test-outputs test-route-policies -Doptimize=ReleaseSafe -j1
@@ -466,4 +683,9 @@ zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build test-package-distribution check-platforms -Doptimize=ReleaseSafe -j1
 ```
 
-新旧API迁移：`.output`改成`.outputs=&.{.{ .target=... }}`；顶层mode/queue/filter等直接移到相应route；`.output.multiple`直接改成outputs列表；捕获前redaction配置到各相关route，或用Secret明确禁止捕获原值；借用Runtime时传输出名。
+API migration: replace `.output` with
+`.outputs = &.{.{ .target = ... }}`; move top-level mode/queue/filter and similar
+settings onto the corresponding route; replace `.output.multiple` with an
+`outputs` list; configure redaction on each affected route before capture, or use
+`Secret` to prevent capturing the original value; pass the output name when
+borrowing a Runtime.

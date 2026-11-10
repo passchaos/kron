@@ -1,78 +1,284 @@
-# 从高性能日志库落实优化
+# Applying lessons from high-performance logging libraries
 
-Prepared提交中独立的一次重复树遍历已进一步消除：runtime原有predicate前校验顺便统计value/nested key长度，私有context在同一未改写调用内复用，canonical形状/引用和公开codec全树检查保持。Debug/Safe/Fast各64项及4096项旧/新codec差分一致；380项完整对照核对6438万条JSON，三个schema用户态指令组减少约4%，shared Memory P1长batch吞吐中位+4.89%，局部重复性与置信区间通过。P1 sampled极端分位有负向，未取得一般tail/P4/Mmap吞吐资格。该方案针对runtime与codec之间的重复校验，和下方被否决的shape-in-visitor循环合并不同；全部正负结果见`bench/evidence/2026-11-01-prepared-measure/`。
+Design borrowing is based on actual hot paths and completion boundaries. The
+repository no longer tracks cross-library harnesses or measured evidence, so the
+notes below describe mechanisms and local observations rather than a current
+cross-library ranking.
 
-最新schema形状/类型检查合并遍历候选未推广：完整树校验和长度visitor期间观察schema key/type并延后形状错误，保持tree→metadata/shape→level→overflow优先级，4096项冻结旧/新差分一致。但独立PMU的schema SPSC指令增加0.463%，完整320项吞吐各组未取得资格，因此恢复原实现。全部400项/5640万条文件/PMU结果保存（其中首40项有潜在测试结束重叠，正式clean360项4436万条）；证据见`bench/evidence/2026-11-01-schema-shape-visitor/`。后续schema优化不能重复推广这一未通过的合并遍历机制，应继续从真实profile定位昂贵操作，并保留完整树校验与错误顺序。
+## Mechanisms confirmed in source
 
-设计借鉴以实际热路径和完成边界为依据。Memory/Mmap所有组合稳定超越Foundation的证据仍未取得；各轮排名以当轮源码和完整JSON对照为准。后续从当前热路径的可测成本出发，正式跨库数据见 [完整工作流](cpp-full-workflow.md)。
-
-## 源码中确认的机制
-
-| 参考 | 本轮检查的实现或文档 | kron采用与继续优化的方向 |
+| Reference | Implementation or documentation inspected | Direction adopted and further work |
 | --- | --- | --- |
-| Quill 13.1 | BackendWorker批量从frontend queue生成TransitEvent，在读完一批后commit_read；一次扫描复用时钟采样 | 保留typed capture与SPSC；进一步减少消费端每条配置查找、游标与统计更新。不能在required输出完成前释放journal槽位 |
-| Foundation Logging | Memory的RecordBatch连续字节区+记录end偏移；Mmap整批write/flush成功后complete_batch；flush携带accepted target | 吸收连续批次和整批确认方式，已有admission cut继续定义flush范围；按协议保留pending、配置pin和实际短写处理 |
-| Foundation默认formatter | 缓存同秒日期/时区，先算输出大小后一次resize，再复制与写数字；线程缓存formatter clone | 共享encoder应减少重复Writer对齐/小块copy；如果引入静态输出描述符，必须明确失效与配置版本，不把常量测试字节当任意事件 |
-| fmtlog | logId首次注册静态元信息、类型专门化getArgSizes/encodeArgs、后台formatToFn与fmt参数存储复用；单poll consumer、按buffer大小/最老字节延时/显式poll(true)刷新 | prepared schema继续显式预热；批量策略同时核对低频可见延迟和终止flush，不能让后续日志不断推迟最老pending |
-| NanoLog | 编译期提取静态信息，运行期只捕获动态值，默认二进制并离线解码 | 借鉴静态信息去重，默认text/JSON保持可读；二进制吞吐必须单独报告，不用于完整可读JSON排名 |
-| Reckless | 延迟格式化、批量I/O，强调对应用CPU/cache与队列饱和的影响 | 使用包含producer+worker+flush/关闭的工作流；扩展业务负载，统计CPU/内存和tail，不能只看入队中位延迟 |
-| BqLog | 官方文档强调模板缓存、copy/hash合并、长度回填、批量I/O以及格式/内存/CPU成本 | 后续检查捕获与CRC是否可共用一次内存访问，输出协议与节点预算不变；压缩输出需独立比较 |
+| Quill 13.1 | `BackendWorker` builds `TransitEvent`s from frontend queues in batches and commits reads after a batch; one scan reuses clock samples | Keep typed capture and SPSC; reduce per-record configuration lookup, cursor, and statistics updates on the consumer. Journal slots cannot be released before required output completes |
+| Foundation Logging | Memory uses contiguous `RecordBatch` byte ranges plus record end offsets; Mmap completes a batch after a successful write/flush; flush carries accepted targets | Adopt contiguous batches and whole-batch acknowledgement; the existing admission cut still defines flush scope. Preserve pending state, configuration pins, and real short-write handling |
+| Foundation default formatter | Caches same-second date/timezone, computes output size first, resizes once, then copies and writes numbers; caches formatter clones per thread | Shared encoders should reduce repeated writer alignment and small copies. A static output descriptor must define invalidation and configuration generations; constant test bytes are not arbitrary events |
+| fmtlog | Static metadata registered on first `logId`, type-specialized `getArgSizes`/`encodeArgs`, background `formatToFn`, reused fmt argument storage; single polling consumer, refresh by buffer size/oldest-byte delay/explicit `poll(true)` | Prepared schemas remain explicitly warmed. Batch policy must check both low-frequency visibility latency and terminal flush so later logs cannot indefinitely postpone the oldest pending record |
+| NanoLog | Compile-time static information, runtime capture of dynamic values only, binary by default with offline decoding | Reuse static-information deduplication while keeping default text/JSON readable. Binary throughput must be reported separately and cannot rank complete readable JSON |
+| Reckless | Deferred formatting, batched I/O, emphasis on application CPU/cache and queue saturation | Measure complete producer+worker+flush/shutdown workflows; expand business workloads and report CPU/memory/tail, not only median enqueue latency |
+| BqLog | Official documentation emphasizes template caching, combined copy/hash, length backfill, batched I/O, and format/memory/CPU cost | Check whether capture and CRC can share one memory access without changing output protocol or node budgets; compressed output needs independent comparison |
 
-Quill、Foundation与fmtlog条目来自拥有源码；NanoLog/Reckless/BqLog条目来自官方README/设计介绍，后者不是对其全部实现或发布性能的独立验证。fmtlog读取当前master的具体内容并记录文件SHA256，提交查询不可用，因此不虚称固定到某个提交。具体读取源与SHA256在 `bench/evidence/2026-11-01-crc-slicing16/research-sources.json`。不增加生产依赖或直接复制上游实现。
+Quill, Foundation, and fmtlog entries came from owned source; NanoLog/Reckless/
+BqLog entries came from official README/design descriptions, which are not an
+independent verification of every implementation or published performance.
+fmtlog was read from the then-current master with file SHA-256 recorded because
+commit lookup was unavailable; no fixed commit is claimed. No production
+dependency was added and no upstream implementation was copied directly.
 
-fmtlog的队列数据采用进程内logId、类型专门化函数和部分对象表示，指针参数可要求对象一直存活到poll结束；这些冷/热分离机制有借鉴意义，表示方式不能直接写入kron持久journal。kron保留显式borrowed-call生命周期、字符串/bytes复制和自包含schema身份，并把首次注册/预热成本单独计时。同样，fmtlog源码使用volatile队列索引的发布方式，不能直接照搬到本库跨架构的release/acquire协议。
+fmtlog's queue uses in-process log IDs, type-specialized functions, and partial
+object representation; pointer arguments may require objects to live until poll
+finishes. The cold/hot separation is useful, but its representation cannot be
+written directly into kron's persistent journal. kron keeps explicit
+borrowed-call lifetimes, string/bytes copies, and self-contained schema
+identity, and times first registration/preparation separately. fmtlog also
+publishes queue indices through volatile operations, which cannot be copied
+directly into this library's cross-architecture release/acquire protocol.
 
-## 本次发现的工作量差异
+## Workload differences found
 
-对真实100万条、P4 SPSC-memory、完整JSON文件流程进行core PMU profile，约24%的采样落在slotChecksum。kron在producer提交、consumer checked peek和releaseAfter的checked peek都计算CRC。Foundation正常Mmap的peek只读slot descriptor，complete_batch检查顺序并发布FREE；恢复扫描另外检查CRC。两者因此具有不同的正常运行期损坏检查成本。这能解释部分CPU工作差异，但不是完整性能差距的唯一原因。
+A core PMU profile of a real one-million-record P4 SPSC-memory complete JSON file
+workflow placed about 24% of samples in `slotChecksum`. kron computes CRC at
+producer commit, consumer checked peek, and `releaseAfter` checked peek.
+Foundation's normal Mmap peek reads only the slot descriptor, and
+`complete_batch` checks ordering before publishing FREE; recovery scanning checks
+CRC separately. The two designs therefore have different normal-operation
+corruption-check costs. This explains part of the CPU-work difference but is not
+the sole cause of the complete performance gap.
 
-本轮先优化同一IEEE CRC算法：每轮16字节的portable slicing，保留每个校验点、schema引用参与范围、初值/反射/final XOR和恢复格式。只读表从8KiB增至16KiB。5对固定CPU的独立CRC过程PMU统计中，用户态cycles中位减少约24.4%，instructions增加约4.3%；这是并行化依赖链后的cycle收益，不是减少指令数。微基准时间与完整工作流仍有明显host波动，完整吞吐资格保持inconclusive。
+The first optimization kept the same IEEE CRC algorithm and changed it to
+portable 16-byte slicing, preserving every checkpoint, schema-reference coverage,
+initial value/reflection/final XOR, and recovery format. The read-only table grew
+from 8 KiB to 16 KiB. Five fixed-CPU primitive PMU pairs reduced user cycles by
+about 24.4% and increased instructions by about 4.3%; this is a cycle gain from
+parallelizing the dependency chain, not fewer instructions. Microbenchmark time
+and complete workflows still had noticeable host variance, and complete
+throughput qualification stayed inconclusive.
 
-2026-11-01随后在native x86_64加入编译期PCLMUL+SSE2 block folding，通用/非x86/短输入和尾部仍走portable表。journal形状CRC primitive中位在256B/512B/2KiB/16KiB分别下降约80%/87%/90%/92%；五对完整流程PMU的SPSC-memory P4与async-memory P1用户态指令分别减少15.33%/14.78%，SPSC-memory P4完整吞吐中位1.393M→1.816M条/s并达到本轮噪声门限。Vort 416组互操作、journal v1/v2 golden和完整ReleaseFast 503/503测试通过；这是原生x86_64路径，跨库排名仍需同轮复测。见 [提交热点](performance-hotspots.md) 和 `bench/evidence/2026-11-01-pclmul-crc/`。
+On 2026-11-01, native x86_64 gained compile-time PCLMUL+SSE2 block folding,
+while generic/non-x86/short inputs and tails kept the portable table.
+Journal-shape CRC primitive medians for 256 B/512 B/2 KiB/16 KiB fell by about
+80%/87%/90%/92%. Five complete-workflow PMU pairs reduced SPSC-memory P4 and
+async-memory P1 user instructions by 15.33%/14.78%, and SPSC-memory P4 complete
+throughput median rose from 1.393M to 1.816M records/s and met this round's noise
+threshold. Vort 416-group interoperability, journal v1/v2 goldens, and the
+complete ReleaseFast 503/503 tests passed. This is a native x86_64 path; a
+same-round cross-library re-measurement would still be required for a ranking.
+See [submission hotspots](performance-hotspots.md).
 
-120个before/after完整流程试验覆盖Memory/Mmap、shared/SPSC、P1/P4与sampled/batch，逐条核对1212万条日志。另为审查短批次P1 SPSC apparent regression运行10个百万条试验，核对1001万条；中位吞吐约1.23M→1.31M，但候选有明显慢尾，仍不宣称稳定提升。所有慢值原样保留。
+A 120-trial before/after complete-workflow comparison covered Memory/Mmap,
+shared/SPSC, P1/P4, and sampled/batch, verifying 12.12 million logs. Another 10
+one-million-record trials reviewed a short-batch P1 SPSC apparent regression and
+verified 10.01 million logs; median throughput was about 1.23M → 1.31M, but the
+candidate had a clear slow tail, so no stable improvement is claimed. All slow
+values were retained.
 
-## 已落实与后续实现
+## Implemented and follow-up work
 
-锁实现不能单独解释多producer完整流程差距。所读Foundation源码中，`parking_lot::Mutex/Condvar`保护Memory/Mmap队列状态；Memory通过交换连续RecordBatch并让多个批次共用文件缓冲，Mmap在文件flush后整批确认。kron SPSC reserve不获取共享队列mutex，仍执行每条CRC、配置引用和required输出确认；每checked batch完成flush后才释放slot。这些批量、确认和唤醒策略均影响饱和队列的成本。尚未进行同一实现只替换mutex的对照或将锁等待单独计量，因此不能把性能差距归因于parking_lot。所读拥有源码的版本/文件SHA256保存在`bench/evidence/2026-11-01-mmap-publication/foundation-lock-sites.json`。
+Lock implementation alone does not explain the multi-producer complete-workflow
+gap. In the Foundation source inspected, `parking_lot::Mutex/Condvar` protects
+Memory/Mmap queue state; Memory exchanges contiguous `RecordBatch` values and
+lets multiple batches share a file buffer, while Mmap acknowledges a whole batch
+after the file flush. kron SPSC reserve does not take the shared queue mutex, but
+still performs per-record CRC, configuration reference, and required-output
+acknowledgement; slots are released only after each checked batch flushes. These
+batch, acknowledgement, and wakeup policies all affect saturated-queue cost. No
+same-implementation mutex-only comparison or isolated lock-wait measurement was
+performed, so the performance gap cannot be attributed to `parking_lot`.
 
-1. **同批配置与能力复用**：consumer View复用已实现，一批内相同generation/fingerprint只查找一次；跨版本保持独立View与lease，错误路径释放临时reader、保留record pin。真实shared/SPSC的31条同批记录确认只查找一次。完整shared-Memory P1本机测得约8.9%提升，其他组合仍inconclusive，见 [批次配置复用](batch-configuration.md)。后续已在当前批次每组预计算required durable route位图，避免每条交付和回收重复扫描，并保留原事件的完整durable barrier mask。
-2. **批内统计与回收**：连续channel的written统计已聚合，31条实际shared/SPSC记录由31次原子RMW减少为1次；错误退出提交真正已确认的前缀，并发sync/fallback更新继续由fetchAdd合成。100次相同完整文件流程全部验证；prepared SPSC-Mmap中位变化约+3.5%，普通SPSC-Mmap约−1.2%，置信区间仍重叠，其他组合波动较大，本轮不宣称稳定提速，见 [批内确认与统计](batch-accounting.md)。journal游标、CRC和releaseAfter仍逐条处理；进一步合并回收需要先界定损坏发生在批次中间时的成功前缀、schema引用和durable checkpoint契约。
-3. **编码输出路径**：完整text/JSON/logfmt记录已经复用同一次完整树校验，后续递归输出保持私有，公共value API继续独立验证。原golden及12个完整输出/16486种短缓冲前缀与冻结源码一致；五对编码probe用户态指令减少14.27%、cycles减少17.90%，完整SPSC文件流程指令减少2.55%，但100次普通文件试验出现较大候选慢值，另10次长流程仍未取得稳定吞吐资格，见 [编码校验复用](encoder-validation.md)。之后针对实际采样中的对齐/复制与转义回调，增加无宽度十进制输出和直接完整字符串consume：native数值直接生成digits，宽整数以10^19分块，所有JSON精度与generic Writer失败前缀保持；串行编码probe指令减少18.50%，完整SPSC文件流程指令减少6.22%，完整吞吐仍inconclusive，见 [数字与转义输出](decimal-output.md)。最新一轮把默认inline admission的完整树校验与长度统计合并：route predicate前调用`codec.measure`，接受后`encodeSized`只检查level/容量并写同一事件，不再重复长度遍历；redaction与prepared schema保持独立入口。完整流程用户态指令中位减少约2.5%，filtered invalid level与invalid tree的错误顺序由测试锁定，吞吐仍inconclusive。随后消费者decoded delivery复用checked decoder的树校验：`codec.decode`/`schema_codec.resolve`设置内部`Event.tree_validated`，内部`encodeDecoded`只对该证明跳过第二次`ValueValidator`，公开encoder忽略提示并始终校验，runtime用可信上下文覆盖调用方提示。五对完整流程PMU中SPSC-memory P4与async-memory P1用户态指令分别减少3.73%/4.49%，cycles与吞吐仍inconclusive。之后为常见形状增加fused wire-to-JSON：单JSON/text/logfmt route、v4 inline、非deferred、无args时一次解析并写出（nested attributes使用scratch arena），其他形状Fallback；SPSC-memory P4与async-memory P1指令再减少5.94%/6.20%。之后checked wire typed visitor让融合renderer跳过中间`Value`和通用tag二次分派：`valueWith`保持同一套完整树检查，array/group仍物化后才回调；40项完整shared核对1204万JSON，四组指令中位减少1.65%–1.69%，完整吞吐/尾部仍inconclusive，见 [wire scalar证据](../bench/evidence/2026-11-02-wire-scalar-render/README.md)。最新一轮把JSON固定metadata的timestamp/session/sequence/route_mask/config_generation直接以comptime tag和原始u64/i64写出，跳过临时`Value`、运行时tag switch和u64→u128宽整数路径：四组完整shared指令中位再减少2.45%–2.48%，80项未插桩workflow八组吞吐全为正、六组稳定，见 [metadata证据](../bench/evidence/2026-11-02-wire-metadata-direct/README.md)。下一步继续研究Foundation的DefaultFormatter先计算appended_size、一次resize后顺序复制，同时保留全部value tags、UTF-8、source、边界和无效树零输出。Foundation的同秒日期缓存适用于日历时间文本；kron当前JSON是完整timestamp_ns，不能用降低时间戳精度来换取该项收益。
-4. **捕获与CRC合并**：按BqLog所描述的方向研究共用内存读，但记录长度、借用生命周期与CRC覆盖必须在同一次安全调用内完成，不公开可复用unchecked凭证。
+1. **Same-batch configuration and capability reuse**: consumer View reuse is
+   implemented; a batch with the same generation/fingerprint looks up once, while
+   cross-generation records keep independent Views and leases, and error paths
+   release temporary readers while retaining record pins. Thirty-one same-batch
+   shared/SPSC records confirmed a single lookup. A local shared-Memory P1
+   measurement showed about 8.9% improvement; other combinations remained
+   inconclusive. See [batch configuration reuse](batch-configuration.md). Later
+   work precomputes the required durable-route bitmap per batch group to avoid
+   rescanning per delivery/reclaim while preserving the original event's complete
+   durable barrier mask.
+2. **Intra-batch accounting and reclamation**: written accounting for contiguous
+   channels is aggregated, reducing 31 actual shared/SPSC records from 31 atomic
+   RMWs to one; error exits submit the truly acknowledged prefix, and concurrent
+   sync/fallback updates still compose through `fetchAdd`. One hundred identical
+   complete-file workflows all verified. Prepared SPSC-Mmap changed by about
+   +3.5% and ordinary SPSC-Mmap by about −1.2%, with overlapping intervals; other
+   combinations varied, so no stable speedup is claimed. See
+   [batch acknowledgement and accounting](batch-accounting.md). Journal cursors,
+   CRC, and `releaseAfter` remain per-record; further reclamation coalescing must
+   first define the successful prefix when corruption occurs mid-batch, schema
+   references, and the durable checkpoint contract.
+3. **Encoding output path**: complete text/JSON/logfmt records reuse the same
+   complete tree validation, while recursive output stays private and the public
+   value API continues to validate independently. Original goldens and 12
+   complete outputs/16,486 short-buffer prefixes matched the frozen source. Five
+   encoding-probe pairs reduced user instructions by 14.27% and cycles by 17.90%;
+   complete SPSC file workflows reduced instructions by 2.55%, but 100 ordinary
+   file trials showed large candidate slow values, and another 10 long workflows
+   did not qualify for stable throughput. See
+   [encoder validation reuse](encoder-validation.md). Later work added
+   width-free decimal output and direct complete-string consumption, producing
+   native digits directly and chunking wide integers by 10^19 while preserving
+   all JSON precision and generic Writer failure prefixes. Serial encoding
+   probes reduced instructions by 18.50% and complete SPSC file workflows by
+   6.22%, while complete throughput remained inconclusive. See
+   [decimal and escaping output](decimal-output.md). A later round merged the
+   default inline-admission tree validation with length accounting:
+   `codec.measure` runs before the route predicate, and after acceptance
+   `encodeSized` only checks level/capacity and writes the same event, avoiding a
+   repeated length traversal; redaction and prepared schema keep independent
+   entry points. Complete-workflow user instructions fell by about 2.5%, error
+   ordering for filtered invalid levels and invalid trees is locked by tests, and
+   throughput remained inconclusive. The consumer then reused the checked
+   decoder's tree validation: `codec.decode`/`schema_codec.resolve` set an
+   internal `Event.tree_validated` flag, internal `encodeDecoded` skips the second
+   `ValueValidator` only for that proof, the public encoder ignores the hint and
+   always validates, and runtime overwrites caller hints with trusted context.
+   Five complete-workflow PMU pairs reduced SPSC-memory P4 and async-memory P1
+   user instructions by 3.73%/4.49%; cycles and throughput remained
+   inconclusive. A fused wire-to-JSON path for common shapes then reduced
+   instructions by another 5.94%/6.20%. A checked wire typed visitor let the
+   fused renderer skip intermediate `Value` materialization and generic tag
+   dispatch while keeping the same complete tree checks; arrays/groups are still
+   materialized before callbacks. Forty complete shared trials verified 12.04
+   million JSON records and reduced instructions by 1.65%–1.69%, with complete
+   throughput/tail still inconclusive. See
+   [wire scalar evidence](performance-hotspots.md). The latest round writes JSON
+   fixed metadata timestamp/session/sequence/route_mask/config_generation
+   directly with comptime tags and raw `u64`/`i64`, skipping temporary `Value`,
+   runtime tag switches, and the `u64`→`u128` path: four complete shared groups
+   reduced instructions by another 2.45%–2.48%, and 80 uninstrumented workflows
+   had positive throughput in all eight groups, six stable. See
+   [metadata evidence](performance-hotspots.md). Next, study Foundation's
+   `DefaultFormatter` pattern of computing `appended_size`, resizing once, and
+   copying sequentially while preserving all value tags, UTF-8, source,
+   boundaries, and zero output for invalid trees. Foundation's same-second date
+   cache applies to calendar-time text; kron JSON currently carries full
+   `timestamp_ns`, so reducing timestamp precision is not an acceptable trade.
+4. **Capture and CRC combination**: investigate shared memory reads as described
+   by BqLog, but record length, borrowed lifetime, and CRC coverage must complete
+   within the same safe call, without exposing a reusable unchecked credential.
 
-已实现条目按对应证据报告，其余条目是后续优先级。每项须有修改前源码、同语义完整工作流、故障门禁和明确性能限制，最终再与Quill/Foundation同轮复测。移动平台实际资格和长期fuzz仍按总验收清单继续。
+Implemented items are documented in their corresponding reports; the remaining
+items are follow-up priorities. Each requires before-source, a same-semantics
+complete workflow, fault gates, and explicit performance limits, followed by a
+same-round comparison. Mobile-platform execution qualification and long-running
+fuzz remain on the overall acceptance list.
 
-后续配置record pin批量释放实验已实际执行两版候选，分别以100项完整文件和20项完整PMU试验验证，共核对3224万条日志。语义测试确认31条同配置记录可从31次pin原子减法合成1次，但多个Memory组的负向中位、高spread和不重叠收益缺失使两版均未通过性能推广条件，生产实现恢复逐条pin释放。原始数据保留在`bench/evidence/2026-11-01-batch-pins/`，并保留更强的旧配置晚期损坏/lease回归。引用计数优化必须同时考虑逐条分支、状态维护、缓存竞争和完整流程；源码中看见的重复操作只能提供假设。
+Two configuration record-pin batch-release candidates were tested with 100
+complete-file and 20 complete-PMU trials, verifying 32.24 million logs.
+Semantics tests confirmed that 31 same-configuration records could combine 31
+pin atomic decrements into one, but negative medians in several Memory groups,
+high spread, and missing non-overlapping gains meant neither candidate qualified.
+Production returned to per-record pin release, and the stronger late-corruption/
+lease regression for old configurations was retained. Reference-count
+optimization must account for per-record branches, state maintenance, cache
+contention, and the complete workflow; visible duplicate operations only provide
+a hypothesis.
 
-## 批次合并后的Memory/Mmap优先级
+## Memory/Mmap priorities after batch coalescing
 
-从当前consumer decimal采样推进的八位分块与冷buffered输出已保留：large native值按10^8尾段生成u32 digit pairs，small保留原loop，把宽值/流式buffer frame拆冷。三版各50项primitive保留前两版的small/record负向；最终五类指令减少约9%–10%。140项完整shared文件核对4214万JSON，Memory/Mmap P1/P4用户态指令稳定减少3.43%–3.47%，公开整数/短写与完整Safe151步骤639项通过。batch吞吐中位正向但区间重叠，sampled Mmap P1−6%未在独立20项复测重现，完整尾部不作一般承诺。精确源码/全部慢值见 [数字分块证据](../bench/evidence/2026-11-02-decimal-u32-chunks/README.md)；不把局部结果加到历史Foundation排名。
+Eight-digit chunking and cold buffered output were retained from consumer decimal
+sampling: large native values generate u32 digit pairs from a 10^8 tail, small
+values keep the original loop, and wide/streaming buffer frames move to a cold
+path. The first two of three versions retained small/record negatives; the final
+version reduced five instruction classes by about 9%–10%. One hundred forty
+complete shared file trials verified 42.14 million JSON records, and Memory/Mmap
+P1/P4 user instructions fell by 3.43%–3.47%; public integer/short-write behavior
+and the complete Safe 151-step/639-test gate passed. Batch throughput medians
+were positive but intervals overlapped, and a sampled Mmap P1 −6% did not
+reproduce in an independent 20-trial recheck, so no general tail promise is made.
+See [decimal chunking](decimal-output.md).
 
-当前生产`2fd7f75`的shared managed完整profile核对400.4万JSON，P4 begin/submitSafeDestination仍为主要producer自占采样；filter与configuration reader登记后的publication读取处有集中样本。后续TLS scope复制缓存、无scope规则的uniform原子镜像及冷/热拆分实际完成120项PMU、80项未插桩流程，共另核对6020万JSON。filter reader RMW减少并未取得整体收益：TLS指令约+0.76%–0.78%，最终shared吞吐正负混合、区间全部重叠，尾部没有优势，候选全部撤回。后续优先从consumer wire/数字输出继续，避免只凭原子操作数推广同一机制。源码、完整数据和限制见 [当前shared filter实验](../bench/evidence/2026-11-02-shared-filter-cache/README.md)。
+The current shared managed complete profile verifies 4.004 million JSON records;
+P4 `begin`/`submitSafeDestination` remain the main producer self-time samples,
+with concentrated samples at publication reads after filter/configuration reader
+registration. A follow-up TLS scope-copy cache, uniform atomic mirror for
+no-scope rules, and cold/hot split completed 120 PMU trials and 80 uninstrumented
+workflows, verifying another 60.2 million JSON records. Reducing filter-reader
+RMW did not produce an overall gain: TLS instructions rose about 0.76%–0.78%,
+final shared throughput was mixed with all intervals overlapping, and tails had
+no advantage; all candidates were withdrawn. Future work should continue from
+consumer wire/number output instead of generalizing a mechanism from atomic
+operation counts alone.
 
-当前已将原四个64条服务量子内的就绪记录合并为最多256条窗口。240项完整文件试验核对2424万条物理JSON，portable Memory四组中位提升4.4%–10.0%，其中三组bootstrap中位区间不重叠；Mmap多数组未资格。独立io_uring P4 Memory两组中位提升14.2%/23.6%，共享Memory的调用p99也出现可重复负向。单对trace的pwritev1581→833、futex9184→4533只证明本次诊断操作数下降。源码、全部慢值、确认与恢复门禁见 [就绪批次合并](coalesced-delivery.md) 和 [完整证据](../bench/evidence/2026-11-01-coalesced-delivery/README.md)。
+Ready records within the former four 64-record service quanta are now merged
+into a window of up to 256. Two hundred forty complete-file trials verified
+24.24 million physical JSON records; portable Memory four-group medians improved
+4.4%–10.0%, with three groups having non-overlapping bootstrap medians; most
+Mmap groups were unqualified. Independent io_uring P4 Memory groups improved
+14.2%/23.6% by median, while shared Memory call p99 showed a repeatable negative.
+A single trace pair (`pwritev` 1581→833, `futex` 9184→4533) proves only that this
+diagnostic operation count fell. See [ready-batch coalescing](coalesced-delivery.md).
 
-下表列的是待验证的候选，优先级综合当前证据、常用路径覆盖与实现复杂度；没有预先承诺百分比收益。新一轮先重新采集批次合并后的producer/consumer/系统调用profile，避免继续使用旧CRC占比解释当前瓶颈。
+The table below lists candidates still to verify, ordered by current evidence,
+common-path coverage, and implementation complexity; no percentage gain is
+promised in advance. New rounds should first re-collect producer/consumer/syscall
+profiles after batch coalescing instead of reusing old CRC shares to explain the
+current bottleneck.
 
-| 优先级 | 候选与 owning source | 现有成本与拟验证变化 | 验证重点 |
+| Priority | Candidate and owning source | Current cost and proposed change | Verification focus |
 | --- | --- | --- | --- |
-| 1 | 有界窗口与满队列尾延迟；`core/runtime.zig`、`core/delivery_batch.zig` | 固定最多256条在吞吐和槽位释放频率之间有取舍；研究按当前积压/输出字节控制窗口，保持每轮64条量子预算，不增加补满等待 | 稀疏、突发、持续饱和负载；P1/P4的完整written吞吐、调用p99/p99.9、低频可见时间与peer服务；不能只挑最优分位数 |
-| 2 | 减少consumer到file的复制；`core/delivery.zig`、`sink/file.zig`、`backend/buffer_pool.zig` | 当前格式化到runtime scratch，再由FileSink复制入文件缓冲，io_uring再复制到稳定pool；研究私有的有界reserve/commit或批量writer，在完整验证后提交记录 | 所有格式字节与短缓冲失败前缀；invalid记录零输出；在途缓冲生命周期、partial write、flush/关闭和轮转 |
-| 3 | schema/prepared的融合输出与静态元信息复用；`core/runtime.zig`、`core/schema_codec.zig`、`encoder/wire_json.zig` | 当前融合已覆盖inline v4和至少64条就绪窗口的schema，要求单route、无deferred/args；继续研究template路径与静态key/metadata转义缓存 | 按schema身份与配置版本失效，定义持久化先于ready；保留template语义、nullable/nested/source/trace、错误优先级与恢复；注册/preparation单独计时 |
-| 4 | 多producer原子与缓存行竞争；`core/runtime.zig`、`core/admission.zig`、`core/thread_registry.zig`、`journal/journal.zig` | shared队列tail/accounting、全局admission/wake和channel counters仍有原子更新；SPSC也存在全局生命周期协调；先用PMU/cache-to-cache诊断定位，再研究热字段分离或精确分片统计 | P1/P4扩展、系统与用户CPU、满队列尾部；flush admission cut、关闭、错误唤醒和准确统计不变；当前证据不能归因于parking_lot |
-| 5 | Mmap冷启动与channel准备；`journal/storage.zig`、`platform/mapping/linux.zig`、`core/thread_registry.zig` | mmap建立/初始化/文件与目录发布仍影响生命周期；研究显式预建channel、初始化内存访问与系统调用覆盖范围 | 单独报告init/preparation与written稳态，保留磁盘/channel预算、文件/目录发布和schema顺序；不能把启动同步成本用于解释普通written稳态差距 |
-| 6 | io_uring跨窗口流水线；`backend/linux_uring.zig`、`core/runtime.zig` | backend已有稳定buffer pool和CQE进度，但runtime每个交付窗口后flush会排空在途写；研究有限pending windows，让下一窗口格式化与前一窗口I/O重叠 | 只有实际CQE完整成功才推进written/回收；mixed配置pin、短写、失败前缀、shutdown/deadline和资源上界。收益先与portable同轮复测，复杂度高于前几项 |
-| 7 | 显式durable的批量checkpoint/reclaim；`journal/journal.zig` | durable `releaseAfter`当前逐条执行数据同步、checkpoint同步及slot失效同步；可研究对已完成durable输出的连续前缀进行有界整批持久回收 | checkpoint/slot复用顺序、torn write、每个失败边界与子VM掉电恢复；只对durable路径有意义，当前普通written性能试验未执行这些逐条同步 |
+| 1 | Bounded window and full-queue tail latency; `core/runtime.zig`, `core/delivery_batch.zig` | A fixed 256-record maximum trades throughput against slot-release frequency; study controlling the window by current backlog/output bytes while keeping the 64-record quantum budget and not adding fill waits | Sparse, burst, and sustained-saturation loads; complete written throughput, call p99/p99.9, low-frequency visibility, and peer service for P1/P4; do not select only the best quantile |
+| 2 | Reduce consumer-to-file copies; `core/delivery.zig`, `sink/file.zig`, `backend/buffer_pool.zig` | Formatting currently writes to runtime scratch, FileSink copies into the file buffer, and io_uring copies again into a stable pool; study a private bounded reserve/commit or batched writer that submits records after complete validation | All format bytes and short-buffer failure prefixes; zero output for invalid records; in-flight buffer lifetime, partial writes, flush/shutdown, and rotation |
+| 3 | Schema/prepared fused output and static metadata reuse; `core/runtime.zig`, `core/schema_codec.zig`, `encoder/wire_json.zig` | Fusion already covers inline v4 and schema windows with at least 64 ready records, requiring one route and no deferred messages/arguments; continue with template paths and static key/metadata escaping caches | Invalidate by schema identity and configuration generation; definitions persist before ready; preserve template semantics, nullable/nested/source/trace, error precedence, and recovery; time registration/preparation separately |
+| 4 | Multi-producer atomics and cache-line contention; `core/runtime.zig`, `core/admission.zig`, `core/thread_registry.zig`, `journal/journal.zig` | Shared queue tail/accounting, global admission/wakeup, and channel counters still use atomics; SPSC also has global lifetime coordination; first diagnose with PMU/cache-to-cache data, then study hot-field separation or exact sharded statistics | P1/P4 scaling, system/user CPU, full-queue tails; flush admission cut, shutdown, error wakeups, and exact accounting must not change; current evidence cannot attribute this to `parking_lot` |
+| 5 | Mmap cold start and channel preparation; `journal/storage.zig`, `platform/mapping/linux.zig`, `core/thread_registry.zig` | Mmap creation/initialization/file and directory publication still affect lifecycle; study explicit channel pre-creation, initialization memory access, and syscall coverage | Report init/preparation separately from written steady state; preserve disk/channel budgets, file/directory publication, and schema ordering; startup synchronization cost must not explain ordinary written steady-state gaps |
+| 6 | io_uring cross-window pipelining; `backend/linux_uring.zig`, `core/runtime.zig` | The backend has a stable buffer pool and CQE progress, but runtime flushes after every delivery window, draining in-flight writes; study bounded pending windows so the next window formats while the previous window's I/O is in flight | Advance written/reclaim only after actual complete CQE success; mixed configuration pins, short writes, failure prefixes, shutdown/deadline, and resource bounds. Measure gains against portable in the same round; complexity is higher than earlier items |
+| 7 | Explicit durable batched checkpoint/reclaim; `journal/journal.zig` | Durable `releaseAfter` currently performs data sync, checkpoint sync, and slot invalidation sync per record; study bounded whole-batch durable reclamation for a completed contiguous prefix | Checkpoint/slot-reuse ordering, torn writes, every failure boundary, and child-VM power-loss recovery; only meaningful for the durable path, since ordinary written experiments do not execute these per-record syncs |
 
-此前条件progress wake候选虽然并发门禁通过，完整吞吐仍未取得收益，饱和负载futex次数也未下降，已恢复原通知策略，见`bench/evidence/2026-11-01-progress-wakeup/`。这和批量pin的负向结果说明后续应测量新的成本或改变机制，避免重复推广同一未通过候选。PCLMUL CRC、默认脱敏scratch、重复树校验、批内配置View、written聚合和就绪批次合并均已落实，不作为新的待做项目。
+An earlier conditional progress-wake candidate passed concurrency gates but did
+not gain complete throughput and did not reduce saturated-load futex counts; the
+original notification policy was restored. Together with the negative batch-pin
+results, this indicates that follow-up work should measure new costs or change
+the mechanism rather than repeat an unqualified candidate. PCLMUL CRC, default
+redaction scratch removal, duplicate tree-validation removal, same-batch
+configuration Views, written aggregation, and ready-batch coalescing are
+implemented and are not open items.
 
-直接渲染到FileSink staging的同步callback候选也已否决：完整280项试验核对3628万条JSON，40项PMU四组用户态指令增加0.48%–0.64%，完整240项吞吐各组中位区间全部重叠，多个默认Memory路径中位负向。候选正确性门禁通过，但额外接口、回调与状态维护没有取得端到端收益；生产恢复`c2f8792`，完整候选/失败与正负原始报告见`bench/evidence/2026-11-01-direct-record-buffer/`。后续减少复制应采用不同机制并重新计量成本，不能把“少一次memcpy”直接作为速度结论。该实验之后转向shared admission已保护配置View的复用，必须保持旧配置lease、采样/filtered结束与异步record pin独立。
+A synchronous callback that rendered directly into FileSink staging was also
+rejected: 280 complete trials verified 36.28 million JSON records, 40 PMU trials
+increased user instructions by 0.48%–0.64%, all 240 complete throughput medians
+overlapped, and several default Memory paths had negative medians. Correctness
+gates passed, but the extra interface, callbacks, and state maintenance produced
+no end-to-end gain; production returned to the verified source state. Future
+copy reduction must use a different mechanism and re-measure cost; "one fewer
+memcpy" is not automatically a speed claim.
 
-随后shared admission已直接复用已验证View，直到end释放reader，accepted record的独立pending pin与原CRC/barrier/reclaim保持。相关真实Memory/Mmap计数、并发旧lease与filtered/sampled/error回归通过。最终320项完整文件、40项PMU及独立10项百万条检查共核对5437万条JSON；shared schema Mmap P1短流程中位+9.55%、独立长流程+4.79%，CV/spread通过且区间不重叠。PMU shared Memory P4却有−3.36%负向中位且区间不重叠；完整workflow多数P4差异区间重叠，不能宣布一般P4收益或完整CPU指令下降。早期测试退出重叠长流程独立保留，不计入正式370项资格。来源与所有限制见`bench/evidence/2026-11-01-admission-view/`；保留该有范围的优化后继续按当前热点推进。
+Shared admission then reused an already validated View until `end` released the
+reader, while accepted records kept independent pending pins and the original
+CRC/barrier/reclaim. Real Memory/Mmap accounting, concurrent old leases, and
+filtered/sampled/error regressions passed. Final 320 complete-file, 40 PMU, and
+10 independent one-million-record trials verified 54.37 million JSON records;
+shared schema Mmap P1 short workflows improved 9.55% by median and independent
+long workflows 4.79%, with CV/spread and non-overlapping intervals. PMU shared
+Memory P4 had a −3.36% negative median with non-overlapping intervals; most P4
+workflow intervals overlapped, so no general P4 gain or complete CPU-instruction
+reduction is claimed. Early overlapping long workflows were kept separately and
+not counted in the formal 370-trial qualification.
 
-跨队列64条轮次合并窗口已实际验证并否决。完整440项/5244万条JSON显示p99.9降低与p99/p50显著升高并存，吞吐与单量子控制均未取得整体资格，用户态指令增加0.58%–0.71%；候选的调度/跨来源确认成本及更大transitive stack不推广。生产恢复同轮对照的`e8bd353`逻辑；源码、真实FIFO/故障/服务预算门禁与全量分布保留在`bench/evidence/2026-11-01-cross-queue-delivery/`。后续应针对满队列等待者与progress_epoch的跨队列唤醒进行有界诊断；保留worker错误、shutdown和reservation gap的正确唤醒，避免从表面批次大小推导整体低尾延迟。
+A 64-record cross-queue round-coalescing window was tested and rejected: 440
+complete trials/52.44 million JSON records showed lower p99.9 together with
+significantly higher p99/p50, no overall throughput or single-quantum
+qualification, and 0.58%–0.71% more user instructions; the scheduling/
+cross-source acknowledgement cost and larger transitive stack were not adopted.
+Production restored the same-round comparison logic. Future work should perform
+bounded diagnostics on full-queue waiters and cross-queue wakeups for
+`progress_epoch`, while preserving correct wakeups for worker errors, shutdown,
+and reservation gaps.
 
-随后对SPSC满队列等待加入本队列space通知，保持原调度和global control等待。前后各12项诊断发现本队列written未变化的futex返回降为0，但这个计数本身不作为wall-time资格。正式400项完整文件/PMU/百万条对照核对8440万条日志，Memory inline SPSC P4长sampled p99.9中位下降6.99%、局部重复性及区间不重叠成立；p50/p99、Mmap和普通吞吐大多仍inconclusive。没有省略CRC/pin/barrier或提前回收，worker错误/关闭对所有队列通知；登记与epoch的SC握手锁定wait前事件边界，每Journal增加64字节进程内control。保持这项有限收益后，仍需继续降低约340µs的极端等待和明确其他负载资格。原短流程P1负向、全量分布和真实并发测试见`bench/evidence/2026-11-01-queue-progress/`。
+SPSC full-queue waiting then gained a local-queue space notification while
+keeping the original scheduling and global control waits. Twelve diagnostic
+trials before/after showed that futex returns for unchanged local-queue written
+dropped to zero, but that count alone is not a wall-time qualification. Formal
+400 complete-file/PMU/one-million-record trials verified 84.40 million logs;
+Memory inline SPSC P4 long sampled p99.9 median fell 6.99% with local
+repeatability and non-overlapping intervals; p50/p99, Mmap, and ordinary
+throughput mostly remained inconclusive. CRC/pin/barrier were not skipped and
+reclaim was not advanced early; worker errors/shutdown notify all queues; the
+registration/epoch SC handshake locks the pre-wait event boundary and adds 64
+bytes of in-process control per journal. The remaining extreme wait of about
+340 µs and qualification on other workloads still need work.
 
-参考链接：[Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h)、[fmtlog](https://github.com/MengRao/fmtlog)、[NanoLog](https://github.com/PlatformLab/NanoLog)、[Reckless](https://github.com/mattiasflodin/reckless)、[BqLog](https://github.com/Tencent/BqLog)。Foundation使用用户指定本地仓库 [logging](/home/passchaos/robotics/onboard-monorepo/foundation/logging/README.md)。
+Reference links: [Quill BackendWorker](https://github.com/odygrd/quill/blob/v13.1.0/include/quill/backend/BackendWorker.h),
+[fmtlog](https://github.com/MengRao/fmtlog),
+[NanoLog](https://github.com/PlatformLab/NanoLog),
+[Reckless](https://github.com/mattiasflodin/reckless),
+[BqLog](https://github.com/Tencent/BqLog).

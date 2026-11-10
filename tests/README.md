@@ -1,56 +1,81 @@
-# 测试组织
+# Test organization
 
-测试分为生产模块单测、公开API集成、真实进程/子VM故障、独立Zig消费和证据oracle。构建step统一从仓库根运行，精细选择见 [开发与验证](../docs/development.md)。
+Tests are divided into production-module unit tests, public-API integration,
+real-process/child-VM faults, independent Zig consumption, and evidence oracles.
+Run build steps from the repository root; see
+[development and verification](../docs/development.md) for targeted selection.
 
-## 范围与入口
+## Scope and entry points
 
-| 类型 | 所在位置/fixture | 验证 |
+| Type | Location/fixture | Verification |
 | --- | --- | --- |
-| 模块与内部回归 | `src/` 内test、[core/tests](../src/core/tests/runtime.zig)、[logging/tests](../src/logging/tests.zig) | 字段/codec、token/gate、配置缓存、批次、错误/allocator；由根模块纳入 |
-| 公共日志管线 | runtime/capture/adapter/redaction/async_storage integration | 真实sync/shared/SPSC，typed快照、context、无分配与错误 |
-| 并发共享producer交付 | [async_storage.zig](async_storage.zig)、`test-async-storage` | 4线程×250记录×2轮、Memory block queue、accepted=written=1000、pending=0；mid-flight `shutdown(.drain)`下accepted=written、rejected_closing、state=closed；mmap并发提交后clean reopen、pending=0；Safe/Debug/Fast、多seeds与1000次重复soak |
-| 字段键与错误顺序 | [field_key_validation.zig](field_key_validation.zig)、`test-field-keys` | 独立eql字节oracle、精确pair/node计数、重复与cycle/depth/budget先后、Linux两端真实guard page |
-| 队列精确峰值 | [journal_peak.zig](journal_peak.zig)、`test-journal-peak` | Memory/Mmap普通/schema并发持有量与高水位、Full/oversize/abort/CRC失败、恢复重建与完整序号/数据 |
-| written进度与发布 | [journal_progress.zig](journal_progress.zig)、`test-journal-progress` | 未sync实时offset72、leading tombstones、CRC失败前缀、recovery旧tail/newgap、acquire观察后join前marker断言 |
-| Journal/archive随机fuzz | [journal_fuzz.zig](journal_fuzz.zig)、`test-journal-fuzz` | 20,000随机commit/peek/release、mmap reopen/recovery、随机archive record count/message round-trip；seed打印、Debug/Safe/Fast；扩展1000-seed ReleaseSafe扫描1000/1000通过 |
-| v1/v2 journal升级兼容 | [journal/schema_journal_tests.zig](../src/journal/schema_journal_tests.zig)、根test/`test-logging` | 真实v1/v2 header/extension、CRC、commit/peek、reopen/recovery在V3源码下读写；未释放记录恢复 |
-| 旧二进制journal fixture | [fixtures/journal](fixtures/journal/README.md)、根test/`test-logging` | 提交`5b1fd7c`实际二进制写出的v1/v2 journal（x86_64与aarch64 QEMU生成）；待恢复记录在V3源码`recover=true`下读取并解析旧scope/message |
-| nested/轮转/schema组合恢复 | [logging/tests.zig](../src/logging/tests.zig)、根test/`test-logging` | prepared nested group/array经rolling输出与mmap schema journal；flushDurable/shutdown后同journal reopen、pending=0与replay追加 |
-| Clock与Io调用边界 | [clock_dispatch.zig](clock_dispatch.zig)、`test-clock-dispatch` | 精确clamp、callback内/外切换、Io身份/参数快照、zero/monotonic、public函数指针与capture/full边界 |
-| TLS admission生命周期 | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig)、`test-admission-lifecycle` | owned/bare/borrowed复用、回调中的outer所有权、64层栈与溢出、OS线程隔离、全部Level与完整generation/channel边界 |
-| 原生CRC数学与目标选择 | [crc32_pclmul.zig](../src/platform/crc32_pclmul.zig)、[crc32.zig](../src/platform/crc32.zig)；根筛选 `partial CRC stripes` | 独立bitwise/GF2消息和seed basis、任意seed/alignment、冻结zlib、prefix/partition；helper仅在x86_64+PCLMUL+SSE2测试目标导入 |
-| CRC分段与读边界 | [crc32_segment_tests.zig](../src/platform/crc32_segment_tests.zig)、`test-crc-segments` | 任意u32 seed和0..512/32对齐、原20/24段及增量切分、Linux两端PROT_NONE边界与空slice |
-| ASCII短尾与公共转义 | [escaping.zig](../src/encoder/escaping.zig)、`test-escaping-tails` | 独立标量首匹配、全字节/相邻pair/尾部跨界；五种公共操作逐缓冲容量的成功字节与失败前缀 |
-| fused scratch生命周期 | [wire_scratch_tests.zig](../src/encoder/wire_scratch_tests.zig)、`test-wire-scratch` | JSON/text/logfmt错误和Fallback后的完整decode复用、准确比较次数、64顶层key/精确nested预算及后缀守卫 |
-| 共享/SPSC坐标与证据 | [journal/tests.zig](../src/journal/tests.zig)、`test-journal-coordinates` | 八容量独立递增slot/generation oracle、非二次幂环回、跨2^32及max_sequence、reserved header/commit payload/abort/release与written；独立重算有效CRC下generation错误仍拒绝并保留槽位 |
-| 配置与deadline | configuration_integration/transactions、route_policy、route_filter、predicate、deadline | 旧route版本/lease、admission、采样相位、timeout资源与reentrancy |
-| 配置替换并发 | [configuration_integration.zig](configuration_integration.zig)、`test-configurations` | shared async 4 producer×500、20次route/redaction替换与cut；另有4 producer×500+20次filter reload；accepted=written、health/sink一致；200次重复soak |
-| 时间与source | time_integration、local_time_integration/oracle、独立package tests | exact纳秒、固定/local cache、DST/恢复身份、repo-relative source路径 |
-| 文件/归档/解码 | file_delivery_failures、compressed_archive、decoder_matrix/fuzz、tool_query | partial/zero/CQE错误、版本/损坏、只读Reader/query/follow |
-| 多文件系统行为 | [multifs-volatile证据](../bench/evidence/2026-11-03-multifs-volatile/README.md) | tmpfs上mmap journal按设计`VolatileFilesystem`拒绝；ext4五模式通过；非crash/掉电资格 |
-| 共享文件系统行为 | [9p shared FS证据](../bench/evidence/2026-11-03-9p-shared-fs/README.md)、[shared_fs/vm_9p.py](shared_fs/vm_9p.py) | QEMU virtio-9p：sync/memory/spsc_memory通过；mmap journal按设计`PreallocationUnsupported`拒绝；非NFS/crash资格 |
-| 真实ENOSPC故障 | [ENOSPC证据](../bench/evidence/2026-11-03-enospc-fault/README.md)、[faults/vm_enospc.py](faults/vm_enospc.py) | child VM 1MiB tmpfs填满后，直接FileSink、Runtime Memory+FileSink durable flush与RollingFileSink flush均返回`NoSpaceLeft`并latch；无false success |
-| 只读文件系统初始化 | [read-only证据](../bench/evidence/2026-11-03-readonly-fault/README.md)、[faults/vm_readonly.py](faults/vm_readonly.py) | child VM只读ext4下FileSink与Journal均返回`ReadOnlyFileSystem`；无false success |
-| Journal ENOSPC预分配 | [journal ENOSPC证据](../bench/evidence/2026-11-03-journal-enospc/README.md)、[faults/vm_journal_enospc.py](faults/vm_journal_enospc.py) | 64MiB ext4填满后`Journal.create`返回`NoSpaceLeft`；无false success |
-| 正则 | regex_differential/fuzz/equivalence | Python差分、有界mutation、coverage-guided入口；fuzz corpus由runner seed驱动并完成1000-seed扫描 |
-| Decoder mutation fuzz | [decoder_fuzz.zig](decoder_fuzz.zig)、`test-fuzz` | runner-seed-driven mutation；1000-seed扫描1000/1000，Safe/Debug/Fast 7/7 |
-| 负向编译 | [compile_fail/](compile_fail/)、[run_compile_fail.py](run_compile_fail.py) | 不支持输入/格式、字段选择边界、禁止直接改opaque配置 |
-| 进程恢复 | crash_writer/recovery、async_storage_crash、recovery_campaign、runtime_crash_campaign | 真实SIGKILL，完整commit/预留缺口/热route、随机ACK覆盖 |
-| 子VM停机 | [power_loss/](power_loss/README.md) | QEMU停机及journal/output确认；ext4/XFS/Btrfs/F2FS 16-run schema campaigns与单次非schema ACK1通过；具体文件系统/设备，非物理断电普遍资格 |
-| aarch64 QEMU用户态 | [aarch64-qemu证据](../bench/evidence/2026-11-03-aarch64-qemu/README.md) | aarch64-linux-musl static root suite 455 pass/7 skip/0 fail；journal/archive fuzz 20 seeds；独立package consumer五模式与qualification通过；非真实设备 |
-| 独立包与设备宿主 | [package_consumer/](package_consumer/build.zig)、[package_consumer.py](package_consumer.py) | b.dependency、五模式、single-thread、local选项、源码分发与目标原生自校验 |
-| 基准工具oracle | `test_*.py`、time/local oracle | 拒绝不完整输出、后端fallback、错误比较/回归结果，独立应用模型 |
+| Module and internal regressions | In-`src/` tests, [core/tests](../src/core/tests/runtime.zig), [logging/tests](../src/logging/tests.zig) | Fields/codec, token/gate, configuration caches, batches, errors/allocator; included by the root module |
+| Public logging pipelines | runtime/capture/adapter/redaction/async_storage integration | Real sync/shared/SPSC, typed snapshots, context, zero allocation, and errors |
+| Concurrent shared-producer delivery | [async_storage.zig](async_storage.zig), `test-async-storage` | 4 threads × 250 records × 2 rounds, Memory block queue, accepted=written=1000, pending=0; mid-flight `shutdown(.drain)` gives accepted=written, rejected_closing, state=closed; clean reopen after concurrent mmap submission, pending=0; Safe/Debug/Fast, multiple seeds, 1000-run soak |
+| Field keys and error ordering | [field_key_validation.zig](field_key_validation.zig), `test-field-keys` | Independent `eql` byte oracle, exact pair/node counts, duplicate vs cycle/depth/budget precedence, real guard pages at both Linux ends |
+| Exact queue peak | [journal_peak.zig](journal_peak.zig), `test-journal-peak` | Memory/Mmap ordinary/schema concurrent occupancy and high-water marks, Full/oversize/abort/CRC failures, recovery rebuild, complete sequence/data |
+| Written progress and publication | [journal_progress.zig](journal_progress.zig), `test-journal-progress` | Live offset without sync, leading tombstones, CRC failure prefix, recovery old-tail/new-gap, acquire-observation and pre-join marker assertions |
+| Journal/archive randomized fuzz | [journal_fuzz.zig](journal_fuzz.zig), `test-journal-fuzz` | 20,000 random commit/peek/release, mmap reopen/recovery, random archive record-count/message round-trip; seeds printed; Debug/Safe/Fast; extended 1000-seed ReleaseSafe scan passed 1000/1000 |
+| v1/v2 journal upgrade compatibility | [journal/schema_journal_tests.zig](../src/journal/schema_journal_tests.zig), root tests/`test-logging` | Real v1/v2 headers/extensions, CRC, commit/peek, reopen/recovery read/write under V3 sources; unreleased-record recovery |
+| Old-binary journal fixtures | [fixtures/journal](fixtures/journal/README.md), root tests/`test-logging` | v1/v2 journals written by actual `5b1fd7c` binaries (x86_64 and aarch64 QEMU); pending records read under V3 sources with `recover=true`, old scope/message parsed |
+| Nested/rolling/schema combined recovery | [logging/tests.zig](../src/logging/tests.zig), root tests/`test-logging` | Prepared nested group/array through rolling output and mmap schema journal; after flushDurable/shutdown, same-journal reopen, pending=0, replay append |
+| Clock and Io call boundaries | [clock_dispatch.zig](clock_dispatch.zig), `test-clock-dispatch` | Exact clamp, callback inside/outside switching, Io identity/argument snapshots, zero/monotonic, public function pointers and capture/full boundaries |
+| TLS admission lifetime | [admission_lifecycle.zig](../src/core/tests/admission_lifecycle.zig), `test-admission-lifecycle` | Owned/bare/borrowed reuse, outer ownership in callbacks, 64-level stack and overflow, OS-thread isolation, all Levels and full generation/channel boundaries |
+| Native CRC math and target selection | [crc32_pclmul.zig](../src/platform/crc32_pclmul.zig), [crc32.zig](../src/platform/crc32.zig); root filter `partial CRC stripes` | Independent bitwise/GF2 message and seed basis, arbitrary seed/alignment, frozen zlib, prefix/partition; helper imported only for x86_64+PCLMUL+SSE2 test targets |
+| CRC segmentation and read boundaries | [crc32_segment_tests.zig](../src/platform/crc32_segment_tests.zig), `test-crc-segments` | Arbitrary u32 seeds and 0..512/32 alignment, original 20/24 segments and incremental splits, Linux PROT_NONE boundaries at both ends and empty slices |
+| ASCII short tails and public escaping | [escaping.zig](../src/encoder/escaping.zig), `test-escaping-tails` | Independent scalar first-match, all bytes/adjacent pairs/tail crossings; five public operations' success bytes and failure prefixes per buffer capacity |
+| Fused scratch lifetime | [wire_scratch_tests.zig](../src/encoder/wire_scratch_tests.zig), `test-wire-scratch` | Complete decode reuse after JSON/text/logfmt errors and Fallback, exact comparison counts, 64 top-level keys/exact nested budget and suffix guards |
+| Shared/SPSC coordinates and evidence | [journal/tests.zig](../src/journal/tests.zig), `test-journal-coordinates` | Eight-capacity independent incrementing slot/generation oracle, non-power-of-two wrap, crossing 2^32 and max_sequence, reserved header/commit payload/abort/release and written; independently recomputed valid CRC with wrong generation still rejected and slot preserved |
+| Configuration and deadline | configuration_integration/transactions, route_policy, route_filter, predicate, deadline | Old route generation/lease, admission, sampling phase, timeout resources and reentrancy |
+| Concurrent configuration replacement | [configuration_integration.zig](configuration_integration.zig), `test-configurations` | Shared async 4 producers × 500, 20 route/redaction replacements and cuts; also 4 producers × 500 + 20 filter reloads; accepted=written, health/sink agreement; 200-run soak |
+| Time and source | time_integration, local_time_integration/oracle, independent package tests | Exact nanoseconds, fixed/local cache, DST/recovery identity, repository-relative source paths |
+| Files/archives/decoding | file_delivery_failures, compressed_archive, decoder_matrix/fuzz, tool_query | Partial/zero/CQE errors, versions/corruption, read-only Reader/query/follow |
+| Multiple filesystem behavior | [multifs volatile](../docs/async-storage.md) | tmpfs mmap journal rejects `VolatileFilesystem` by design; ext4 five modes pass; not crash/power-loss qualification |
+| Shared filesystem behavior | [shared_fs/vm_9p.py](shared_fs/vm_9p.py) | QEMU virtio-9p: sync/memory/SPSC-memory pass; mmap journal rejects `PreallocationUnsupported` by design; not NFS/crash qualification |
+| Real ENOSPC faults | [faults/vm_enospc.py](faults/vm_enospc.py) | After filling a child-VM 1 MiB tmpfs, direct FileSink, Runtime Memory+FileSink durable flush, and RollingFileSink flush all return and latch `NoSpaceLeft`; no false success |
+| Read-only filesystem initialization | [faults/vm_readonly.py](faults/vm_readonly.py) | On a read-only child-VM ext4, FileSink and Journal both return `ReadOnlyFileSystem`; no false success |
+| Journal ENOSPC preallocation | [faults/vm_journal_enospc.py](faults/vm_journal_enospc.py) | After filling a 64 MiB ext4, `Journal.create` returns `NoSpaceLeft`; no false success |
+| Regex | regex_differential/fuzz/equivalence | Python differential, bounded mutation, coverage-guided entry; fuzz corpus driven by runner seed and a completed 1000-seed scan |
+| Decoder mutation fuzz | [decoder_fuzz.zig](decoder_fuzz.zig), `test-fuzz` | Runner-seed-driven mutation; 1000-seed scan 1000/1000, Safe/Debug/Fast 7/7 |
+| Negative compilation | [compile_fail/](compile_fail/), [run_compile_fail.py](run_compile_fail.py) | Unsupported inputs/formats, field-selection boundaries, prohibition on directly modifying opaque configuration |
+| Process recovery | crash_writer/recovery, async_storage_crash, recovery_campaign, runtime_crash_campaign | Real SIGKILL, complete commits/reservation gaps/hot routes, random ACK coverage |
+| Child-VM shutdown | [power_loss/](power_loss/README.md) | QEMU shutdown and journal/output confirmation; ext4/XFS/Btrfs/F2FS 16-run schema campaigns and single non-schema ACK1 pass; specific filesystem/device, not general physical power-loss qualification |
+| aarch64 QEMU user mode | [aarch64 QEMU notes](../docs/platforms.md) | aarch64-linux-musl static root suite 455 pass/7 skip/0 fail; journal/archive fuzz 20 seeds; independent package consumer five modes and qualification pass; not a real device |
+| Independent package and device host | [package_consumer/](package_consumer/build.zig), [package_consumer.py](package_consumer.py) | `b.dependency`, five modes, single-thread, local options, source distribution and target-native self-check |
+| Benchmark tool oracles | `test_*.py`, time/local oracles | Reject incomplete output, backend fallback, wrong comparisons/regression results; independent application models |
 
-## 验证原则
+## Verification principles
 
-最小test证明对应行为后再升级到相关组合或最终gate。测试不因被重定位而改断言、伪造module或扩大private公开面；共享fixture仅在保持责任与oracle独立时复用。
+Run the smallest test that proves the behavior, then escalate to the relevant
+combination or final gate. Tests do not change assertions when relocated, fake
+modules, or expand the private surface; shared fixtures are reused only when
+responsibility and oracle independence are preserved.
 
-同一个测试binary中的导入聚合test会计入总数，跨binary计数不是唯一测试数量。无libc根测试的local skip是具体能力检查，`test-local-time`必须实际运行转换/consumer与oracle。
+Import-aggregated tests in one test binary count toward totals; cross-binary
+counts are not a unique test count. A local skip in a no-libc root test is a
+specific capability check, and `test-local-time` must actually run conversion/
+consumer and the oracle.
 
-真实故障记录保留ACK、物理JSON、完整性/FIFO和重放身份。Memory丢失未交付记录是契约，Mmap至少一次重复是允许边界；normal shutdown或只读重开不冒充SIGKILL/系统断电。平台对象/链接不冒充目标设备执行。
+Real fault records retain ACK, physical JSON, completeness/FIFO, and replay
+identity. Memory losing undelivered records is a contract, and Mmap at-least-once
+duplication is an allowed boundary; normal shutdown or read-only reopen is not
+presented as SIGKILL/system power loss. Platform objects/linking are not
+presented as target-device execution.
 
-临时文件与缓存使用 `.zig-cache` 或由fixture拥有的临时目录，保留失败现场时记录其身份。冻结历史结果位于 `bench/evidence` 与 `power_loss/evidence`，不会被当前测试路径整理改变。
+Temporary files and caches use `.zig-cache` or fixture-owned temporary
+directories; when preserving a failure scene, record its identity. Frozen
+historical results under `power_loss/evidence` are not changed by current test
+path organization.
 
-`independent_outputs.zig`（`zig build test-outputs`）验证Logging.outputs独立mode/queue/overflow、逐route采样与队列前脱敏、partial success、64输出、thread/prepared回滚与deadline关闭。`test_managed_outputs_compare.py`校验完整流程基准的JSON oracle，拒绝漏项、重复、截断与工作负载改变。
+`independent_outputs.zig` (`zig build test-outputs`) verifies `Logging.outputs`
+independent mode/queue/overflow, per-route sampling and pre-queue redaction,
+partial success, 64 outputs, thread/prepared rollback, and deadline shutdown.
+`test_managed_outputs_compare.py` verifies the complete-workflow benchmark JSON
+oracle and rejects missing, duplicate, truncated, or changed-workload output.
 
-`submission_snapshot.zig`（`zig build test-submission-snapshot`）验证public submit对调用者Event/各层borrowed backing的不可变性、accepted前队列快照、public Binding的canonical查找与非法引用拒绝边界，以及sync/full fallback内嵌套sink回调的redaction scratch生命周期。该step纳入test与verify-local，不通过公开私有measurement proof来验证。
+`submission_snapshot.zig` (`zig build test-submission-snapshot`) verifies public
+submit immutability of caller Event/borrowed backing layers, queue snapshots
+before acceptance, public Binding canonical lookup and invalid-reference
+rejection, and redaction scratch lifetime across nested sink callbacks in
+sync/full fallback. The step is part of `test` and `verify-local`; it does not
+validate through a public private-measurement proof.

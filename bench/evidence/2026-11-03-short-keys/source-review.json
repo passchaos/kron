@@ -1,7 +1,0 @@
-{
-  "scope": "Read-only review of private keysEqual, no benchmark inference",
-  "findings": [],
-  "bounds": "length equality before all loads; empty/same-pointer shortcut; guard4<=n<=8 precedes n-4. Reads[0,4) and[n-4,n)cover all bytes and remain within both slices. readInt supports unaligned byte buffers.",
-  "order": "Original checkUnique for and TestingAudit before each pair unchanged, visitor onField/value call locations unchanged. Short-circuit AND maintained.",
-  "pending": "actual full Logger code size/offset/spill and tests; no performance qualification yet"
-}

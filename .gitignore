@@ -23,38 +23,9 @@ zig-out/
 *.jsonl.[0-9]*
 *.jsonl.lock
 *.jsonl.spool
-# Benchmark evidence rows are intentionally tracked; runtime JSONL elsewhere is not.
-!/bench/evidence/**/*.jsonl
-!/bench/cpp_reference/evidence/**/*.jsonl
 *.kron
 /core
 /core.*
-
-# Keep benchmark reports and frozen source evidence; omit generated workload
-# files and executable copies. Reports retain source/binary hashes.
-/bench/**/artifacts/
-/bench/evidence/*/reference-foundation
-/bench/evidence/*/reference-foundation_tracing
-/bench/evidence/*/reference-kron
-/bench/evidence/*/kron-bench-*
-/bench/evidence/*/kron-ref-*
-/bench/evidence/*/kron-crc-*
-/bench/cpp_reference/evidence/*/reference-*
-
-# Raw source snapshots and profiling data are retained outside Git history.
-/bench/evidence/**/*.tar
-/bench/evidence/**/*.tar.xz
-/bench/evidence/**/*.tar.gz
-/bench/evidence/**/*.perf.data
-/bench/evidence/**/*.perf.data.gz
-/bench/evidence/**/*.data
-/bench/cpp_reference/evidence/**/*.tar
-/bench/cpp_reference/evidence/**/*.tar.xz
-/bench/cpp_reference/evidence/**/*.tar.gz
-/bench/cpp_reference/evidence/**/*.perf.data
-/bench/cpp_reference/evidence/**/*.perf.data.gz
-/bench/cpp_reference/evidence/**/*.data
-target/
 
 # Python bytecode and operating-system metadata.
 __pycache__/

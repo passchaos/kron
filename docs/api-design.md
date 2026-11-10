@@ -1,49 +1,107 @@
-# 应用入口、事件采集与输出架构
+# Application entry, event capture, and output architecture
 
-应用从 `kron.Logging.create` 接入，统一提供 `outputs` 列表。一个Logging管理全部文件、轮转、标准流writer和Runtime生命周期，每个route是独立管线，可单独设置mode、queue、overflow、过滤、采样、脱敏、格式与确认边界。默认一个stderr/sync/text/info输出；增加目标直接增加列表元素。
+Applications integrate through `kron.Logging.create`, which provides a unified
+`outputs` list. One Logging instance manages all files, rotation, standard-stream
+writers, and Runtime lifetimes. Each route is an independent pipeline with its
+own mode, queue, overflow, filtering, sampling, redaction, format, and
+acknowledgement boundary. The default is one stderr/sync/text/info output; add a
+target by adding a list element.
 
-## 与 tracing 的对应
+## Mapping to tracing
 
-参考Rust tracing的职责分离、静态metadata与组合方式，保持事件采集入口独立于输出资源：
+The design borrows Rust tracing's responsibility separation, static metadata,
+and composition style while keeping event capture independent of output
+resources:
 
-| tracing设计 | kron对应 |
+| tracing design | kron equivalent |
 | --- | --- |
-| instrumentation与subscriber分离 | logger捕获typed Event，Logging管理输出管线 |
-| 静态metadata与callsite interest | Zig comptime字段/格式验证、静态最低级别、版本化过滤缓存 |
-| 值与静态定义分离 | 普通inline捕获；显式prepared注册scope/模板/形状 |
-| layer组合过滤与输出 | outputs列表中各route独立配置策略、队列和目标 |
-| span context | withTrace与borrowed/owned context；应用显式传递 |
-| 应用配置一个subscriber | 一个Logging owner，一套scoped/emit/flush/shutdown |
+| Instrumentation separated from subscriber | Logger captures a typed Event; Logging manages output pipelines |
+| Static metadata and callsite interest | Zig comptime field/format validation, static minimum level, versioned filter caches |
+| Values separated from static definitions | Ordinary inline capture; explicit prepared registration of scope/template/shape |
+| Layer composition for filtering and output | Each route in the `outputs` list configures policy, queue, and target independently |
+| Span context | `withTrace` plus borrowed/owned context; the application propagates explicitly |
+| Application configures one subscriber | One Logging owner and one scoped/emit/flush/shutdown API |
 
-这些对应不表示已实现tracing的全部span registry、任务instrumentation或生态layer。官方参考：[tracing](https://docs.rs/tracing/latest/tracing/)、[Layer](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Layer.html)、[Filter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Filter.html)。
+These mappings do not imply that kron implements tracing's full span registry,
+task instrumentation, or ecosystem layers. Official references:
+[tracing](https://docs.rs/tracing/latest/tracing/),
+[Layer](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Layer.html),
+[Filter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/layer/trait.Filter.html).
 
-## 捕获与独立管线
+## Capture and independent pipelines
 
-组合logger先分别完成各输出的level/filter/sampling入场。没有任何输出接受入场时跳过typed字段、lazy provider与时钟。选中输出后只构造一次字段描述和时间戳，再把同一Event提交到各Runtime；Runtime在复制进自己的Memory/Mmap队列前执行有效redaction与predicate，并保留自己的配置版本、session和sequence。
+The composite logger first performs level/filter/sampling admission separately
+for each output. If no output admits the event, typed fields, lazy providers, and
+the clock are skipped. After outputs are selected, field descriptions and the
+timestamp are constructed once, and the same Event is submitted to each Runtime;
+before copying into its own Memory/Mmap queue, each Runtime applies effective
+redaction and predicates and retains its own configuration generation, session,
+and sequence.
 
-异步消费者完成text/JSON/logfmt格式化，包括按事件整秒缓存的local时间。同步与fallback_sync在调用线程交付。异步接受前深拷贝动态字节，后台不借用producer栈或任意formatter。
+Asynchronous consumers perform text/JSON/logfmt formatting, including local time
+cached per event second. Sync and fallback_sync deliver on the calling thread.
+Dynamic bytes are deep-copied before asynchronous acceptance, so the background
+never borrows the producer stack or an arbitrary formatter.
 
-每个Runtime独立持有采样配额、队列、worker、scratch、配置缓存、目标身份与恢复数据。Route字段自带默认值，各route分别设置sampling与redaction。需要禁止原值进入任何输出时用Secret，或确保每个相关route的有效规则覆盖该字段。
+Each Runtime independently owns its sampling quota, queue, worker, scratch,
+configuration cache, target identity, and recovery data. Route fields carry
+defaults, and sampling/redaction are configured per route. Use `Secret` when the
+original value must not enter any output, or ensure that every relevant route's
+effective rules cover the field.
 
-独立队列增加内存、线程、复制和编码成本。同一调用仍顺序提交各输出，block或慢同步sink会延长producer等待；best_effort不会自动改变backpressure。低优先级输出可显式异步drop_newest。
+Independent queues add memory, thread, copy, and encoding cost. One call still
+submits to outputs sequentially, and a block or slow synchronous sink extends
+producer waiting; best_effort does not automatically change backpressure. A
+low-priority output can explicitly use asynchronous `drop_newest`.
 
-## 热路径与所有权
+## Hot path and ownership
 
-scoped返回值owner的泛型Frontend，避免通用动态layer链和每事件分配。单输出使用小入场帧，调用其Runtime入场/提交；多输出另外访问预分配的批量入场存储，保留至多64个入场并按反序释放，避免破坏Runtime的入场栈与版本保护。内部方法借用本次调用的owner，公共日志方法仍按值固定自己的scope/context/trace状态。最多8层独立Logging嵌套，同一Logging递归被拒绝；底层Runtime同时入场上限仍为64。
+`scoped` returns a generic Frontend owned by its owner, avoiding a generic
+dynamic layer chain and per-event allocation. A single output uses a small
+admission frame and calls that Runtime's admission/submit; multiple outputs use
+preallocated batch admission storage, retain up to 64 admissions, and release
+them in reverse order, preserving the Runtime admission stack and generation
+protection. Internal methods borrow the current call's owner, while public
+logging methods still fix their scope/context/trace state by value. At most eight
+independent Logging instances may nest; recursion within the same Logging is
+rejected; the lower-level Runtime simultaneous admission limit remains 64.
 
-scopedOutput(name, scope)返回指定Runtime的原始logger，可用于单目标热点。attachThread在创建时预分配的attachment槽中取得各SPSC管线channel，scope复制，generation/thread校验防止跨线程使用与旧handle复活。prepared bindings在冷路径分配，由Logging拥有至destroy。
+`scopedOutput(name, scope)` returns the original logger for the named Runtime and
+can be used for single-target hot paths. `attachThread` obtains each SPSC
+pipeline's channel from preallocated attachment slots at creation, copies the
+scope, and uses generation/thread checks to prevent cross-thread use and old
+handle revival. Prepared bindings are allocated on the cold path and owned by
+Logging until destroy.
 
-多输出分别编码，不能复用不同队列的encoded record。高级Runtime同一管线内仍可组合多个route并复用相同format/time编码，但其mode/queue和捕获保护共享；此入口用于明确需要这些取舍的应用，不增加普通接入的第二个owner。
+Multiple outputs encode separately; an encoded record cannot be reused across
+different queues. Within one advanced Runtime pipeline, multiple routes may
+still share encoding when format/time match, but their mode/queue and capture
+protection are shared. This entry is for applications that explicitly need those
+trade-offs and does not add a second owner to ordinary integration.
 
-## 结果与完成边界
+## Results and completion boundaries
 
-一次调用不是跨输出事务：required输出失败仍尝试其他已入场输出，部分成功不会回滚；best_effort失败写入逐输出结果与diagnostics。lastResults返回当前OS线程最近一次分发的借用结果，顺序与outputs一致；异步后续I/O失败通过health和flush/shutdown报告。
+One call is not a cross-output transaction: a required-output failure still
+attempts other admitted outputs, and partial success does not roll back;
+best_effort failures are recorded in per-output results and diagnostics.
+`lastResults` returns borrowed results from the current OS thread's most recent
+dispatch in `outputs` order; later asynchronous I/O failures are reported through
+health and flush/shutdown.
 
-health按输出提交合计，一条事件写两处计两次。全局durable只确认required输出；按名durable确认所有显式选中输出。全部控制预先检查回调重入，shutdown先关闭全部入场再顺序排空，deadline共用一个绝对时间。超时不释放仍在使用的资源。
+Health aggregates per output submission, so one event written to two places
+counts twice. Global durable confirms only required outputs; by-name durable
+confirms every explicitly selected output. All control operations pre-check
+callback reentrancy, shutdown closes all admission before draining sequentially,
+and deadlines share one absolute time. A timeout does not release resources still
+in use.
 
-每个Mmap管线独立校验journal路径、layout、稳定文件身份与记录版本。重启仍使用至少一次恢复，不承诺跨输出相同交付顺序或一致提交。共同事件关联用应用event_id，各输出内去重用session/channel/sequence。
+Each Mmap pipeline independently validates journal path, layout, stable file
+identity, and record versions. Restart still uses at-least-once recovery and does
+not promise identical delivery order or consistent commits across outputs. Use an
+application `event_id` to correlate a common event and session/channel/sequence
+for per-output deduplication.
 
-## 普通入口与高级扩展
+## Ordinary entry and advanced extensions
 
 ```zig
 const logging = try kron.Logging.create(allocator, io, .{
@@ -57,6 +115,13 @@ logging.scoped("http").info("completed", .{ .status = @as(u16, 200) });
 try logging.shutdown();
 ```
 
-Runtime通过 `try logging.runtime(name)` 借用，适用于跨代配置、外部sink、显式schema metadata与时钟选择。不得单独destroy这个Runtime。跨输出过滤更新是顺序操作；需要单引擎原子配置事务时采用Runtime版本接口。
+Borrow a Runtime with `try logging.runtime(name)` for cross-generation
+configuration, external sinks, explicit schema metadata, and clock selection. Do
+not destroy that Runtime separately. Cross-output filter updates are sequential;
+use the Runtime generation interface when a single-engine atomic configuration
+transaction is required.
 
-详细参数、生命周期和完整示例见 [使用指南](usage.md)。性能需以完整流程实测；独立管线能力不自动带来对Foundation/spdlog的普遍优势。
+See the [usage guide](usage.md) for detailed parameters, lifetime, and complete
+examples. Performance must be measured end to end; independent pipeline
+capabilities do not automatically provide a general advantage over other logging
+libraries.
