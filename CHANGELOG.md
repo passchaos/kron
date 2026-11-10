@@ -37,8 +37,9 @@ verification note.
   links, compile-fail/fuzz/decoder/single-threaded gates, regex
   differential/fuzz/equivalence gates, benchmark/report self-tests,
   cross-platform compile checks, native platform-host qualification, package
-  distribution/single-threaded consumer and crash/recovery gates;
-  CI coverage boundaries are documented in `docs/development.md`.
+  distribution/single-threaded consumer and crash/recovery gates; CI uses
+  read-only permissions, superseded-run cancellation and Zig build caching.
+  Coverage boundaries are documented in `docs/development.md`.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
 
