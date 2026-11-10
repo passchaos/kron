@@ -10,8 +10,9 @@
 //! The scope is chosen at the call site, so independent libraries do not
 //! compete for one fixed process-wide scope. This is a convenience facade,
 //! not a replacement for the explicit `Logging`/`Runtime` lifecycle. The slot
-//! must be configured once at an ownership boundary; installing or clearing
-//! it concurrently with logging is not supported.
+//! is atomic, so lookups do not race with install/clear; the caller must still
+//! keep the installed `Logging` alive until every user has stopped and must
+//! call `clearLogging` before destroying it.
 
 const std = @import("std");
 const Logging = @import("logging/root.zig").Logging;
@@ -19,28 +20,28 @@ const Level = @import("core/level.zig").Level;
 
 pub const Logger = Logging.Logger;
 
-var global_logging: ?*Logging = null;
+var global_logging: std.atomic.Value(?*Logging) = .init(null);
 
 /// Install the process-wide owner. Call before starting workers.
 pub fn setLogging(logging: ?*Logging) void {
-    global_logging = logging;
+    global_logging.store(logging, .release);
 }
 
 /// Remove the global owner before destroying the underlying `Logging`.
 pub fn clearLogging() void {
-    global_logging = null;
+    global_logging.store(null, .release);
 }
 
 /// Returns the installed owner, or null when no owner is configured.
 pub fn getLogging() ?*Logging {
-    return global_logging;
+    return global_logging.load(.acquire);
 }
 
 /// Derive a zero-allocation frontend for `scope`, or null when unset.
 /// The scope string must outlive the returned logger; use a literal or a
 /// module-level constant.
 pub fn scoped(scope: []const u8) ?Logger {
-    const logging = global_logging orelse return null;
+    const logging = getLogging() orelse return null;
     return logging.scoped(scope);
 }
 

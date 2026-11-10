@@ -18,6 +18,8 @@ const diagnostics_module = @import("diagnostics.zig");
 const control_module = @import("control.zig");
 const configurations = @import("../config/routes.zig");
 const RenderCache = @import("render_cache.zig").RenderCache;
+const max_routes = configurations.max_routes;
+const max_journals = 1 + configurations.max_channels;
 
 pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, comptime worker_callback: anytype, comptime control_callback: anytype, comptime decode_callback: anytype) !*Runtime {
     if (builtin.single_threaded and options.submission != .sync) return error.ThreadsUnavailable;
@@ -116,7 +118,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
     }
     errdefer if (self.thread_registry) |registry| registry.destroy();
     if (options.render_cache) {
-        var cache_journals: [65]?*Journal = @splat(null);
+        var cache_journals: [max_journals]?*Journal = @splat(null);
         var cache_count: usize = 0;
         if (self.journal) |store| {
             cache_journals[cache_count] = store;
@@ -146,7 +148,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
         if (caches.render_caches.len != 0) allocator.free(caches.render_caches);
         if (caches.render_journals.len != 0) allocator.free(caches.render_journals);
     }
-    var recovery_journals: [65]*Journal = undefined;
+    var recovery_journals: [max_journals]*Journal = undefined;
     var journal_count: usize = 0;
     if (journal) |store| {
         recovery_journals[journal_count] = store;
@@ -178,7 +180,7 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options, compti
             view.release();
         }
     }
-    var all_views: [64]configurations.View = undefined;
+    var all_views: [max_routes]configurations.View = undefined;
     const views = try configuration.retainedViews(&all_views);
     for (views) |view| {
         for (view.snapshot.routes) |*route| if (route.delivery == .required and !route.sink.supports_durable) self.historical_durable_supported.store(false, .monotonic);

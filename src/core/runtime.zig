@@ -48,6 +48,9 @@ threadlocal var sink_frame: ?*const SinkFrame = null;
 threadlocal var cleanup_owner: ?*Runtime = null;
 
 const types = @import("runtime_types.zig");
+const max_channels = configurations.max_channels;
+const max_routes = configurations.max_routes;
+const max_journals = 1 + max_channels;
 pub const Admission = types.Admission;
 pub const BeginResult = types.BeginResult;
 pub const EmitResult = types.EmitResult;
@@ -72,7 +75,7 @@ pub const Runtime = struct {
         render_caches: []?*RenderCache = &.{},
         render_journals: []?*Journal = &.{},
         text_format: bool = false,
-        channels: [64]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
+        channels: [max_channels]configurations.Manager.ChannelCache = @splat(.{ .channel = 0 }),
     };
     pub const TestingHooks = if (@import("builtin").is_test) struct {
         pub threadlocal var after_snapshot: ?*const fn (*anyopaque) void = null;
@@ -108,7 +111,7 @@ pub const Runtime = struct {
     historical_durable_supported: Atomic(bool) = .init(true),
     last_error: Atomic(u16) = .init(0),
     counters: Counters = .{},
-    channel_counters: [64]Counters align(64) = @splat(.{}),
+    channel_counters: [max_channels]Counters align(64) = @splat(.{}),
     clock: Clock,
     diagnostics: diagnostics_module.Reporter,
     delivery_mutex: std.Io.Mutex = .init,
@@ -134,7 +137,7 @@ pub const Runtime = struct {
         return @ptrCast(@alignCast(self.configuration_cache_handle));
     }
 
-    fn channelCaches(self: *Runtime) *[64]configurations.Manager.ChannelCache {
+    fn channelCaches(self: *Runtime) *[max_channels]configurations.Manager.ChannelCache {
         return &self.runtimeCaches().channels;
     }
 
@@ -540,7 +543,7 @@ pub const Runtime = struct {
         admission_protocol.wait(&self.admission_gate, &self.admission_epoch, self.io);
     }
 
-    fn cutTargets(self: *Runtime, targets: *[65]u64) usize {
+    fn cutTargets(self: *Runtime, targets: *[max_journals]u64) usize {
         self.cut_mutex.lockUncancelable(self.io);
         defer self.cut_mutex.unlock(self.io);
         _ = self.admission_gate.fetchOr(cut_bit, .acq_rel);
@@ -1295,9 +1298,9 @@ pub const Runtime = struct {
     }
 
     fn waitForCut(self: *Runtime) !void {
-        var targets: [65]u64 = undefined;
+        var targets: [max_journals]u64 = undefined;
         _ = self.cutTargets(&targets);
-        var journals: [65]*Journal = undefined;
+        var journals: [max_journals]*Journal = undefined;
         const count = self.collectJournals(&journals);
         self.notify();
         for (journals[0..count], targets[0..count]) |journal, target| {
@@ -1319,7 +1322,7 @@ pub const Runtime = struct {
         defer self.delivery_mutex.unlock(self.io);
         if (boundary != .drain) try self.flushWith(snapshot, mask, boundary, false);
         if (boundary == .durable) {
-            var journals: [65]*Journal = undefined;
+            var journals: [max_journals]*Journal = undefined;
             const count = self.collectJournals(&journals);
             // A subset cannot certify the other historical targets.
             for (journals[0..count]) |journal| if (journal.isPersistent()) try journal.sync();
@@ -1335,20 +1338,20 @@ pub const Runtime = struct {
         defer self.configuration_mutex.unlock(self.io);
         self.delivery_mutex.lockUncancelable(self.io);
         defer self.delivery_mutex.unlock(self.io);
-        var storage: [64]configurations.View = undefined;
+        var storage: [max_routes]configurations.View = undefined;
         const views = try self.configurationManager().retainedViews(&storage);
         defer for (views) |view| view.release();
         if (boundary != .drain) for (views) |view| {
             try self.flushWith(view.snapshot, requiredMask(view.snapshot), boundary, true);
         };
         if (boundary == .durable) {
-            var journals: [65]*Journal = undefined;
+            var journals: [max_journals]*Journal = undefined;
             const count = self.collectJournals(&journals);
             for (journals[0..count]) |journal| if (journal.isPersistent()) try journal.checkpointWrittenDurable();
         }
     }
 
-    fn collectJournals(self: *Runtime, journals: *[65]*Journal) usize {
+    fn collectJournals(self: *Runtime, journals: *[max_journals]*Journal) usize {
         var count: usize = 0;
         if (self.journal) |journal| {
             journals[count] = journal;
@@ -1389,7 +1392,7 @@ pub const Runtime = struct {
         if (failure == null) shutdown_flush: {
             self.delivery_mutex.lockUncancelable(self.io);
             defer self.delivery_mutex.unlock(self.io);
-            var view_storage: [64]configurations.View = undefined;
+            var view_storage: [max_routes]configurations.View = undefined;
             const views = self.configurationManager().retainedViews(&view_storage) catch |err| {
                 failure = err;
                 break :shutdown_flush;
@@ -1491,7 +1494,7 @@ pub const Runtime = struct {
         var high_water: usize = 0;
         var mapped_bytes: usize = 0;
         var queue_bytes: usize = 0;
-        var journals: [65]*Journal = undefined;
+        var journals: [max_journals]*Journal = undefined;
         const count = self.collectJournals(&journals);
         for (journals[0..count]) |journal| {
             high_water += journal.highWater();

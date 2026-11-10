@@ -5,9 +5,10 @@ const std = @import("std");
 const configurations = @import("../config/routes.zig");
 const types = @import("runtime_types.zig");
 const Filter = @import("../config/filter.zig").Filter;
+const max_routes = configurations.max_routes;
 
 pub const Collection = struct {
-    versions: [64]configurations.Version = undefined,
+    versions: [configurations.max_capacity]configurations.Version = undefined,
     count: usize = 0,
 };
 
@@ -48,7 +49,7 @@ pub fn prepareCollection(owner: anytype, manager: *configurations.Manager, compt
     // Owner-only caches must not be changed by collection: enabled/filtered
     // reads can occur outside channel admission. Idle owners retain versions
     // until their next refresh or detach.
-    var storage: [64]configurations.View = undefined;
+    var storage: [max_routes]configurations.View = undefined;
     const views = try manager.retainedViews(&storage);
     defer for (views) |view| view.release();
     var delivery_locked = false;
