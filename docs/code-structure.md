@@ -57,7 +57,7 @@ route_selection保存不可变level/filter与predicate presence掩码，Runtime�
 
 公共集成、并发/故障、compile-fail、独立消费包和进程/子VM测试位于 [tests/](../tests/README.md)。各场景的fixture保持自己的边界；生产路径通过根模块导入验证，避免只分析测试stub。
 
-`build.zig` 定义包模块、公共运行/测试/基准step与复合gate；[build/validation.zig](../build/validation.zig) 归拢九目标生产对象检查及19个示例入口。根 [examples.zig](../examples.zig) 选择字面import并保留仓库相对source路径。`build.zig.zon.paths` 同时包含build支持与入口，源码分发门禁核验独立包。
+`build.zig` 定义包模块、公共运行/测试/基准step与复合gate；[build/validation.zig](../build/validation.zig) 归拢九目标生产对象检查及19个示例入口。根 [examples.zig](../examples.zig) 选择字面import并保留仓库相对source路径。`build.zig.zon.paths` 包含build支持、源码/测试/示例、benchmark源码/脚本与文档，但不包含`bench/evidence/`或`bench/cpp_reference/evidence/`的测量数据；源码分发门禁核验独立包。
 
 ## 扩展与修改原则
 

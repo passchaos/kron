@@ -16,7 +16,8 @@ import tarfile
 MODES = ("sync", "memory", "mmap", "spsc_memory", "spsc_mmap")
 GENERATED_ROOT_PATTERNS = (".zig-cache", "zig-out", "__pycache__", "*.pyc")
 # These are the generated benchmark outputs excluded by the repository's
-# .gitignore. A local directory fetch otherwise includes its ignored files.
+# .gitignore when a full bench directory is staged. Current .paths lists bench
+# sources individually; keep the guard for future path changes.
 GENERATED_BENCH_PATTERNS = ("artifacts", "kron-ref-*", "kron-bench-*", "kron-crc-*", "reference-*")
 
 
@@ -53,6 +54,7 @@ def main():
             for relative in paths:
                 source = root / relative
                 destination = stage / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
                 if source.is_dir():
                     excluded = GENERATED_ROOT_PATTERNS + (GENERATED_BENCH_PATTERNS if relative == "bench" else ())
                     shutil.copytree(source, destination, ignore=shutil.ignore_patterns(*excluded))
