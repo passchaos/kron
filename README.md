@@ -67,6 +67,7 @@ mode/queue/overflow/redaction/sampling等均逐route设置，未填写字段采�
 | 修改源码、选择测试和维护证据 | [开发与验证](docs/development.md)、[测试目录](tests/README.md)、[基准目录](bench/README.md) |
 | 查能力、平台和剩余工作 | [当前验收状态](docs/implementation-status.md)、[平台支持](docs/platforms.md) |
 | 查全部专题与历史记录 | [文档导航](docs/README.md)、[历史记录](docs/history/README.md) |
+| 查版本与近期变更 | [变更记录](CHANGELOG.md) |
 
 ## 构建和示例
 
