@@ -21,6 +21,8 @@ jobs:
         run: zig build test -Doptimize=ReleaseSafe -j1 --summary all
       - name: Compile-fail, fuzz, decoder and single-threaded gates
         run: zig build test-compile-fail test-fuzz test-decoder-matrix test-single-threaded -Doptimize=ReleaseSafe -j1 --summary all
+      - name: Regex differential and fuzz gates
+        run: zig build test-regex-differential test-regex-fuzz test-regex-equivalence -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
         run: zig build check-platforms -j1 --summary all
       - name: Package and recovery gates
