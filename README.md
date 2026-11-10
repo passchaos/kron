@@ -112,6 +112,10 @@ zig-out/bin/kroncat --follow --level warn app.kron
 
 原始数据、失败/慢值、各轮源码身份与局部 before/after 均保留在 evidence；历次 README 性能叙述见 [历史快照](docs/history/README.md)。
 
+## Contributing
+
+见 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [SECURITY.md](SECURITY.md)。
+
 ## License
 
 MIT，见 [LICENSE](LICENSE)。

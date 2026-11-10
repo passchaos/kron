@@ -26,6 +26,7 @@ verification note.
 ### Added
 
 - MIT license.
+- CONTRIBUTING.md and SECURITY.md.
 - Capability matrix for mode/storage/format/recovery/durable combinations.
 - Benchmark evidence retention policy and history-rewrite boundary.
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
