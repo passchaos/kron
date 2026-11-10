@@ -17,6 +17,7 @@ verification note.
 
 ### Added
 
+- MIT license.
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
   template.
 - `zig build fmt`, `bench-index`, `hygiene`, `docs` and `verify-fast` steps.
