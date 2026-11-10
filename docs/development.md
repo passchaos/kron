@@ -49,7 +49,7 @@
 zig build verify-fast -Doptimize=ReleaseSafe -j1 --summary all
 zig build verify-local test-package-distribution -Doptimize=ReleaseSafe -j1 --summary all
 zig build check-platforms -j1 --summary all
-zig build fmt bench-index hygiene -j1
+zig build fmt bench-index hygiene links -j1
 zig build docs -j1
 ```
 
