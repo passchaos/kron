@@ -16,6 +16,9 @@ verification note.
 - The optional global logging owner uses an atomic acquire/release slot.
 - Extracted pure TSC calibration math into `src/platform/tsc_math.zig`; clock
   state, cross-core probe and fallback remain in `tsc_clock.zig`.
+- Extracted cold route payload construction and comparison into
+  `src/config/routes_payload.zig`; Snapshot/Manager hot path remains in
+  `routes.zig`.
 - Rewrote `main` history to remove reference binaries, tar snapshots and raw
   profiling data; pre-rewrite history is preserved in
   `/nav_env/project-z/kron-pre-evidence-rewrite.bundle` (outside Git).

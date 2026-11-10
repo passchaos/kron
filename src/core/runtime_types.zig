@@ -43,6 +43,10 @@ pub const SinkRelease = struct {
     release: *const fn (*anyopaque) void,
 };
 
+pub const max_routes = 64;
+pub const max_capacity = 64;
+pub const max_channels = 64;
+
 pub const RoutePolicy = struct {
     redaction: []const redact_module.Rule = &.{},
     sampling: sampler_module.Config = .none,
