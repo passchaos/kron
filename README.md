@@ -86,7 +86,7 @@ zig build test-logging -Doptimize=ReleaseSafe -j1
 zig build verify-fast -Doptimize=ReleaseSafe -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1
-zig build fmt bench-index hygiene -j1
+zig build fmt bench-index hygiene links -j1
 zig build docs -j1
 ```
 

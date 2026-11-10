@@ -38,6 +38,8 @@ pub fn build(b: *std.Build) void {
     b.step("bench-index", "Verify the generated benchmark evidence index").dependOn(&bench_index.step);
     const hygiene = b.addSystemCommand(&.{ "python3", "tools/check_repo_hygiene.py" });
     b.step("hygiene", "Check tracked-file hygiene and repository size guards").dependOn(&hygiene.step);
+    const links = b.addSystemCommand(&.{ "python3", "tools/check_links.py" });
+    b.step("links", "Check relative Markdown links").dependOn(&links.step);
     const docs_lib = b.addLibrary(.{ .name = "kron-docs", .root_module = module, .linkage = .static });
     const docs_install = b.addInstallDirectory(.{
         .source_dir = docs_lib.getEmittedDocs(),

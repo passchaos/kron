@@ -16,7 +16,7 @@ jobs:
         with:
           version: 0.16.0
       - name: Repository, evidence and docs checks
-        run: zig build fmt bench-index hygiene docs -j1 --summary all
+        run: zig build fmt bench-index hygiene docs links -j1 --summary all
       - name: Unit and integration tests
         run: zig build test -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
