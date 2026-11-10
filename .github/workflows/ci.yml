@@ -21,3 +21,5 @@ jobs:
         run: zig build test -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
         run: zig build check-platforms -j1 --summary all
+      - name: Package and recovery gates
+        run: zig build test-package-distribution test-crash test-async-crash test-recovery-campaign -Doptimize=ReleaseSafe -j1 --summary all

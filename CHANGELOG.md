@@ -33,8 +33,9 @@ verification note.
   template.
 - `zig build fmt`, `bench-index`, `hygiene`, `links`, `docs`, `test-unit` and
   `verify-fast` steps.
-- Repository hygiene guard and GitHub Actions CI, including docs and
-  cross-platform compile checks.
+- Repository hygiene guard and GitHub Actions CI, including docs, Markdown
+  links, cross-platform compile checks, package distribution and crash/recovery
+  gates.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
 
