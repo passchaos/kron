@@ -56,7 +56,7 @@
 | [Memory journal单次清零初始化](evidence/2026-11-02-memory-init-zeroing/README.md) | 保留优化；16.8MB journal batch init 9.13→6.64ms（5/5配对下降），sampled区间仍重叠；512B小队列低于噪声 |
 | [Fresh Linux mmap只写header初始化](evidence/2026-11-02-mmap-fresh-zero-init/README.md) | 保留优化；16.8MB journal init 54.2/53.8ms→8.2/6.9ms，5/5配对下降、区间不重叠；ext4 zero契约探针通过，非白名单文件系统完整清零 |
 
-所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。`bench/evidence/` 与 `bench/cpp_reference/evidence/` 是仓库内证据，不进入源码分发包；生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
+所有其他证据从 [性能专题导航](../docs/README.md#性能机制与测量) 与历史快照进入。新增/整理证据遵循 [证据保留策略](../docs/benchmark-evidence-policy.md)；`evidence/` 中的冻结源码和报告保留原目录、hash 和测量身份，目录整理不重写历史结果。`bench/evidence/` 与 `bench/cpp_reference/evidence/` 是仓库内证据，不进入源码分发包；生成 workload、缓存和可执行文件副本由 ignore 规则排除，源码分发会验证这些产物没有进入包。
 
 `managed_outputs.zig`测量管理入口的单/双输出完整流程，区分初始化、producer提交和written关闭时间，覆盖sync/Memory/Mmap/SPSC；`managed_outputs_compare.py`按before/after轮换配对运行，核对每条实际文件JSON，报告置信区间。用法：`zig build bench-managed-outputs -Doptimize=ReleaseFast -- memory /tmp/existing-directory 20000 2`（末尾输出数默认1，可选2）。对照脚本的`--outputs=2`校验两份完整JSON与合计written，逐输出序列和配置元数据也参与oracle。多输出独立管线会增加队列、后台线程和编码成本，单输出数字不代表多输出吞吐。
 

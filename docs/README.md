@@ -44,6 +44,7 @@
 | 范围 | 文档 |
 | --- | --- |
 | 计时边界、输入与复现 | [基准方法](benchmark-methodology.md) |
+| 证据保留、外置与新增流程 | [证据保留策略](benchmark-evidence-policy.md) |
 | 完整业务计算和无 logger 基线 | [应用影响](application-benchmark.md) |
 | 完整 C++/Foundation 工作流 | [完整对照](cpp-full-workflow.md)、[对照复现](cpp-comparison.md) |
 | 回归统计与噪声 | [性能回归](performance-regression.md) |

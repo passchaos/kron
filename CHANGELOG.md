@@ -24,6 +24,7 @@ verification note.
 
 - MIT license.
 - Capability matrix for mode/storage/format/recovery/durable combinations.
+- Benchmark evidence retention policy and history-rewrite boundary.
 - Generated benchmark evidence index (`bench/evidence/INDEX.md`) and experiment
   template.
 - `zig build fmt`, `bench-index`, `hygiene`, `docs` and `verify-fast` steps.
