@@ -10,5 +10,6 @@
 | [README 性能叙述 2026-11-09](readme-performance-2026-11-09.md) | 2026-11-09 README 的完整性能 chronology；当前状态见验收状态 |
 | [验证 chronology 2026-11-09](verification-chronology-2026-11-09.md) | 2026-11-09 验收状态页的完整最近验证记录；当前能力见验收状态 |
 | [设计 2026-10-31](design-2026-10-31.md) | 原始整体设计，包含已经被统一 Logging 接口替代的 API/目录草案 |
+| [仓库历史重写 2026-11-10](repository-history-rewrite-2026-11-10.md) | 移除历史中的 reference 二进制、tar 快照与 raw profiling 数据；记录备份和 SHA 边界 |
 
 原始测量和冻结源码没有移动。链接已调整到快照所在目录，原样的源码 hash、数据、成功/失败与资格边界保持自己的身份。
