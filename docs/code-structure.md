@@ -59,6 +59,13 @@ route_selection保存不可变level/filter与predicate presence掩码，Runtime�
 
 `build.zig` 定义包模块、公共运行/测试/基准step与复合gate；[build/validation.zig](../build/validation.zig) 归拢九目标生产对象检查及19个示例入口。根 [examples.zig](../examples.zig) 选择字面import并保留仓库相对source路径。`build.zig.zon.paths` 包含build支持、源码/测试/示例、benchmark源码/脚本与文档，但不包含`bench/evidence/`或`bench/cpp_reference/evidence/`的测量数据；源码分发门禁核验独立包。
 
+## 已评估的拆分边界
+
+- TSC纯校准数学已拆到 [tsc_math.zig](../src/platform/tsc_math.zig)；clock状态、跨核probe和fallback留在`tsc_clock.zig`，避免把资格状态机拆散。
+- route冷payload构造与比较已拆到 [routes_payload.zig](../src/config/routes_payload.zig)；`Snapshot`/`Manager`热路径留在`routes.zig`，避免改变pin/lease代码布局。
+- journal recovery scan/validate仍留在`journal.zig`：它直接依赖slot bytes/state/generation/checksum和reservation ownership；独立文件需要公开slot内部或引入recovery view，当前只有一个消费者，收益不足。若未来出现第二个reader/恢复实现，再按view边界拆分。
+- Runtime保持单一owner；只在不改变热路径布局且benchmark证明无回退时拆冷控制/flush。
+
 ## 扩展与修改原则
 
 - 常规应用增加选项先放Logging配置层，为组合handle和scopedOutput分别检查无分配与开销。
