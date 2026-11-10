@@ -9,9 +9,9 @@ has no such memcpy call. Exact executable identity and facts are preserved in
 [results.jsonl](results.jsonl) contains four matched sleeping-collector admission
 checks: one/four producers, shared/attached,10000 calls with1000 excluded warmup.
 P1 p50 was78/77ns and P4 p50 was484/157ns(shared/attached). No Runtime allocation,
-drop or pending work remained. [full-p4-results.jsonl](full-p4-results.jsonl)
-contains two full JSON rows with10000 accepted/written records and final drain:
-about587K records/s shared and617K attached.
+drop or pending work remained. The original full-P4 end-to-end rows (about587K
+records/s shared and617K attached) were not retained in this evidence directory;
+manifest.json records the binary identity for that run.
 
 These are single development-host checks, not a stable latency guarantee.
 Admission-only and end-to-end output are different metrics; original spinning

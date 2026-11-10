@@ -14,7 +14,7 @@ V3 schema journal保留后，新增真实v1/v2 journal的升级兼容回归，�
 - `zig build test -Doptimize=ReleaseSafe -j1 --summary all`：**65/65 steps、744/745 tests（1项local skip）**。
 - `zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all`：**159/159 steps、778/779 tests（1项local skip）**，`verify-local success`；含真实SIGKILL、schema/non-schema恢复、源码分发、单线程、工具和示例。
 
-日志见[test.log](test.log)与[verify-local.log](verify-local.log)。测试源码为[../../src/journal/schema_journal_tests.zig](../../src/journal/schema_journal_tests.zig)。
+日志见[test.log](test.log)与[verify-local.log](verify-local.log)。测试源码为[../../../src/journal/schema_journal_tests.zig](../../../src/journal/schema_journal_tests.zig)。
 
 ## 边界
 

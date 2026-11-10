@@ -26,4 +26,4 @@
 
 这是进程内随机操作/恢复与archive round-trip，不是真实SIGKILL、系统掉电、多文件系统或设备资格；journal fuzz的随机模型只覆盖已提交未释放记录和重开recovery，不替代现有crash/power-loss campaign。`test-journal-fuzz`已纳入默认`test` step，`verify-local`会实际执行。
 
-日志见同目录`run-*.log`；源码为[../../tests/journal_fuzz.zig](../../tests/journal_fuzz.zig)与[build.zig](../../build.zig)。整体“业界最佳”目标仍未完成。
+日志见同目录`run-*.log`；源码为[../../../tests/journal_fuzz.zig](../../../tests/journal_fuzz.zig)与[build.zig](../../../build.zig)。整体“业界最佳”目标仍未完成。

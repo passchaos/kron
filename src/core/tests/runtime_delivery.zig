@@ -23,10 +23,10 @@ fn renderCacheRun(allocator: std.mem.Allocator, cache: bool) ![]u8 {
     });
     defer runtime.destroy();
     runtime.session = 42;
-    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, 8)) })) } });
+    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{field.kv("u", @as(u64, 8))})) } });
     for (0..4) |index| {
         _ = try runtime.scoped("cache").tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
-        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, index + 8)) })) } };
+        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{field.kv("u", @as(u64, index + 8))})) } };
         const admission = switch (runtime.begin(.info, "cache")) {
             .ready => |ready| ready,
             else => return error.UnexpectedAdmission,
@@ -109,10 +109,10 @@ fn textFormatRun(allocator: std.mem.Allocator, text_format: bool) ![]u8 {
     });
     defer runtime.destroy();
     runtime.session = 42;
-    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, 8)) })) } });
+    const schema_binding = try runtime.prewarmSchema(.{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, 7)), field.kv("nested", field.group(&.{field.kv("u", @as(u64, 8))})) } });
     for (0..4) |index| {
         _ = try runtime.scoped("cache").tryEmit(.info, "inline", .{ .n = @as(u64, index), .s = "x" });
-        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{ field.kv("u", @as(u64, index + 8)) })) } };
+        const event: Event = .{ .level = .info, .scope = "cache", .message = "schema", .timestamp_ns = 0, .fields = &.{ field.kv("n", @as(u64, index + 7)), field.kv("nested", field.group(&.{field.kv("u", @as(u64, index + 8))})) } };
         const admission = switch (runtime.begin(.info, "cache")) {
             .ready => |ready| ready,
             else => return error.UnexpectedAdmission,

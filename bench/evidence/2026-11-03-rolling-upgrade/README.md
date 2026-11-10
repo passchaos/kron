@@ -18,7 +18,7 @@
 - `zig build test -Doptimize=ReleaseSafe -j1 --summary all`：**65/65 steps、745/746 tests（1项local skip）**。
 - `zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all`：**159/159 steps、779/780 tests（1项local skip）**，`verify-local success`；含真实SIGKILL、schema/non-schema恢复、源码分发、单线程、工具和示例。
 
-日志见[test.log](test.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。测试源码为[../../src/logging/tests.zig](../../src/logging/tests.zig)。
+日志见[test.log](test.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。测试源码为[../../../src/logging/tests.zig](../../../src/logging/tests.zig)。
 
 ## 边界
 

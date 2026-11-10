@@ -79,7 +79,7 @@ SPSC 的 channel 是预分配的，`channelCount()` 不能区分“1 个已 atta
 | spsc-memory-p4-schema-batch | 3.314M | 3.244M | 1.0249 | 方向混合，中位 +2.5% |
 | spsc-memory-p1-schema-sampled | 1.460M | 1.460M | 0.9954 | parity，无回退 |
 
-7 轮补充：spsc-mmap-p4-schema-batch 1.0011、spsc-memory-p4-schema-sampled 1.0100、spsc-mmap-p4-schema-sampled 1.0056、spsc-mmap-p1-schema-batch 1.0020。整体是小幅正向/中性，未达到 qualified 门槛；保留是因为策略更准确（多 producer SPSC 不再误用单 producer 阈值），且 P1 单 producer 行为不变。原始行见 [ab/spsc-count-results.jsonl](ab/spsc-count-results.jsonl)。
+7 轮补充：spsc-mmap-p4-schema-batch 1.0011、spsc-memory-p4-schema-sampled 1.0100、spsc-mmap-p4-schema-sampled 1.0056、spsc-mmap-p1-schema-batch 1.0020。整体是小幅正向/中性，未达到 qualified 门槛；保留是因为策略更准确（多 producer SPSC 不再误用单 producer 阈值），且 P1 单 producer 行为不变。主对照原始行见 [ab/results.jsonl](ab/results.jsonl)；该 7 轮补充的独立原始行未保留。
 
 ## peer 资格（5 轮，Foundation HEAD `0d1f5b0`）
 
@@ -185,6 +185,6 @@ SPSC 配置同样开启自适应 `render_cache`；240 次试验、逐条核验 *
 
 - [manifest.json](manifest.json)：host/load、git HEAD、源码与 binary sha256、Foundation HEAD、配置。
 - [ab/results.jsonl](ab/results.jsonl)：32 配置 × 2 variant × 5 轮（320 次）。
-- [ab/spsc-count-results.jsonl](ab/spsc-count-results.jsonl)：SPSC attached-count 阈值 2 配置 × 2 binary × 11 轮（44 次）。
+- `ab/spsc-count-results.jsonl`（未保留）：SPSC attached-count 阈值 2 配置 × 2 binary × 11 轮（44 次）；主对照原始行见 [ab/results.jsonl](ab/results.jsonl)。
 - [peer/results.jsonl](peer/results.jsonl)：async kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。
 - [peer-spsc/results.jsonl](peer-spsc/results.jsonl)：SPSC kron/Foundation/tracing 4 配置 × 2 producers × 2 phase × 5 轮（240 次）。

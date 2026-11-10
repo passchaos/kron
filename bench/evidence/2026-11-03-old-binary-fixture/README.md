@@ -14,7 +14,7 @@ V3保留后，新增由**真实pre-V3提交`5b1fd7c`**编译运行写出的v1与
 - `zig build test -Doptimize=ReleaseSafe -j1 --summary all`：**65/65 steps、747/748 tests（1项local skip）**。
 - `zig build verify-local -Doptimize=ReleaseSafe -j1 --summary all`：**159/159 steps、781/782 tests（1项local skip）**，`verify-local success`；含真实SIGKILL、schema/non-schema恢复、源码分发、单线程、工具和示例。
 
-日志见[test.log](test.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。测试源码为[../../src/journal/schema_journal_tests.zig](../../src/journal/schema_journal_tests.zig)。
+日志见[test.log](test.log)、[test-full.log](test-full.log)与[verify-local.log](verify-local.log)。测试源码为[../../../src/journal/schema_journal_tests.zig](../../../src/journal/schema_journal_tests.zig)。
 
 ## 边界
 

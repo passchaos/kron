@@ -1,0 +1,34 @@
+* text=auto eol=lf
+
+*.zig text diff=zig
+*.md text
+*.json text
+*.jsonl text
+*.journal binary
+*.tar binary
+*.tar.xz binary
+*.tar.gz binary
+*.xz binary
+*.gz binary
+*.perf.data binary
+
+# Large benchmark evidence data is not reviewable source. Keep data files out
+# of textual diffs and language statistics; evidence README/manifest stay text.
+bench/evidence/**/*.json -diff linguist-generated=true
+bench/evidence/**/*.jsonl -diff linguist-generated=true
+bench/evidence/**/*.log -diff
+bench/evidence/**/*.csv -diff
+bench/evidence/**/*.data -diff
+bench/evidence/**/*.xz -diff
+bench/evidence/**/*.gz -diff
+bench/evidence/**/*.tar -diff
+bench/evidence/**/*.perf.data -diff
+bench/cpp_reference/evidence/**/*.json -diff linguist-generated=true
+bench/cpp_reference/evidence/**/*.jsonl -diff linguist-generated=true
+bench/cpp_reference/evidence/**/*.log -diff
+bench/cpp_reference/evidence/**/*.csv -diff
+bench/cpp_reference/evidence/**/*.data -diff
+bench/cpp_reference/evidence/**/*.xz -diff
+bench/cpp_reference/evidence/**/*.gz -diff
+bench/cpp_reference/evidence/**/*.tar -diff
+bench/cpp_reference/evidence/**/*.perf.data -diff

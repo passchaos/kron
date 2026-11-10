@@ -345,8 +345,7 @@ test "capture: deferred arguments changed by clock fail as submission errors and
         const target = journal.reservationTarget();
         const argument = if (duplicate) kron.group(&group) else kron.array(&values);
         try kron.fields.validateValue(kron.fields.fromAny(argument));
-        try testing.expectError(if (duplicate) error.DuplicateKey else error.CyclicValue,
-            log.tryLogf(.info, "{any}", .{argument}, .{ .scalar = @as(u64, 42) }));
+        try testing.expectError(if (duplicate) error.DuplicateKey else error.CyclicValue, log.tryLogf(.info, "{any}", .{argument}, .{ .scalar = @as(u64, 42) }));
         try testing.expectEqual(@as(usize, 1), clock.calls);
         try testing.expectEqual(target, journal.reservationTarget());
         try testing.expectEqual(@as(u64, 0), runtime.health().capture_errors);

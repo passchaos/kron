@@ -569,7 +569,6 @@ test "batch written acknowledgement rejects a corrupted middle slot without recl
     try testing.expectEqual(@as(u64, 3), j.writtenTarget());
 }
 
-
 test "batch written acknowledgement rejects late payload corruption after checked peek" {
     if (!@import("../platform/mapping.zig").supported) return error.SkipZigTest;
     var tmp = testing.tmpDir(.{});
