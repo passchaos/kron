@@ -36,6 +36,7 @@
 | 已有能力、最近门禁、剩余优先级 | [当前验收状态](implementation-status.md) |
 | 本地项目调研与复用边界 | [本地复用](local-reuse.md) |
 | 示例、集成/故障测试、基准与工具 | [examples](../examples/README.md)、[tests](../tests/README.md)、[bench](../bench/README.md)、[tools](../tools/README.md) |
+| 贡献流程、安全报告与许可证 | [CONTRIBUTING](../CONTRIBUTING.md)、[SECURITY](../SECURITY.md)、[LICENSE](../LICENSE) |
 
 ## 性能机制与测量
 
