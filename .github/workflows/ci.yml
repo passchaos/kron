@@ -23,6 +23,8 @@ jobs:
         run: zig build test-compile-fail test-fuzz test-decoder-matrix test-single-threaded -Doptimize=ReleaseSafe -j1 --summary all
       - name: Regex differential and fuzz gates
         run: zig build test-regex-differential test-regex-fuzz test-regex-equivalence -Doptimize=ReleaseSafe -j1 --summary all
+      - name: Benchmark and report self-tests
+        run: zig build test-regression test-managed-output-report test-cpp-reference-report test-bench test-application-bench test-dispatch test-snapshot test-sampling-bench test-encoding-bench test-capture-bench test-regex-bench -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
         run: zig build check-platforms -j1 --summary all
       - name: Package, platform-host and recovery gates

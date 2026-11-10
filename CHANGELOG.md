@@ -35,8 +35,9 @@ verification note.
   `verify-fast` steps.
 - Repository hygiene guard and GitHub Actions CI, including docs, Markdown
   links, compile-fail/fuzz/decoder/single-threaded gates, regex
-  differential/fuzz/equivalence gates, cross-platform compile checks, native
-  platform-host qualification, package distribution and crash/recovery gates;
+  differential/fuzz/equivalence gates, benchmark/report self-tests,
+  cross-platform compile checks, native platform-host qualification, package
+  distribution and crash/recovery gates;
   CI coverage boundaries are documented in `docs/development.md`.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
