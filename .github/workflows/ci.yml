@@ -33,6 +33,8 @@ jobs:
             zig-0.16.0-${{ runner.os }}-
       - name: Repository, evidence and docs checks
         run: zig build fmt bench-index hygiene docs links -j1 --summary all
+      - name: Fast unit tests
+        run: zig build test-unit -Doptimize=ReleaseSafe -j1 --summary all
       - name: Unit and integration tests
         run: zig build test -Doptimize=ReleaseSafe -j1 --summary all
       - name: Compile-fail, fuzz, decoder and single-threaded gates
