@@ -19,6 +19,8 @@ jobs:
         run: zig build fmt bench-index hygiene docs links -j1 --summary all
       - name: Unit and integration tests
         run: zig build test -Doptimize=ReleaseSafe -j1 --summary all
+      - name: Compile-fail, fuzz and single-threaded gates
+        run: zig build test-compile-fail test-fuzz test-single-threaded -Doptimize=ReleaseSafe -j1 --summary all
       - name: Cross-platform compile checks
         run: zig build check-platforms -j1 --summary all
       - name: Package and recovery gates
