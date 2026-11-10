@@ -16,10 +16,14 @@
 
 | fixture | 大小 | SHA-256 |
 | --- | --- | --- |
-| `v1-old-binary-5b1fd7c.journal` | 4608B | `4a894557324473cef6e84161accb2b8da5ebbf7d1899037413a5dde4fb9f9b8f` |
-| `v2-old-binary-5b1fd7c.journal` | 12544B | `433752b1b2e67b834c0293a016cefa43673efb509c841b94954f4f1ee5856464` |
+| `v1-old-binary-5b1fd7c.journal` | 4608B | `ecc0fcd4767357c3f78fafa146a57c3fc30ed233e976c5ccb3779e9a184f0e44` |
+| `v2-old-binary-5b1fd7c.journal` | 12544B | `fe0d12fdda2fb9133042c718d71bdc4f9e5fd20c465f3018d976d9d645f09704` |
 | `v1-old-binary-aarch64-5b1fd7c.journal` | 4608B | `659676bbbfcc573418551148fbff6d4e3b901234e458e1244a980a7714e4cba6` |
 | `v2-old-binary-aarch64-5b1fd7c.journal` | 12544B | `f60c279748b66ea12cf7cb2e64315933bddbd7747c60075f9e4d7a1e4899b933` |
+
+原始 x86_64 fixture 文件在仓库历史中缺失；2026-11-10 用同一 `5b1fd7c` worktree
+和本页生成程序重新生成。journal header 含随机 session identity，因此 SHA-256
+与早先记录不同；header version、schema 布局和 payload 语义保持不变。
 
 生成程序核心：
 

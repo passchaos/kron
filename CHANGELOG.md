@@ -24,6 +24,11 @@ verification note.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
 
+### Fixed
+
+- Restored the missing x86_64 pre-V3 journal fixtures, generated from the same
+  `5b1fd7c` worktree; all four fixture cases now run in the test suite.
+
 ### Removed
 
 - Tracked benchmark reference executables under `bench/evidence/`; their
