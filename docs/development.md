@@ -30,7 +30,7 @@ concurrency/lifetime, persistent formats, build, or release paths are affected.
 | Clock and time conversion/recovery | `test-clock-dispatch`, `test-time` (fixed offsets and Python oracle), `test-local-time` (consumer and independent zoneinfo) |
 | flush/deadline/shutdown | `test-deadline`, `test-single-threaded`, `test-integration` |
 | Real files/rotation | `test-file-delivery`, `test-platform-host`, and corresponding sink module tests |
-| Failure capture | `test-failure-handler`; real SIGSEGV/SIGABRT/SIGTERM and fatal-event children, symbolized signal reports by default with a raw opt-out, symbolized `record`/`fatal`, crash-file contents, symlink, stderr mirror, and `chdir` independence |
+| Failure capture | `test-failure-handler`; real SIGSEGV/SIGABRT/SIGTERM and fatal-event children, symbolized signal reports by default with a raw opt-out and bounded frames, symbolized `record`/`fatal`, crash-file contents, symlink, stderr mirror, `chdir` independence, stack-overflow alt-stack capture, and worker-thread SIGSEGV |
 | Multiple filesystem behavior | tmpfs vs ext4 package consumer; tmpfs mmap journal rejects `VolatileFilesystem` by design |
 | Shared filesystem behavior | `tests/shared_fs/vm_9p.py`; under QEMU virtio-9p sync/memory pass, while mmap journal rejects `PreallocationUnsupported` by design |
 | Real ENOSPC faults | `tests/faults/vm_enospc.py`; after filling a child-VM tmpfs, direct FileSink, Runtime Memory+FileSink durable flush, and RollingFileSink flush all return and latch `NoSpaceLeft` |

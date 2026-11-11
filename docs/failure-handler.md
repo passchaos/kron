@@ -55,9 +55,10 @@ on Linux and `"kron"` elsewhere. `host_name`/`user_name` default to the system
 hostname and `USER` (with libc); unavailable values become `unknown`.
 
 Only one handler can be installed process-wide. `install` returns
-`error.AlreadyInstalled` for a second handler. Install before starting worker
-threads and uninstall after they stop; uninstall restores the previous signal
-actions.
+`error.AlreadyInstalled` for a second handler, opens the crash directory once,
+and warms debug info when symbolization is enabled. Install before starting
+worker threads and uninstall after they stop; uninstall restores the previous
+signal actions and closes the directory handle.
 
 ## Crash file naming and content
 
@@ -78,7 +79,16 @@ Each report contains:
 - PID/TID, program, host, and user;
 - reason and optional message;
 - raw return addresses (`#0 0x...`) for every captured frame;
-- an optional symbolized trace.
+- a symbolized trace, bounded by `max_symbolized_frames`.
+
+The raw report is built in one fixed 32 KiB buffer and written to the crash
+file before symbolization starts. The symbolized section is then appended to
+the file and mirrored to stderr; a debug-info failure or stall cannot remove
+the raw evidence. Raw addresses keep up to `max_stack_frames`; symbolization
+covers at most `max_symbolized_frames` (default 32). A report that exceeds the
+buffer ends with a `[report truncated]` marker instead of failing.
+`sync_crash_file` is off by default; crash files are diagnostic evidence, not a
+durability protocol.
 
 `record(reason, message)` writes one report and returns without terminating.
 It is useful for non-fatal diagnostics and is the only mode that returns
@@ -91,8 +101,10 @@ with `SIGABRT`.
 
 The default signal set is `SIGSEGV`, `SIGILL`, `SIGFPE`, `SIGABRT`, `SIGBUS`,
 and `SIGTERM`, matching glog's POSIX set. `Options.signals` can select a subset.
-After writing, the handler restores the default action and re-raises the
-signal, so the process still terminates by the original signal.
+After writing, the handler restores the default action, re-raises the signal,
+and explicitly unblocks it so a previously blocked signal cannot leave the
+process alive. If delivery still does not terminate the process, the handler
+falls back to exiting with `128 + signal`.
 
 When `Logging` is created with `.failure_handler = &handler` and the handler was
 initialized with `.abort_on_fatal = true`, a delivered `.fatal` event calls
@@ -118,12 +130,13 @@ boundary described below, and the raw report reaches disk first.
 
 The following boundaries are deliberate:
 
-- **Signal symbolization is on by default.** Zig's debug-info reader may
-  allocate and take internal locks; the raw report is written first, so this
-  cannot remove the address list. Set `symbolize_signal_stack_trace = false`
-  and, for a strictly fixed-allocation signal path, `capture_stack_trace =
-  false` as well. `record`/`fatal` use `symbolize_stack_trace`, which also
-  defaults to true.
+- **Signal symbolization is on by default and bounded.** Zig's debug-info
+  reader may allocate and take internal locks; the raw report is written first,
+  so this cannot remove the address list. `install` warms debug info in normal
+  context, and symbolization covers at most `max_symbolized_frames` (default
+  32). Set `symbolize_signal_stack_trace = false` and, for a strictly
+  fixed-allocation signal path, `capture_stack_trace = false` as well.
+  `record`/`fatal` use `symbolize_stack_trace`, which also defaults to true.
 - **Alternate signal stacks are per-thread.** `install` installs one for the
   calling thread. Call `installThreadSignalStack()` from every thread that
   should survive stack-overflow capture.
@@ -153,6 +166,9 @@ workload and verifies:
   `segv-raw` verifies the opt-out path;
 - `segv-chdir` changes the working directory after `install` and still writes
   the report and symlink through the pre-opened directory handle;
+- `stack-overflow` exercises the alternate signal stack, and `thread-segv`
+  captures a SIGSEGV raised on a worker thread;
+- a directory below a regular file is rejected during initialization;
 - reports contain the signal, code, fault address, PID/TID, program/host/user,
   and at least one raw stack address;
 - stderr mirrors the complete report.

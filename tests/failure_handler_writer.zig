@@ -5,13 +5,27 @@
 const std = @import("std");
 const kron = @import("kron");
 
-const Mode = enum { record, fatal, @"fatal-log", segv, @"segv-chdir", @"segv-raw", abort, term };
+const Mode = enum { record, fatal, @"fatal-log", segv, @"segv-chdir", @"segv-raw", @"stack-overflow", @"thread-segv", abort, term };
 
 fn chdirRoot() void {
     if (comptime @import("builtin").os.tag == .linux) {
         _ = std.os.linux.chdir("/");
     }
 }
+
+noinline fn recurse(depth: usize) void {
+    var pad: [4096]u8 = undefined;
+    @memset(&pad, @truncate(depth));
+    recurse(depth + 1);
+    std.mem.doNotOptimizeAway(&pad);
+}
+
+const ThreadWorker = struct {
+    fn run() void {
+        const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
+        invalid.* = 1;
+    }
+};
 
 pub fn main(init: std.process.Init) !void {
     const arguments = try init.minimal.args.toSlice(init.arena.allocator());
@@ -81,6 +95,15 @@ pub fn main(init: std.process.Init) !void {
         .@"segv-raw" => {
             const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
             invalid.* = 1;
+            std.process.exit(1);
+        },
+        .@"stack-overflow" => {
+            recurse(0);
+            std.process.exit(1);
+        },
+        .@"thread-segv" => {
+            const thread = try std.Thread.spawn(.{}, ThreadWorker.run, .{});
+            thread.join();
             std.process.exit(1);
         },
         .abort => {

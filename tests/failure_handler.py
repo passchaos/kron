@@ -9,6 +9,8 @@ Each mode uses a fresh directory and a real signal or abort:
 - segv-chdir: the same SIGSEGV path after changing the process working
   directory, proving the pre-opened crash directory handle is used.
 - segv-raw: the same SIGSEGV path with signal symbolization disabled.
+- stack-overflow: deep recursion exercises the alternate signal stack.
+- thread-segv: SIGSEGV on a worker thread without a per-thread alternate stack.
 
 Signal reports include an in-process symbolized trace by default, matching
 glog; `segv-raw` verifies the opt-out. `record` and `fatal` also keep
@@ -106,6 +108,8 @@ def check_report(directory, mode, result):
             "segv": (signal.SIGSEGV, "SIGSEGV"),
             "segv-chdir": (signal.SIGSEGV, "SIGSEGV"),
             "segv-raw": (signal.SIGSEGV, "SIGSEGV"),
+            "stack-overflow": (signal.SIGSEGV, "SIGSEGV"),
+            "thread-segv": (signal.SIGSEGV, "SIGSEGV"),
             "abort": (signal.SIGABRT, "SIGABRT"),
             "term": (signal.SIGTERM, "SIGTERM"),
         }[mode]
@@ -119,7 +123,7 @@ def check_report(directory, mode, result):
             assert "Symbolized stack trace:" in text, "signal reports are symbolized by default"
         assert "*** kron failure handler ***" in stderr, stderr
         assert expected[1] in stderr, stderr
-        if mode in ("segv", "segv-chdir", "segv-raw"):
+        if mode in ("segv", "segv-chdir", "segv-raw", "thread-segv"):
             assert "Fault address: 0x0" in text, text
     return {
         "mode": mode,
@@ -139,7 +143,7 @@ def main():
     disable_core_dumps()
     with tempfile.TemporaryDirectory(prefix="kron-failure-") as temporary:
         root = Path(temporary)
-        for mode in ("record", "fatal", "fatal-log", "segv", "segv-chdir", "segv-raw", "abort", "term"):
+        for mode in ("record", "fatal", "fatal-log", "segv", "segv-chdir", "segv-raw", "stack-overflow", "thread-segv", "abort", "term"):
             directory = root / mode
             directory.mkdir()
             directory_arg = os.path.relpath(directory, Path.cwd()) if mode == "segv-chdir" else directory

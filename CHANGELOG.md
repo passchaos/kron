@@ -50,6 +50,10 @@ verification note.
   through `test-failure-handler`.
 - Runnable `run-failure-handler` example for non-fatal reports and real
   `segv`/`fatal`/`fatal-log` crash modes.
+- Bound failure-handler symbolization with `max_symbolized_frames` (default
+  32), warm debug info during `install`, unblock signals before re-raising with
+  a `128 + signal` fallback, and serialize handler installation/removal with a
+  blocked signal mask.
 
 ### Fixed
 

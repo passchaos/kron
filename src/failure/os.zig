@@ -110,6 +110,35 @@ pub fn replaceSymlinkAt(dir_fd: DirHandle, link_path: [:0]const u8, target: [:0]
     }
 }
 
+/// Removes `sig` from the calling thread's signal mask. Used after re-raising
+/// a fatal signal so a previously blocked signal cannot leave the process
+/// alive in the handler return path.
+pub fn unblockSignal(sig: PosixSignal) void {
+    if (comptime !signals_supported) {
+        return;
+    } else {
+        var set = std.posix.sigemptyset();
+        std.posix.sigaddset(&set, sig);
+        std.posix.sigprocmask(std.posix.SIG.UNBLOCK, &set, null);
+    }
+}
+
+/// Last-resort termination with the shell convention `128 + signal`.
+pub fn exitSignal(sig: PosixSignal) noreturn {
+    if (comptime !signals_supported) {
+        std.process.abort();
+    } else {
+        const number: u8 = @intCast(@intFromEnum(sig));
+        if (comptime builtin.link_libc) {
+            std.c._exit(128 + number);
+        } else if (comptime builtin.os.tag == .linux) {
+            std.os.linux.exit_group(128 + number);
+        } else {
+            std.process.abort();
+        }
+    }
+}
+
 pub fn getpid() i32 {
     if (comptime builtin.os.tag == .windows) {
         return @intCast(std.os.windows.GetCurrentProcessId());

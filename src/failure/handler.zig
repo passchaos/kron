@@ -87,6 +87,9 @@ pub const FailureHandler = struct {
         sync_crash_file: bool = false,
         /// Maximum captured frames, up to `trace.max_frames`.
         max_stack_frames: usize = 64,
+        /// Maximum frames included in the symbolized trace. Raw addresses keep
+        /// all captured frames.
+        max_symbolized_frames: usize = 32,
         /// Invoke `fatal` when a `.fatal` event is submitted through a
         /// `Logging` owner bound to this handler. Disabled by default because
         /// kron's `.fatal` severity is otherwise non-terminating.
@@ -110,6 +113,7 @@ pub const FailureHandler = struct {
     capture_stack_trace: bool = true,
     sync_crash_file: bool = false,
     max_stack_frames: usize = 64,
+    max_symbolized_frames: usize = 32,
     abort_on_fatal: bool = false,
     signals: [max_signals]Signal = undefined,
     signal_count: usize = 0,
@@ -122,6 +126,7 @@ pub const FailureHandler = struct {
         if (options.directory.len == 0 or options.directory.len >= report.max_path) return error.InvalidDirectory;
         if (options.signals.len == 0 or options.signals.len > max_signals) return error.InvalidSignals;
         if (options.max_stack_frames == 0 or options.max_stack_frames > trace.max_frames) return error.InvalidStackFrames;
+        if (options.max_symbolized_frames == 0 or options.max_symbolized_frames > trace.max_frames) return error.InvalidSymbolizedFrames;
         for (options.signals, 0..) |value, index| {
             for (options.signals[0..index]) |previous| {
                 if (previous == value) return error.DuplicateSignal;
@@ -144,6 +149,7 @@ pub const FailureHandler = struct {
         self.capture_stack_trace = options.capture_stack_trace;
         self.sync_crash_file = options.sync_crash_file;
         self.max_stack_frames = options.max_stack_frames;
+        self.max_symbolized_frames = options.max_symbolized_frames;
         self.abort_on_fatal = options.abort_on_fatal;
         @memcpy(self.signals[0..options.signals.len], options.signals);
         self.signal_count = options.signals.len;
@@ -167,6 +173,7 @@ pub const FailureHandler = struct {
                 self.directory_handle = null;
             }
         }
+        self.warmDebugInfo();
         if (self.install_signal_handlers) self.installSignals();
         self.installed = true;
     }
@@ -175,6 +182,10 @@ pub const FailureHandler = struct {
         if (!self.installed) return;
         if (self.install_signal_handlers) {
             if (comptime os.signals_supported) {
+                var previous_mask: std.posix.sigset_t = undefined;
+                const all = std.posix.sigfillset();
+                std.posix.sigprocmask(std.posix.SIG.BLOCK, &all, &previous_mask);
+                defer std.posix.sigprocmask(std.posix.SIG.SETMASK, &previous_mask, null);
                 for (self.signals[0..self.signal_count], 0..) |value, index| {
                     std.posix.sigaction(os.toPosixSignal(value), &self.previous[index], null);
                 }
@@ -232,18 +243,30 @@ pub const FailureHandler = struct {
         }
     }
 
+    fn warmDebugInfo(self: *FailureHandler) void {
+        if (!self.symbolize_stack_trace and !self.symbolize_signal_stack_trace) return;
+        _ = std.debug.getSelfDebugInfo() catch {};
+    }
+
     fn installSignals(self: *FailureHandler) void {
-        if (comptime !os.signals_supported) return;
-        installThreadSignalStack();
-        const flags = std.posix.SA.SIGINFO | std.posix.SA.RESETHAND |
-            (if (@hasDecl(std.posix.SA, "ONSTACK")) std.posix.SA.ONSTACK else 0);
-        var action: os.StoredAction = .{
-            .handler = .{ .sigaction = handleSignal },
-            .mask = std.posix.sigemptyset(),
-            .flags = flags,
-        };
-        for (self.signals[0..self.signal_count], 0..) |value, index| {
-            std.posix.sigaction(os.toPosixSignal(value), &action, &self.previous[index]);
+        if (comptime !os.signals_supported) {
+            return;
+        } else {
+            installThreadSignalStack();
+            var previous_mask: std.posix.sigset_t = undefined;
+            const all = std.posix.sigfillset();
+            std.posix.sigprocmask(std.posix.SIG.BLOCK, &all, &previous_mask);
+            defer std.posix.sigprocmask(std.posix.SIG.SETMASK, &previous_mask, null);
+            const flags = std.posix.SA.SIGINFO | std.posix.SA.RESETHAND |
+                (if (@hasDecl(std.posix.SA, "ONSTACK")) std.posix.SA.ONSTACK else 0);
+            var action: os.StoredAction = .{
+                .handler = .{ .sigaction = handleSignal },
+                .mask = std.posix.sigemptyset(),
+                .flags = flags,
+            };
+            for (self.signals[0..self.signal_count], 0..) |value, index| {
+                std.posix.sigaction(os.toPosixSignal(value), &action, &self.previous[index]);
+            }
         }
     }
 
@@ -300,7 +323,7 @@ pub const FailureHandler = struct {
 
         if (symbolize) {
             var symbol_writer = report.Writer.init(buffer);
-            formatSymbolized(&symbol_writer, captured);
+            formatSymbolized(&symbol_writer, captured, self.max_symbolized_frames);
             const symbol_bytes = symbol_writer.finish();
             if (symbol_bytes.len != 0) {
                 if (opened) |fd| _ = os.writeAll(fd, symbol_bytes);
@@ -434,9 +457,22 @@ fn emptyTrace() std.debug.StackTrace {
     return .{ .return_addresses = &.{}, .skipped = .none };
 }
 
-fn formatSymbolized(writer: *report.Writer, captured: std.debug.StackTrace) void {
+fn formatSymbolized(writer: *report.Writer, captured: std.debug.StackTrace, limit: usize) void {
     writer.write("\nSymbolized stack trace:\n");
-    if (!trace.appendSymbolized(&writer.inner, &captured)) writer.truncated = true;
+    const limited = limitTrace(captured, limit);
+    if (!trace.appendSymbolized(&writer.inner, &limited)) writer.truncated = true;
+}
+
+fn limitTrace(captured: std.debug.StackTrace, limit: usize) std.debug.StackTrace {
+    const total = captured.return_addresses.len;
+    if (total <= limit) return captured;
+    const dropped = total - limit;
+    const skipped: std.debug.SkippedAddresses = switch (captured.skipped) {
+        .none => @enumFromInt(dropped),
+        .unknown => .unknown,
+        else => |count| @enumFromInt(@as(usize, @intFromEnum(count)) + dropped),
+    };
+    return .{ .return_addresses = captured.return_addresses[0..limit], .skipped = skipped };
 }
 
 fn handleSignal(sig: os.PosixSignal, info: *const SignalInfo, context: ?*anyopaque) callconv(.c) void {
@@ -456,7 +492,9 @@ fn reraise(sig: os.PosixSignal) void {
         std.posix.sigaction(sig, &action, null);
         // The signal is blocked while the handler runs. Returning from the
         // handler delivers the pending default action.
-        std.posix.raise(sig) catch std.process.abort();
+        std.posix.raise(sig) catch os.exitSignal(sig);
+        os.unblockSignal(sig);
+        os.exitSignal(sig);
     } else {
         std.process.abort();
     }
@@ -553,6 +591,7 @@ test "signal symbolization is enabled by default" {
     });
     try std.testing.expect(handler.symbolize_stack_trace);
     try std.testing.expect(handler.symbolize_signal_stack_trace);
+    try std.testing.expectEqual(@as(usize, 32), handler.max_symbolized_frames);
     try std.testing.expect(!handler.sync_crash_file);
 }
 
@@ -565,6 +604,31 @@ test "init rejects invalid options" {
     try std.testing.expectError(error.InvalidStackFrames, handler);
     handler = FailureHandler.init(std.testing.io, .{ .directory = ".zig-cache/failure-invalid", .signals = &.{ .segv, .segv } });
     try std.testing.expectError(error.DuplicateSignal, handler);
+    handler = FailureHandler.init(std.testing.io, .{ .directory = ".zig-cache/failure-invalid", .max_symbolized_frames = 0 });
+    try std.testing.expectError(error.InvalidSymbolizedFrames, handler);
+}
+
+test "symbolized frame limit reports skipped frames" {
+    var addresses: [4]usize = .{ 1, 2, 3, 4 };
+    const captured: std.debug.StackTrace = .{ .return_addresses = &addresses, .skipped = .none };
+    const limited = limitTrace(captured, 2);
+    try std.testing.expectEqual(@as(usize, 2), limited.return_addresses.len);
+    try std.testing.expectEqual(@as(usize, 2), @intFromEnum(limited.skipped));
+    try std.testing.expectEqual(@as(usize, 2), limited.return_addresses[1]);
+}
+
+test "init propagates directory creation errors" {
+    if (comptime !os.posix) return error.SkipZigTest;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const file = try tmp.dir.createFile(std.testing.io, "not-a-dir", .{});
+    file.close(std.testing.io);
+    var path_buffer: [report.max_path]u8 = undefined;
+    const directory = try std.fmt.bufPrint(&path_buffer, ".zig-cache/tmp/{s}/not-a-dir/sub", .{tmp.sub_path});
+    try std.testing.expectError(error.NotDir, FailureHandler.init(std.testing.io, .{
+        .directory = directory,
+        .install_signal_handlers = false,
+    }));
 }
 
 test "record writes a report and updates the latest link" {
