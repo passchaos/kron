@@ -42,7 +42,11 @@ verification note.
   SIGSEGV/SIGILL/SIGFPE/SIGABRT/SIGBUS/SIGTERM, UTC crash-file naming,
   raw stack addresses, stderr mirroring, a stable `<program>.FATAL` symlink,
   `record`/`fatal` entry points, and an opt-in `Logging` `.fatal` hook.
-  Real-child verification is available through `test-failure-handler`.
+  Signal reports are raw-only by default; `record`/`fatal` keep symbolized
+  traces. Reports are built in one fixed buffer, written to the file before the
+  stderr mirror, and `fsync` is opt-in. `install` opens the crash directory once
+  so relative directories survive `chdir`. Real-child verification is available
+  through `test-failure-handler`.
 
 ### Fixed
 

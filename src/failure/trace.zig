@@ -1,8 +1,8 @@
 //! Stack capture shared by fatal reports and signal reports.
 //!
 //! Capture stores raw return addresses in caller storage. Raw addresses are
-//! always written; symbolization is a separate best-effort step because Zig's
-//! debug-info reader may allocate and take internal locks.
+//! always written; symbolization appends directly to a bounded report writer
+//! because Zig's debug-info reader may allocate and take internal locks.
 const std = @import("std");
 
 pub const max_frames = 128;
@@ -25,11 +25,11 @@ pub fn captureFromSignal(context: ?*anyopaque, buffer: []usize) std.debug.StackT
     }
 }
 
-/// Writes a symbolized trace into `buffer` using a fixed writer. Returns the
-/// written bytes; truncation keeps the prefix instead of failing the report.
-pub fn symbolize(buffer: []u8, trace: *const std.debug.StackTrace) []const u8 {
-    var writer = std.Io.Writer.fixed(buffer);
-    const terminal: std.Io.Terminal = .{ .writer = &writer, .mode = .no_color };
-    std.debug.writeStackTrace(trace, terminal) catch {};
-    return writer.buffered();
+/// Appends a symbolized trace to `writer`. Returns false when the writer is
+/// full or debug information is unavailable; the caller marks the report
+/// truncated. No separate symbolization buffer is allocated.
+pub fn appendSymbolized(writer: *std.Io.Writer, captured: *const std.debug.StackTrace) bool {
+    const terminal: std.Io.Terminal = .{ .writer = writer, .mode = .no_color };
+    std.debug.writeStackTrace(captured, terminal) catch return false;
+    return true;
 }

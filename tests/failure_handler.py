@@ -6,6 +6,13 @@ Each mode uses a fresh directory and a real signal or abort:
 - fatal: one report and SIGABRT, with no duplicate SIGABRT report.
 - fatal-log: a `.fatal` event through Logging aborts with the event message.
 - segv/abort/term: real signals are captured, mirrored to stderr, and re-raised.
+- segv-chdir: the same SIGSEGV path after changing the process working
+  directory, proving the pre-opened crash directory handle is used.
+- segv-symbolized: the same SIGSEGV path with signal symbolization enabled.
+
+Signal reports contain raw return addresses by default; in-process
+symbolization is opt-in and therefore absent from these signal cases except
+`segv-symbolized`. `record` and `fatal` keep symbolized traces.
 
 The checks cover report contents, raw stack addresses, the stable symlink, and
 the exact terminating signal. They do not establish symbolization quality on
@@ -15,6 +22,7 @@ stripped binaries or alternate-stack coverage for threads that never called
 
 import argparse
 import json
+import os
 import re
 import resource
 import signal
@@ -45,7 +53,6 @@ def run_mode(writer, directory, mode, timeout):
         check=False,
     )
     return result
-
 
 def crash_files(directory):
     return sorted(
@@ -78,6 +85,7 @@ def check_report(directory, mode, result):
         assert "Reason: diagnostic" in text, text
         assert "Message: record message" in text, text
         assert "Signal:" not in text, text
+        assert "Symbolized stack trace:" in text, text
         assert "*** kron failure report ***" in stderr, stderr
     elif mode == "fatal":
         assert result.returncode == -signal.SIGABRT, result.returncode
@@ -96,6 +104,8 @@ def check_report(directory, mode, result):
     else:
         expected = {
             "segv": (signal.SIGSEGV, "SIGSEGV"),
+            "segv-chdir": (signal.SIGSEGV, "SIGSEGV"),
+            "segv-symbolized": (signal.SIGSEGV, "SIGSEGV"),
             "abort": (signal.SIGABRT, "SIGABRT"),
             "term": (signal.SIGTERM, "SIGTERM"),
         }[mode]
@@ -103,9 +113,13 @@ def check_report(directory, mode, result):
         assert f"Signal: {expected[1]} (" in text, text
         assert "Signal code: " in text, text
         assert "Fault address: " in text, text
+        if mode == "segv-symbolized":
+            assert "Symbolized stack trace:" in text, text
+        else:
+            assert "Symbolized stack trace:" not in text, "signal reports are raw-only by default"
         assert "*** kron failure handler ***" in stderr, stderr
         assert expected[1] in stderr, stderr
-        if mode == "segv":
+        if mode in ("segv", "segv-chdir", "segv-symbolized"):
             assert "Fault address: 0x0" in text, text
     return {
         "mode": mode,
@@ -125,10 +139,11 @@ def main():
     disable_core_dumps()
     with tempfile.TemporaryDirectory(prefix="kron-failure-") as temporary:
         root = Path(temporary)
-        for mode in ("record", "fatal", "fatal-log", "segv", "abort", "term"):
+        for mode in ("record", "fatal", "fatal-log", "segv", "segv-chdir", "segv-symbolized", "abort", "term"):
             directory = root / mode
             directory.mkdir()
-            result = run_mode(args.writer, directory, mode, args.timeout)
+            directory_arg = os.path.relpath(directory, Path.cwd()) if mode == "segv-chdir" else directory
+            result = run_mode(args.writer, directory_arg, mode, args.timeout)
             results.append(check_report(directory, mode, result))
     print(json.dumps({"result": "pass", "cases": results}, sort_keys=True), flush=True)
 

@@ -8,12 +8,11 @@
 //! after delivery when `abort_on_fatal` is enabled.
 //!
 //! The signal path uses fixed storage and async-signal-safe file operations.
-//! Symbolization is best-effort: Zig's debug-info reader may allocate or take
-//! internal locks, so raw addresses are always written and symbolization can
-//! be disabled. Set `capture_stack_trace = false` as well for a strictly
-//! fixed-allocation path. `sigaltstack` is per-thread; call
-//! `installThreadSignalStack` from every thread that should survive
-//! stack-overflow capture.
+//! Signal reports contain raw addresses by default; symbolization is opt-in
+//! because Zig's debug-info reader may allocate or take internal locks. Set
+//! `capture_stack_trace = false` as well for a strictly fixed-allocation path.
+//! `sigaltstack` is per-thread; call `installThreadSignalStack` from every
+//! thread that should survive stack-overflow capture.
 const std = @import("std");
 const builtin = @import("builtin");
 const os = @import("os.zig");
@@ -24,6 +23,19 @@ const signal_mod = @import("signal.zig");
 const max_signals = signal_mod.default_signals.len;
 const SignalInfo = if (os.signals_supported) std.posix.siginfo_t else void;
 
+const ReportKind = enum {
+    signal,
+    report,
+    fatal,
+
+    fn title(self: ReportKind) []const u8 {
+        return switch (self) {
+            .signal, .fatal => "*** kron failure handler ***\n",
+            .report => "*** kron failure report ***\n",
+        };
+    }
+};
+
 var active: std.atomic.Value(?*FailureHandler) = .init(null);
 
 /// Per-thread alternate signal stack. `sigaltstack` is thread-local, so each
@@ -32,6 +44,10 @@ var active: std.atomic.Value(?*FailureHandler) = .init(null);
 const SignalStack = if (os.signals_supported) struct {
     threadlocal var bytes: [64 * 1024]u8 align(16) = undefined;
 } else struct {};
+
+/// Signal-path report storage. `handling` guarantees one signal report at a
+/// time; `record`/`fatal` use caller stack storage instead.
+var signal_report_buffer: [report.max_report_bytes]u8 = undefined;
 
 pub const FailureHandler = struct {
     pub const Signal = signal_mod.Signal;
@@ -51,13 +67,23 @@ pub const FailureHandler = struct {
         install_signal_handlers: bool = true,
         /// Fatal signals to capture. The default is glog's POSIX set.
         signals: []const Signal = &signal_mod.default_signals,
-        /// Mirror every report to standard error.
+        /// Mirror every report to standard error after the crash file write.
         write_stderr: bool = true,
         /// Maintain `<program>.FATAL` as a link to the newest report.
         create_latest_symlink: bool = true,
-        /// Attempt to resolve raw addresses through Zig debug info. The raw
-        /// address list is emitted regardless.
+        /// Attempt to resolve raw addresses through Zig debug info for
+        /// `record` and `fatal`. The raw address list is emitted regardless.
         symbolize_stack_trace: bool = true,
+        /// Attempt to resolve raw addresses for signal reports. Off by default
+        /// because debug-info allocation and locks are unsafe in a signal
+        /// handler; raw addresses remain available for offline symbolization.
+        symbolize_signal_stack_trace: bool = false,
+        /// Capture stack return addresses. Disable together with signal
+        /// symbolization for a strictly fixed-allocation signal path.
+        capture_stack_trace: bool = true,
+        /// Call `fsync` on the crash file before closing it. Off by default:
+        /// the crash file is diagnostic, not a durability protocol.
+        sync_crash_file: bool = false,
         /// Maximum captured frames, up to `trace.max_frames`.
         max_stack_frames: usize = 64,
         /// Invoke `fatal` when a `.fatal` event is submitted through a
@@ -66,6 +92,7 @@ pub const FailureHandler = struct {
         abort_on_fatal: bool = false,
     };
 
+    io: std.Io = undefined,
     directory: [report.max_path]u8 = undefined,
     directory_len: usize = 0,
     program: [report.max_component]u8 = undefined,
@@ -78,14 +105,17 @@ pub const FailureHandler = struct {
     write_stderr: bool = true,
     create_latest_symlink: bool = true,
     symbolize_stack_trace: bool = true,
+    symbolize_signal_stack_trace: bool = false,
+    capture_stack_trace: bool = true,
+    sync_crash_file: bool = false,
     max_stack_frames: usize = 64,
     abort_on_fatal: bool = false,
     signals: [max_signals]Signal = undefined,
     signal_count: usize = 0,
     previous: [max_signals]os.StoredAction = undefined,
+    directory_handle: ?std.Io.Dir = null,
     installed: bool = false,
     handling: std.atomic.Value(bool) = .init(false),
-    sequence: std.atomic.Value(u32) = .init(0),
 
     pub fn init(io: std.Io, options: Options) !FailureHandler {
         if (options.directory.len == 0 or options.directory.len >= report.max_path) return error.InvalidDirectory;
@@ -99,6 +129,7 @@ pub const FailureHandler = struct {
         try std.Io.Dir.cwd().createDirPath(io, options.directory);
 
         var self: FailureHandler = .{};
+        self.io = io;
         @memcpy(self.directory[0..options.directory.len], options.directory);
         self.directory_len = options.directory.len;
         self.program_len = resolveProgram(&self.program, options.program_name);
@@ -108,6 +139,9 @@ pub const FailureHandler = struct {
         self.write_stderr = options.write_stderr;
         self.create_latest_symlink = options.create_latest_symlink;
         self.symbolize_stack_trace = options.symbolize_stack_trace;
+        self.symbolize_signal_stack_trace = options.symbolize_signal_stack_trace;
+        self.capture_stack_trace = options.capture_stack_trace;
+        self.sync_crash_file = options.sync_crash_file;
         self.max_stack_frames = options.max_stack_frames;
         self.abort_on_fatal = options.abort_on_fatal;
         @memcpy(self.signals[0..options.signals.len], options.signals);
@@ -115,16 +149,24 @@ pub const FailureHandler = struct {
         return self;
     }
 
-    /// Installs process-wide signal handlers. The handler must stay at a
-    /// stable address until `uninstall`; do not move the value after install.
+    /// Installs process-wide signal handlers and opens the crash directory.
+    /// The handler must stay at a stable address until `uninstall`; do not move
+    /// the value after install.
     pub fn install(self: *FailureHandler) !void {
         if (self.installed) return error.AlreadyInstalled;
+        if (self.install_signal_handlers and comptime !os.signals_supported) return error.SignalHandlersUnsupported;
         if (active.cmpxchgStrong(null, self, .acq_rel, .acquire) != null) return error.AlreadyInstalled;
         errdefer _ = active.cmpxchgStrong(self, null, .acq_rel, .acquire);
-        if (self.install_signal_handlers) {
-            if (comptime !os.signals_supported) return error.SignalHandlersUnsupported;
-            self.installSignals();
+        if (comptime os.posix) {
+            self.directory_handle = std.Io.Dir.cwd().openDir(self.io, self.directorySlice(), .{}) catch return error.CrashDirectoryUnavailable;
         }
+        errdefer {
+            if (self.directory_handle) |*dir| {
+                dir.close(self.io);
+                self.directory_handle = null;
+            }
+        }
+        if (self.install_signal_handlers) self.installSignals();
         self.installed = true;
     }
 
@@ -137,6 +179,10 @@ pub const FailureHandler = struct {
                 }
             }
         }
+        if (self.directory_handle) |*dir| {
+            dir.close(self.io);
+            self.directory_handle = null;
+        }
         self.installed = false;
         _ = active.cmpxchgStrong(self, null, .acq_rel, .acquire);
     }
@@ -146,12 +192,17 @@ pub const FailureHandler = struct {
     }
 
     /// Writes one crash report without terminating. Returns
-    /// `error.CrashFileUnavailable` when no file could be created; the stderr
-    /// mirror is still attempted.
+    /// `error.CrashFileUnavailable` when no file could be created or
+    /// `error.CrashFileWriteFailed` when writing failed; the stderr mirror is
+    /// still attempted in both cases.
     pub fn record(self: *FailureHandler, reason: []const u8, message: []const u8) !void {
         var frames: [trace.max_frames]usize = undefined;
-        const captured = trace.capture(frames[0..self.max_stack_frames], .{ .first_address = @returnAddress() });
-        return self.writeReport("report", reason, message, null, 0, null, captured);
+        const captured = if (self.capture_stack_trace)
+            trace.capture(frames[0..self.max_stack_frames], .{ .first_address = @returnAddress() })
+        else
+            emptyTrace();
+        var buffer: [report.max_report_bytes]u8 = undefined;
+        return self.writeReport(&buffer, .report, reason, message, null, 0, null, captured, self.symbolize_stack_trace);
     }
 
     /// Writes a fatal report and aborts. The SIGABRT handler is suppressed for
@@ -159,8 +210,12 @@ pub const FailureHandler = struct {
     pub fn fatal(self: *FailureHandler, message: []const u8) noreturn {
         if (self.handling.cmpxchgStrong(false, true, .acq_rel, .acquire) == null) {
             var frames: [trace.max_frames]usize = undefined;
-            const captured = trace.capture(frames[0..self.max_stack_frames], .{ .first_address = @returnAddress() });
-            self.writeReport("fatal", "fatal", message, null, 0, null, captured) catch {};
+            const captured = if (self.capture_stack_trace)
+                trace.capture(frames[0..self.max_stack_frames], .{ .first_address = @returnAddress() })
+            else
+                emptyTrace();
+            var buffer: [report.max_report_bytes]u8 = undefined;
+            self.writeReport(&buffer, .fatal, "fatal", message, null, 0, null, captured, self.symbolize_stack_trace) catch {};
         }
         std.process.abort();
     }
@@ -193,60 +248,60 @@ pub const FailureHandler = struct {
 
     fn writeReport(
         self: *FailureHandler,
-        kind: []const u8,
+        buffer: []u8,
+        kind: ReportKind,
         reason: []const u8,
         message: []const u8,
         signal_value: ?Signal,
         signal_code: i32,
         fault_address: ?usize,
         captured: std.debug.StackTrace,
+        symbolize: bool,
     ) !void {
-        var path_buffer: [report.max_path]u8 = undefined;
-        var zero_buffer: [report.max_path + 1]u8 = undefined;
-        var opened: ?os.fd_t = null;
-        var final_path: ?[:0]const u8 = null;
-        var attempt: u32 = 0;
         const unix = os.timestampSeconds();
+        var writer = report.Writer.init(buffer);
+        self.formatReport(&writer, kind, reason, message, signal_value, signal_code, fault_address, captured, symbolize, unix);
+        const bytes = writer.finish();
+
+        const use_dir = self.directory_handle != null;
+        const pid = os.getpid();
+        var name_buffer: [report.max_name + 1]u8 = undefined;
+        var path_buffer: [report.max_path + 1]u8 = undefined;
+        var attempt: u32 = 0;
         while (attempt < 8) : (attempt += 1) {
-            const name = report.fileName(
-                &path_buffer,
-                self.directorySlice(),
-                self.programSlice(),
-                self.hostSlice(),
-                self.userSlice(),
-                unix,
-                os.getpid(),
-                attempt,
-            ) catch break;
-            const zero = std.fmt.bufPrintZ(&zero_buffer, "{s}", .{name}) catch break;
-            opened = os.openExclusive(zero) catch |err| switch (err) {
+            const zero = if (use_dir)
+                report.crashNameZ(&name_buffer, self.programSlice(), self.hostSlice(), self.userSlice(), unix, pid, attempt) catch break
+            else
+                report.fileNameZ(&path_buffer, self.directorySlice(), self.programSlice(), self.hostSlice(), self.userSlice(), unix, pid, attempt) catch break;
+            const dir_fd = if (use_dir) self.directory_handle.?.handle else os.at_fdcwd;
+            const opened = os.openExclusiveAt(dir_fd, zero) catch |err| switch (err) {
                 error.PathAlreadyExists => continue,
                 else => break,
             };
-            final_path = zero;
-            break;
+            const written = os.writeAll(opened, bytes);
+            if (self.sync_crash_file) os.sync(opened);
+            os.close(opened);
+            if (written and self.create_latest_symlink) self.updateLatestLink(use_dir, std.fs.path.basename(zero));
+            self.writeStderr(bytes);
+            if (!written) return error.CrashFileWriteFailed;
+            return;
         }
-        const file = opened;
-        self.emitReport(file, unix, kind, reason, message, signal_value, signal_code, fault_address, captured);
-        if (file) |handle| {
-            os.sync(handle);
-            os.close(handle);
-        }
-        if (final_path) |path| {
-            if (self.create_latest_symlink) self.updateLatestLink(path);
-        }
-        if (file == null) return error.CrashFileUnavailable;
+        self.writeStderr(bytes);
+        return error.CrashFileUnavailable;
     }
 
-    fn updateLatestLink(self: *FailureHandler, path: [:0]const u8) void {
+    fn updateLatestLink(self: *FailureHandler, use_dir: bool, basename: []const u8) void {
         var link_buffer: [report.max_path]u8 = undefined;
         var zero_link: [report.max_path + 1]u8 = undefined;
-        var zero_target: [report.max_path + 1]u8 = undefined;
-        const link = report.latestLink(&link_buffer, self.directorySlice(), self.programSlice()) catch return;
-        const target = std.fs.path.basename(path);
+        var zero_target: [report.max_name + 1]u8 = undefined;
+        const link = if (use_dir)
+            report.latestName(&link_buffer, self.programSlice()) catch return
+        else
+            report.latestLink(&link_buffer, self.directorySlice(), self.programSlice()) catch return;
         const zero_link_value = std.fmt.bufPrintZ(&zero_link, "{s}", .{link}) catch return;
-        const zero_target_value = std.fmt.bufPrintZ(&zero_target, "{s}", .{target}) catch return;
-        os.replaceSymlink(zero_link_value, zero_target_value);
+        const zero_target_value = std.fmt.bufPrintZ(&zero_target, "{s}", .{basename}) catch return;
+        const dir_fd = if (use_dir) self.directory_handle.?.handle else os.at_fdcwd;
+        os.replaceSymlinkAt(dir_fd, zero_link_value, zero_target_value);
     }
 
     fn writeSignalReport(self: *FailureHandler, sig: os.PosixSignal, info: *const SignalInfo, context: ?*anyopaque) void {
@@ -254,90 +309,86 @@ pub const FailureHandler = struct {
             return;
         } else {
             var frames: [trace.max_frames]usize = undefined;
-            const captured = trace.captureFromSignal(context, frames[0..self.max_stack_frames]);
+            const captured = if (self.capture_stack_trace)
+                trace.captureFromSignal(context, frames[0..self.max_stack_frames])
+            else
+                emptyTrace();
             self.writeReport(
-                "signal",
+                &signal_report_buffer,
+                .signal,
                 "fatal signal",
                 "",
                 fromPosixSignal(sig),
                 info.code,
                 faultAddress(info),
                 captured,
+                self.symbolize_signal_stack_trace,
             ) catch {};
         }
     }
 
-    fn emitReport(
+    fn formatReport(
         self: *FailureHandler,
-        fd: ?os.fd_t,
-        unix: i64,
-        kind: []const u8,
+        writer: *report.Writer,
+        kind: ReportKind,
         reason: []const u8,
         message: []const u8,
         signal_value: ?Signal,
         signal_code: i32,
         fault_address: ?usize,
         captured: std.debug.StackTrace,
+        symbolize: bool,
+        unix: i64,
     ) void {
         var timestamp_buffer: [32]u8 = undefined;
         const timestamp = report.formatIsoTimestamp(&timestamp_buffer, unix) catch "unknown";
-        const title = if (std.mem.eql(u8, kind, "signal") or std.mem.eql(u8, kind, "fatal"))
-            "*** kron failure handler ***\n"
-        else
-            "*** kron failure report ***\n";
-        self.emit(fd, "{s}", .{title});
-        self.emit(fd, "Captured at {s} (unix={d})\n", .{ timestamp, unix });
+        writer.write(kind.title());
+        writer.print("Captured at {s} (unix={d})\n", .{ timestamp, unix });
         if (signal_value) |value| {
             if (comptime os.signals_supported) {
-                self.emit(fd, "Signal: {s} ({d})\n", .{ report.signalLabel(value), @intFromEnum(os.toPosixSignal(value)) });
+                writer.print("Signal: {s} ({d})\n", .{ report.signalLabel(value), @intFromEnum(os.toPosixSignal(value)) });
             } else {
-                self.emit(fd, "Signal: {s}\n", .{report.signalLabel(value)});
+                writer.print("Signal: {s}\n", .{report.signalLabel(value)});
             }
-            self.emit(fd, "Signal code: {d}\n", .{signal_code});
+            writer.print("Signal code: {d}\n", .{signal_code});
             if (fault_address) |address| {
-                self.emit(fd, "Fault address: 0x{x}\n", .{address});
+                writer.print("Fault address: 0x{x}\n", .{address});
             } else {
-                self.emit(fd, "Fault address: unavailable\n", .{});
+                writer.write("Fault address: unavailable\n");
             }
         }
-        self.emit(fd, "PID: {d} TID: {d}\n", .{ os.getpid(), os.gettid() });
-        self.emit(fd, "Program: {s}\nHost: {s}\nUser: {s}\n", .{
+        writer.print("PID: {d} TID: {d}\n", .{ os.getpid(), os.gettid() });
+        writer.print("Program: {s}\nHost: {s}\nUser: {s}\n", .{
             self.programSlice(),
             self.hostSlice(),
             self.userSlice(),
         });
-        self.emit(fd, "Reason: {s}\n", .{reason});
-        if (message.len != 0) self.emit(fd, "Message: {s}\n", .{message});
-        self.emit(fd, "\nStack trace:\n", .{});
+        writer.write("Reason: ");
+        writer.write(reason);
+        writer.write("\n");
+        if (message.len != 0) {
+            writer.write("Message: ");
+            writer.write(message);
+            writer.write("\n");
+        }
+        writer.write("\nStack trace:\n");
         if (captured.return_addresses.len == 0) {
-            self.emit(fd, "  (no stack frames captured)\n", .{});
+            writer.write("  (no stack frames captured)\n");
         } else {
             for (captured.return_addresses, 0..) |address, index| {
-                self.emit(fd, "  #{d} 0x{x}\n", .{ index, address });
+                writer.print("  #{d} 0x{x}\n", .{ index, address });
             }
         }
-        if (self.symbolize_stack_trace) {
-            var symbol_buffer: [16 * 1024]u8 = undefined;
-            const symbols = trace.symbolize(&symbol_buffer, &captured);
-            if (symbols.len != 0) {
-                self.emit(fd, "\nSymbolized stack trace:\n", .{});
-                self.emitBytes(fd, symbols);
-            }
+        if (symbolize) {
+            writer.write("\nSymbolized stack trace:\n");
+            if (!trace.appendSymbolized(&writer.inner, &captured)) writer.truncated = true;
         }
     }
 
-    fn emit(self: *FailureHandler, fd: ?os.fd_t, comptime fmt: []const u8, args: anytype) void {
-        var buffer: [512]u8 = undefined;
-        const text = std.fmt.bufPrint(&buffer, fmt, args) catch return;
-        self.emitBytes(fd, text);
-    }
-
-    fn emitBytes(self: *FailureHandler, fd: ?os.fd_t, bytes: []const u8) void {
-        if (fd) |handle| _ = os.writeAll(handle, bytes);
-        if (self.write_stderr) {
-            if (!os.writeStderr(bytes)) {
-                if (comptime !os.posix) std.debug.print("{s}", .{bytes});
-            }
+    fn writeStderr(self: *FailureHandler, bytes: []const u8) void {
+        if (!self.write_stderr) return;
+        if (!os.writeStderr(bytes)) {
+            if (comptime !os.posix) std.debug.print("{s}", .{bytes});
         }
     }
 
@@ -495,6 +546,8 @@ test "record writes a report and updates the latest link" {
         .write_stderr = false,
         .symbolize_stack_trace = false,
     });
+    try handler.install();
+    defer handler.uninstall();
     try handler.record("unit reason", "unit message");
 
     var found_name: ?[128]u8 = null;
@@ -520,4 +573,39 @@ test "record writes a report and updates the latest link" {
     var link_buffer: [128]u8 = undefined;
     const target = try tmp.dir.readLink(std.testing.io, "unit-failure.FATAL", &link_buffer);
     try std.testing.expectEqualStrings(name, link_buffer[0..target]);
+}
+
+test "record falls back to the configured path before install" {
+    if (comptime !os.posix) return error.SkipZigTest;
+    var tmp = std.testing.tmpDir(.{ .iterate = true });
+    defer tmp.cleanup();
+    var path_buffer: [report.max_path]u8 = undefined;
+    const directory = try std.fmt.bufPrint(&path_buffer, ".zig-cache/tmp/{s}", .{tmp.sub_path});
+    var handler = try FailureHandler.init(std.testing.io, .{
+        .directory = directory,
+        .program_name = "unit-fallback",
+        .host_name = "unit-host",
+        .user_name = "unit-user",
+        .install_signal_handlers = false,
+        .write_stderr = false,
+        .symbolize_stack_trace = false,
+    });
+    try handler.record("fallback", "before install");
+
+    var found_name: ?[128]u8 = null;
+    var found_len: usize = 0;
+    var iterator = tmp.dir.iterate();
+    while (try iterator.next(std.testing.io)) |entry| {
+        if (std.mem.indexOf(u8, entry.name, "unit-fallback.") != null) {
+            var name_buffer: [128]u8 = undefined;
+            @memcpy(name_buffer[0..entry.name.len], entry.name);
+            found_name = name_buffer;
+            found_len = entry.name.len;
+        }
+    }
+    try std.testing.expect(found_len != 0);
+    const contents = try tmp.dir.readFileAlloc(std.testing.io, found_name.?[0..found_len], std.testing.allocator, .limited(64 * 1024));
+    defer std.testing.allocator.free(contents);
+    try std.testing.expect(std.mem.indexOf(u8, contents, "Reason: fallback") != null);
+    try std.testing.expect(std.mem.indexOf(u8, contents, "Message: before install") != null);
 }

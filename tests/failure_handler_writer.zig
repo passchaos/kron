@@ -5,7 +5,13 @@
 const std = @import("std");
 const kron = @import("kron");
 
-const Mode = enum { record, fatal, @"fatal-log", segv, abort, term };
+const Mode = enum { record, fatal, @"fatal-log", segv, @"segv-chdir", @"segv-symbolized", abort, term };
+
+fn chdirRoot() void {
+    if (comptime @import("builtin").os.tag == .linux) {
+        _ = std.os.linux.chdir("/");
+    }
+}
 
 pub fn main(init: std.process.Init) !void {
     const arguments = try init.minimal.args.toSlice(init.arena.allocator());
@@ -32,6 +38,7 @@ pub fn main(init: std.process.Init) !void {
         .install_signal_handlers = selected != .record,
         .write_stderr = true,
         .symbolize_stack_trace = selected == .record or selected == .fatal or selected == .@"fatal-log",
+        .symbolize_signal_stack_trace = selected == .@"segv-symbolized",
         .max_stack_frames = 16,
         .abort_on_fatal = selected == .@"fatal-log",
     });
@@ -60,6 +67,19 @@ pub fn main(init: std.process.Init) !void {
             return error.FatalLogDidNotAbort;
         },
         .segv => {
+            const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
+            invalid.* = 1;
+            std.process.exit(1);
+        },
+        .@"segv-chdir" => {
+            // The crash directory was opened during install; changing the
+            // process working directory must not redirect or break the report.
+            chdirRoot();
+            const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
+            invalid.* = 1;
+            std.process.exit(1);
+        },
+        .@"segv-symbolized" => {
             const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
             invalid.* = 1;
             std.process.exit(1);

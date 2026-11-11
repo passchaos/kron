@@ -169,7 +169,10 @@ pub const Owner = struct {
         return if (binding) |schema| runtime.submitWithSchema(admission, event, schema) else runtime.submit(admission, event);
     }
     pub fn submit(self: *const Owner, admission: AdmissionType, event: core.Event) !core.EmitResult {
-        defer if (event.level == .fatal) self.fatalHook(event);
+        defer if (event.level == .fatal) {
+            @branchHint(.unlikely);
+            self.fatalHook(event);
+        };
         if (self.logging.pipelines.len == 1) {
             const i: usize = 0;
             const frame = admission.frame.?;

@@ -1,8 +1,8 @@
 //! Minimal OS layer for the crash path.
 //!
 //! The report writer must remain callable from a signal handler, so this file
-//! deliberately uses `openat`/`write`/`symlink`/`unlink` wrappers instead of
-//! buffered or allocating I/O. Unsupported targets keep compiling: install
+//! deliberately uses `openat`/`write`/`symlinkat`/`unlinkat` wrappers instead
+//! of buffered or allocating I/O. Unsupported targets keep compiling: install
 //! reports `error.SignalHandlersUnsupported` and record/fatal fall back to
 //! stderr only.
 const std = @import("std");
@@ -33,6 +33,8 @@ pub const signals_supported = posix and switch (builtin.os.tag) {
 };
 
 pub const fd_t = if (posix) std.posix.fd_t else i32;
+pub const DirHandle = std.Io.Dir.Handle;
+pub const at_fdcwd: DirHandle = if (posix) std.posix.AT.FDCWD else @ptrFromInt(1);
 pub const PosixSignal = if (signals_supported) std.posix.SIG else void;
 pub const StoredAction = if (signals_supported) std.posix.Sigaction else void;
 
@@ -69,13 +71,13 @@ pub fn writeStderr(bytes: []const u8) bool {
     }
 }
 
-/// Opens a new crash file with mode 0600 and no following symlink. The caller
+/// Opens a new crash file with mode 0600 relative to `dir_fd`. The caller
 /// retries with a different name on `PathAlreadyExists`.
-pub fn openExclusive(path: [:0]const u8) OpenError!fd_t {
+pub fn openExclusiveAt(dir_fd: DirHandle, path: [:0]const u8) OpenError!fd_t {
     if (comptime !posix) {
         return error.OpenFailed;
     } else {
-        return std.posix.openat(std.posix.AT.FDCWD, path, .{
+        return std.posix.openat(dir_fd, path, .{
             .ACCMODE = .WRONLY,
             .CREAT = true,
             .EXCL = true,
@@ -92,19 +94,19 @@ pub fn close(fd: fd_t) void {
 }
 
 /// Best-effort data synchronization. Crash files are diagnostic, not a
-/// durability protocol, so failure is ignored.
+/// durability protocol, so this is opt-in and failure is ignored.
 pub fn sync(fd: fd_t) void {
     if (comptime posix) _ = std.posix.system.fsync(fd);
 }
 
-/// Replaces the stable `<program>.FATAL` link. Unlink and symlink are both
-/// async-signal-safe; failure leaves the previous link intact.
-pub fn replaceSymlink(link_path: [:0]const u8, target: [:0]const u8) void {
+/// Replaces the stable `<program>.FATAL` link relative to `dir_fd`. Unlink and
+/// symlink are both async-signal-safe; failure leaves the previous link intact.
+pub fn replaceSymlinkAt(dir_fd: DirHandle, link_path: [:0]const u8, target: [:0]const u8) void {
     if (comptime !posix) {
         return;
     } else {
-        _ = std.posix.system.unlink(link_path);
-        _ = std.posix.system.symlink(target, link_path);
+        _ = std.posix.system.unlinkat(dir_fd, link_path, 0);
+        _ = std.posix.system.symlinkat(target, dir_fd, link_path);
     }
 }
 

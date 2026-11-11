@@ -102,22 +102,27 @@ used.
 
 ## Safety boundaries
 
-The signal path uses fixed storage and `openat`/`write`/`symlink`/`raise`
-operations. It does not allocate, take logging locks, or drain the runtime.
+The report formatting and file-write path uses fixed storage and
+`openat`/`write`/`symlinkat`/`raise` operations. It does not allocate or take
+logging locks. Stack capture and optional symbolization have the separate
+debug-info boundary described below.
+
 The following boundaries are deliberate:
 
-- **Symbolization is best-effort.** Zig's debug-info reader may allocate and
+- **Signal symbolization is opt-in.** Zig's debug-info reader may allocate and
   take internal locks. Raw return addresses are always written; set
-  `capture_stack_trace = false` and `symbolize_stack_trace = false` for a
-  strictly fixed-allocation signal path.
+  `symbolize_signal_stack_trace = false` (the default) and, for a strictly
+  fixed-allocation signal path, `capture_stack_trace = false` as well.
+  `record`/`fatal` use `symbolize_stack_trace`, which defaults to true.
 - **Alternate signal stacks are per-thread.** `install` installs one for the
   calling thread. Call `installThreadSignalStack()` from every thread that
   should survive stack-overflow capture.
 - **The crash file is not durable evidence.** It is written with ordinary
-  writes and a best-effort `fsync`; it does not replace journal recovery or
-  power-loss qualification.
-- **Relative directories resolve at crash time.** Use an absolute directory
-  when the process may change its working directory.
+  writes; `sync_crash_file` is opt-in and off by default. It does not replace
+  journal recovery or power-loss qualification.
+- **The directory handle is opened at install.** A relative `directory`
+  therefore keeps working after `chdir`. If `record` is called without
+  `install`, it falls back to resolving the configured path at report time.
 - **POSIX signal handlers are unavailable on Windows.** `init` and `record`
   still compile, but installing signal handlers returns
   `error.SignalHandlersUnsupported` and file-backed reports are unavailable.
@@ -129,13 +134,18 @@ The following boundaries are deliberate:
 `zig build test-failure-handler -Doptimize=ReleaseSafe -j1` builds a real child
 workload and verifies:
 
-- `record` produces one report, exits 0, and updates the symlink;
+- `record` produces one report, exits 0, updates the symlink, and includes a
+  symbolized trace;
 - `fatal` and a `.fatal` `Logging` event terminate with `SIGABRT` and produce
   exactly one report with the expected message;
 - real `SIGSEGV`, `SIGABRT`, and `SIGTERM` terminate with the original signal;
+- signal reports are raw-only by default and contain no in-process symbolized
+  trace; `segv-symbolized` verifies the opt-in signal path;
+- `segv-chdir` changes the working directory after `install` and still writes
+  the report and symlink through the pre-opened directory handle;
 - reports contain the signal, code, fault address, PID/TID, program/host/user,
   and at least one raw stack address;
-- stderr mirrors the report header and signal name.
+- stderr mirrors the complete report.
 
 The step is part of `zig build test`. It does not qualify symbolization on
 stripped binaries, alternate-stack coverage for threads that never installed a
