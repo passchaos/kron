@@ -37,7 +37,6 @@ pub fn main(init: std.process.Init) !void {
         .user_name = "test-user",
         .install_signal_handlers = selected != .record,
         .write_stderr = true,
-        .symbolize_stack_trace = selected == .record or selected == .fatal or selected == .@"fatal-log",
         .symbolize_signal_stack_trace = selected != .@"segv-raw",
         .max_stack_frames = 16,
         .abort_on_fatal = selected == .@"fatal-log",

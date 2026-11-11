@@ -546,6 +546,16 @@ fn resolveUser(destination: []u8, override: ?[]const u8) usize {
     return report.sanitize(destination, "unknown").len;
 }
 
+test "signal symbolization is enabled by default" {
+    const handler = try FailureHandler.init(std.testing.io, .{
+        .directory = ".zig-cache/failure-defaults",
+        .install_signal_handlers = false,
+    });
+    try std.testing.expect(handler.symbolize_stack_trace);
+    try std.testing.expect(handler.symbolize_signal_stack_trace);
+    try std.testing.expect(!handler.sync_crash_file);
+}
+
 test "init rejects invalid options" {
     var handler = FailureHandler.init(std.testing.io, .{ .directory = "" });
     try std.testing.expectError(error.InvalidDirectory, handler);
