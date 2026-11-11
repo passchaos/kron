@@ -13,6 +13,11 @@ queues, flush outputs, or claim durability; its crash file is diagnostic
 evidence, not a replacement for [journal recovery](journal-protocol.md) or the
 [completion boundaries](lifecycle.md).
 
+A runnable demo is in
+[examples/failure_handler.zig](../examples/failure_handler.zig): the default run
+writes a non-fatal report, while `-- --crash segv`, `-- --crash fatal`, and
+`-- --crash fatal-log` demonstrate terminating capture.
+
 ## Installation
 
 The handler owns fixed storage, so place it in a global or another address that

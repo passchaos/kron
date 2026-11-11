@@ -107,6 +107,7 @@ zig build run-file-stdout-local-time
 zig build run-mmap
 zig build run-source-location
 zig build run-route-policies
+zig build run-failure-handler
 zig build test-unit -Doptimize=ReleaseSafe -j1
 zig build test-logging -Doptimize=ReleaseSafe -j1
 zig build test-failure-handler -Doptimize=ReleaseSafe -j1

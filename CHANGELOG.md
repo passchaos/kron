@@ -48,6 +48,8 @@ verification note.
   mirror, and `fsync` is opt-in. `install` opens the crash directory once
   so relative directories survive `chdir`. Real-child verification is available
   through `test-failure-handler`.
+- Runnable `run-failure-handler` example for non-fatal reports and real
+  `segv`/`fatal`/`fatal-log` crash modes.
 
 ### Fixed
 

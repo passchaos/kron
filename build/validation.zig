@@ -53,6 +53,7 @@ const examples = [_]Example{
     .{ .name = "mmap", .path = "examples/mmap.zig", .system_local_time = true },
     .{ .name = "source-location", .path = "examples/source_location.zig", .system_local_time = true },
     .{ .name = "route-policies", .path = "examples/route_policies.zig", .system_local_time = true },
+    .{ .name = "failure-handler", .path = "examples/failure_handler.zig" },
 };
 
 pub fn addExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, module: *std.Build.Module, verify: *std.Build.Step) void {
@@ -62,6 +63,7 @@ pub fn addExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
         const name = if (example.system_local_time) b.fmt("kron-{s}-example", .{example.name}) else b.fmt("kron-{s}", .{example.name});
         const executable = b.addExecutable(.{ .name = name, .root_module = example_module });
         const run = b.addRunArtifact(executable);
+        if (b.args) |args| run.addArgs(args);
         b.step(b.fmt("run-{s}", .{example.name}), b.fmt("Run the {s} example", .{example.name})).dependOn(&run.step);
         verify.dependOn(&executable.step);
     }

@@ -38,6 +38,11 @@ rotation removes the oldest archive according to retention. When running
 repeatedly, match counts against the latest session. `verify-local` compiles all
 examples; actual execution and output checks are separate.
 
+`run-failure-handler` writes a non-fatal report by default. Pass
+`-- --crash segv`, `-- --crash fatal`, or `-- --crash fatal-log` to terminate the
+child process and inspect the crash file under the configured directory. Use
+`-- --directory DIR` to choose a different directory.
+
 Examples are selected and imported by the repository-root `examples.zig`, and
 `@src().file` preserves the `examples/` prefix. Text prints
 `source= examples/mmap.zig:line:column` without outer quotes; ordinary package
