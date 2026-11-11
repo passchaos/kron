@@ -3,6 +3,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const types = @import("../core/runtime_types.zig");
 const outputs = @import("output.zig");
+const FailureHandler = @import("../failure/root.zig").FailureHandler;
 
 pub const Mode = enum { sync, asynchronous, spsc };
 pub const Target = outputs.Target;
@@ -38,6 +39,11 @@ pub const Options = struct {
     outputs: []const Route = &.{.{}},
     /// Overall queue backing budget across independent output pipelines.
     max_total_queue_bytes: usize = 256 * 1024 * 1024,
+    /// Optional process-wide failure handler. When set and the handler was
+    /// initialized with `abort_on_fatal`, a `.fatal` event invokes the handler
+    /// after dispatch. `.fatal` remains a non-terminating severity otherwise.
+    /// The handler must outlive this Logging owner.
+    failure_handler: ?*FailureHandler = null,
 };
 pub fn resolve(route: Route) Route {
     var resolved = route;

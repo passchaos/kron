@@ -169,6 +169,7 @@ pub const Owner = struct {
         return if (binding) |schema| runtime.submitWithSchema(admission, event, schema) else runtime.submit(admission, event);
     }
     pub fn submit(self: *const Owner, admission: AdmissionType, event: core.Event) !core.EmitResult {
+        defer if (event.level == .fatal) self.fatalHook(event);
         if (self.logging.pipelines.len == 1) {
             const i: usize = 0;
             const frame = admission.frame.?;
@@ -183,6 +184,14 @@ pub const Owner = struct {
             return result;
         }
         return self.submitMultiple(admission, event);
+    }
+    /// A bound failure handler with `abort_on_fatal` turns a delivered
+    /// `.fatal` event into a glog-style crash report and process abort.
+    fn fatalHook(self: *const Owner, event: core.Event) void {
+        if (event.level != .fatal) return;
+        const handler = self.logging.failure_handler orelse return;
+        if (!handler.abortOnFatal()) return;
+        handler.fatal(event.message);
     }
     noinline fn submitMultiple(self: *const Owner, admission: AdmissionType, event: core.Event) !core.EmitResult {
         const fanout = admission.frame.?.fanout.?;

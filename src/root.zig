@@ -66,6 +66,11 @@ pub const Pattern = @import("pipeline/predicate.zig").Pattern;
 pub const diagnostics = @import("core/diagnostics.zig");
 pub const std_log = @import("adapters/std_log.zig");
 
+// Optional glog-style fatal-signal and fatal-event crash capture.
+pub const failure = @import("failure/root.zig");
+pub const FailureHandler = failure.FailureHandler;
+pub const FailureSignal = failure.Signal;
+
 // Advanced runtime, output resources and completion controls.
 pub const Runtime = @import("core/runtime.zig").Runtime;
 pub const RuntimeOptions = @import("core/runtime.zig").Options;

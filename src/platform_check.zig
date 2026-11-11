@@ -119,4 +119,12 @@ fn check(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !void {
     rolling.sync() catch {};
     try rolling.reopen();
     try rolling.shutdown();
+
+    var failure = try kron.FailureHandler.init(io, .{
+        .directory = ".",
+        .install_signal_handlers = false,
+        .write_stderr = false,
+    });
+    try failure.install();
+    failure.uninstall();
 }

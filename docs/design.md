@@ -329,6 +329,11 @@ SIGKILL tests are not power-loss tests. Durability guarantees require dedicated
 verification through virtual-machine/block-device fault injection, with the
 filesystem, kernel, and storage configuration recorded.
 
+The optional [failure handler](failure-handler.md) is diagnostic evidence for
+fatal signals and opt-in fatal events. It writes a separate crash file, does not
+drain the logging runtime, and does not replace journal recovery or durable
+output boundaries.
+
 ### 15.2 Performance
 
 The following must be reported together:

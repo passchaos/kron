@@ -150,10 +150,11 @@ it does not change the waiting policy.
 
 ## Route configuration and defaults
 
-`Logging.Options` has only two fields: `outputs` (default `&.{.{}}`) and
-`max_total_queue_bytes` (default 256 MiB). Mode, queue, filtering, and output
-policies are set directly on each `Logging.Route`; omitted fields take that
-route type's defaults.
+`Logging.Options` has three fields: `outputs` (default `&.{.{}}`),
+`max_total_queue_bytes` (default 256 MiB), and an optional `failure_handler`
+(default null). Mode, queue, filtering, and output policies are set directly on
+each `Logging.Route`; omitted fields take that route type's defaults. See
+[failure handler](failure-handler.md) for fatal-signal and fatal-event capture.
 
 The default list contains one synchronous text output named `stderr` with an
 info filter. Multiple outputs are configured separately.

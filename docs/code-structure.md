@@ -25,6 +25,7 @@ not reference internal paths.
 | [sink/](../src/sink/interface.zig) | Output interfaces, writer/file/rolling/compressed resources, record boundaries, and error latching |
 | [backend/](../src/backend/interface.zig) | portable/io_uring batched writes, buffer pools, file/directory synchronization, and in-flight ownership |
 | [platform/](../src/platform/capabilities.zig) | Linux/Windows/Darwin mapping and capabilities, clocks/TSC (pure calibration math in [tsc_math.zig](../src/platform/tsc_math.zig)), CRC specialization |
+| [failure/](../src/failure/root.zig) | Optional glog-style failure handler: crash-file naming, POSIX signal installation, raw stack capture, fixed-storage report writing, and the `Logging` fatal-event hook |
 | [time/](../src/time/root.zig) | Gregorian dates, exact timestamp/duration, RFC3339, route-owned second caches, and explicit system-local conversion |
 | [telemetry/](../src/telemetry/trace_context.zig), adapters | Explicit trace/span correlation, `std.log` bridge binding, and bounded producer formatting |
 

@@ -22,6 +22,7 @@ lower-level APIs and design notes are covered in the topic documents.
 | Choosing Memory or Mmap | [Asynchronous storage](async-storage.md) |
 | Mode/storage/format/recovery/durable combinations | [Capability matrix](capability-matrix.md) |
 | flush, durable, deadline, shutdown | [Lifecycle](lifecycle.md) |
+| Fatal-signal and fatal-event crash capture | [Failure handler](failure-handler.md) |
 | File short writes, rotation, synchronization, error latching | [File reliability](file-reliability.md) |
 | Four encodings and protocol versions | [Encoding](encoding.md) |
 | Standard zlib compressed archives | [Compressed archive](compressed-archive.md) |

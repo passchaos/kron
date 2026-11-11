@@ -8,6 +8,7 @@ const config = @import("configuration.zig");
 const dispatch = @import("handle.zig");
 const Event = @import("../core/event.zig").Event;
 const Deadline = @import("../core/control.zig").Deadline;
+const FailureHandler = @import("../failure/root.zig").FailureHandler;
 
 test {
     _ = @import("tests.zig");
@@ -38,6 +39,7 @@ pub const Logging = struct {
     sites_mutex: std.Io.Mutex = .init,
     sites: ?*dispatch.Site = null,
     stopping: std.atomic.Value(bool) = .init(false),
+    failure_handler: ?*FailureHandler = null,
 
     pub fn create(allocator: std.mem.Allocator, io: std.Io, options: Options) !*Logging {
         try config.validate(options);
@@ -100,7 +102,7 @@ pub const Logging = struct {
         for (attachments) |*slot| slot.* = .{};
         const thread_handles = try allocator.alloc(?dispatch.ThreadLogger, slots * pipelines.len);
         @memset(thread_handles, null);
-        self.* = .{ .allocator = allocator, .io = io, .pipelines = pipelines, .attachments = attachments, .thread_handles = thread_handles };
+        self.* = .{ .allocator = allocator, .io = io, .pipelines = pipelines, .attachments = attachments, .thread_handles = thread_handles, .failure_handler = options.failure_handler };
         return self;
     }
     fn allMask(self: *const Logging) u64 {

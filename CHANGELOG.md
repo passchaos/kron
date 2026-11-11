@@ -38,6 +38,11 @@ verification note.
   Coverage boundaries are documented in `docs/development.md`.
 - `docs/history/readme-performance-2026-11-09.md` and
   `docs/history/verification-chronology-2026-11-09.md` snapshots.
+- Optional glog-style `FailureHandler`: fatal-signal capture for
+  SIGSEGV/SIGILL/SIGFPE/SIGABRT/SIGBUS/SIGTERM, UTC crash-file naming,
+  raw stack addresses, stderr mirroring, a stable `<program>.FATAL` symlink,
+  `record`/`fatal` entry points, and an opt-in `Logging` `.fatal` hook.
+  Real-child verification is available through `test-failure-handler`.
 
 ### Fixed
 

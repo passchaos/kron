@@ -295,6 +295,19 @@ pub fn build(b: *std.Build) void {
     crash_check.addArtifactArg(tool);
     b.step("test-crash", "Kill real writers and recover through kroncat").dependOn(&crash_check.step);
 
+    const failure_module = b.createModule(.{
+        .root_source_file = b.path("tests/failure_handler_writer.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    failure_module.addImport("kron", module);
+    const failure_writer = b.addExecutable(.{ .name = "kron-failure-writer", .root_module = failure_module });
+    const failure_check = b.addSystemCommand(&.{ "python3", "tests/failure_handler.py", "--writer" });
+    failure_check.addArtifactArg(failure_writer);
+    const failure_step = b.step("test-failure-handler", "Verify glog-style signal/fatal crash capture in real child processes");
+    failure_step.dependOn(&failure_check.step);
+    test_step.dependOn(&failure_check.step);
+
     const async_crash_module = b.createModule(.{ .root_source_file = b.path("tests/async_crash_writer.zig"), .target = target, .optimize = optimize });
     async_crash_module.addImport("kron", module);
     const async_crash_writer = b.addExecutable(.{ .name = "kron-async-crash-writer", .root_module = async_crash_module });

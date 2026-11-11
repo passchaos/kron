@@ -91,6 +91,7 @@ Network sinks and exporters are outside the current single-machine scope.
 | Understand the API and internals | [API architecture](docs/api-design.md), [code structure](docs/code-structure.md), [overall design](docs/design.md) |
 | Modify sources, choose tests, maintain evidence | [Development and verification](docs/development.md), [test directory](tests/README.md), [benchmark directory](bench/README.md) |
 | Check capabilities, platforms, and remaining work | [Capability matrix](docs/capability-matrix.md), [current acceptance status](docs/implementation-status.md), [platform support](docs/platforms.md) |
+| Capture fatal-signal and fatal-event crashes | [Failure handler](docs/failure-handler.md) |
 | Browse all topics and historical records | [Documentation navigation](docs/README.md), [history](docs/history/README.md) |
 | Check versions and recent changes | [Changelog](CHANGELOG.md) |
 
@@ -108,6 +109,7 @@ zig build run-source-location
 zig build run-route-policies
 zig build test-unit -Doptimize=ReleaseSafe -j1
 zig build test-logging -Doptimize=ReleaseSafe -j1
+zig build test-failure-handler -Doptimize=ReleaseSafe -j1
 zig build verify-fast -Doptimize=ReleaseSafe -j1
 zig build verify-local -Doptimize=ReleaseSafe -j1
 zig build check-platforms -j1

@@ -21,20 +21,27 @@ pipelines, rotation, stable writer storage, and each route's Runtime through the
 `outputs` list. Ordinary integration does not need a second resource owner; the
 lower-level Runtime remains for advanced extensions and existing APIs.
 
-`Logging.Options` keeps only the `outputs` list and the total queue budget, with
-defaults defined directly on route fields. Each route has independent
-mode/queue/overflow/redaction/sampling and state. Rotation supports size, a pure
-time interval, or either trigger, with time rotation checked at record
-boundaries.
+`Logging.Options` keeps the `outputs` list, the total queue budget, and an
+optional failure handler, with defaults defined directly on route fields. Each
+route has independent mode/queue/overflow/redaction/sampling and state. Rotation
+supports size, a pure time interval, or either trigger, with time rotation
+checked at record boundaries.
+
+`FailureHandler` is an independent, opt-in process failure reporter. It writes
+glog-style crash files with raw stack addresses for fatal signals, mirrors them
+to stderr, and can turn a delivered `.fatal` event into a terminating report. It
+does not drain the logging runtime and is not a durability or power-loss
+mechanism; see [failure handler](failure-handler.md).
 
 ## Recent verification
 
-As of 2026-11-10, the repository's correctness gates cover the root unit and
+As of 2026-11-11, the repository's correctness gates cover the root unit and
 integration suites, compile-fail checks, fuzz/decoder corpora, single-threaded
-builds, real SIGKILL recovery, async crash recovery, the recovery campaign, and
-cross-platform compile checks. The exact pass counts are produced by the
-commands in [development and verification](development.md); they are not
-duplicated here because they change with every test addition.
+builds, real SIGKILL recovery, async crash recovery, the recovery campaign,
+real fatal-signal/fatal-event crash capture, and cross-platform compile checks.
+The exact pass counts are produced by the commands in
+[development and verification](development.md); they are not duplicated here
+because they change with every test addition.
 
 The cross-library C++/Rust reference harnesses and their measured evidence have
 been removed from the repository. Current performance work uses the in-repo Zig
@@ -60,6 +67,7 @@ capability tables, and priorities.
 | Threads and lifecycle | Thread token/generation, admission cut, deadlines, shutdown/failure wakeups; [lifecycle](lifecycle.md), [scheduling](consumer-scheduling.md) | Timeout does not cancel background work; destroy is blocking cleanup |
 | Files, rotation, and io_uring | Short writes, CQE/in-flight ownership, size/time/retention/reopen, real synchronization; portable default, io_uring explicit; [files](file-reliability.md) | Backend implementation, device capability, and power-loss qualification are separate |
 | Process recovery | Real SIGKILL across committed/reserved/gap/schema/hot-route cases and random ACKs | Process-crash tests do not replace system power-loss tests |
+| Failure capture | Real SIGSEGV/SIGABRT/SIGTERM and fatal-event children; crash-file naming/content, raw stack addresses, symlink, stderr mirror; [failure handler](failure-handler.md) | POSIX signal handlers only; symbolization is best-effort; alternate stacks are per-thread; crash files are not durable evidence |
 | Durability | Output/checkpoint ordering, fault sinks, child-QEMU shutdown recovery (ext4/XFS/Btrfs/F2FS 16-run campaigns); [power tests](../tests/power_loss/README.md) | Physical power loss, NFS, and devices still need broader qualification |
 | Time, std.log, trace | RFC3339/fixed offsets, independent oracle, Bridge, explicit TraceContext; [time](time.md), [API](api-design.md) | Fixed offsets stay pure Zig; local time uses system DST rules; no bundled IANA database or full tracing task/span ecosystem |
 | Platforms and single-threaded | Nine-target object/partial-link checks; Linux real files/recovery and one OS thread; [platforms](platforms.md) | Windows/macOS/Android/iOS still lack device execution |

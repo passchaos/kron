@@ -23,6 +23,12 @@ execution, syscall availability, or device durability**. Apple app linking needs
 a normal Xcode SDK/libSystem; Android app linking needs a normal NDK/bionic. The
 host object check does not install or substitute for those SDKs.
 
+The optional [failure handler](failure-handler.md) installs POSIX signal
+handlers and writes crash files on Linux, macOS, Android, and iOS targets.
+Windows keeps the API compiling and can emit stderr diagnostics, but signal
+installation returns `error.SignalHandlersUnsupported`. Cross-compilation of the
+failure module is part of `check-platforms`; it is not target-device execution.
+
 `kron.platform` provides compile-time `target`, `synchronous`, `shared_journal`,
 `asynchronous`, `spsc`, `directory_durable_protocol`, `io_uring`, and `tsc`.
 Capability values mean the implementation exists; runtime disk, permissions,
