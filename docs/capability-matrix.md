@@ -56,7 +56,7 @@ standard zlib.
 | --- | --- | --- | --- |
 | `FailureHandler.record` | Explicit application call | One crash file plus stderr mirror; no termination | Returns `error.CrashFileUnavailable` when the file cannot be created |
 | `FailureHandler.fatal` | Explicit call or bound `.fatal` event | One crash file plus stderr mirror, then `SIGABRT` | `.fatal` binding requires `abort_on_fatal`; filtered/sampled events never reach dispatch |
-| Signal handlers | `SIGSEGV`/`SIGILL`/`SIGFPE`/`SIGABRT`/`SIGBUS`/`SIGTERM` | Crash file with signal/code/fault address and raw stack addresses, then re-raise | POSIX only; signal symbolization is opt-in; alternate stacks are per-thread |
+| Signal handlers | `SIGSEGV`/`SIGILL`/`SIGFPE`/`SIGABRT`/`SIGBUS`/`SIGTERM` | Crash file with signal/code/fault address and raw stack addresses, then re-raise | POSIX only; signal symbolization is on by default and can be disabled; alternate stacks are per-thread |
 
 Crash files are diagnostic and do not drain queues, flush outputs, or replace
 journal recovery. See [failure handler](failure-handler.md).

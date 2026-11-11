@@ -4,7 +4,9 @@
 installs handlers for fatal signals, writes a crash file with raw stack return
 addresses, mirrors the report to standard error, and maintains a stable
 `<program>.FATAL` link. It can also bind to `Logging` so a `.fatal` event
-terminates the process after delivery.
+terminates the process after delivery. Signal reports include a symbolized
+trace by default, matching glog; the raw report is written before
+symbolization, so debug-info failure cannot remove the address list.
 
 The failure handler is independent of the journal and sinks. It does not drain
 queues, flush outputs, or claim durability; its crash file is diagnostic
@@ -74,9 +76,11 @@ Each report contains:
 - an optional symbolized trace.
 
 `record(reason, message)` writes one report and returns without terminating.
-It is useful for non-fatal diagnostics and is the only mode that returns a
-file-write error (`error.CrashFileUnavailable`) while still attempting the
-stderr mirror. `fatal(message)` writes one report and aborts with `SIGABRT`.
+It is useful for non-fatal diagnostics and is the only mode that returns
+`error.CrashFileUnavailable` when no file could be created or
+`error.CrashFileWriteFailed` when the raw write failed; the stderr mirror is
+still attempted in both cases. `fatal(message)` writes one report and aborts
+with `SIGABRT`.
 
 ## Signals and fatal events
 
@@ -102,18 +106,19 @@ used.
 
 ## Safety boundaries
 
-The report formatting and file-write path uses fixed storage and
+The raw report formatting and file-write path uses fixed storage and
 `openat`/`write`/`symlinkat`/`raise` operations. It does not allocate or take
-logging locks. Stack capture and optional symbolization have the separate
-debug-info boundary described below.
+logging locks. Stack capture and symbolization have the separate debug-info
+boundary described below, and the raw report reaches disk first.
 
 The following boundaries are deliberate:
 
-- **Signal symbolization is opt-in.** Zig's debug-info reader may allocate and
-  take internal locks. Raw return addresses are always written; set
-  `symbolize_signal_stack_trace = false` (the default) and, for a strictly
-  fixed-allocation signal path, `capture_stack_trace = false` as well.
-  `record`/`fatal` use `symbolize_stack_trace`, which defaults to true.
+- **Signal symbolization is on by default.** Zig's debug-info reader may
+  allocate and take internal locks; the raw report is written first, so this
+  cannot remove the address list. Set `symbolize_signal_stack_trace = false`
+  and, for a strictly fixed-allocation signal path, `capture_stack_trace =
+  false` as well. `record`/`fatal` use `symbolize_stack_trace`, which also
+  defaults to true.
 - **Alternate signal stacks are per-thread.** `install` installs one for the
   calling thread. Call `installThreadSignalStack()` from every thread that
   should survive stack-overflow capture.
@@ -139,8 +144,8 @@ workload and verifies:
 - `fatal` and a `.fatal` `Logging` event terminate with `SIGABRT` and produce
   exactly one report with the expected message;
 - real `SIGSEGV`, `SIGABRT`, and `SIGTERM` terminate with the original signal;
-- signal reports are raw-only by default and contain no in-process symbolized
-  trace; `segv-symbolized` verifies the opt-in signal path;
+- signal reports include an in-process symbolized trace by default;
+  `segv-raw` verifies the opt-out path;
 - `segv-chdir` changes the working directory after `install` and still writes
   the report and symlink through the pre-opened directory handle;
 - reports contain the signal, code, fault address, PID/TID, program/host/user,

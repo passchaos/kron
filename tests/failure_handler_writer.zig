@@ -5,7 +5,7 @@
 const std = @import("std");
 const kron = @import("kron");
 
-const Mode = enum { record, fatal, @"fatal-log", segv, @"segv-chdir", @"segv-symbolized", abort, term };
+const Mode = enum { record, fatal, @"fatal-log", segv, @"segv-chdir", @"segv-raw", abort, term };
 
 fn chdirRoot() void {
     if (comptime @import("builtin").os.tag == .linux) {
@@ -38,7 +38,7 @@ pub fn main(init: std.process.Init) !void {
         .install_signal_handlers = selected != .record,
         .write_stderr = true,
         .symbolize_stack_trace = selected == .record or selected == .fatal or selected == .@"fatal-log",
-        .symbolize_signal_stack_trace = selected == .@"segv-symbolized",
+        .symbolize_signal_stack_trace = selected != .@"segv-raw",
         .max_stack_frames = 16,
         .abort_on_fatal = selected == .@"fatal-log",
     });
@@ -79,7 +79,7 @@ pub fn main(init: std.process.Init) !void {
             invalid.* = 1;
             std.process.exit(1);
         },
-        .@"segv-symbolized" => {
+        .@"segv-raw" => {
             const invalid: *allowzero volatile u8 = @ptrFromInt(@as(usize, 0));
             invalid.* = 1;
             std.process.exit(1);

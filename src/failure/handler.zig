@@ -105,7 +105,7 @@ pub const FailureHandler = struct {
     write_stderr: bool = true,
     create_latest_symlink: bool = true,
     symbolize_stack_trace: bool = true,
-    symbolize_signal_stack_trace: bool = false,
+    symbolize_signal_stack_trace: bool = true,
     capture_stack_trace: bool = true,
     sync_crash_file: bool = false,
     max_stack_frames: usize = 64,
@@ -260,33 +260,58 @@ pub const FailureHandler = struct {
     ) !void {
         const unix = os.timestampSeconds();
         var writer = report.Writer.init(buffer);
-        self.formatReport(&writer, kind, reason, message, signal_value, signal_code, fault_address, captured, symbolize, unix);
-        const bytes = writer.finish();
+        self.formatRawReport(&writer, kind, reason, message, signal_value, signal_code, fault_address, captured, unix);
+        const raw_bytes = writer.finish();
 
         const use_dir = self.directory_handle != null;
         const pid = os.getpid();
         var name_buffer: [report.max_name + 1]u8 = undefined;
         var path_buffer: [report.max_path + 1]u8 = undefined;
         var attempt: u32 = 0;
+        var opened: ?os.fd_t = null;
+        var basename: []const u8 = "";
         while (attempt < 8) : (attempt += 1) {
             const zero = if (use_dir)
                 report.crashNameZ(&name_buffer, self.programSlice(), self.hostSlice(), self.userSlice(), unix, pid, attempt) catch break
             else
                 report.fileNameZ(&path_buffer, self.directorySlice(), self.programSlice(), self.hostSlice(), self.userSlice(), unix, pid, attempt) catch break;
             const dir_fd = if (use_dir) self.directory_handle.?.handle else os.at_fdcwd;
-            const opened = os.openExclusiveAt(dir_fd, zero) catch |err| switch (err) {
+            opened = os.openExclusiveAt(dir_fd, zero) catch |err| switch (err) {
                 error.PathAlreadyExists => continue,
                 else => break,
             };
-            const written = os.writeAll(opened, bytes);
-            if (self.sync_crash_file) os.sync(opened);
-            os.close(opened);
-            if (written and self.create_latest_symlink) self.updateLatestLink(use_dir, std.fs.path.basename(zero));
-            self.writeStderr(bytes);
-            if (!written) return error.CrashFileWriteFailed;
+            basename = std.fs.path.basename(zero);
+            break;
+        }
+
+        // Raw evidence reaches the file before symbolization starts. A debug
+        // info failure or stall therefore cannot remove the address list.
+        var file_written = false;
+        if (opened) |fd| {
+            file_written = os.writeAll(fd, raw_bytes);
+            if (file_written and self.create_latest_symlink) self.updateLatestLink(use_dir, basename);
+        }
+        self.writeStderr(raw_bytes);
+        if (opened != null and !file_written) {
+            if (opened) |fd| os.close(fd);
+            return error.CrashFileWriteFailed;
+        }
+
+        if (symbolize) {
+            var symbol_writer = report.Writer.init(buffer);
+            formatSymbolized(&symbol_writer, captured);
+            const symbol_bytes = symbol_writer.finish();
+            if (symbol_bytes.len != 0) {
+                if (opened) |fd| _ = os.writeAll(fd, symbol_bytes);
+                self.writeStderr(symbol_bytes);
+            }
+        }
+
+        if (opened) |fd| {
+            if (self.sync_crash_file) os.sync(fd);
+            os.close(fd);
             return;
         }
-        self.writeStderr(bytes);
         return error.CrashFileUnavailable;
     }
 
@@ -327,7 +352,7 @@ pub const FailureHandler = struct {
         }
     }
 
-    fn formatReport(
+    fn formatRawReport(
         self: *FailureHandler,
         writer: *report.Writer,
         kind: ReportKind,
@@ -337,7 +362,6 @@ pub const FailureHandler = struct {
         signal_code: i32,
         fault_address: ?usize,
         captured: std.debug.StackTrace,
-        symbolize: bool,
         unix: i64,
     ) void {
         var timestamp_buffer: [32]u8 = undefined;
@@ -379,10 +403,6 @@ pub const FailureHandler = struct {
                 writer.print("  #{d} 0x{x}\n", .{ index, address });
             }
         }
-        if (symbolize) {
-            writer.write("\nSymbolized stack trace:\n");
-            if (!trace.appendSymbolized(&writer.inner, &captured)) writer.truncated = true;
-        }
     }
 
     fn writeStderr(self: *FailureHandler, bytes: []const u8) void {
@@ -411,6 +431,11 @@ pub const FailureHandler = struct {
 
 fn emptyTrace() std.debug.StackTrace {
     return .{ .return_addresses = &.{}, .skipped = .none };
+}
+
+fn formatSymbolized(writer: *report.Writer, captured: std.debug.StackTrace) void {
+    writer.write("\nSymbolized stack trace:\n");
+    if (!trace.appendSymbolized(&writer.inner, &captured)) writer.truncated = true;
 }
 
 fn handleSignal(sig: os.PosixSignal, info: *const SignalInfo, context: ?*anyopaque) callconv(.c) void {
