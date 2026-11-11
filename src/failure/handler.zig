@@ -74,10 +74,11 @@ pub const FailureHandler = struct {
         /// Attempt to resolve raw addresses through Zig debug info for
         /// `record` and `fatal`. The raw address list is emitted regardless.
         symbolize_stack_trace: bool = true,
-        /// Attempt to resolve raw addresses for signal reports. Off by default
-        /// because debug-info allocation and locks are unsafe in a signal
-        /// handler; raw addresses remain available for offline symbolization.
-        symbolize_signal_stack_trace: bool = false,
+        /// Attempt to resolve raw addresses for signal reports. On by default
+        /// to match glog; the raw report is written before symbolization, so a
+        /// debug-info failure cannot remove the raw evidence. Disable for a
+        /// strictly fixed-allocation signal path.
+        symbolize_signal_stack_trace: bool = true,
         /// Capture stack return addresses. Disable together with signal
         /// symbolization for a strictly fixed-allocation signal path.
         capture_stack_trace: bool = true,
